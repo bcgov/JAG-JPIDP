@@ -11,7 +11,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "plr-intake", "services.plr-
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "plr-intake.tests", "services.plr-intake.tests\plr-intake.tests.csproj", "{6C64ACF9-73DD-4A52-926E-9AFC07555060}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "edt.service", "service.edt\edt.service.csproj", "{B4470CEB-BE69-4736-9A78-DEC03DF8554C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "edt.service", "service.edt\edt.service.csproj", "{B4470CEB-BE69-4736-9A78-DEC03DF8554C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "jumwebapi", "jum-api\jumwebapi\jumwebapi.csproj", "{A327628F-68D4-4650-B3D0-55894E415B38}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NotificationService", "jum-api\NotificationService\NotificationService.csproj", "{B796D8FB-A2BC-45C9-9C3E-39D4DC2DF7EA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +43,14 @@ Global
 		{B4470CEB-BE69-4736-9A78-DEC03DF8554C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B4470CEB-BE69-4736-9A78-DEC03DF8554C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B4470CEB-BE69-4736-9A78-DEC03DF8554C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A327628F-68D4-4650-B3D0-55894E415B38}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A327628F-68D4-4650-B3D0-55894E415B38}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A327628F-68D4-4650-B3D0-55894E415B38}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A327628F-68D4-4650-B3D0-55894E415B38}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B796D8FB-A2BC-45C9-9C3E-39D4DC2DF7EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B796D8FB-A2BC-45C9-9C3E-39D4DC2DF7EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B796D8FB-A2BC-45C9-9C3E-39D4DC2DF7EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B796D8FB-A2BC-45C9-9C3E-39D4DC2DF7EA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
