@@ -1,0 +1,31 @@
+global:
+  licenseplate: '5b7aa5'
+  environment: 'test'
+
+kafka:
+  createtopics: true
+  authorization:
+    enabled: true
+  metrics:
+    enabled: true
+  kafkaui:
+    enabled : false
+
+
+apicurio:
+  enabled: true
+
+keycloak:
+  realmName: DEMSTEST
+  auth: https://test.common-sso.justice.gov.bc.ca/auth/realms/DEMSTEST
+  base: https://test.common-sso.justice.gov.bc.ca/auth
+
+postgresql:
+  createSecret: true
+  auth:
+    username: "kafka"
+    database: "kafka"
+    existingSecret: "pidp-kafka-postgresql"
+    secretKeys:
+      adminPasswordKey: "admin-password"
+      userPasswordKey: "kafka-password"

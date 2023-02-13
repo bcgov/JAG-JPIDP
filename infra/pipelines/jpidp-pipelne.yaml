@@ -1,0 +1,226 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: jpidp-pipeline
+  namespace: e27db1-tools
+spec:
+  params:
+    - name: git-url
+      type: string
+    - default: develop
+      name: git-revision
+      type: string
+    - name: git-short-sha
+      type: string
+    - default: 'image-registry.openshift-image-registry.svc:5000/e27db1-tools'
+      name: image-registry
+      type: string
+    - default: develop
+      name: image-tag
+      type: string
+    - default: jpidp-test
+      name: release_name
+      type: string
+    - default: e27db1-test
+      name: release_namespace
+      type: string
+    - default: v0.1.0
+      name: release_version
+      type: string
+    - default: deploy/test_values.yaml
+      name: values_file
+      type: string
+  tasks:
+    - name: git-clone
+      params:
+        - name: url
+          value: $(params.git-url)
+        - name: submodules
+          value: 'true'
+        - name: depth
+          value: '1'
+        - name: sslVerify
+          value: 'true'
+        - name: subdirectory
+          value: jps-pidp
+        - name: deleteExisting
+          value: 'true'
+        - name: verbose
+          value: 'true'
+        - name: revision
+          value: $(params.git-revision)
+        - name: gitInitImage
+          value: >-
+            registry.redhat.io/openshift-pipelines/pipelines-git-init-rhel8@sha256:afc5d3f9efe26c7042635d43b8ffd09d67936e3d0b6b901dc08a33e20313d361
+      taskRef:
+        kind: ClusterTask
+        name: git-clone-v0-22-0
+      workspaces:
+        - name: output
+          workspace: source
+    - name: build-frontend
+      params:
+        - name: PATH_CONTEXT
+          value: jps-pidp/workspace/
+      runAfter:
+        - git-clone
+      taskRef:
+        kind: Task
+        name: build-frontend
+      workspaces:
+        - name: source
+          workspace: source
+    - name: build-frontend-image
+      params:
+        - name: IMAGE
+          value: '$(params.image-registry)/pidp-frontend:$(params.image-tag)'
+        - name: CONTEXT
+          value: jps-pidp/workspace/
+        - name: DOCKERFILE
+          value: jps-pidp/workspace/Dockerfile
+        - name: EXTRA_ARGS
+          value:
+            - '--skip-tls-verify'
+      runAfter:
+        - build-frontend
+      taskRef:
+        kind: Task
+        name: kaniko
+      workspaces:
+        - name: source
+          workspace: source
+        - name: dockerconfig
+          workspace: dockerconfig
+    - name: build-webapi
+      params:
+        - name: IMAGE
+          value: '$(params.image-registry)/pidp-webapi:$(params.image-tag)'
+        - name: CONTEXT
+          value: jps-pidp/backend/webapi/
+        - name: DOCKERFILE
+          value: jps-pidp/backend/webapi/Dockerfile
+        - name: EXTRA_ARGS
+          value:
+            - '--skip-tls-verify'
+      runAfter:
+        - git-clone
+      taskRef:
+        kind: Task
+        name: kaniko
+      workspaces:
+        - name: source
+          workspace: source
+        - name: dockerconfig
+          workspace: dockerconfig
+    - name: build-edt-service
+      params:
+        - name: IMAGE
+          value: '$(params.image-registry)/edt-service:$(params.image-tag)'
+        - name: CONTEXT
+          value: jps-pidp/backend/service.edt/
+        - name: DOCKERFILE
+          value: jps-pidp/backend/service.edt/Dockerfile
+        - name: EXTRA_ARGS
+          value:
+            - '--skip-tls-verify'
+      runAfter:
+        - git-clone
+      taskRef:
+        kind: Task
+        name: kaniko
+      workspaces:
+        - name: source
+          workspace: source
+        - name: dockerconfig
+          workspace: dockerconfig
+    - name: build-jumapi
+      params:
+        - name: IMAGE
+          value: '$(params.image-registry)/jum-api:$(params.image-tag)'
+        - name: CONTEXT
+          value: jps-jum/backend/jum-api/jumwebapi/
+        - name: DOCKERFILE
+          value: jps-jum/backend/jum-api/jumwebapi/Dockerfile
+        - name: EXTRA_ARGS
+          value:
+            - '--skip-tls-verify'
+      runAfter:
+        - git-clone
+      taskRef:
+        kind: Task
+        name: kaniko
+      workspaces:
+        - name: source
+          workspace: source
+    - name: build-notification-service
+      params:
+        - name: IMAGE
+          value: '$(params.image-registry)/jum-notification:$(params.image-tag)'
+        - name: CONTEXT
+          value: jps-jum/backend/jum-api/NotificationService/
+        - name: DOCKERFILE
+          value: jps-jum/backend/jum-api/NotificationService/Dockerfile
+        - name: EXTRA_ARGS
+          value:
+            - '--skip-tls-verify'
+      runAfter:
+        - git-clone
+      taskRef:
+        kind: Task
+        name: kaniko
+      workspaces:
+        - name: source
+          workspace: source
+    - name: build-plr-intake
+      params:
+        - name: IMAGE
+          value: '$(params.image-registry)/pidp-plr-intake:$(params.image-tag)'
+        - name: CONTEXT
+          value: jps-pidp/backend/services.plr-intake/
+        - name: DOCKERFILE
+          value: jps-pidp/backend/services.plr-intake/Dockerfile
+        - name: EXTRA_ARGS
+          value:
+            - '--skip-tls-verify'
+      runAfter:
+        - git-clone
+      taskRef:
+        kind: Task
+        name: kaniko
+      workspaces:
+        - name: source
+          workspace: source
+        - name: dockerconfig
+          workspace: dockerconfig
+    - name: install-upgrade
+      params:
+        - name: charts_dir
+          value: ./jps-pidp/charts/pidp
+        - name: release_version
+          value: $(params.release_version)
+        - name: release_name
+          value: $(params.release_name)
+        - name: release_namespace
+          value: $(params.release_namespace)
+        - name: overwrite_values
+          value: >-
+            global.image.tag=$(params.image-tag),global.commit_sha=$(params.git-short-sha)
+        - name: values_file
+          value: jps-pidp/$(params.values_file)
+      runAfter:
+        - git-clone
+        - build-plr-intake
+        - build-frontend-image
+        - build-webapi
+        - build-edt-service
+        - build-notification-service
+        - build-jumapi
+      taskRef:
+        kind: Task
+        name: helm-upgrade-from-source
+      workspaces:
+        - name: source
+          workspace: source
+  workspaces:
+    - name: source
+    - name: dockerconfig

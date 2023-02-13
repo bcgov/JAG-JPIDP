@@ -1,0 +1,27 @@
+"RetryPolicy": {
+  "DeadLetterTopic": "digitalevidence-deadletteraccessrequest-topic",
+  "RetryTopics": [
+    {
+      "TopicName": "digitalevidence-retryaccessrequest-topic",
+      "Order": 1,
+      "RetryCount": 2,
+      "DelayMinutes": 1,
+      "NotifyUser": false
+    },
+    {
+      "TopicName": "digitalevidence-midretryaccessrequest-topic",
+      "Order": 2,
+      "RetryCount": 1,
+      "DelayMinutes": 2,
+      "NotifyUser": true
+    },
+    {
+      "TopicName": "digitalevidence-finalretryaccessrequest-topic",
+      "Order": 3,
+      "RetryCount": 1,
+      "DelayMinutes": 2,
+      "NotifyOnEachRetry": true,
+      "NotifyUser": true
+    }
+  ]
+}

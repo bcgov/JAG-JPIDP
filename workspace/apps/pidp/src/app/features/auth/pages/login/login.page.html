@@ -1,0 +1,152 @@
+<ui-dashboard-header [theme]="headerConfig.theme" [allowMobileToggle]="headerConfig.allowMobileToggle">
+</ui-dashboard-header>
+
+<div class="container">
+  <ng-container *ngIf="idpHint === IdentityProvider.BCSC; else admin">
+    <div class="row">
+      <div class="col-12">
+        <ui-alert *ngIf="loginCancelled" type="info" icon="error_outline" heading="Login Cancelled">
+          <ng-container uiAlertContent>
+            <p>
+              You have cancelled your login to the Provider Identity Portal.
+            </p>
+            <ul>
+              <li>
+                For support with the provider identity portal, contact
+                <a uiAnchor scheme="mailto" [attr.href]="providerIdentitySupportEmail"></a>
+              </li>
+              <li>
+                For support with your BC Services Card, click
+                <a uiAnchor [attr.href]="bcscSupportUrl">here</a>
+              </li>
+            </ul>
+          </ng-container>
+        </ui-alert>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12 col-xl-auto">
+        <div class="header">
+          <div class="heading">
+            <img src="/assets/images/pidp-logo-blue-small.svg" alt="Provider Identity Portal Logo" />
+            <h1>Provider Identity Portal</h1>
+          </div>
+
+          <p>
+            A portal for approved individuals to enroll for access to provided systems.
+          </p>
+        </div>
+
+        <div class="hide-on-large-viewports">
+          <ng-container *ngTemplateOutlet="login"></ng-container>
+        </div>
+
+        <!-- <div class="hide-on-small-viewports scroll">
+          <button mat-stroked-button color="primary" (click)="onScrollToAnchor()">
+            View available court systems
+          </button>
+        </div> -->
+
+        <div class="support">
+          <app-get-support></app-get-support>
+        </div>
+
+        <div class="systems">
+          <ui-page-section>
+            <ui-scroll-target targetId="systems"></ui-scroll-target>
+            <ui-page-section-subheader icon="assignment" heading="Systems Available"></ui-page-section-subheader>
+
+            <!-- <ui-page-section>
+              <h3>Digital Evidence Management System</h3>
+              <p>
+                B.C. court associates, lawyers, police and Out of Custody users
+                can enrol for access to Digital Evidence Management System.
+              </p>
+              <p>
+                You need to set up the
+                <a uiAnchor [attr.href]="bcscMobileSetupUrl">
+                  BC Services Card app
+                </a>
+                to enrol. You will use the app each time you access the DEMS
+                application.
+              </p>
+            </ui-page-section> -->
+
+            <ui-page-section>
+              <h3>Driver Medical Fitness Transformation Program</h3>
+              <p>
+                B.C. drivers can enrol for access to the Driver Medical Fitness
+                Application Portal.
+              </p>
+              <p>
+                You need to set up the
+                <a uiAnchor [attr.href]="bcscMobileSetupUrl">
+                  BC Services Card app
+                </a>
+                to enrol. You will use the app each time you access the DMFT
+                Drivers Portal.
+              </p>
+            </ui-page-section>
+          </ui-page-section>
+        </div>
+      </div>
+      <div class="col-12 col-xl-auto hide-on-small-viewports">
+        <ng-container *ngTemplateOutlet="login"></ng-container>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-template #login>
+    <div class="actions">
+      <div>Login using:</div>
+      <div>
+        <button mat-stroked-button (click)="onLogin(IdentityProvider.OIDC)">
+          Login with BC Services Card
+        </button>
+        <small>
+          Need an account?
+          <a uiAnchor [attr.href]="bcscMobileSetupUrl">Set up</a>
+        </small>
+
+        <button mat-stroked-button (click)="onLogin(IdentityProvider.ADFS)">
+          BCPS User
+        </button>
+
+        <button mat-stroked-button (click)="onLogin(IdentityProvider.AZUREIDIR)">
+          Government User
+        </button>
+        <br /><br />
+        <!--<mat-form-field class="example-form">
+          <input
+            #inputField
+            type="text"
+            placeholder="Select your organization"
+            matInput
+            aria-label="Number"
+            [formControl]="myControl"
+            [matAutocomplete]="auto" />
+          <mat-autocomplete #auto="matAutocomplete">
+            <mat-option
+              *ngFor="let organization of organizations"
+              [value]="organization.name">
+              {{ organization.name }}
+            </mat-option>
+          </mat-autocomplete>
+        </mat-form-field>-->
+      </div>
+    </div>
+  </ng-template>
+
+  <ng-template #admin>
+    <div class="row admin">
+      <div class="col-12">
+        <img src="/assets/images/pidp-logo-blue.svg" alt="Provider Identity Portal Logo" />
+      </div>
+      <div class="col-12">
+        <button mat-flat-button color="primary" (click)="onLogin()">
+          {{ idpHint | uppercase }} Login
+        </button>
+      </div>
+    </div>
+  </ng-template>
+</div>

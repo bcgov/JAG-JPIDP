@@ -1,0 +1,11 @@
+@import 'bootstrap/bootstrap-imports';
+
+p.lead {
+  margin-bottom: 3rem;
+}
+
+@include media-breakpoint-up(xl) {
+  .row > div {
+    max-width: 800px;
+  }
+}

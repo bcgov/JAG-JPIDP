@@ -1,0 +1,152 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: {{ include "pidp-kafka.fullname" . }}-cluster
+spec:
+  entityOperator:
+    topicOperator: {}
+    userOperator: {}
+
+  kafka:
+    {{- if .Values.kafka.metrics.enabled }}
+    metricsConfig:
+      type: jmxPrometheusExporter
+      valueFrom:
+        configMapKeyRef:
+          name: {{ include "pidp-kafka.fullname" . }}-metrics
+          key: kafka-metrics-config.yml
+    {{- end }}
+    readinessProbe:
+      initialDelaySeconds: 120
+      timeoutSeconds: 15
+    livenessProbe:
+      initialDelaySeconds: 240
+      timeoutSeconds: 15
+    {{- if .Values.kafka.authorization.enabled }}
+    authorization:
+      clientId: {{ .Values.kafka.authorization.clientId }}
+      delegateToKafkaAcls: true
+      type: keycloak
+<<<<<<< Updated upstream
+      superUsers:
+        - rest-proxy-user
+        - kafka-broker
+        - service-account-kafka-admin
+=======
+>>>>>>> Stashed changes
+      tlsTrustedCertificates:
+        - certificate: ca.crt
+          secretName: {{ include "pidp-kafka.fullname" . }}-keycloak-ca
+      tokenEndpointUri: {{ .Values.keycloak.auth }}/protocol/openid-connect/token
+    {{- end }}
+    listeners:
+<<<<<<< Updated upstream
+      - authentication:
+          jwksEndpointUri: >-
+            {{ .Values.keycloak.auth }}/protocol/openid-connect/certs
+          userNameClaim: preferred_username
+          clientId: kafka-admin
+          enableOauthBearer: true
+          validIssuerUri: {{ .Values.keycloak.auth }}
+          maxSecondsWithoutReauthentication: 3600
+          tlsTrustedCertificates:
+            - certificate: ca.crt
+              secretName: pidp-kafka-keycloak-ca
+          type: oauth
+          clientSecret:
+            key: secret
+            secretName: pidp-kafka-broker-secret
+          tokenEndpointUri: >-
+            {{ .Values.keycloak.auth }}/protocol/openid-connect/token
+        name: scram
+=======
+      - name: internal
+>>>>>>> Stashed changes
+        port: 9095
+        authentication:
+          type: oauth
+          enableOauthBearer: true
+          clientId: kafka-broker
+          clientSecret:
+            key: secret
+            secretName: {{ include "pidp-kafka.fullname" . }}-broker-secret
+          validIssuerUri: {{ .Values.keycloak.auth }}
+          jwksEndpointUri: {{ .Values.keycloak.auth }}/protocol/openid-connect/certs
+          userNameClaim: preferred_username
+          tokenEndpointUri: {{ .Values.keycloak.auth }}/protocol/openid-connect/token
+          maxSecondsWithoutReauthentication: 3600
+          tlsTrustedCertificates:
+            - secretName: {{ include "pidp-kafka.fullname" . }}-keycloak-ca
+              certificate: ca.crt
+        tls: true
+        type: internal
+      - name: external
+        port: 9094
+        tls: true
+        type: route
+        authentication:
+          type: oauth
+          enableOauthBearer: true
+<<<<<<< Updated upstream
+          clientId: pidp-kafka-authn
+=======
+          clientId: kafka-broker
+>>>>>>> Stashed changes
+          clientSecret:
+            key: secret
+            secretName: {{ include "pidp-kafka.fullname" . }}-broker-secret
+          validIssuerUri: {{ .Values.keycloak.auth }}
+          jwksEndpointUri: {{ .Values.keycloak.auth }}/protocol/openid-connect/certs
+          userNameClaim: preferred_username
+          tokenEndpointUri: {{ .Values.keycloak.auth }}/protocol/openid-connect/token
+          maxSecondsWithoutReauthentication: 3600
+          tlsTrustedCertificates:
+            - secretName: {{ include "pidp-kafka.fullname" . }}-keycloak-ca
+              certificate: ca.crt
+        configuration:
+          bootstrap:
+            host: {{ include "pidp-kafka.fullname" . }}-{{ .Values.global.licenseplate }}-{{ .Values.global.environment }}.apps.silver.devops.gov.bc.ca
+          createBootstrapService: true
+    storage:
+      type: persistent-claim
+      size: {{ .Values.kafka.pvcSize }}
+      deleteClaim: false
+      class: netapp-file-standard
+    version: 3.2.3
+<<<<<<< Updated upstream
+    replicas: {{ default 3 .Values.kafka.replicas }}
+=======
+    replicas: 3
+    readinessProbe:
+      initialDelaySeconds: 120
+      timeoutSeconds: 15
+    livenessProbe:
+      initialDelaySeconds: 240
+      timeoutSeconds: 15
+>>>>>>> Stashed changes
+    config:
+      offsets.topic.replication.factor: {{ default 3 .Values.kafka.topics.replicas }}
+      transaction.state.log.replication.factor: {{ default 3 .Values.kafka.topics.replicas }}
+      transaction.state.log.min.isr: 2
+      default.replication.factor: {{ default 3 .Values.kafka.topics.replicas }}
+      min.insync.replicas: 2
+      inter.broker.protocol.version: '3.2'
+  kafkaExporter: {}
+  zookeeper:
+    livenessProbe:
+      initialDelaySeconds: 90
+    storage:
+      type: persistent-claim
+      class: netapp-file-standard
+      deleteClaim: false
+      size: {{ .Values.zookeeper.pvcSize }}
+    replicas: 3
+    {{- if .Values.kafka.metrics.enabled }}
+    metricsConfig:
+      type: jmxPrometheusExporter
+      valueFrom:
+        configMapKeyRef:
+          name: {{ include "pidp-kafka.fullname" . }}-metrics
+          key: zookeeper-metrics-config.yml
+    {{- end }}
+

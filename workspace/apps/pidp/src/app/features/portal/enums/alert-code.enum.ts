@@ -1,0 +1,6 @@
+export enum AlertCode {
+  TRANSIENT_ERROR = 1,
+  PLR_BAD_STANDING,
+  JUM_VALIDATION_ERROR,
+  PENDING_REQUEST,
+}
