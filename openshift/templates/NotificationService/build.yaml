@@ -1,0 +1,145 @@
+# This is a build template for .NET 6
+# It will build a new image from the specified source control repo
+# that will run your application.
+kind: Template
+apiVersion: v1
+metadata:
+  name: notification-api-build
+  annotations:
+    openshift.io/display-name: .NET 6 Build Template
+    description: Build template for a .NET 6 application.
+    tags: notification-api
+parameters:
+  - name: APP_NAME
+    displayName: App Name
+    description: The name of the application (grouped).
+    required: true
+    value: notification
+  - name: ROLE_NAME
+    displayName: Role Name
+    description: The name of the application component role (e.g ui, web, api, database).
+    required: true
+    value: api
+  - name: PROJECT_NAMESPACE
+    displayName: "OpenShift Project Namespace"
+    description: "The namespace of the OpenShift project containing the application."
+    required: true
+    value: "e27db1"
+  - name: ENV_NAME
+    displayName: "Environment name"
+    description: "The name for this environment [dev, test, prod, tools]"
+    required: true
+    value: "tools"
+  - name: INSTANCE
+    displayName: "Unique Identifier"
+    description: "A unique identifier to allow for multiple instances (i.e. '-01')."
+    required: false
+
+  - name: BUILDIMAGE_NAME
+    displayName: "Source Image Name"
+    description: "The image to use as the Builder Image."
+    value: "dotnet-60"
+  - name: BUILDIMAGE_TAG
+    displayName: "Source Image Tag"
+    description: "The s2i image tag which is used to build the code."
+    value: "6.0"
+
+  - name: GIT_URL
+    displayName: Git Repository URL
+    description: The URL of the repository with your application source code.
+    required: true
+    value: https://github.com/sookeke/JUM.git
+  - name: GIT_REF
+    displayName: Git Reference
+    description:
+      Set this to a branch name, tag or other ref of your repository if you
+      are not using the default branch.
+    value: master
+  - name: SOURCE_CONTEXT_DIR
+    displayName: Context Directory
+    description: Set this to use a subdirectory of the source code repository
+    value: backend/jum-api/NotificationService
+
+  - name: OUTPUT_IMAGE_TAG
+    displayName: Output Image Tag
+    description: "The tag given to the built image based on environment. Expected values are (latest-dev, latest-test or latest-uat)"
+    required: true
+    value: latest-dev
+
+  - name: CPU_LIMIT
+    displayName: Resources CPU Limit
+    description: The resources CPU limit (in cores) for this build.
+    required: true
+    value: "2"
+  - name: MEMORY_LIMIT
+    displayName: Memory Limit
+    description: Maximum amount of memory the container can use.
+    required: true
+    value: 6Gi
+  - name: CPU_REQUEST
+    displayName: Resources CPU Limit
+    description: The resources CPU limit (in cores) for this build.
+    required: true
+    value: "1"
+  - name: MEMORY_REQUEST
+    displayName: Memory Limit
+    description: Maximum amount of memory the container can use.
+    required: true
+    value: 4Gi
+objects:
+  # Image stream for the built image.
+  - kind: ImageStream
+    apiVersion: v1
+    metadata:
+      name: ${APP_NAME}-${ROLE_NAME}${INSTANCE}
+      namespace: ${PROJECT_NAMESPACE}-${ENV_NAME}
+      annotations:
+        description: Keeps track of changes in the application image
+      labels:
+        name: ${APP_NAME}-${ROLE_NAME}${INSTANCE}
+        app: ${APP_NAME}
+        role: ${ROLE_NAME}
+        env: ${ENV_NAME}
+
+  # The build config that will be created and be named for the branch you created it for.
+  - kind: BuildConfig
+    apiVersion: v1
+    metadata:
+      name: ${APP_NAME}-${ROLE_NAME}${INSTANCE}.${GIT_REF}
+      namespace: ${PROJECT_NAMESPACE}-${ENV_NAME}
+      annotations:
+        description: Defines how to build the application
+      labels:
+        name: ${APP_NAME}-${ROLE_NAME}${INSTANCE}.${GIT_REF}
+        app: ${APP_NAME}
+        role: ${ROLE_NAME}
+        env: ${ENV_NAME}
+        branch: ${GIT_REF}
+    spec:
+      triggers:
+        - type: ImageChange
+        - type: ConfigChange
+      runPolicy: Serial
+      source:
+        type: Git
+        git:
+          uri: ${GIT_URL}
+          ref: ${GIT_REF}
+        contextDir: ${SOURCE_CONTEXT_DIR}
+      strategy:
+        type: Source
+        sourceStrategy:
+          from:
+            kind: ImageStreamTag
+            name: ${BUILDIMAGE_NAME}:${BUILDIMAGE_TAG}
+      output:
+        to:
+          kind: ImageStreamTag
+          name: ${APP_NAME}-${ROLE_NAME}${INSTANCE}:${OUTPUT_IMAGE_TAG}
+      resources:
+        limits:
+          cpu: ${CPU_LIMIT}
+          memory: ${MEMORY_LIMIT}
+        requests:
+          cpu: ${CPU_REQUEST}
+          memory: ${MEMORY_REQUEST}

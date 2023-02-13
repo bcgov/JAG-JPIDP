@@ -1,0 +1,37 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  generateName: jum-cicd-pipeline-run-
+spec:
+  pipelineRef:
+    name: jum-cicd-pipeline
+  serviceAccountName: pipeline
+  params:
+    - name: git-url
+      value: https://github.com/sookeke/JUM.git
+    - name: git-revision
+      value: master
+    - name: git-short-sha
+      value: 2fa8afe
+    - name: image-tag
+      value: develop
+    - name: image-registry
+      value: 'image-registry.openshift-image-registry.svc:5000/e27db1-tools'
+    - name: release_name
+      value: jum-dev
+    - name: release_namespace
+      value: e27db1-dev
+    - name: values_file
+      value: charts/jum/values.yaml
+  workspaces:
+  - name: source
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+          - ReadWriteMany
+        resources:
+          requests:
+            storage: 1Gi
+  - name: dockerconfig
+    secret:
+      secretName: pipeline-dockercfg-88jls

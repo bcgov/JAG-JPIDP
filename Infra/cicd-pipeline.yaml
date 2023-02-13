@@ -1,0 +1,114 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: jum-cicd-pipeline
+  namespace: e27db1-tools
+spec:
+  params:
+    - name: git-url
+    - name: git-revision
+      default: master
+    - name: git-short-sha
+    - name: image-registry
+      default: image-registry.openshift-image-registry.svc:5000/e27db1-tools
+    - name: image-tag
+      default: develop
+    - name: release_name
+      default: jum-dev
+    - name: release_namespace
+      default: e27db1-dev
+    - name: release_version
+      default: "v0.1.0"
+    - name: values_file
+      default: charts/jum/values.yaml
+  workspaces:
+    - name: source
+  tasks:
+    - name: git-clone
+      workspaces:
+        - name: output
+          workspace: source
+      params:
+        - name: url
+          value: $(params.git-url)
+        - name: submodules
+          value: 'true'
+        - name: depth
+          value: '1'
+        - name: sslVerify
+          value: 'true'
+        - name: subdirectory
+          value: jps-jum
+        - name: deleteExisting
+          value: 'true'
+        - name: verbose
+          value: 'true'
+        - name: revision
+          value: $(params.git-revision)
+        - name: gitInitImage
+          value: >-
+            registry.redhat.io/openshift-pipelines/pipelines-git-init-rhel8@sha256:afc5d3f9efe26c7042635d43b8ffd09d67936e3d0b6b901dc08a33e20313d361
+      taskRef:
+        kind: ClusterTask
+        name: git-clone-v0-22-0
+    - name: build-jumapi
+      workspaces:
+        - name: source
+          workspace: source
+      taskRef:
+        kind: Task
+        name: kaniko
+      params:
+        - name: IMAGE
+          value: $(params.image-registry)/jum-api:$(params.image-tag)
+        - name: CONTEXT
+          value: jps-jum/backend/jum-api/jumwebapi/
+        - name: DOCKERFILE
+          value: jps-jum/backend/jum-api/jumwebapi/Dockerfile
+        - name: EXTRA_ARGS
+          value: 
+            - --skip-tls-verify
+      runAfter: 
+        - git-clone
+    - name: build-notification-service
+      workspaces:
+        - name: source
+          workspace: source
+      taskRef:
+        kind: Task
+        name: kaniko
+      params:
+        - name: IMAGE
+          value: $(params.image-registry)/notification-api:$(params.image-tag)
+        - name: CONTEXT
+          value: jps-jum/backend/jum-api/NotificationService/
+        - name: DOCKERFILE
+          value: jps-jum/backend/jum-api/NotificationService/Dockerfile
+        - name: EXTRA_ARGS
+          value: 
+            - --skip-tls-verify
+      runAfter: 
+        - git-clone
+    - name: install-upgrade
+      workspaces:
+        - name: source
+          workspace: source
+      params:
+      - name: charts_dir
+        value: ./jps-jum/charts/jum
+      - name: release_version
+        value: $(params.release_version)
+      - name: release_name
+        value: $(params.release_name)
+      - name: release_namespace
+        value: $(params.release_namespace)
+      - name: overwrite_values
+        value: global.image.tag=$(params.image-tag),global.commit_sha=$(params.git-short-sha)
+      - name: values_file
+        value: jps-jum/$(params.values_file)
+      taskRef:
+        name: helm-upgrade-from-source
+      runAfter: 
+        - git-clone
+        - build-notification-service
+        - build-jumapi

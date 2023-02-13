@@ -7,12 +7,19 @@ global:
   image:
     tag: develop-clean
 
+notification:
+  image:
+    repository: jum-notification
+    pullPolicy: Always
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "build-test"
 
-route:
+backend:
+  route:
   enabled: false
 
 ingress:
-  enabled: true
+    enabled: true
   annotations:
     route.openshift.io/termination: "passthrough" 
 

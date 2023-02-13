@@ -1,0 +1,43 @@
+# Default values for mssql-latest.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicas: 1
+
+image:
+  repository: image-registry.openshift-image-registry.svc:5000/e27db1-tools/jum-database
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "develop"
+
+ACCEPT_EULA:
+    value: "y"
+MSSQL_PID:
+    value: "Developer"
+MSSQL_AGENT_ENABLED:
+    value: "true"
+hostname: justin
+sa_password: {}
+containers:
+  ports:
+      containerPort: 1433
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+service:
+  type: ClusterIP
+  port: 1433
+
+pvc:
+ StorageClass: "netapp-file-standard"
+ userdbaccessMode: ReadWriteOnce
+ userdbsize: 5Gi
+ userlogaccessMode: ReadWriteOnce
+ userlogsize: 5Gi
+ tempdbaccessMode: ReadWriteOnce
+ tempsize: 2Gi
+ mssqldataaccessMode: ReadWriteOnce
+ mssqldbsize: 2Gi
+

@@ -86,9 +86,9 @@ nginx:
   replicaCount: 2
 
 frontend:
-  image: 
+  image:
   repository: frontend
-  pullPolicy: Always
+    pullPolicy: Always
   tag: "develop"
   replicaCount: 1
   settings:
