@@ -5,7 +5,7 @@ global:
   licenseplate: "e27db1"
   environment: "dev"
   image:
-    tag: develop-clean
+    tag: develop
 
 route:
   enabled: false
@@ -23,34 +23,6 @@ pidp-sso:
 postgresql:
   postgresqlDatabase: jps-pidp
   auth:
-    postgresPassword: "postgres"
-    username: postgres
-  existingSecret: postgresql
-  secretKeys:
-    adminPasswordKey: admin-password
-    userPasswordKey: jps-password
-  primary:
-    initdb:
-      scriptsConfigMap: pipd-postgres-init
-
-
-route:
-  enabled: false
-
-pidp-sso:
-  keycloak:
-    realm: https://pidp-sso-e27db1-dev.apps.gold.devops.gov.bc.ca/auth/realms/DEMSDEV
-  auth:
-  existingSecret: pidp-sso-postgresql
-  secretKeys:
-    postgresPassword: password
-
-
-
-postgresql:
-  postgresqlDatabase: jps-pidp
-  auth:
-    postgresPassword: "postgres"
     username: postgres
   existingSecret: postgresql
   secretKeys:
@@ -87,7 +59,7 @@ nginx:
 
 frontend:
   image:
-  repository: frontend
+    repository: frontend
     pullPolicy: Always
   tag: "develop"
   replicaCount: 1
