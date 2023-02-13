@@ -1,0 +1,94 @@
+# PR Helm values
+global:
+  vanityURL: "test.jpidp.justice.gov.bc.ca"
+  commit_sha: ""
+  licenseplate: "e27db1"
+  environment: "test"
+  image:
+    tag: test
+
+
+route:
+  enabled: false
+
+ingress:
+  enabled: true
+  annotations:
+    route.openshift.io/termination: "passthrough" 
+
+  tls: {}
+    #- hosts:
+      #- "pidp-e27db1-test.apps.gold.devops.gov.bc.ca"
+      #secretName: tls-secret
+#postgresql:
+#  createSecret: true
+#  database: pidpdb
+#  auth:
+#    postgresPassword: "postgres"
+#    username: postgres
+#  secretKeys:
+#    adminPasswordKey: admin-password
+#    userPasswordKey: jps-password
+#  primary:
+#    database: pidpdb
+#    initdb:
+#      scriptsConfigMap: pipd-postgres-init
+
+postgresql:
+  createSecret: false
+  database: pidpdb
+  auth:
+    postgresPassword: "postgres"
+    username: postgres
+    database: pidpdb
+  secretKeys:
+    adminPasswordKey: admin-password
+    userPasswordKey: jps-password
+  primary:
+    database: pidpdb
+    auth:
+      postgresPassword: "postgres"
+      username: postgres
+#    initdb:
+#      scriptsConfigMap: pipd-postgres-init
+
+
+
+keycloak:
+  realmName: DEMSTEST
+  auth: https://test.common-sso.justice.gov.bc.ca/auth/realms/DEMSTEST
+  base: https://test.common-sso.justice.gov.bc.ca/auth
+
+database:
+  autoCreate: false
+  # databaseHost: dev-patroni
+  # existingSecret: dev-patroni-secret
+
+redis:
+  enabled: false
+  auth:
+    existingSecret: redis
+    existingSecretPasswordKey: database-password
+
+nginx:
+  replicaCount: 2
+
+    
+frontend:
+  replicaCount: 1
+  settings:
+    environmentName: test
+    keycloak:
+      url: https://test.common-sso.justice.gov.bc.ca/auth
+      realm: "DEMSTEST"
+
+webapi:
+  jumClientURL: https://jum-api-e27db1-test.apps.gold.devops.gov.bc.ca/api
+  replicaCount: 1
+  aspnetcore:
+    environment: Staging
+
+
+plr-intake:
+  replicaCount: 1
+

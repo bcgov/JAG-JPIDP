@@ -1,0 +1,166 @@
+@use '@angular/material' as mat;
+@use 'material/material-variables' as var;
+
+@use 'palette' as palette;
+@import 'bootstrap/bootstrap-imports';
+
+.container {
+  padding-top: 3rem;
+  padding-bottom: 1rem;
+  max-width: 840px;
+
+  @include media-breakpoint-up(xl) {
+    // Constrain to center content within the container
+    // on larger viewports
+    max-width: 1200px;
+  }
+}
+
+//
+.example-form {
+  min-width: 150px;
+  max-width: 500px;
+  width: 100%;
+  background-color: white;
+}
+// BCSC Login
+//
+
+.header,
+.scroll,
+.actions,
+.systems {
+  margin-bottom: 2.5rem;
+
+  button {
+    font-size: 0.95rem;
+    padding: 0.75rem 1.2rem;
+
+    @include media-breakpoint-up(sm) {
+      font-size: 1rem;
+    }
+  }
+}
+
+.header {
+  .heading {
+    display: flex;
+    align-items: flex-end;
+    margin-bottom: 1.5rem;
+
+    img {
+      display: none;
+    }
+
+    @media (min-width: 645px) {
+      img {
+        display: block;
+        width: 135px;
+        height: auto;
+      }
+
+      h1 {
+        // Alignment of text with image
+        margin-top: 0.5rem;
+        margin-left: 1.5rem;
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  p {
+    @include media-breakpoint-up(sm) {
+      width: 425px;
+    }
+    @media (min-width: 645px) {
+      width: 500px;
+    }
+    @include media-breakpoint-up(lg) {
+      width: 600px;
+    }
+  }
+}
+
+.scroll {
+  button {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+.actions {
+  div:first-child {
+    margin-left: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  div:last-child {
+    background-color: palette.theme-palette(blue);
+    border-radius: 5px;
+    padding: 3.5rem 1.5rem;
+
+    @include media-breakpoint-up(xl) {
+      padding-left: 3rem;
+      padding-right: 3rem;
+    }
+  }
+
+  button {
+    background-color: white;
+    width: 100%;
+  }
+
+  button:nth-of-type(2) {
+    margin-top: 1.5rem;
+    margin-bottom: 3rem;
+  }
+
+  small {
+    &,
+    a {
+      color: white;
+    }
+    a:hover {
+      text-decoration: none;
+    }
+
+    margin-top: 0.2rem;
+    margin-bottom: 0.5rem;
+    padding-left: 1rem;
+    display: block;
+  }
+
+  @include media-breakpoint-up(xl) {
+    max-width: 550px;
+    padding-left: 3rem;
+  }
+}
+
+.systems {
+  @include media-breakpoint-up(xl) {
+    width: 600px;
+  }
+}
+
+@include media-breakpoint-down(xl) {
+  .hide-on-small-viewports {
+    display: none;
+  }
+}
+
+@include media-breakpoint-up(xl) {
+  .hide-on-large-viewports {
+    display: none;
+  }
+}
+
+.admin {
+  & > div {
+    text-align: center;
+  }
+
+  img {
+    margin-bottom: 3rem;
+    width: 275px;
+    height: auto;
+  }
+}

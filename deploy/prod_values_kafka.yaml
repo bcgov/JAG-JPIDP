@@ -1,0 +1,43 @@
+global:
+  licenseplate: '5b7aa5'
+  environment: 'prod'
+
+apicurio:
+  enabled: true
+
+zookeeper:
+  pvcSize: 2Gi
+
+kafka:
+  pvcSize: 5Gi
+  topics:
+    replicas: 5
+  replicas: 5
+  authorization:
+    enabled: true
+    clientId: pidp-kafka-authz
+  metrics:
+    enabled: true
+  kafkaui:
+    enabled: false
+  createtopics: true
+
+akhq:
+  networkPolicy:
+    enabled: true
+
+
+keycloak:
+  realmName: Kafka
+  auth: https://common-sso.justice.gov.bc.ca/auth/realms/Kafka
+  base: https://common-sso.justice.gov.bc.ca/auth
+
+postgresql:
+  createSecret: false
+  auth:
+    username: "kafka"
+    database: "kafka"
+    existingSecret: "pidp-kafka-postgresql"
+    secretKeys:
+      adminPasswordKey: "postgres-password"
+      userPasswordKey: "kafka-password"

@@ -1,0 +1,53 @@
+{{- if hasPrefix "pr-" .Release.Name }}
+{{ $release := .Release.Name }}
+{{ $ocEnv := regexFind "([^-]*$)" .Release.Namespace }}
+{{ $isPR := hasPrefix "pr-" .Release.Name }}
+## Derived release name
+{{ $drn := ternary $release $ocEnv $isPR }}
+#
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "jum.fullname" . }}-dropdb
+  annotations:
+    helm.sh/hook: post-delete
+    helm.sh/hook-delete-policy: hook-succeeded
+  labels:
+    {{- include "jum.labels" . | nindent 4 }}
+spec:
+  template:
+    spec:
+      containers:
+      - name: dropdb
+        image: {{ .Values.global.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
+        imagePullPolicy: Always
+        command:
+          - /bin/bash
+          - -c
+          - >
+            dropdb $(PGDATABASE)
+        env:
+          - name: PGHOST
+            value:postgresql
+          - name: PGUSER
+            valueFrom:
+              secretKeyRef:
+                name: postgresql
+                key: database-user
+          - name: APPUSER
+            valueFrom:
+              secretKeyRef:
+                name: postgresql
+                key: database-user
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgresql
+                key: database-password
+          - name: PGDATABASE
+              secretKeyRef:
+                name: postgresql
+                key: database-name
+      restartPolicy: Never
+  backoffLimit: 3
+{{- end }}
