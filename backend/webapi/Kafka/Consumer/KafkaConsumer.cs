@@ -94,10 +94,12 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
         try
         {
 
+            var settingsFile = PidpConfiguration.IsDevelopment() ? "appsettings.Development.json" : "appsettings.json";
+
 
             var clusterConfig = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json").Build();
+                .AddJsonFile(settingsFile).Build();
 
             var tokenEndpoint = Environment.GetEnvironmentVariable("KafkaCluster__SaslOauthbearerTokenEndpointUrl");
             var clientId = Environment.GetEnvironmentVariable("KafkaCluster__SaslOauthbearerConsumerClientId");
@@ -106,7 +108,7 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
             clientSecret ??= clusterConfig.GetValue<string>("KafkaCluster:SaslOauthbearerConsumerClientSecret");
             clientId ??= clusterConfig.GetValue<string>("KafkaCluster:SaslOauthbearerConsumerClientId");
             tokenEndpoint ??= clusterConfig.GetValue<string>("KafkaCluster:SaslOauthbearerTokenEndpointUrl");
-            Log.Logger.Information("Pidp Kafka Consumer getting token {0} {1} {2}", tokenEndpoint, clientId, clientSecret);
+            Log.Logger.Debug("Pidp Kafka Consumer getting token {0} {1}", tokenEndpoint, clientId);
             var accessTokenClient = new HttpClient();
 
 
@@ -122,7 +124,7 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
             var tokenDate = DateTimeOffset.FromUnixTimeSeconds(tokenTicks);
             var timeSpan = new DateTime() - tokenDate;
             var ms = tokenDate.ToUnixTimeMilliseconds();
-            Log.Logger.Information("Consumer got token {0}", ms);
+            Log.Logger.Debug("Consumer got token {0}", ms);
 
             client.OAuthBearerSetToken(accessToken.AccessToken, ms, subject);
         }

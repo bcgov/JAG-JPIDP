@@ -48,3 +48,6 @@ logs/
 
 # Environment Variables
 .env
+
+
+appsettings.Development.json

@@ -367,3 +367,6 @@ FodyWeavers.xsd
 /backend/jum-api/jumwebapi/.nuget
 /.idea
 /.vscode
+
+# Dev settings
+appsettings.Development.json

@@ -1,6 +1,7 @@
-﻿using System.Globalization;
+using System.Globalization;
 using Confluent.Kafka;
 using IdentityModel.Client;
+using jumwebapi.Infrastructure.Auth;
 using jumwebapi.Kafka.Producer.Interfaces;
 using Serilog;
 
@@ -30,9 +31,13 @@ public class KafkaProducer<TKey, TValue> : IDisposable, IKafkaProducer<TKey, TVa
     {
         try
         {
+
+            var settingsFile = jumwebapiConfiguration.IsDevelopment() ? "appsettings.Development.json" : "appsettings.json";
+
+
             var clusterConfig = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json").Build();
+                .AddJsonFile(settingsFile).Build();
 
             var tokenEndpoint = Environment.GetEnvironmentVariable("KafkaCluster__SaslOauthbearerTokenEndpointUrl");
             var clientId = Environment.GetEnvironmentVariable("KafkaCluster__SaslOauthbearerProducerClientId");

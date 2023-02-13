@@ -36,10 +36,12 @@ public class KafkaProducer<TKey, TValue> : KafkaOauthTokenRefreshHandler, IDispo
         try
         {
 
+            var settingsFile = EdtServiceConfiguration.IsDevelopment() ? "appsettings.Development.json" : "appsettings.json";
+
 
             var clusterConfig = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json").Build();
+                .AddJsonFile(settingsFile).Build();
 
             var tokenEndpoint = Environment.GetEnvironmentVariable("KafkaCluster__SaslOauthbearerTokenEndpointUrl");
             var clientId = Environment.GetEnvironmentVariable("KafkaCluster__SaslOauthbearerProducerClientId");
@@ -49,10 +51,10 @@ public class KafkaProducer<TKey, TValue> : KafkaOauthTokenRefreshHandler, IDispo
             clientId ??= clusterConfig.GetValue<string>("KafkaCluster:SaslOauthbearerProducerClientId");
             tokenEndpoint ??= clusterConfig.GetValue<string>("KafkaCluster:SaslOauthbearerTokenEndpointUrl");
 
-            Log.Logger.Information("Pidp Kafka Producer getting token {0} {1} {2}", tokenEndpoint, clientId, clientSecret);
+            Log.Logger.Debug("Pidp Kafka Producer getting token {0} {1}", tokenEndpoint, clientId);
             var accessTokenClient = new HttpClient();
 
-            Log.Logger.Information("Producer getting token {0}", tokenEndpoint);
+            Log.Logger.Debug("Producer getting token {0}", tokenEndpoint);
 
 
             var accessToken = await accessTokenClient.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest

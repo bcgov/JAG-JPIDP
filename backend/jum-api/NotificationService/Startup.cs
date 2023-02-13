@@ -1,4 +1,4 @@
-﻿using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Models;
 using NodaTime;
 using Serilog;
 using System.Reflection;
@@ -97,10 +97,8 @@ public class Startup
         this.Configuration.Bind(config);
         services.AddSingleton(config);
 
-        Log.Logger.Information("### App Version:{0} ###", Assembly.GetExecutingAssembly().GetName().Version);
-        Log.Logger.Information("### X Notification Service Configuration:{0} ###", JsonSerializer.Serialize(config));
-
-
+        Log.Logger.Information("### Notification Service Version:{0} ###", Assembly.GetExecutingAssembly().GetName().Version);
+        Log.Logger.Debug("### Notification Service Configuration:{0} ###", JsonSerializer.Serialize(config));
 
         return config;
     }
