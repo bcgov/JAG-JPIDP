@@ -1,9 +1,6 @@
-# Justin-User-Manager
+# JPIDP - Provider Identity Portal
 
-This service provides access to JUSTIN User information.
+This set of services is used to identify users with an IDP (Internal or external) and allow them to request access to various services.
 
-## Pipeline
 
-This is triggered to build and deploy using the jum-cicd-pipeline.
-A push to the develop, test  branches will trigger a deployment. A PR merge into main will (later) trigger a deployment to production - should be setup to use blue-green strategy.
 
