@@ -5,14 +5,39 @@ global:
   licenseplate: "e27db1"
   environment: "dev"
   image:
-    tag: develop
+    tag: telemetry
 
 route:
   enabled: false
 
 pidp-sso:
   keycloak:
-    realm: https://pidp-sso-e27db1-dev.apps.gold.devops.gov.bc.ca/auth/realms/DEMSDEV
+    realm: https://dev.common-sso.justice.gov.bc.ca/auth/realms/DEMSDEV
+  auth:
+  existingSecret: pidp-sso-postgresql
+  secretKeys:
+    postgresPassword: password
+
+postgresql:
+  postgresqlDatabase: jps-pidp
+  auth:
+    postgresPassword: "postgres"
+    username: postgres
+  existingSecret: postgresql
+  secretKeys:
+    adminPasswordKey: admin-password
+    userPasswordKey: jps-password
+  primary:
+    initdb:
+      scriptsConfigMap: pipd-postgres-init
+
+
+route:
+  enabled: false
+
+pidp-sso:
+  keycloak:
+    realm: https://dev.common-sso.justice.gov.bc.ca/auth/realms/DEMSDEV
   auth:
   existingSecret: pidp-sso-postgresql
   secretKeys:
@@ -40,13 +65,13 @@ database:
   # trigger
 
 keycloak:
-  realm: DEMSPOC
-  auth: https://dev.common-sso.justice.gov.bc.ca/auth/realms/DEMSPOC
+  realm: DEMSDEV
+  auth: https://dev.common-sso.justice.gov.bc.ca/auth/realms/DEMSDEV
   base: https://dev.common-sso.justice.gov.bc.ca/auth
 
 edt-service:
   image:
-    tag: develop-clean
+    tag: main
 
 redis:
   enabled: false
@@ -67,12 +92,14 @@ frontend:
     environmentName: dev
     keycloak:
       url: https://dev.common-sso.justice.gov.bc.ca/auth
-      realm: DEMSPOC
+      realm: DEMSDEV
 
 
 webapi:
   jumClientURL: https://jum-api-e27db1-dev.apps.gold.devops.gov.bc.ca/api
   replicaCount: 1
+  image:
+    tag: develop
   aspnetcore:
     environment: Staging
 

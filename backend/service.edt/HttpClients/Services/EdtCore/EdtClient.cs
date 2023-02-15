@@ -1,9 +1,11 @@
 namespace edt.service.HttpClients.Services.EdtCore;
 
+using System.Diagnostics.Metrics;
 using System.Threading.Tasks;
 using AutoMapper;
 using DomainResults.Common;
 using edt.service.Exceptions;
+using edt.service.Infrastructure.Telemetry;
 using edt.service.Kafka.Model;
 using edt.service.ServiceEvents.UserAccountCreation.Models;
 using Serilog;
@@ -11,29 +13,37 @@ using Serilog;
 public class EdtClient : BaseClient, IEdtClient
 {
     private readonly IMapper mapper;
+    private readonly OtelMetrics meters;
+
+
     public EdtClient(
-        HttpClient httpClient,
+        HttpClient httpClient, OtelMetrics meters,
         IMapper mapper,
         ILogger<EdtClient> logger)
-        : base(httpClient, logger) => this.mapper = mapper;
+        : base(httpClient, logger)
+    {
+        this.mapper = mapper;
+        this.meters = meters;
+    }
 
     public async Task<UserModificationEvent> CreateUser(EdtUserProvisioningModel accessRequest)
     {
+        this.meters.AddUser();
         var edtUserDto = this.mapper.Map<EdtUserProvisioningModel, EdtUserDto>(accessRequest);
         var result = await this.PostAsync($"api/v1/users", edtUserDto);
         var userModificationResponse = new UserModificationEvent
         {
-            PartId = edtUserDto.Key,
-            Event = UserModificationEvent.UserEvent.Create,
-            EventTime = new DateTime(),
-            AccessRequestId = accessRequest.AccessRequestId,
-            Successful = true
+            partId = edtUserDto.Key,
+            eventType = UserModificationEvent.UserEvent.Create,
+            eventTime = DateTime.Now,
+            accessRequestId = accessRequest.AccessRequestId,
+            successful = true
         };
 
         if (!result.IsSuccess)
         {
             Log.Logger.Error("Failed to create EDT user {0}", string.Join(",", result.Errors));
-            userModificationResponse.Successful = false;
+            userModificationResponse.successful = false;
         }
 
         //add user to group
@@ -49,7 +59,7 @@ public class EdtClient : BaseClient, IEdtClient
         }
         else
         {
-            userModificationResponse.Successful = false;
+            userModificationResponse.successful = false;
         }
 
         return userModificationResponse;
@@ -117,16 +127,16 @@ public class EdtClient : BaseClient, IEdtClient
         var result = await this.PutAsync($"api/v1/users", edtUserDto);
         var userModificationResponse = new UserModificationEvent
         {
-            PartId = edtUserDto.Key,
-            Event = UserModificationEvent.UserEvent.Modify,
-            EventTime = new DateTime(),
-            AccessRequestId = accessRequest.AccessRequestId,
-            Successful = true
+            partId = edtUserDto.Key,
+            eventType = UserModificationEvent.UserEvent.Modify,
+            eventTime = DateTime.Now,
+            accessRequestId = accessRequest.AccessRequestId,
+            successful = true
     };
 
         if (!result.IsSuccess)
         {
-            userModificationResponse.Successful = false;
+            userModificationResponse.successful = false;
         }
         //add user to group
         var user = await this.GetUser(accessRequest.Key!);
@@ -135,14 +145,14 @@ public class EdtClient : BaseClient, IEdtClient
             var addGroupToUser = await this.UpdateUserAssignedGroups(user.Id!, accessRequest.AssignedRegions!, userModificationResponse);
             if (!addGroupToUser)
             {
-                userModificationResponse.Successful = false;
+                userModificationResponse.successful = false;
             }
         }
         else
         {
             var msg = $"Failed to add user {accessRequest.Id} to group {accessRequest.AssignedRegions}";
             Log.Logger.Error(msg);
-            userModificationResponse.Successful = false;
+            userModificationResponse.successful = false;
         }
 
 
@@ -152,6 +162,8 @@ public class EdtClient : BaseClient, IEdtClient
 
     public async Task<EdtUserDto?> GetUser(string userKey)
     {
+
+        this.meters.GetUser();
         Log.Logger.Information("Checking if user key {0} already present", userKey);
         var result = await this.GetAsync<EdtUserDto?>($"api/v1/users/key:{userKey}");
 

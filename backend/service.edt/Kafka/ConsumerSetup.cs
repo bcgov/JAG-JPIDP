@@ -9,6 +9,7 @@ using edt.service.ServiceEvents.UserAccountCreation;
 using edt.service.ServiceEvents.UserAccountCreation.ConsumerRetry;
 using edt.service.ServiceEvents.UserAccountCreation.Handler;
 using EdtService.Extensions;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 public static class ConsumerSetup
 {
@@ -32,6 +33,7 @@ public static class ConsumerSetup
             SaslOauthbearerScope = config.KafkaCluster.Scope,
             SslEndpointIdentificationAlgorithm = SslEndpointIdentificationAlgorithm.Https,
             SslCaLocation = config.KafkaCluster.SslCaLocation,
+            ConnectionsMaxIdleMs = 600000,
             SslCertificateLocation = config.KafkaCluster.SslCertificateLocation,
             SslKeyLocation = config.KafkaCluster.SslKeyLocation
         };
@@ -45,7 +47,7 @@ public static class ConsumerSetup
             SaslOauthbearerMethod = SaslOauthbearerMethod.Oidc,
             SaslOauthbearerScope = config.KafkaCluster.Scope,
             ClientId = Dns.GetHostName(),
-            //RequestTimeoutMs = 60000,
+            RequestTimeoutMs = 60000,
             SslEndpointIdentificationAlgorithm = SslEndpointIdentificationAlgorithm.Https,
             SslCaLocation = config.KafkaCluster.SslCaLocation,
             SaslOauthbearerClientId = config.KafkaCluster.SaslOauthbearerProducerClientId,
@@ -76,9 +78,6 @@ public static class ConsumerSetup
             ClientId = Dns.GetHostName(),
             EnableAutoOffsetStore = false,
             AutoCommitIntervalMs = 4000,
-            MaxPollIntervalMs= retrySeconds * 1000,
-            ConnectionsMaxIdleMs = retrySeconds * 1000,
-            //SessionTimeoutMs = retrySeconds * 1000,
             BootstrapServers = config.KafkaCluster.BootstrapServers,
             SaslOauthbearerClientId = config.KafkaCluster.SaslOauthbearerConsumerClientId,
             SaslOauthbearerClientSecret = config.KafkaCluster.SaslOauthbearerConsumerClientSecret,
@@ -90,8 +89,8 @@ public static class ConsumerSetup
 
         services.AddSingleton(typeof(IKafkaProducer<,>), typeof(KafkaProducer<,>));
 
-        services.AddScoped<IKafkaHandler<string, EdtUserProvisioningModel>, UserProvisioningHandler>();
 
+        services.AddScoped<IKafkaHandler<string, EdtUserProvisioningModel>, UserProvisioningHandler>();
         services.AddSingleton(typeof(IKafkaConsumer<,>), typeof(KafkaConsumer<,>));
 
         services.AddHostedService<EdtServiceConsumer>();
