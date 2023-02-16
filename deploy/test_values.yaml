@@ -5,7 +5,7 @@ global:
   licenseplate: "e27db1"
   environment: "test"
   image:
-    tag: develop-clean
+    tag: telemetry
 
 notification:
   image:
@@ -61,7 +61,7 @@ postgresql:
 
 edt-service:
   image:
-    tag: develop-clean
+    tag: telemetry
 
 
 

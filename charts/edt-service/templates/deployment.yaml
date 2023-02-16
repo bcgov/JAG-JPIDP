@@ -22,6 +22,8 @@ spec:
   template:
     metadata:
       annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: "8080"
         {{- if .Values.global.commit_sha }}
         commit_sha: {{ .Values.global.commit_sha }}
         {{- end}}
@@ -62,9 +64,15 @@ spec:
             - name: KafkaCluster__SslKeyLocation
               value: /opt/kafka/certificates/client.key
             - name: KafkaCluster__SaslOauthbearerProducerClientId
-              value: "kafka-producer"
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-edt
+                  key: KafkaCluster__ProducerClientId
             - name: KafkaCluster__SaslOauthbearerConsumerClientId
-              value: "kafka-consumer"
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-edt
+                  key: KafkaCluster__ConsumerClientId
             - name: KafkaCluster__ConsumerGroupId
               value: {{ include "edt-service.fullname" . }}-consumer-group
             - name: DB_PASSWORD
@@ -158,7 +166,17 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: edt-client
-                  key: Apikey 
+                  key: Apikey
+            - name: Telemetry__CollectorUrl
+              valueFrom: 
+                secretKeyRef:
+                  name: telemetry-pidp
+                  key: Telemetry__CollectorUrl
+            - name: Telemetry__AzureConnectionString
+              valueFrom: 
+                secretKeyRef:
+                  name: telemetry-pidp
+                  key: Telemetry__AzureConnectionString
           volumeMounts:
           - name: truststore
             mountPath: "/opt/kafka/certificates"

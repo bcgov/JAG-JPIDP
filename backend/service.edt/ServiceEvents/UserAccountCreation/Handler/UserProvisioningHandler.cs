@@ -1,10 +1,13 @@
 namespace edt.service.ServiceEvents.UserAccountCreation.Handler;
 
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using edt.service.Data;
 using edt.service.Exceptions;
 using edt.service.HttpClients;
 using edt.service.HttpClients.Services.EdtCore;
+using edt.service.Infrastructure.Telemetry;
 using edt.service.Kafka;
 using edt.service.Kafka.Interfaces;
 using edt.service.Kafka.Model;
@@ -22,6 +25,8 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
     private readonly IEdtClient edtClient;
     private readonly ILogger logger;
     private readonly EdtDataStoreDbContext context;
+
+
 
     public UserProvisioningHandler(
         IKafkaProducer<string, Notification> producer,
@@ -45,6 +50,10 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
 
         Serilog.Log.Logger.Information("Db {0} {1}", this.context.Database.CanConnect(), this.context.Database.GetConnectionString());
 
+        // set acitivty info
+        Activity.Current?.AddTag("digitalevidence.party.id", accessRequestModel.AccessRequestId);
+
+
         using var trx = this.context.Database.BeginTransaction();
         try
         {
@@ -63,7 +72,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
             var result = await this.CheckUser(accessRequestModel);
 
 
-            if (result.Successful)
+            if (result.successful)
             {
                 //add to tell message has been proccessed by consumer
                 await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
@@ -85,7 +94,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
                     Tag = msgKey
                 });
 
-                if ( string.IsNullOrEmpty(this.configuration.SchemaRegistry.Url))
+                if (string.IsNullOrEmpty(this.configuration.SchemaRegistry.Url))
                 {
                     throw new EdtServiceException("Schema registry is not configured");
                 }
@@ -93,14 +102,14 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
                 var producer = new SchemaAwareProducer(ConsumerSetup.GetProducerConfig(), this.userModificationProducer, this.configuration);
                 // publish to the user creation topic for others to consume
                 bool publishResultOk;
-                if (result.Event == UserModificationEvent.UserEvent.Create)
+                if (result.eventType == UserModificationEvent.UserEvent.Create)
                 {
-                    Serilog.Log.Information("Publishing EDT user creation event {0}", msgKey);
+                    Serilog.Log.Information("Publishing EDT user creation event {0} {1}", msgKey, accessRequestModel.Key);
                     publishResultOk = await producer.ProduceAsync(this.configuration.KafkaCluster.UserCreationTopicName, key: msgKey, result);
                 }
                 else
                 {
-                    Serilog.Log.Information("Publishing EDT user modification event {0}", msgKey);
+                    Serilog.Log.Information("Publishing EDT user modification event {0} {1}", msgKey, accessRequestModel.Key);
                     publishResultOk = await producer.ProduceAsync(this.configuration.KafkaCluster.UserModificationTopicName, key: msgKey, result);
                 }
 
@@ -141,6 +150,9 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
         return Task.CompletedTask; //create specific exception handler later
     }
 
+
+    private async Task<string> CheckEdtServiceVersion() => await this.edtClient.GetVersion();
+
     private async Task<UserModificationEvent> CheckUser(EdtUserProvisioningModel value)
     {
         var user = await this.edtClient.GetUser(value.Key!);
@@ -165,12 +177,16 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
             <head>
                 <title>Digital Evidence Management System Enrollment Confirmation</title>
             </head>
-                <body> 
-                <img src='https://drive.google.com/uc?export=view&id=16JU6XoVz5FvFUXXWCN10JvN-9EEeuEmr' width='' height='50'/><br/><br/><div style='border-top: 3px solid #22BCE5'><span style = 'font-family: Arial; font-size: 10pt' ><br/> Hello {0},<br/>
-<br/> Your Digital Evidence Management System Access Request has been processed and account successfully created.<p/><p/>
-                You may now Login to the EDT Portal with your digital identity via Single Sign-On (SSO)<p/><p/>{1}<p/>
-<p/>Thanks <br/>The DEMS User Management Team.
-                </span></div></body></html> ",
+            <body> 
+                <img src='https://drive.google.com/uc?export=view&id=16JU6XoVz5FvFUXXWCN10JvN-9EEeuEmr' width='' height='50'/><br/><br/>
+                <div style='border-top: 3px solid #22BCE5'><span style = 'font-family: Arial; font-size: 10pt' >
+                <br/> Hello {0},<br/>
+                <br/>Your BCPS DEMS profile has been successfully created.<p/>
+                <br/><i>Your account is still being finalized and assigned cases will be available once this process completes.</i>
+                <br/>If you need immediate access to a case you do not have access to, please contact DEMS Support.
+                <p/>{1}<p/>
+                </span></div>
+            </body></html> ",
                 firstName, GetSupportMessage());
         return msgBody;
     }
@@ -183,9 +199,12 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
                 <title>Digital Evidence Management System Enrollment Confirmation</title>
             </head>
                 <body> 
-                <img src='https://drive.google.com/uc?export=view&id=16JU6XoVz5FvFUXXWCN10JvN-9EEeuEmr' width='' height='50'/><br/><br/><div style='border-top: 3px solid red'><span style = 'font-family: Arial; font-size: 10pt' ><br/> Hello {0},<br/>
-<br/>We were unable to complete your request to access the Digital Evidence Management System.<p/><p/>
-                {1}<br/> <p/><p/>The DEMS User Management Team.
+                <img src='https://drive.google.com/uc?export=view&id=16JU6XoVz5FvFUXXWCN10JvN-9EEeuEmr' width='' height='50'/><br/><br/>
+                <div style='border-top: 3px solid red'>
+                <span style = 'font-family: Arial; font-size: 10pt' >
+                <br/> Hello {0},<br/>
+                <br/>Your BCPS DEMS profile has NOT been created.<p/><p/>
+                {1}<br/>
                 </span><p/><div style='border-top: 3px solid red'></div></body></html> ",
                 firstName, GetSupportMessage());
         return msgBody;
@@ -211,7 +230,7 @@ We will inform you if we are unable to complete your request.<p/><p/>{2}<p/>
         return msgBody;
     }
 
-    private static string GetSupportMessage() => "<p/><b>For assistance contact <a href = \"mailto:support@dems.gov.bc.ca\">support@dems.gov.bc.ca</a> or call (888)-888-8888</b><p/><i>Please do not reply to this message as this message box is not monitored. Contact support at the address above for assistance</i>";
+    private static string GetSupportMessage() => "<p/>If you require any assistance, please contact <a href = \"mailto:bcps.disclosure.support@gov.bc.ca\">bcps.disclosure.support@gov.bc.ca</a><p/><p/>Thank you,<br/>BCPS DEMS Support<p/>";
 
 
     /// <summary>
@@ -279,7 +298,7 @@ We will inform you if we are unable to complete your request.<p/><p/>{2}<p/>
     }
 
 
-        public async Task<Task> HandleRetryAsync(string consumerName, string key, EdtUserProvisioningModel value, int retryCount, string topicName)
+    public async Task<Task> HandleRetryAsync(string consumerName, string key, EdtUserProvisioningModel value, int retryCount, string topicName)
     {
         using var trx = this.context.Database.BeginTransaction();
 
@@ -289,13 +308,21 @@ We will inform you if we are unable to complete your request.<p/><p/>{2}<p/>
             //check wheather this message has been processed before   
             if (await this.context.HasBeenProcessed(key, consumerName))
             {
-                //await trx.RollbackAsync();
+                await trx.RollbackAsync();
                 return Task.CompletedTask;
             }
             ///check weather edt service api is available before making any http request
             ///
             /// call version endpoint via get
             ///
+            var edtVersion = await this.CheckEdtServiceVersion();
+
+            if (edtVersion == null)
+            {
+                await trx.RollbackAsync();
+                Serilog.Log.Logger.Error("Failed to ping EDT service");
+                return Task.FromException(new EdtServiceException("Unable to access EDT endpoint"));
+            }
 
             //check wheather edt user already exist
             var result = await this.CheckUser(value);
@@ -306,7 +333,7 @@ We will inform you if we are unable to complete your request.<p/><p/>{2}<p/>
             //// TODO REMOVE THIS BLOCK ONCE TESTED
 
 
-            if (result.Successful)
+            if (result.successful)
             {
                 //add to tell message has been proccessed by consumer
                 await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
@@ -337,7 +364,7 @@ We will inform you if we are unable to complete your request.<p/><p/>{2}<p/>
         catch (Exception e)
         {
 
-            //await trx.RollbackAsync();
+            await trx.RollbackAsync();
             // get the last retry number
             var currentTopic = this.configuration.RetryPolicy.RetryTopics.Find(retryTopic => retryTopic.Order == value.TopicOrder);
             if (currentTopic == null)
@@ -406,5 +433,4 @@ public static partial class UserProvisioningHandlerLoggingExtensions
     public static partial void LogUserAccessRetryError(this ILogger logger, string partId, string accessRequestId);
 
 }
-
 

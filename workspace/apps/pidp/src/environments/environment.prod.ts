@@ -28,8 +28,8 @@ import { AppEnvironment, EnvironmentName } from './environment.model';
 export const environment: AppEnvironment = {
   production: true,
   apiEndpoint: 'http://localhost:5050',
-  authEndpoint: 'https://sso-dev-5b7aa5-dev.apps.silver.devops.gov.bc.ca',
-  authRealm: 'DEMSPOC',
+  authEndpoint: 'https://dev.common-sso.justice.gov.bc.ca',
+  authRealm: 'DEMSDEV',
   environmentName: EnvironmentName.LOCAL,
   applicationUrl: 'http://localhost:4200',
   emails: {
@@ -51,8 +51,8 @@ export const environment: AppEnvironment = {
   },
   keycloakConfig: {
     config: {
-      url: 'https://sso-dev-5b7aa5-dev.apps.silver.devops.gov.bc.ca/auth',
-      realm: 'DEMSPOC',
+      url: 'https://dev.common-sso.justice.gov.bc.ca/auth',
+      realm: 'DEMSDEV',
       clientId: 'PIDP-WEBAPP',
     },
     initOptions: {

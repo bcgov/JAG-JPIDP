@@ -1,7 +1,3 @@
-# JPIDP - Provider Identity Portal
+# Solution Architecture
 
-This set of services is used to identify users with an IDP (Internal or external) and allow them to request access to various services.
-
-The services are autmatically built and deployed using tekton pipelines
-
-
+<img align="center" width="1110" src="/docs/Future State Solution Architecture.drawio (3).png">

@@ -6,28 +6,70 @@ spec:
   entityOperator:
     topicOperator: {}
     userOperator: {}
+
   kafka:
+    {{- if .Values.kafka.metrics.enabled }}
+    metricsConfig:
+      type: jmxPrometheusExporter
+      valueFrom:
+        configMapKeyRef:
+          name: {{ include "pidp-kafka.fullname" . }}-metrics
+          key: kafka-metrics-config.yml
+    {{- end }}
+    readinessProbe:
+      initialDelaySeconds: 120
+      timeoutSeconds: 15
+    livenessProbe:
+      initialDelaySeconds: 240
+      timeoutSeconds: 15
+    {{- if .Values.kafka.authorization.enabled }}
+    authorization:
+      clientId: {{ .Values.kafka.authorization.clientId }}
+      delegateToKafkaAcls: true
+      type: keycloak
+      superUsers:
+        - rest-proxy-user
+        - kafka-broker
+        - service-account-kafka-admin
+      tlsTrustedCertificates:
+        - certificate: ca.crt
+          secretName: {{ include "pidp-kafka.fullname" . }}-keycloak-ca
+      tokenEndpointUri: {{ .Values.keycloak.auth }}/protocol/openid-connect/token
+    {{- end }}
     listeners:
-      - name: tls
-        port: 9093
-        type: internal
+      - authentication:
+          jwksEndpointUri: >-
+            {{ .Values.keycloak.auth }}/protocol/openid-connect/certs
+          userNameClaim: preferred_username
+          clientId: kafka-admin
+          enableOauthBearer: true
+          validIssuerUri: {{ .Values.keycloak.auth }}
+          maxSecondsWithoutReauthentication: 3600
+          tlsTrustedCertificates:
+            - certificate: ca.crt
+              secretName: pidp-kafka-keycloak-ca
+          type: oauth
+          clientSecret:
+            key: secret
+            secretName: pidp-kafka-broker-secret
+          tokenEndpointUri: >-
+            {{ .Values.keycloak.auth }}/protocol/openid-connect/token
+        name: scram
+        port: 9095
         tls: true
+        type: internal
       - name: external
         port: 9094
         tls: true
         type: route
         authentication:
           type: oauth
-#          checkAudience: true
           enableOauthBearer: true
-#          checkAccessTokenType: true
-#          accessTokenIsJwt: true
-          clientId: kafka-broker
+          clientId: pidp-kafka-authn
           clientSecret:
             key: secret
             secretName: {{ include "pidp-kafka.fullname" . }}-broker-secret
           validIssuerUri: {{ .Values.keycloak.auth }}
-          # introspectionEndpointUri: {{ .Values.keycloak.auth }}/protocol/openid-connect/token/introspect
           jwksEndpointUri: {{ .Values.keycloak.auth }}/protocol/openid-connect/certs
           userNameClaim: preferred_username
           tokenEndpointUri: {{ .Values.keycloak.auth }}/protocol/openid-connect/token
@@ -37,28 +79,38 @@ spec:
               certificate: ca.crt
         configuration:
           bootstrap:
-            host: {{ include "pidp-kafka.fullname" . }}-cluster-5b7aa5-{{ .Values.global.environment }}.apps.silver.devops.gov.bc.ca
+            host: {{ include "pidp-kafka.fullname" . }}-{{ .Values.global.licenseplate }}-{{ .Values.global.environment }}.apps.silver.devops.gov.bc.ca
           createBootstrapService: true
     storage:
       type: persistent-claim
-      size: 1Gi
-      deleteClaim: true
+      size: {{ .Values.kafka.pvcSize }}
+      deleteClaim: false
       class: netapp-file-standard
     version: 3.2.3
-    replicas: 3
+    replicas: {{ default 3 .Values.kafka.replicas }}
     config:
-      offsets.topic.replication.factor: 3
-      transaction.state.log.replication.factor: 3
+      offsets.topic.replication.factor: {{ default 3 .Values.kafka.topics.replicas }}
+      transaction.state.log.replication.factor: {{ default 3 .Values.kafka.topics.replicas }}
       transaction.state.log.min.isr: 2
-      default.replication.factor: 3
+      default.replication.factor: {{ default 3 .Values.kafka.topics.replicas }}
       min.insync.replicas: 2
       inter.broker.protocol.version: '3.2'
+  kafkaExporter: {}
   zookeeper:
     livenessProbe:
       initialDelaySeconds: 90
     storage:
       type: persistent-claim
       class: netapp-file-standard
-      deleteClaim: true
-      size: 1Gi
+      deleteClaim: false
+      size: {{ .Values.zookeeper.pvcSize }}
     replicas: 3
+    {{- if .Values.kafka.metrics.enabled }}
+    metricsConfig:
+      type: jmxPrometheusExporter
+      valueFrom:
+        configMapKeyRef:
+          name: {{ include "pidp-kafka.fullname" . }}-metrics
+          key: zookeeper-metrics-config.yml
+    {{- end }}
+

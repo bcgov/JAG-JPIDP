@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text.Json;
 using edt.service.Data;
 using edt.service.HttpClients;
+using edt.service.Infrastructure.Telemetry;
 using edt.service.Kafka;
 using edt.service.ServiceEvents.UserAccountCreation.ConsumerRetry;
 using edt.service.ServiceEvents.UserAccountCreation.Handler;
@@ -14,8 +15,19 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.OpenApi.Models;
 using NodaTime;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using OpenTelemetry;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
 using Serilog;
 using Swashbuckle.AspNetCore.Filters;
+using System.Diagnostics.Metrics;
+using Azure.Monitor.OpenTelemetry.Exporter;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using Prometheus;
 
 public class Startup
 {
@@ -33,6 +45,62 @@ public class Startup
     public void ConfigureServices(IServiceCollection services)
     {
         var config = this.InitializeConfiguration(services);
+
+        if (string.IsNullOrEmpty(config.SchemaRegistry.Url))
+        {
+            Log.Error("Schema registry is not configured - please resolve configuration and retry");
+            Environment.Exit(-1);
+        }
+
+        if (!string.IsNullOrEmpty(config.Telemetry.CollectorUrl))
+        {
+
+            var meters = new OtelMetrics();
+
+            Action<ResourceBuilder> configureResource = r => r.AddService(
+                 serviceName: TelemetryConstants.ServiceName,
+                 serviceVersion: Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown",
+                 serviceInstanceId: Environment.MachineName);
+
+            Log.Logger.Information("Telemetry logging is enabled {0}", config.Telemetry.CollectorUrl);
+            var resource = ResourceBuilder.CreateDefault().AddService(TelemetryConstants.ServiceName);
+
+            services.AddOpenTelemetry()
+               .ConfigureResource(configureResource)
+               .WithTracing(builder =>
+               {
+                   builder.SetSampler(new AlwaysOnSampler())
+                       .AddHttpClientInstrumentation()
+                       .AddEntityFrameworkCoreInstrumentation(options => options.SetDbStatementForText = true)
+                       .AddAspNetCoreInstrumentation();
+
+                   if (config.Telemetry.LogToConsole)
+                   {
+                       builder.AddConsoleExporter();
+                   }
+                   if (config.Telemetry.AzureConnectionString != null)
+                   {
+                       Log.Information("*** Azure trace exporter enabled ***");
+                       builder.AddAzureMonitorTraceExporter(o => o.ConnectionString = config.Telemetry.AzureConnectionString);
+                   }
+                   if (config.Telemetry.CollectorUrl != null)
+                   {
+                       builder.AddOtlpExporter(options =>
+                       {
+                           Log.Information("*** OpenTelemetry trace exporter enabled ***");
+
+                           options.Endpoint = new Uri(config.Telemetry.CollectorUrl);
+                           options.Protocol = OtlpExportProtocol.HttpProtobuf;
+                       });
+                   }
+               })
+               .WithMetrics(builder =>
+                   builder.AddHttpClientInstrumentation()
+                       .AddAspNetCoreInstrumentation()).StartWithHost();
+
+        }
+
+
         services
           .AddAutoMapper(typeof(Startup))
           .AddKafkaConsumer(config)
@@ -52,10 +120,13 @@ public class Startup
 
         services.AddHealthChecks()
                 .AddCheck("liveliness", () => HealthCheckResult.Healthy())
-                .AddSqlServer(config.ConnectionStrings.EdtDataStore, tags: new[] { "services" });
+                .AddSqlServer(config.ConnectionStrings.EdtDataStore, tags: new[] { "services" }).ForwardToPrometheus();
 
         services.AddControllers();
         services.AddHttpClient();
+
+        services.AddSingleton<OtelMetrics>();
+
 
         //services.AddSingleton<ProblemDetailsFactory, UserManagerProblemDetailsFactory>();
         //services.AddHealthChecks();
@@ -100,6 +171,11 @@ public class Startup
         });
        // services.AddFluentValidationRulesToSwagger();
 
+        JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+        {
+            ContractResolver = new CamelCasePropertyNamesContractResolver()
+        };
+
         //services.AddKafkaConsumer(config);
 
     }
@@ -110,7 +186,7 @@ public class Startup
         services.AddSingleton(config);
 
         Log.Logger.Information("### EDT Service Version:{0} ###", Assembly.GetExecutingAssembly().GetName().Version);
-        Log.Logger.Debug("### Edt Service Configuration:{0} ###", JsonSerializer.Serialize(config));
+        Log.Logger.Debug("### Edt Service Configuration:{0} ###", System.Text.Json.JsonSerializer.Serialize(config));
 
         return config;
     }
@@ -141,8 +217,12 @@ public class Startup
         app.UseEndpoints(endpoints =>
         {
             endpoints.MapControllers();
+            endpoints.MapMetrics();
             endpoints.MapHealthChecks("/health/liveness").AllowAnonymous();
         });
+
+        app.UseMetricServer();
+        app.UseHttpMetrics();
 
     }
 }
