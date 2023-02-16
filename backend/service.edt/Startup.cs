@@ -46,6 +46,11 @@ public class Startup
     {
         var config = this.InitializeConfiguration(services);
 
+        if (string.IsNullOrEmpty(config.SchemaRegistry.Url))
+        {
+            Log.Error("Schema registry is not configured - please resolve configuration and retry");
+            Environment.Exit(-1);
+        }
 
         if (!string.IsNullOrEmpty(config.Telemetry.CollectorUrl))
         {
