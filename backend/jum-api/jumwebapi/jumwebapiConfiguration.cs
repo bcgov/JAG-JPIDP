@@ -1,4 +1,4 @@
-﻿namespace jumwebapi.Infrastructure.Auth;
+namespace jumwebapi.Infrastructure.Auth;
 public class jumwebapiConfiguration
 {
     public static bool IsProduction() => EnvironmentName == Environments.Production;
@@ -57,6 +57,10 @@ public class jumwebapiConfiguration
     public class JustinParticipantClientConfiguration
     {
         public string Url { get; set; } = string.Empty;
+        public string ApiKey { get; set; } = string.Empty;
+
+        public string BasicAuthUsername { get; set; } = string.Empty;
+        public string BasicAuthPassword { get; set; } = string.Empty;
     }
     public class KeycloakConfiguration
     {

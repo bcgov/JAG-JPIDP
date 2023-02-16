@@ -94,7 +94,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
                     Tag = msgKey
                 });
 
-                if ( string.IsNullOrEmpty(this.configuration.SchemaRegistry.Url))
+                if (string.IsNullOrEmpty(this.configuration.SchemaRegistry.Url))
                 {
                     throw new EdtServiceException("Schema registry is not configured");
                 }
@@ -298,7 +298,7 @@ We will inform you if we are unable to complete your request.<p/><p/>{2}<p/>
     }
 
 
-        public async Task<Task> HandleRetryAsync(string consumerName, string key, EdtUserProvisioningModel value, int retryCount, string topicName)
+    public async Task<Task> HandleRetryAsync(string consumerName, string key, EdtUserProvisioningModel value, int retryCount, string topicName)
     {
         using var trx = this.context.Database.BeginTransaction();
 
@@ -339,14 +339,12 @@ We will inform you if we are unable to complete your request.<p/><p/>{2}<p/>
                 await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
 
                 await this.context.SaveChangesAsync();
-
-                var msgKey = Guid.NewGuid().ToString();
-
+                //After successful operation, we can produce message for other service's consumption e.g. Notification service
 
                 // TODO - fix typo (is partyId used for anything?)
                 await this.producer.ProduceAsync(this.configuration.KafkaCluster.ProducerTopicName, key: key, new Notification
                 {
-                    To = accessRequestModel.Email,
+                    To = value.Email,
                     From = "jpsprovideridentityportal@gov.bc.ca",
                     FirstName = value.FullName!.Split(' ').FirstOrDefault(),
                     Subject = "Digital Evidence Management System Enrollment Confirmation",
@@ -355,35 +353,8 @@ We will inform you if we are unable to complete your request.<p/><p/>{2}<p/>
                     Tag = Guid.NewGuid().ToString()
                 });
 
-                if ( string.IsNullOrEmpty(this.configuration.SchemaRegistry.Url))
-                {
-                    throw new EdtServiceException("Schema registry is not configured");
-                }
 
-                var producer = new SchemaAwareProducer(ConsumerSetup.GetProducerConfig(), this.userModificationProducer, this.configuration);
-                // publish to the user creation topic for others to consume
-                bool publishResultOk;
-                if (result.Event == UserModificationEvent.UserEvent.Create)
-                {
-                    Serilog.Log.Information("Publishing EDT user creation event {0}", msgKey);
-                    publishResultOk = await producer.ProduceAsync(this.configuration.KafkaCluster.UserCreationTopicName, key: msgKey, result);
-                }
-                else
-                {
-                    Serilog.Log.Information("Publishing EDT user modification event {0}", msgKey);
-                    publishResultOk = await producer.ProduceAsync(this.configuration.KafkaCluster.UserModificationTopicName, key: msgKey, result);
-                }
-
-
-                if (publishResultOk)
-                {
-                    await trx.CommitAsync();
-                }
-                else
-                {
-                    Serilog.Log.Logger.Error("Failed to publish to user notification topic - rolling back transaction");
-                    await trx.RollbackAsync();
-                }
+                await trx.CommitAsync();
 
                 return Task.CompletedTask;
 
@@ -461,200 +432,5 @@ public static partial class UserProvisioningHandlerLoggingExtensions
     [LoggerMessage(6, LogLevel.Error, "Error creating or updating edt user with partId {partId} and access requestId {accessRequestId} after final retry")]
     public static partial void LogUserAccessRetryError(this ILogger logger, string partId, string accessRequestId);
 
-    private static string GetSupportMessage() => "<p/><b>For assistance contact <a href = \"mailto:support@dems.gov.bc.ca\">support@dems.gov.bc.ca</a> or call (888)-888-8888</b><p/><i>Please do not reply to this message as this message box is not monitored. Contact support at the address above for assistance</i>";
-
-
-    /// <summary>
-    /// Publish to the retry topic
-    /// </summary>
-    /// <param name="value"></param>
-    /// <param name="key"></param>
-    /// <param name="retryTopicModel"></param>
-    /// <returns></returns>
-    private async Task PublishToRetryTopic(EdtUserProvisioningModel value, string key, RetryTopicModel retryTopicModel)
-    {
-        Serilog.Log.Information("Publishing to retry topic {0} {1}", value.Key, retryTopicModel.TopicName);
-        // different topic then reset to 1, otherwise increment retry count
-
-        value.RetryNumber = retryTopicModel.Order == value.TopicOrder ? value.RetryNumber : 1;
-        value.RetryDuration = TimeSpan.FromMinutes(retryTopicModel.DelayMinutes);
-        value.TopicOrder = retryTopicModel.Order;
-        if (retryTopicModel.RetryCount >= value.RetryNumber)
-        {
-            // place onto the topic 
-            await this.retryProducer.ProduceAsync(retryTopicModel.TopicName, key, value);
-
-            var msgId = Guid.NewGuid().ToString();
-
-            // if notification set and first retry attempt then send a message
-            // we only want to notify once per retry topic unless NotifyOnEachRetry is set
-            if (retryTopicModel.NotifyUser && (value.RetryNumber == 1 || retryTopicModel.NotifyOnEachRetry))
-            {
-                Serilog.Log.Information("Sending email to user to notify of retry");
-                await this.producer.ProduceAsync(this.configuration.KafkaCluster.ProducerTopicName, key: msgId, new Notification
-                {
-                    To = value.Email,
-                    From = "jpsprovideridentityportal@gov.bc.ca",
-                    FirstName = value.FullName!.Split(' ').FirstOrDefault(),
-                    Subject = "Digital Evidence Management System Notification",
-                    MsgBody = MsgBodyRetry(value.FullName?.Split(' ').FirstOrDefault(), retryTopicModel),
-                    PartyId = value.Key!,
-                    Tag = msgId
-                });
-
-            }
-        }
-    }
-
-    private async Task PublishToDeadLetterTopic(EdtUserProvisioningModel value, string key, string deadLetterTopic)
-    {
-        Serilog.Log.Information("Publishing to dead letter topic {0} {1}", value.Key);
-        await this.retryProducer.ProduceAsync(deadLetterTopic, key, value);
-    }
-
-    private async Task NotifyUserFailure(EdtUserProvisioningModel value, string key, string topic)
-    {
-        var msgId = Guid.NewGuid().ToString();
-
-        await this.producer.ProduceAsync(topic, key: msgId, new Notification
-        {
-            To = value.Email,
-            From = "jpsprovideridentityportal@gov.bc.ca",
-            FirstName = value.FullName!.Split(' ').FirstOrDefault(),
-            Subject = "Digital Evidence Management System Notification",
-            MsgBody = MsgBodyFailed(value.FullName?.Split(' ').FirstOrDefault()),
-            PartyId = value.Key!,
-            Tag = msgId
-        });
-    }
-
-
-        public async Task<Task> HandleRetryAsync(string consumerName, string key, EdtUserProvisioningModel value, int retryCount, string topicName)
-    {
-        using var trx = this.context.Database.BeginTransaction();
-
-        try
-        {
-
-            //check wheather this message has been processed before   
-            if (await this.context.HasBeenProcessed(key, consumerName))
-            {
-                //await trx.RollbackAsync();
-                return Task.CompletedTask;
-            }
-            ///check weather edt service api is available before making any http request
-            ///
-            /// call version endpoint via get
-            ///
-
-            //check wheather edt user already exist
-            var result = await this.CheckUser(value);
-
-            //// TODO REMOVE THIS BLOCK ONCE TESTED
-            //Serilog.Log.Error("THROWING FAKE EXCEPTION!!!!!!!");
-            //throw new EdtServiceException("FAKE EXCEPTION!!!");
-            //// TODO REMOVE THIS BLOCK ONCE TESTED
-
-
-            if (result.Successful)
-            {
-                //add to tell message has been proccessed by consumer
-                await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
-
-                await this.context.SaveChangesAsync();
-                //After successful operation, we can produce message for other service's consumption e.g. Notification service
-
-                // TODO - fix typo (is partyId used for anything?)
-                await this.producer.ProduceAsync(this.configuration.KafkaCluster.ProducerTopicName, key: key, new Notification
-                {
-                    To = value.Email,
-                    From = "jpsprovideridentityportal@gov.bc.ca",
-                    FirstName = value.FullName!.Split(' ').FirstOrDefault(),
-                    Subject = "Digital Evidence Management System Enrollment Confirmation",
-                    MsgBody = MsgBody(value.FullName?.Split(' ').FirstOrDefault()),
-                    PartyId = value.Key!,
-                    Tag = Guid.NewGuid().ToString()
-                });
-
-
-                await trx.CommitAsync();
-
-                return Task.CompletedTask;
-
-            }
-
-        }
-        catch (Exception e)
-        {
-
-            //await trx.RollbackAsync();
-            // get the last retry number
-            var currentTopic = this.configuration.RetryPolicy.RetryTopics.Find(retryTopic => retryTopic.Order == value.TopicOrder);
-            if (currentTopic == null)
-            {
-                throw new EdtServiceException($"Did not find a topic with order number {value.TopicOrder}");
-            }
-
-
-            if (value.RetryNumber >= currentTopic.RetryCount)
-            {
-
-                // skip to the next retry topic - if no topics left then send to dead letter topic and inform user of failure
-                var nextRetryModel = this.configuration.RetryPolicy.RetryTopics.Find(retryTopic => retryTopic.Order == value.TopicOrder + 1);
-
-                if (nextRetryModel == null)
-                {
-                    Serilog.Log.Warning("No more retry topics found - sending to dead letter topic");
-                    await this.context.FailedEventLogs.AddAsync(new FailedEventLog
-                    {
-                        EventId = Guid.NewGuid().ToString(),
-                        Producer = this.configuration.KafkaCluster.ProducerTopicName,
-                        ConsumerGroupId = this.configuration.KafkaCluster.RetryConsumerGroupId,
-                        ConsumerId = consumerName,
-                        EventPayload = value
-                    });
-
-                    // publish to dead letter topic
-                    await this.PublishToDeadLetterTopic(value, key, this.configuration.RetryPolicy.DeadLetterTopic);
-
-
-                    // notify user
-                    await this.NotifyUserFailure(value, key, this.configuration.KafkaCluster.ProducerTopicName);
-
-                    await this.context.SaveChangesAsync();
-                    this.logger.LogUserAccessRetryError(value.Key!, key);
-
-                    // we didnt complete the request but we want the offset committed so we
-                    // dont continue to process the messages
-                    return Task.CompletedTask;
-                }
-                else
-                {
-                    Serilog.Log.Information("Moving to next retry topic");
-                    await this.PublishToRetryTopic(value, key, nextRetryModel);
-                }
-            }
-            else
-            {
-                // increase the retryCount and publish to same topic (if the timeout has been reached)
-                var retryMessage = value;
-                retryMessage.RetryNumber++;
-                Serilog.Log.Information("Resending message to retry topic");
-                await this.PublishToRetryTopic(retryMessage, key, currentTopic);
-            }
-
-        }
-        return Task.CompletedTask;
-
-    }
 }
-public static partial class UserProvisioningHandlerLoggingExtensions
-{
-    [LoggerMessage(5, LogLevel.Warning, "Cannot provisioned user with partId {partId} and request Id {accessrequestId}. Published event key {accessrequestId} of {fromTopic} record to {topic} topic for retrial")]
-    public static partial void LogUserAccessPublishError(this ILogger logger, string? partId, string accessrequestId, string fromTopic, string topic);
-    [LoggerMessage(6, LogLevel.Error, "Error creating or updating edt user with partId {partId} and access requestId {accessRequestId} after final retry")]
-    public static partial void LogUserAccessRetryError(this ILogger logger, string partId, string accessRequestId);
-
-}
-
 

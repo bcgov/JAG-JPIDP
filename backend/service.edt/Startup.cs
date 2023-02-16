@@ -181,7 +181,7 @@ public class Startup
         services.AddSingleton(config);
 
         Log.Logger.Information("### EDT Service Version:{0} ###", Assembly.GetExecutingAssembly().GetName().Version);
-        Log.Logger.Debug("### Edt Service Configuration:{0} ###", JsonSerializer.Serialize(config));
+        Log.Logger.Debug("### Edt Service Configuration:{0} ###", System.Text.Json.JsonSerializer.Serialize(config));
 
         return config;
     }
