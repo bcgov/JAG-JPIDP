@@ -1,0 +1,17 @@
+table.mat-table {
+  width: 100%;
+  td.centered-column {
+    text-align: center;
+  }
+}
+
+.capitalize {
+  text-transform: lowercase;
+}
+.pending {
+  background-color: lightblue;
+}
+
+.active {
+  background-color: lightgreen;
+}

@@ -5,6 +5,7 @@ import { PermissionsGuard } from '@app/modules/permissions/permissions.guard';
 import { Role } from '@app/shared/enums/roles.enum';
 
 import { AccessRoutes } from './access.routes';
+import { DigitalEvidenceCaseManagementModule } from './pages/digital-evidence/case-management/digital-evidence-case-management.module';
 import { DigitalEvidenceModule } from './pages/digital-evidence/digital-evidence.module';
 import { DriverFitnessModule } from './pages/driver-fitness/driver-fitness.module';
 import { HcimAccountTransferModule } from './pages/hcim-account-transfer/hcim-account-transfer.module';
@@ -85,6 +86,18 @@ const routes: Routes = [
         (m) => m.DigitalEvidenceModule
       ),
   },
+  {
+    path: AccessRoutes.DIGITAL_EVIDENCE_CASE_MANAGEMENT,
+    //canActivate: [PermissionsGuard],
+    // data: {
+    //   roles: [Role.FEATURE_PIDP_DEMO],
+    // },
+    loadChildren: (): Promise<DigitalEvidenceCaseManagementModule> =>
+      import(
+        './pages/digital-evidence/case-management/digital-evidence-case-management.module'
+      ).then((m) => m.DigitalEvidenceCaseManagementModule),
+  },
+
   {
     path: AccessRoutes.UCI,
     canActivate: [PermissionsGuard],
