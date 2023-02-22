@@ -53,8 +53,8 @@ public class SubmittingAgency
         {
             var dto = await this.GetPidpUser(command);
 
-            if (dto.AlreadyEnroled
-                || dto.Email == null) //user must be already enroled i.e access to DEMS
+            if (!dto.AlreadyEnroled
+                && dto.Email == null) //user must be already enroled i.e access to DEMS
             {
                 this.logger.LogSubmittingAgencyAccessRequestDenied();
                 return DomainResult.Failed();
