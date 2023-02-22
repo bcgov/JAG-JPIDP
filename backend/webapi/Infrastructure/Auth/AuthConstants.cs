@@ -29,6 +29,7 @@ public static class ClaimValues
     public const string Phsa = "phsa";
     public const string Bcps = "adfscert";
     public const string Adfs = "adfs"; // test
+    public const string VicPd = "vicpd";
 
 }
 
@@ -37,10 +38,12 @@ public static class Policies
     public const string BcscAuthentication = "bcsc-authentication-policy";
     public const string IdirAuthentication = "idir-authentication-policy";
     public const string AnyPartyIdentityProvider = "party-idp-policy";
+    public const string SubAgencyIdentityProvider = "subgency-idp-policy";
     public const string UserOwnsResource = "user-owns-resource-policy";
     public const string AllDemsIdentityProvider = "dems-idp-policy";
     public const string BcpsAuthentication = "bcps-authentication-policy";
     public const string AdminAuthentication = "admin-authentication-policy";
+    public const string VicPdAuthentication = "vicpd-authentication-policy";
 }
 
 public static class Clients

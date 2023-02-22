@@ -48,15 +48,18 @@ public static class AuthenticationSetup
 
             options.AddPolicy(Policies.AnyPartyIdentityProvider, policy => policy
                 .RequireAuthenticatedUser()
-                .RequireClaim(Claims.IdentityProvider, ClaimValues.BCServicesCard, ClaimValues.Idir, ClaimValues.Phsa, ClaimValues.Bcps));
+                .RequireClaim(Claims.IdentityProvider, ClaimValues.BCServicesCard, ClaimValues.Idir, ClaimValues.Phsa, ClaimValues.Bcps, ClaimValues.VicPd));
 
             options.AddPolicy(Policies.AllDemsIdentityProvider, policy => policy
                   .RequireAuthenticatedUser()
-                  .RequireClaim(Claims.IdentityProvider, ClaimValues.BCServicesCard, ClaimValues.Bcps, ClaimValues.Idir));
+                  .RequireClaim(Claims.IdentityProvider, ClaimValues.BCServicesCard, ClaimValues.Bcps, ClaimValues.Idir, ClaimValues.VicPd));
 
             options.AddPolicy(Policies.AdminAuthentication, policy => policy
                     .RequireAuthenticatedUser()
                     .RequireClaim(Claims.IdentityProvider, ClaimValues.Idir, ClaimValues.Bcps));
+            options.AddPolicy(Policies.SubAgencyIdentityProvider, policy => policy
+                    .RequireAuthenticatedUser()
+                    .RequireClaim(Claims.IdentityProvider, ClaimValues.VicPd));
 
             options.AddPolicy(Policies.UserOwnsResource, policy => policy.Requirements.Add(new UserOwnsResourceRequirement()));
 

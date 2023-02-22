@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NodaTime;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -14,9 +15,10 @@ using Pidp.Models;
 namespace Pidp.Data.Migrations
 {
     [DbContext(typeof(PidpDbContext))]
-    partial class PidpDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230221092259_SubmittingAgencyAttachment")]
+    partial class SubmittingAgencyAttachment
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -130,16 +132,11 @@ namespace Pidp.Data.Migrations
                     b.Property<Instant>("Modified")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("SubmittingAgencyRequestRequestId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("UploadStatus")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("AttachmentId");
-
-                    b.HasIndex("SubmittingAgencyRequestRequestId");
 
                     b.ToTable("AgencyRequestAttachment");
                 });
@@ -1208,10 +1205,6 @@ namespace Pidp.Data.Migrations
                     b.Property<int>("Code")
                         .HasColumnType("integer");
 
-                    b.Property<string>("IdpHint")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -1224,67 +1217,56 @@ namespace Pidp.Data.Migrations
                         new
                         {
                             Code = 1,
-                            IdpHint = "ADFS",
                             Name = "Justice Sector"
                         },
                         new
                         {
                             Code = 2,
-                            IdpHint = "",
                             Name = "BC Law Enforcement"
                         },
                         new
                         {
                             Code = 3,
-                            IdpHint = "vcc",
                             Name = "BC Law Society"
                         },
                         new
                         {
                             Code = 4,
-                            IdpHint = "",
                             Name = "BC Corrections Service"
                         },
                         new
                         {
                             Code = 5,
-                            IdpHint = "",
                             Name = "Health Authority"
                         },
                         new
                         {
                             Code = 6,
-                            IdpHint = "idir",
                             Name = "BC Government Ministry"
                         },
                         new
                         {
                             Code = 7,
-                            IdpHint = "icbc",
                             Name = "ICBC"
                         },
                         new
                         {
                             Code = 8,
-                            IdpHint = "",
                             Name = "Other"
                         },
                         new
                         {
                             Code = 9,
-                            IdpHint = "vicpd",
                             Name = "Victoria Police Department"
                         },
                         new
                         {
                             Code = 10,
-                            IdpHint = "deltapd",
                             Name = "Delta Police Department"
                         },
                         new
                         {
                             Code = 11,
-                            IdpHint = "saanichpd",
                             Name = "Saanich Police Department"
                         });
                 });
@@ -1729,37 +1711,6 @@ namespace Pidp.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Pidp.Models.Lookups.SubmittingAgency", b =>
-                {
-                    b.Property<int>("Code")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Code");
-
-                    b.ToTable("SubmittingAgencyLookup");
-
-                    b.HasData(
-                        new
-                        {
-                            Code = 0,
-                            Name = "Victoria Police Department"
-                        },
-                        new
-                        {
-                            Code = 1,
-                            Name = "Delta Police Department"
-                        },
-                        new
-                        {
-                            Code = 2,
-                            Name = "Saanich Police Department"
-                        });
-                });
-
             modelBuilder.Entity("Pidp.Models.OutBoxEvent.ExportedEvent", b =>
                 {
                     b.Property<int>("EventId")
@@ -1772,13 +1723,14 @@ namespace Pidp.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("EventPayload")
-                        .IsRequired()
-                        .HasColumnType("jsonb");
-
                     b.Property<string>("EventType")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<string>("JsonEventPayload")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("EventPayload");
 
                     b.HasKey("EventId", "AggregateId");
 
@@ -1956,6 +1908,37 @@ namespace Pidp.Data.Migrations
                     b.ToTable("PartyOrgainizationDetail");
                 });
 
+            modelBuilder.Entity("Pidp.Models.SubmittingAgency", b =>
+                {
+                    b.Property<int>("Code")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Code");
+
+                    b.ToTable("SubmittingAgencyLookup");
+
+                    b.HasData(
+                        new
+                        {
+                            Code = 0,
+                            Name = "Victoria Police Department"
+                        },
+                        new
+                        {
+                            Code = 1,
+                            Name = "Delta Police Department"
+                        },
+                        new
+                        {
+                            Code = 2,
+                            Name = "Saanich Police Department"
+                        });
+                });
+
             modelBuilder.Entity("Pidp.Models.SubmittingAgencyRequest", b =>
                 {
                     b.Property<int>("RequestId")
@@ -1968,9 +1951,8 @@ namespace Pidp.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("CaseGroup")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int?>("AgencyRequestAttachmentAttachmentId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("CaseNumber")
                         .IsRequired()
@@ -1993,6 +1975,8 @@ namespace Pidp.Data.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("RequestId");
+
+                    b.HasIndex("AgencyRequestAttachmentAttachmentId");
 
                     b.HasIndex("PartyId");
 
@@ -2095,17 +2079,6 @@ namespace Pidp.Data.Migrations
                     b.Navigation("Country");
 
                     b.Navigation("Province");
-                });
-
-            modelBuilder.Entity("Pidp.Models.AgencyRequestAttachment", b =>
-                {
-                    b.HasOne("Pidp.Models.SubmittingAgencyRequest", "SubmittingAgencyRequest")
-                        .WithMany("AgencyRequestAttachments")
-                        .HasForeignKey("SubmittingAgencyRequestRequestId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("SubmittingAgencyRequest");
                 });
 
             modelBuilder.Entity("Pidp.Models.CorrectionServiceDetail", b =>
@@ -2239,6 +2212,10 @@ namespace Pidp.Data.Migrations
 
             modelBuilder.Entity("Pidp.Models.SubmittingAgencyRequest", b =>
                 {
+                    b.HasOne("Pidp.Models.AgencyRequestAttachment", null)
+                        .WithMany("AgencyRequests")
+                        .HasForeignKey("AgencyRequestAttachmentAttachmentId");
+
                     b.HasOne("Pidp.Models.Party", "Party")
                         .WithMany()
                         .HasForeignKey("PartyId")
@@ -2286,6 +2263,11 @@ namespace Pidp.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Pidp.Models.AgencyRequestAttachment", b =>
+                {
+                    b.Navigation("AgencyRequests");
+                });
+
             modelBuilder.Entity("Pidp.Models.Endorsement", b =>
                 {
                     b.Navigation("EndorsementRelationships");
@@ -2307,11 +2289,6 @@ namespace Pidp.Data.Migrations
                     b.Navigation("LicenceDeclaration");
 
                     b.Navigation("OrgainizationDetail");
-                });
-
-            modelBuilder.Entity("Pidp.Models.SubmittingAgencyRequest", b =>
-                {
-                    b.Navigation("AgencyRequestAttachments");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,0 +1,43 @@
+namespace Pidp.Features.DigitalEvidenceCaseManagement;
+
+using DomainResults.Common;
+using DomainResults.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Pidp.Features.DigitalEvidenceCaseManagement.Commands;
+using Pidp.Infrastructure.Auth;
+using Pidp.Infrastructure.Services;
+
+[Route("api/[controller]")]
+public class EvidenceCaseManagementController : PidpControllerBase
+{
+    public EvidenceCaseManagementController(IPidpAuthorizationService authService) : base(authService) { }
+
+    [HttpGet("{requestId}")]
+    [Authorize(Policy = Policies.AllDemsIdentityProvider)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<Query.SubmittingAgency.Model>> GetSubAgencyRequests([FromServices] IQueryHandler<Query.SubmittingAgency.Query, Query.SubmittingAgency.Model> handler,
+                                                                                       [FromRoute] Query.SubmittingAgency.Query query)
+        => await handler.HandleAsync(new Query.SubmittingAgency.Query(query.RequestId));
+
+    [HttpPost]
+    [Authorize(Policy = Policies.SubAgencyIdentityProvider)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CreateDigitalEvidenceSubAgencyEnrolment([FromServices] ICommandHandler<SubmittingAgency.Command, IDomainResult> handler,
+                                                      [FromBody] SubmittingAgency.Command command)
+        => await this.AuthorizePartyBeforeHandleAsync(command.PartyId, handler, command)
+        .ToActionResult();
+
+    [HttpPut("{requestId}")]
+    [Authorize(Policy = Policies.SubAgencyIdentityProvider)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> RemoveDigitalEvidenceSubAgencyEnrolment([FromServices] ICommandHandler<RemoveCaseAccess.Command> handler,
+                                            [FromRoute] RemoveCaseAccess.Command command)
+    {
+        await handler.HandleAsync(new RemoveCaseAccess.Command(command.RequestId));
+        return this.NoContent();
+    }
+}

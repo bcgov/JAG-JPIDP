@@ -21,6 +21,7 @@ using static Pidp.Features.Parties.ProfileStatus.ProfileStatusDto;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using System.Globalization;
+using System.Runtime.InteropServices;
 
 public partial class ProfileStatus
 {
@@ -269,6 +270,7 @@ public partial class ProfileStatus
         public CorrectionServiceCode? CorrectionServiceCode { get; set; }
         public string? CorrectionService { get; set; }
         public JusticeSectorCode? JusticeSectorCode { get; set; }
+        public SubmittingAgencyCode? SubmittingAgencyCode { get; set; }
         public string? JusticeSectorService { get; set; }
         public string? EmployeeIdentifier { get; set; }
         //public bool OrganizationDetailEntered { get; set; }
@@ -299,6 +301,7 @@ public partial class ProfileStatus
         //public bool UserIsBcps => this.User.GetIdentityProvider() == ClaimValues.Bcps;
         public bool UserIsBcps => this.User.GetIdentityProvider() == ClaimValues.Bcps && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpApi).Contains(DefaultRoles.Bcps);
         public bool UserIsIdir => this.User.GetIdentityProvider() == ClaimValues.Idir;
+        public bool UserIsVicPd => this.User.GetIdentityProvider() == ClaimValues.VicPd;
         [MemberNotNullWhen(true, nameof(LicenceDeclaration))]
         public bool HasDeclaredLicence => this.LicenceDeclaration?.HasNoLicence == false;
 

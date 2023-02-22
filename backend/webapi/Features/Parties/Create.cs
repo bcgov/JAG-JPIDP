@@ -38,6 +38,7 @@ public class Create
                 ClaimValues.Phsa => new PhsaValidator(),
                 ClaimValues.Bcps => new BcpsValidator(user),
                 ClaimValues.Idir => new IdirValidator(user),
+                ClaimValues.VicPd => new VicPdValidator(user),
                 _ => throw new NotImplementedException("Given Identity Provider is not supported")
             });
         }
@@ -75,6 +76,14 @@ public class Create
         private class IdirValidator : AbstractValidator<Command>
         {
             public IdirValidator(ClaimsPrincipal? user)
+            {
+                this.RuleFor(x => x.Jpdid).NotEmpty().MatchesUserClaim(user, Claims.PreferredUsername);
+                this.RuleFor(x => x.Birthdate).Empty();
+            }
+        }
+        private class VicPdValidator : AbstractValidator<Command>
+        {
+            public VicPdValidator(ClaimsPrincipal? user)
             {
                 this.RuleFor(x => x.Jpdid).NotEmpty().MatchesUserClaim(user, Claims.PreferredUsername);
                 this.RuleFor(x => x.Birthdate).Empty();

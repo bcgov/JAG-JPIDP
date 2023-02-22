@@ -43,6 +43,7 @@ public class Program
 
         var config = new ConfigurationBuilder()
          .AddJsonFile("appsettings.json", optional: true)
+          //.AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
          .Build();
 
         var seqEndpoint = Environment.GetEnvironmentVariable("Seq__Url");

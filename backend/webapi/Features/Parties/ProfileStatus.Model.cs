@@ -109,6 +109,7 @@ public partial class ProfileStatus
             public HealthAuthorityCode? HealthAuthorityCode { get; set; }
             public JusticeSectorCode? JusticeSectorCode { get; set; }
             public CorrectionServiceCode? CorrectionServiceCode { get; set; }
+            public SubmittingAgencyCode? SubmittingAgencyCode { get; set; }
             public string? EmployeeIdentifier { get; set; }
             public string? orgName { get; set; }
             public string? CorrectionService { get; set; }
@@ -119,6 +120,7 @@ public partial class ProfileStatus
                 this.EmployeeIdentifier = profile.EmployeeIdentifier;
                 this.JusticeSectorCode = profile.JusticeSectorCode;
                 this.CorrectionServiceCode = profile.CorrectionServiceCode;
+                this.SubmittingAgencyCode = profile.SubmittingAgencyCode;
                 this.orgName = profile.OrgName;
                 this.CorrectionService = profile.CorrectionService;
             }
@@ -127,7 +129,7 @@ public partial class ProfileStatus
             {
                 // LJW - remove access to Idir for BCPS - re-enable for testing if necessary
                 Log.Logger.Information("*** IDIR Currently permits BCPS access for testing ***");
-                if (!(profile.UserIsPhsa || profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsIdir))
+                if (!(profile.UserIsPhsa || profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsIdir || profile.UserIsVicPd))
                 {
                     this.StatusCode = StatusCode.Hidden;
                     return;
@@ -163,7 +165,7 @@ public partial class ProfileStatus
 
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
-                if (!(profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsIdir))
+                if (!(profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsIdir || profile.UserIsVicPd))
                 {
                     this.StatusCode = StatusCode.Hidden;
                     return;
