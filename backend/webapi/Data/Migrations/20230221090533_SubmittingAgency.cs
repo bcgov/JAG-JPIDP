@@ -14,7 +14,7 @@ namespace Pidp.Data.Migrations
                 name: "SubmittingAgencyLookup",
                 columns: table => new
                 {
-                    Code = table.Column<int>(type: "integer", nullable: false),
+                    Code = table.Column<int>(type: "text", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
@@ -49,16 +49,6 @@ namespace Pidp.Data.Migrations
                     { 9, "Victoria Police Department" },
                     { 10, "Delta Police Department" },
                     { 11, "Saanich Police Department" }
-                });
-
-            migrationBuilder.InsertData(
-                table: "SubmittingAgencyLookup",
-                columns: new[] { "Code", "Name" },
-                values: new object[,]
-                {
-                    { 0, "Victoria Police Department" },
-                    { 1, "Delta Police Department" },
-                    { 2, "Saanich Police Department" }
                 });
         }
 

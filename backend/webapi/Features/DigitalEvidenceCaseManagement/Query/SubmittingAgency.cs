@@ -9,18 +9,18 @@ using Pidp.Models;
 public class SubmittingAgency
 {
 
-    public sealed record Query(int RequestId) : IQuery<Model>;
+    public sealed record Query(int RequestId) : IQuery<Model?>;
     public class QueryValidator : AbstractValidator<Query>
     {
         public QueryValidator() => this.RuleFor(x => x.RequestId).GreaterThan(0);
     }
-    public class QueryHandler : IQueryHandler<Query, Model>
+    public class QueryHandler : IQueryHandler<Query, Model?>
     {
         private readonly PidpDbContext context;
 
         public QueryHandler(PidpDbContext context) => this.context = context;
 
-        public async Task<Model> HandleAsync(Query query)
+        public async Task<Model?> HandleAsync(Query query)
         {
             var agencyRequestAttachements = await this.context.AgencyRequestAttachments
                 .Where(request => request.SubmittingAgencyRequest.RequestId == query.RequestId)
@@ -43,7 +43,7 @@ public class SubmittingAgency
                     RequestStatus = access.RequestStatus,
                     AgencyRequestAttachments = agencyRequestAttachements
                 })
-                .FirstOrDefaultAsync();
+                .SingleOrDefaultAsync();
         }
     }
     public class Model

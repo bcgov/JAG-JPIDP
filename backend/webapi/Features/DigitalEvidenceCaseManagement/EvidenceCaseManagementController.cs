@@ -17,7 +17,7 @@ public class EvidenceCaseManagementController : PidpControllerBase
     [Authorize(Policy = Policies.AllDemsIdentityProvider)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<Query.SubmittingAgency.Model>> GetSubAgencyRequests([FromServices] IQueryHandler<Query.SubmittingAgency.Query, Query.SubmittingAgency.Model> handler,
+    public async Task<ActionResult<Query.SubmittingAgency.Model?>> GetSubAgencyRequests([FromServices] IQueryHandler<Query.SubmittingAgency.Query, Query.SubmittingAgency.Model?> handler,
                                                                                        [FromRoute] Query.SubmittingAgency.Query query)
         => await handler.HandleAsync(new Query.SubmittingAgency.Query(query.RequestId));
 
@@ -34,7 +34,7 @@ public class EvidenceCaseManagementController : PidpControllerBase
     [Authorize(Policy = Policies.SubAgencyIdentityProvider)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> RemoveDigitalEvidenceSubAgencyEnrolment([FromServices] ICommandHandler<RemoveCaseAccess.Command> handler,
+    public async Task<IActionResult> RemoveDigitalEvidenceSubAgencyEnrolment([FromServices] ICommandHandler<RemoveCaseAccess.Command, IDomainResult> handler,
                                             [FromRoute] RemoveCaseAccess.Command command)
     {
         await handler.HandleAsync(new RemoveCaseAccess.Command(command.RequestId));

@@ -37,6 +37,7 @@ public class SubmittingAgency
         private readonly IClock clock;
         private readonly ILogger logger;
         private readonly PidpConfiguration config;
+        //private readonly HttpContext httpContext;
         private readonly PidpDbContext context;
         private readonly IKafkaProducer<string, SubAgencyDomainEvent> kafkaProducer;
 
@@ -47,14 +48,21 @@ public class SubmittingAgency
             this.config = config;
             this.context = context;
             this.kafkaProducer = kafkaProducer;
+            //this.httpContext = httpContext;
         }
 
         public async Task<IDomainResult> HandleAsync(Command command)
         {
             var dto = await this.GetPidpUser(command);
 
+            //var userIdp = this.httpContext.User.GetIdentityProvider();
+
+            //var subAgency = await this.context.Set<Models.Lookups.SubmittingAgency>()
+            //        .Where(agencyIdp => agencyIdp.IdpHint == userIdp)
+            //        .FirstOrDefaultAsync();
+
             if (!dto.AlreadyEnroled
-                && dto.Email == null) //user must be already enroled i.e access to DEMS
+                || dto.Email == null) //user must be already enroled i.e access to DEMS
             {
                 this.logger.LogSubmittingAgencyAccessRequestDenied();
                 return DomainResult.Failed();
@@ -92,17 +100,18 @@ public class SubmittingAgency
             var exportedEvent = this.context.ExportedEvents.Add(new Models.OutBoxEvent.ExportedEvent
             {
                 EventId = subAgencyRequest.RequestId,
-                AggregateType = "SubmittingAgency",
+                AggregateType = command.SubmittingAgencyCode,
                 AggregateId = $"{command.PartyId}",
-                EventType = subAgencyRequest.Created < this.clock.GetCurrentInstant() ? "Case.Request.Submitted" : "Case.Request.Updated",
+                EventType = subAgencyRequest.Created < this.clock.GetCurrentInstant() ? "Case.AccessRequest.Submitted" : "Case.AccessRequest.Updated",
                 EventPayload = JsonConvert.SerializeObject(new SubAgencyDomainEvent
                 {
                     RequestId = subAgencyRequest.RequestId,
                     CaseNumber = subAgencyRequest.CaseNumber,
                     PartyId = subAgencyRequest.PartyId,
-                    AgencyCode = subAgencyRequest.AgencyCode,
+                    AgencyCode = command.SubmittingAgencyCode,
                     CaseGroup = subAgencyRequest.CaseGroup,
-                    Username = dto.Jpdid
+                    Username = dto.Jpdid,
+                    RequestedOn = subAgencyRequest.RequestedOn
                 })
             });
             return Task.FromResult(exportedEvent.Entity);
@@ -118,7 +127,8 @@ public class SubmittingAgency
                 PartyId = subAgencyRequest.PartyId,
                 AgencyCode = subAgencyRequest.AgencyCode,
                 CaseGroup = subAgencyRequest.CaseGroup,
-                Username = dto.Jpdid
+                Username = dto.Jpdid,
+                RequestedOn = subAgencyRequest.RequestedOn,
             });
         }
 
@@ -131,7 +141,7 @@ public class SubmittingAgency
                 AgencyCode = command.SubmittingAgencyCode,
                 PartyId = command.PartyId,
                 RequestedOn = this.clock.GetCurrentInstant(),
-                CaseGroup= command.CaseGroup,
+                CaseGroup = command.CaseGroup,
             };
             this.context.SubmittingAgencyRequests.Add(subAgencyAccessRequest);
 
