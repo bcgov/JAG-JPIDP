@@ -23,7 +23,7 @@ public class EvidenceCaseManagementController : PidpControllerBase
         => await handler.HandleAsync(new Query.SubmittingAgency.Query(query.RequestId));
 
     [HttpGet("parties/{partyId}")]
-    [Authorize(Policy = Policies.AllDemsIdentityProvider)]
+    [Authorize(Policy = Policies.SubAgencyIdentityProvider, Roles = Roles.SubmittingAgency)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<List<Query.SubmittingAgencyByPartyId.Model>>> GetSubAgencyRequestsByPartyId([FromServices] IQueryHandler<Query.SubmittingAgencyByPartyId.Query, List<Query.SubmittingAgencyByPartyId.Model>> handler,
