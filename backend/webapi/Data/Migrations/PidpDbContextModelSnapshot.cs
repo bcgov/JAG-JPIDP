@@ -3090,14 +3090,21 @@ namespace Pidp.Data.Migrations
             modelBuilder.Entity("Pidp.Models.OutBoxEvent.ExportedEvent", b =>
                 {
                     b.Property<int>("EventId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("EventId"));
+
                     b.Property<string>("AggregateId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("AggregateType")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<Instant>("DateOccurred")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("EventPayload")
                         .IsRequired()
@@ -3107,7 +3114,7 @@ namespace Pidp.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasKey("EventId", "AggregateId");
+                    b.HasKey("EventId");
 
                     b.ToTable("OutBoxedExportedEvent", (string)null);
                 });
@@ -3296,6 +3303,10 @@ namespace Pidp.Data.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("CaseGroup")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CaseName")
                         .IsRequired()
                         .HasColumnType("text");
 

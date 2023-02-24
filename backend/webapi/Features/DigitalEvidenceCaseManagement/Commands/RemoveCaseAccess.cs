@@ -4,6 +4,7 @@ using DomainResults.Common;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using NodaTime;
 using Pidp.Data;
 using Pidp.Features.AccessRequests;
 using Pidp.Kafka.Interfaces;
@@ -24,14 +25,16 @@ public class RemoveCaseAccess
     public class CommandHandler : ICommandHandler<Command, IDomainResult>
     {
         private readonly ILogger logger;
+        private readonly IClock clock;
         private readonly PidpConfiguration config;
         private readonly PidpDbContext context;
         private readonly IKafkaProducer<string, SubAgencyDomainEvent> kafkaProducer;
 
-        public CommandHandler(ILogger<CommandHandler> logger, PidpConfiguration config, PidpDbContext context, IKafkaProducer<string, SubAgencyDomainEvent> kafkaProducer)
+        public CommandHandler(ILogger<CommandHandler> logger, IClock clock, PidpConfiguration config, PidpDbContext context, IKafkaProducer<string, SubAgencyDomainEvent> kafkaProducer)
         {
             this.logger = logger;
             this.config = config;
+            this.clock = clock;
             this.context = context;
             this.kafkaProducer = kafkaProducer;
         }
@@ -52,13 +55,13 @@ public class RemoveCaseAccess
 
             try
             {
-
-                this.context.SubmittingAgencyRequests.Remove(subAgencyRequest);
-                await this.context.SaveChangesAsync();
+                subAgencyRequest.RequestStatus = AgencyRequestStatus.DeleteQueued; //set the case access request state to deleteQueued to await delete event
 
                 var exportedEvent = this.AddOutbox(subAgencyRequest, dto);
 
                 await this.PublishSubAgencyAccessRequest(dto, subAgencyRequest);
+                await this.context.SaveChangesAsync();
+                await trx.CommitAsync();
             }
             catch (Exception ex)
             {
@@ -72,10 +75,10 @@ public class RemoveCaseAccess
         {
             var exportedEvent = this.context.ExportedEvents.Add(new Models.OutBoxEvent.ExportedEvent
             {
-                EventId = subAgencyRequest.RequestId,
-                AggregateType = subAgencyRequest.AgencyCode,
-                AggregateId = $"{subAgencyRequest.PartyId}",
-                EventType = "Case.AccessRequest.Deleted",
+                AggregateType = $"SubmittingAgency.{subAgencyRequest.AgencyCode}",
+                AggregateId = $"{subAgencyRequest.RequestId}",
+                DateOccurred = this.clock.GetCurrentInstant(),
+                EventType = "CaseAccessRequestDeleted",
                 EventPayload = JsonConvert.SerializeObject(new SubAgencyDomainEvent
                 {
                     RequestId = subAgencyRequest.RequestId,
@@ -91,8 +94,8 @@ public class RemoveCaseAccess
         }
         private async Task PublishSubAgencyAccessRequest(PartyDto dto, SubmittingAgencyRequest subAgencyRequest)
         {
-            Serilog.Log.Logger.Information("Publishing Sub Agency Delete Domain Event to topic {0} {1}", this.config.KafkaCluster.SubAgencyDeleteTopicName, subAgencyRequest.RequestId);
-            await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.SubAgencyDeleteTopicName, $"{subAgencyRequest.RequestId}", new SubAgencyDomainEvent
+            Serilog.Log.Logger.Information("Publishing Sub Agency Delete Domain Event to topic {0} {1}", this.config.KafkaCluster.CaseDeleteTopicName, subAgencyRequest.RequestId);
+            await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.CaseDeleteTopicName, $"{subAgencyRequest.RequestId}", new SubAgencyDomainEvent
             {
                 RequestId = subAgencyRequest.RequestId,
                 CaseNumber = subAgencyRequest.CaseNumber,

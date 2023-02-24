@@ -30,6 +30,7 @@ namespace Pidp.Data.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     PartyId = table.Column<int>(type: "integer", nullable: false),
                     CaseNumber = table.Column<string>(type: "text", nullable: false),
+                    CaseName = table.Column<string>(type: "text", nullable: false),
                     AgencyCode = table.Column<string>(type: "text", nullable: false),
                     RequestedOn = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
                     RequestStatus = table.Column<string>(type: "text", nullable: false),

@@ -41,6 +41,7 @@ public class SubmittingAgency
                     AgencyCode = access.AgencyCode,
                     LastUpdated = access.Modified,
                     RequestStatus = access.RequestStatus,
+                    CaseName = access.CaseName,
                     AgencyRequestAttachments = agencyRequestAttachements
                 })
                 .SingleOrDefaultAsync();
@@ -54,6 +55,7 @@ public class SubmittingAgency
         public Instant RequestedOn { get; set; }
         public Instant LastUpdated { get; set; }
         public string RequestStatus { get; set; } = string.Empty;
+        public string CaseName { get; set; } = string.Empty;
         public ICollection<ModelAttachment> AgencyRequestAttachments { get; set; } = new List<ModelAttachment>();
 
     }
@@ -61,6 +63,6 @@ public class SubmittingAgency
     {
         public string AttachmentName { get; set; } = string.Empty;
         public string AttachmentType { get; set; } = string.Empty;
-        public string UploadStatus { get; set; } = AgencyRequestStatus.Queued;
+        public string UploadStatus { get; set; } = AgencyRequestStatus.RequestQueued;
     }
 }

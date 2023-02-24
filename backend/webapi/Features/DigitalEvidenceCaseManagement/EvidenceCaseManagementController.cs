@@ -4,6 +4,7 @@ using DomainResults.Common;
 using DomainResults.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Pidp.Features.Admin;
 using Pidp.Features.DigitalEvidenceCaseManagement.Commands;
 using Pidp.Infrastructure.Auth;
 using Pidp.Infrastructure.Services;
@@ -13,7 +14,7 @@ public class EvidenceCaseManagementController : PidpControllerBase
 {
     public EvidenceCaseManagementController(IPidpAuthorizationService authService) : base(authService) { }
 
-    [HttpGet("{requestId}")]
+    [HttpGet("requests/{requestId}")]
     [Authorize(Policy = Policies.AllDemsIdentityProvider)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -21,11 +22,12 @@ public class EvidenceCaseManagementController : PidpControllerBase
                                                                                        [FromRoute] Query.SubmittingAgency.Query query)
         => await handler.HandleAsync(new Query.SubmittingAgency.Query(query.RequestId));
 
-    [HttpGet("{partyId}")]
+    [HttpGet("parties/{partyId}")]
+    [Authorize(Policy = Policies.AllDemsIdentityProvider)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<List<Query.SubmittingAgencyByPartyId.Model>>> GetSubAgencyRequestsByPartyId([FromServices] IQueryHandler<Query.SubmittingAgencyByPartyId.Query, List<Query.SubmittingAgencyByPartyId.Model>> handler,
-                                                              [FromQuery] Query.SubmittingAgencyByPartyId.Query query)
+                                                              [FromRoute] Query.SubmittingAgencyByPartyId.Query query)
     => await handler.HandleAsync(new Query.SubmittingAgencyByPartyId.Query(query.PartyId));
 
     [HttpPost]
@@ -37,8 +39,8 @@ public class EvidenceCaseManagementController : PidpControllerBase
         => await this.AuthorizePartyBeforeHandleAsync(command.PartyId, handler, command)
         .ToActionResult();
 
-    [HttpPut("{requestId}")]
-    [Authorize(Policy = Policies.SubAgencyIdentityProvider)]
+    [HttpDelete("requests/{requestId}")]
+    [Authorize(Policy = Policies.SubAgencyIdentityProvider, Roles = Roles.SubmittingAgency)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> RemoveDigitalEvidenceSubAgencyEnrolment([FromServices] ICommandHandler<RemoveCaseAccess.Command, IDomainResult> handler,

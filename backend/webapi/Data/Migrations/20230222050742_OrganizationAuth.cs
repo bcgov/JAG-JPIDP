@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
+using NodaTime;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -14,6 +16,31 @@ namespace Pidp.Data.Migrations
                 type: "text",
                 nullable: false,
                 defaultValue: "");
+
+            migrationBuilder.DropPrimaryKey(
+                name: "PK_OutBoxedExportedEvent",
+                table: "OutBoxedExportedEvent");
+
+            migrationBuilder.AlterColumn<int>(
+                name: "EventId",
+                table: "OutBoxedExportedEvent",
+                type: "integer",
+                nullable: false,
+                oldClrType: typeof(int),
+                oldType: "integer")
+                .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+            migrationBuilder.AddColumn<Instant>(
+                name: "DateOccurred",
+                table: "OutBoxedExportedEvent",
+                type: "timestamp with time zone",
+                nullable: false,
+                defaultValue: NodaTime.Instant.FromUnixTimeTicks(0L));
+
+            migrationBuilder.AddPrimaryKey(
+                name: "PK_OutBoxedExportedEvent",
+                table: "OutBoxedExportedEvent",
+                column: "EventId");
 
             //migrationBuilder.AlterColumn<string>(
             //    name: "EventPayload",
@@ -117,6 +144,26 @@ namespace Pidp.Data.Migrations
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AddPrimaryKey(
+                name: "PK_OutBoxedExportedEvent",
+                table: "OutBoxedExportedEvent",
+                columns: new[] { "EventId", "AggregateId" });
+
+            migrationBuilder.DropColumn(
+                name: "DateOccurred",
+                table: "OutBoxedExportedEvent");
+
+            migrationBuilder.AlterColumn<int>(
+                name: "EventId",
+                table: "OutBoxedExportedEvent",
+                type: "integer",
+                nullable: false,
+                oldClrType: typeof(int),
+                oldType: "integer")
+                .OldAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+
+
             migrationBuilder.DropColumn(
                 name: "CaseGroup",
                 table: "SubmittingAgencyRequest");

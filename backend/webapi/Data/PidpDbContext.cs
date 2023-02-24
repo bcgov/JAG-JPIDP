@@ -59,8 +59,8 @@ public class PidpDbContext : DbContext
         //.Property(x => x.JsonEventPayload).HasColumnName("EventPayload");
 
         modelBuilder.Entity<ExportedEvent>()
-            .ToTable("OutBoxedExportedEvent")
-            .HasKey(x => new { x.EventId, x.AggregateId });
+            .ToTable("OutBoxedExportedEvent");
+        //.HasKey(x => new { x.EventId, x.AggregateId });
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(PidpDbContext).Assembly);
     }

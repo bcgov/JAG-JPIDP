@@ -18,6 +18,7 @@ public class SubmittingAgency
         public int PartyId { get; set; }
         public string SubmittingAgencyCode { get; set; } = string.Empty;
         public string CaseNumber { get; set; } = string.Empty;
+        public string CaseName { get; set; } = string.Empty;
         public string CaseGroup { get; set; } = string.Empty;
         public string RequestStatus { get; set; } = string.Empty;
     }
@@ -28,6 +29,7 @@ public class SubmittingAgency
             this.RuleFor(x => x.PartyId).NotEmpty();
             this.RuleFor(x => x.CaseNumber).NotEmpty();
             this.RuleFor(x => x.CaseGroup).NotEmpty();
+            this.RuleFor(x => x.CaseName).NotEmpty();
             this.RuleFor(x => x.SubmittingAgencyCode).NotEmpty();
             this.RuleFor(x => x.PartyId).GreaterThan(0);
         }
@@ -61,7 +63,7 @@ public class SubmittingAgency
             //        .Where(agencyIdp => agencyIdp.IdpHint == userIdp)
             //        .FirstOrDefaultAsync();
 
-            if (!dto.AlreadyEnroled
+            if (dto.AlreadyEnroled
                 || dto.Email == null) //user must be already enroled i.e access to DEMS
             {
                 this.logger.LogSubmittingAgencyAccessRequestDenied();
@@ -99,10 +101,10 @@ public class SubmittingAgency
         {
             var exportedEvent = this.context.ExportedEvents.Add(new Models.OutBoxEvent.ExportedEvent
             {
-                EventId = subAgencyRequest.RequestId,
-                AggregateType = command.SubmittingAgencyCode,
-                AggregateId = $"{command.PartyId}",
-                EventType = subAgencyRequest.Created < this.clock.GetCurrentInstant() ? "Case.AccessRequest.Submitted" : "Case.AccessRequest.Updated",
+                AggregateType = $"SubmittingAgency.{command.SubmittingAgencyCode}",
+                AggregateId = $"{subAgencyRequest.RequestId}",
+                DateOccurred = this.clock.GetCurrentInstant(),
+                EventType = subAgencyRequest.Created < this.clock.GetCurrentInstant() ? "CaseAccessRequestCreated" : "CaseAccessRequestUpdated",
                 EventPayload = JsonConvert.SerializeObject(new SubAgencyDomainEvent
                 {
                     RequestId = subAgencyRequest.RequestId,
@@ -137,9 +139,10 @@ public class SubmittingAgency
             var subAgencyAccessRequest = new SubmittingAgencyRequest
             {
                 CaseNumber = command.CaseNumber,
-                RequestStatus = AgencyRequestStatus.Queued,
+                RequestStatus = AgencyRequestStatus.RequestQueued,
                 AgencyCode = command.SubmittingAgencyCode,
                 PartyId = command.PartyId,
+                CaseName = command.CaseName,
                 RequestedOn = this.clock.GetCurrentInstant(),
                 CaseGroup = command.CaseGroup,
             };
@@ -167,4 +170,9 @@ public class SubmittingAgency
                 .SingleAsync();
         }
     }
+}
+public static partial class SUbmittingAgencyLoggingExtensions
+{
+    [LoggerMessage(1, LogLevel.Warning, "Submitting Agency Case Access Request denied due to the Request Record not meeting all prerequisites.")]
+    public static partial void LogSubmittingAgencyAccessRequestDenied(this ILogger logger);
 }

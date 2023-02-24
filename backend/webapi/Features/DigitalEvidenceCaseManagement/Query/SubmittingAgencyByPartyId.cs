@@ -26,25 +26,21 @@ public class SubmittingAgencyByPartyId
         {
             return await this.context.SubmittingAgencyRequests
                 .Where(request => request.PartyId == query.PartyId)
-                .Select(party => new Model
+                .Select(request => new Model
                 {
-                    PartyId = party.PartyId,
-                    CaseNumber = party.CaseNumber,
-                    AgencyCode = party.AgencyCode,
-                    RequestedOn = party.RequestedOn,
-                    LastUpdated = party.Modified,
-                    RequestStatus = party.RequestStatus,
+                    AgencyFileNo = $"{request.AgencyCode}:{request.CaseNumber}",
+                    RequestedOn = request.RequestedOn,
+                    RequestStatus = request.RequestStatus,
+                    CaseName = request.CaseName,
                 })
                 .ToListAsync();
         }
     }
     public class Model
     {
-        public int PartyId { get; set; }
-        public string CaseNumber { get; set; } = string.Empty;
-        public string AgencyCode { get; set; } = string.Empty;
+        public string AgencyFileNo { get; set; } = string.Empty;
         public Instant RequestedOn { get; set; }
-        public Instant LastUpdated { get; set; }
         public string RequestStatus { get; set; } = string.Empty;
+        public string CaseName { get; set; } = string.Empty;
     }
 }

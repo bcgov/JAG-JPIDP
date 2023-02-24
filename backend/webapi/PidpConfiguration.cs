@@ -76,7 +76,9 @@ public class PidpConfiguration
         public string ConsumerTopicName { get; set; } = string.Empty;
         public string ProducerTopicName { get; set; } = string.Empty;
         public string SubAgencyTopicName { get; set; } = string.Empty;
-        public string SubAgencyDeleteTopicName { get; set; } = string.Empty;
+        public string CaseProcessedTopicName { get; set; } = string.Empty;
+        public string CaseDeleteTopicName { get; set; } = string.Empty;
+        public string CaseDeleteAckTopicName { get; set; } = string.Empty;
         public string NotificationTopicName { get; set; } = string.Empty;
         public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientId { get; set; } = string.Empty;

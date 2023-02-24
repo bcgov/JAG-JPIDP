@@ -56,4 +56,5 @@ public static class Roles
     // PIdP Role Placeholders
     public const string Admin = "ADMIN";
     public const string User = "USER";
+    public const string SubmittingAgency = "SUBMITTING_AGENCY";
 }
