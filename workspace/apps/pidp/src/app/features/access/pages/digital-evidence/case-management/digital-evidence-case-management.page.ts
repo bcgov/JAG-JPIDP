@@ -10,6 +10,7 @@ import {
   Observable,
   catchError,
   debounceTime,
+  filter,
   map,
   noop,
   of,
@@ -33,11 +34,14 @@ import { FormUtilsService } from '@core/services/form-utils.service';
 import { PartyUserTypeResource } from '../../../../../features/admin/shared/usertype-resource.service';
 import { OrganizationUserType } from '../../../../../features/admin/shared/usertype-service.model';
 import { BcpsAuthResourceService } from '../auth/bcps-auth-resource.service';
-import { DigitalEvidenceCaseAutocompleteResource } from './digital-evidence-case-autocomplete-resource.service';
-import { DigitalEvidenceCaseAutocompleteResponse } from './digital-evidence-case-autocomplete-response.model';
 import { DigitalEvidenceCaseManagementFormState } from './digital-evidence-case-management-form.state';
 import { DigitalEvidenceCaseManagementResource } from './digital-evidence-case-management-resource.service';
-import { CaseStatus, DigitalEvidenceCase } from './digital-evidence-case.model';
+import { DigitalEvidenceCaseResource } from './digital-evidence-case-resource.service';
+import {
+  CaseStatus,
+  DigitalEvidenceCase,
+  DigitalEvidenceCaseRequest,
+} from './digital-evidence-case.model';
 
 @Component({
   selector: 'app-digital-evidence',
@@ -52,7 +56,7 @@ export class DigitalEvidenceCaseManagementPage
   public title: string;
 
   public organizationType: OrganizationUserType;
-  public caseListing: DigitalEvidenceCase[] = [];
+  public caseListing: DigitalEvidenceCaseRequest[] = [];
 
   public identityProvider$: Observable<IdentityProvider>;
   //public userType$: Observable<OrganizationUserType[]>;
@@ -63,19 +67,23 @@ export class DigitalEvidenceCaseManagementPage
   public pending: boolean | null;
   public policeAgency: Observable<string>;
   public result: string;
+  public requestedCase!: DigitalEvidenceCase | null;
   public isCaseSearchInProgress: boolean;
+  public isCaseFound: boolean;
   public accessRequestFailed: boolean;
+  public requestedCaseNotFound: boolean;
+  public isFindDisabled: boolean;
   public hasCaseListingResults: boolean;
   //@Input() public form!: FormGroup;
   public formControlNames: string[];
   public selectedOption = 0;
-  public dataSource: MatTableDataSource<DigitalEvidenceCase>;
+  public dataSource: MatTableDataSource<DigitalEvidenceCaseRequest>;
   public displayedColumns: string[] = [
-    'caseNumber',
+    'agencyFileNumber',
     'name',
     'requestedDate',
     'assignedDate',
-    'status',
+    'caseAction',
   ];
 
   public constructor(
@@ -93,7 +101,7 @@ export class DigitalEvidenceCaseManagementPage
     documentService: DocumentService,
     accessTokenService: AccessTokenService,
     private authorizedUserService: AuthorizedUserService,
-    private digitalEvidenceCaseAutocompleteResource: DigitalEvidenceCaseAutocompleteResource,
+    private digitalEvidenceCaseResource: DigitalEvidenceCaseResource,
     fb: FormBuilder
   ) {
     super(dialog, formUtilsService);
@@ -102,11 +110,9 @@ export class DigitalEvidenceCaseManagementPage
     this.organizationType = new OrganizationUserType();
     const partyId = this.partyService.partyId;
     this.dataSource = new MatTableDataSource();
-
     //this.userType$ = this.usertype.getUserType(partyId);
     this.identityProvider$ = this.authorizedUserService.identityProvider$;
     this.result = '';
-
     this.policeAgency = accessTokenService
       .decodeToken()
       .pipe(map((token) => token?.identity_provider ?? ''));
@@ -120,7 +126,6 @@ export class DigitalEvidenceCaseManagementPage
       this.organizationType.participantId = data['participantId'];
       this.organizationType.organizationName = data['organizationName'];
     });
-
     this.formState = new DigitalEvidenceCaseManagementFormState(fb);
     this.collectionNotice =
       documentService.getDigitalEvidenceCollectionNotice();
@@ -129,78 +134,98 @@ export class DigitalEvidenceCaseManagementPage
     this.pending = routeData.digitalEvidenceStatusCode === StatusCode.PENDING;
     this.accessRequestFailed = false;
     this.hasCaseListingResults = false;
+    this.isCaseFound = false;
+    this.requestedCaseNotFound = false;
     this.isCaseSearchInProgress = false;
+    this.isFindDisabled = true;
     this.formControlNames = ['ParticipantId', 'CaseListing'];
   }
 
   public onBack(): void {
     this.navigateToRoot();
   }
-  protected performSubmission(): Observable<void> {
-    const partyId = this.partyService.partyId;
-    console.log('Submiting');
-    console.log(this.formState.ParticipantId.value);
-    if (this.selectedOption == 1) {
-      return partyId && this.formState.json
-        ? this.resource.requestAccess(partyId)
-        : EMPTY;
-    }
 
-    return partyId && this.formState.json
-      ? this.resource.requestAccess(partyId)
-      : EMPTY;
+  public checkCaseInput(): void {
+    this.isFindDisabled = this.formState.caseName.value.length < 6;
   }
 
-  public onCaseIdChange(): void {
-    if (this.formState.caseId.value.length >= 3) {
-      alert(this.formState.caseId.value);
-      this.isCaseSearchInProgress = true;
-    }
+  public onRemoveCase(requestedCase: DigitalEvidenceCaseRequest): void {
+    alert('Remove ' + requestedCase.id);
+    requestedCase.status = CaseStatus.RemoveRequested;
   }
 
   public showFormControl(formControlName: string): boolean {
     return this.formControlNames.includes(formControlName);
   }
-  // public get userType(): FormControl {
-  //   return this.form.get('userType') as FormControl;
-  // }
-  public onAutocomplete(input: string): void {
-    this.digitalEvidenceCaseAutocompleteResource
-      .searchCases(input)
-      .subscribe((results) => {
-        this.toastService.openErrorToast(
-          'Cases could not be retrieved ' + results
-        );
-      });
-  }
+
   public onChangeAgencyCode(): void {
     alert(this.formState.agencyCode.value);
   }
 
-  // public OnSubmit(): void {
-  //   console.log('Form Submitted');
-  //   console.log(this.form.value);
-  // }
+  public findCase(): void {
+    this.requestedCaseNotFound = false;
+    this.digitalEvidenceCaseResource
+      .findCase(this.formState.agencyCode.value, this.formState.caseName.value)
+      .pipe(
+        tap(() => {
+          this.isCaseFound = true;
+          this.isCaseSearchInProgress = false;
+        })
+      )
+      .subscribe((digitalEvidenceCase: DigitalEvidenceCase | null) => {
+        this.requestedCaseNotFound = !digitalEvidenceCase ? true : false;
+        this.requestedCase = digitalEvidenceCase;
+      });
+  }
+  protected performSubmission(): Observable<unknown> {
+    throw new Error('Method not implemented.');
+  }
+  public addCaseRequest(): void {
+    if (this.requestedCase !== null) {
+      // check case not already requested
+      const idExists = this.caseListing.some(
+        (caseEntry) =>
+          caseEntry.id === this.requestedCase?.id &&
+          caseEntry.status !== CaseStatus.RemoveRequested
+      );
+
+      if (idExists) {
+        this.toastService.openErrorToast('Case already requested');
+      } else {
+        this.onRequestAccess();
+        const extendedDigitalEvidenceCase: DigitalEvidenceCaseRequest = {
+          name: this.requestedCase.name,
+          agencyFileNumber:
+            this.requestedCase.fields.find((c) => c.name === 'Agency File No.')
+              ?.value || '',
+          description: this.requestedCase.description,
+          id: this.requestedCase.id,
+          key: this.requestedCase.key,
+          fields: [],
+          requestedDate: new Date(),
+          assignedDate: null,
+          status: this.requestedCase.status,
+          requestStatus: CaseStatus.NewRequest,
+        };
+        this.caseListing.push(extendedDigitalEvidenceCase);
+        this.requestedCase = null;
+        this.formState.caseName.patchValue('');
+        this.dataSource.data = this.caseListing;
+      }
+    }
+  }
+
   public onRequestAccess(): void {
-    console.log('Submiting');
-    console.log(this.formState.ParticipantId.value);
-    if (this.selectedOption == 1) {
+    if (this.requestedCase !== null) {
+      const agencyFileNumber = this.requestedCase.fields.find(
+        (c) => c.name === 'Agency File No.'
+      )?.value;
       this.resource
-        .requestAccess(this.partyService.partyId)
-        .pipe(
-          tap(() => (this.completed = true)),
-          catchError((error: HttpErrorResponse) => {
-            if (error.status === HttpStatusCode.NotFound) {
-              this.navigateToRoot();
-            }
-            this.accessRequestFailed = true;
-            return of(noop());
-          })
+        .requestAccess(
+          this.partyService.partyId,
+          this.requestedCase?.id,
+          agencyFileNumber
         )
-        .subscribe();
-    } else {
-      this.resource
-        .requestAccess(this.partyService.partyId)
         .pipe(
           tap(() => (this.completed = true)),
           catchError((error: HttpErrorResponse) => {
@@ -228,36 +253,37 @@ export class DigitalEvidenceCaseManagementPage
       return this.navigateToRoot();
     }
 
-    this.formState.agencyCode.patchValue(this.partyService.partyId);
+    // this.formState.agencyCode.patchValue(this.partyService.partyId);
 
-    const sample1: DigitalEvidenceCase = {
-      requestedDate: new Date(),
-      assignedDate: new Date(),
-      name: '401: 23-23232',
-      status: CaseStatus.Active,
-      caseNumber: '401: 23-23232',
-    };
-    const sample2: DigitalEvidenceCase = {
-      requestedDate: new Date(),
-      assignedDate: new Date(),
-      name: '401: 23-5544',
-      status: CaseStatus.Pending,
-      caseNumber: '401: 23-5544',
-    };
+    this.formState.agencyCode.patchValue('105');
 
-    this.caseListing = [sample1, sample2];
-    this.dataSource.data = this.caseListing;
-
-    this.formState.caseId.valueChanges
+    this.formState.caseName.valueChanges
       .pipe(
         debounceTime(400),
+        filter((value: string) => value.length > 12),
         switchMap((value: string) => {
-          return value
-            ? this.digitalEvidenceCaseAutocompleteResource.searchCases(value)
-            : EMPTY;
+          this.isCaseSearchInProgress = true;
+          this.isCaseFound = false;
+
+          return this.digitalEvidenceCaseResource.findCase(
+            this.formState.agencyCode.value,
+            value
+          );
+        }),
+        tap((digitalEvidenceCase: any) => {
+          // Set a value on completion of the observable
+          // For example, you could set a boolean flag to indicate completion
+          console.log(digitalEvidenceCase);
+          this.isCaseFound = true;
+
+          this.isCaseSearchInProgress = false;
         })
       )
-      .subscribe();
+      .subscribe((digitalEvidenceCase: DigitalEvidenceCase | null) => {
+        // Do something with the search results here
+        this.requestedCase = digitalEvidenceCase;
+        console.log(digitalEvidenceCase);
+      });
   }
 
   private navigateToRoot(): void {

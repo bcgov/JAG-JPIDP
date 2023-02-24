@@ -202,15 +202,10 @@ public partial class ProfileStatus
 
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
-                if (!(profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsIdir))
+                // todo - this should be for SubmittingAgencies only
+                if (!( profile.UserIsBcps || profile.UserIsIdir))
                 {
                     this.StatusCode = StatusCode.Hidden;
-                    return;
-                }
-
-                if (profile.AccessRequestStatus.Contains(AccessRequestStatus.Pending))
-                {
-                    this.StatusCode = StatusCode.Pending;
                     return;
                 }
 
@@ -230,7 +225,7 @@ public partial class ProfileStatus
                     return;
                 }
 
-                this.StatusCode = StatusCode.Incomplete;
+                this.StatusCode = StatusCode.Pending;
             }
         }
 

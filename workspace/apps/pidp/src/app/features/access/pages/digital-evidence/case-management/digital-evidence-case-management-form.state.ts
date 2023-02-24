@@ -25,8 +25,12 @@ export class DigitalEvidenceCaseManagementFormState extends AbstractFormState<De
     return this.formInstance.get('agencyCode') as FormControl;
   }
 
-  public get caseId(): FormControl {
-    return this.formInstance.get('caseId') as FormControl;
+  public get requestedCase(): FormControl {
+    return this.formInstance.get('requestedCase') as FormControl;
+  }
+
+  public get caseName(): FormControl {
+    return this.formInstance.get('caseName') as FormControl;
   }
 
   public get caseListing(): FormControl {
@@ -49,7 +53,7 @@ export class DigitalEvidenceCaseManagementFormState extends AbstractFormState<De
   public buildForm(): void {
     this.formInstance = this.fb.group({
       agencyCode: [null, [FormControlValidators.requiredBoolean]],
-      caseId: [null, [FormControlValidators.requiredBoolean]],
+      caseName: [null, [FormControlValidators.alphanumeric]],
     });
   }
 }

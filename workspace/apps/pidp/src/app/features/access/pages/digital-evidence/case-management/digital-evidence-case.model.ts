@@ -5,11 +5,24 @@ export enum CaseStatus {
   Pending = 'PENDING',
 }
 
-export interface DigitalEvidenceCase {
-  requestedDate: Date;
-  assignedDate: Date;
+export interface Field {
+  id: number;
   name: string;
-  status: CaseStatus;
-  caseNumber: string;
+  value: any;
+}
 
+export interface DigitalEvidenceCase {
+  name: string;
+  description: string;
+  key: string;
+  agencyFileNumber: string;
+  status: string;
+  fields: Field[] | [];
+  id: number;
+}
+
+export interface DigitalEvidenceCaseRequest extends DigitalEvidenceCase {
+  requestedDate: Date;
+  assignedDate: Date | null;
+  requestStatus: CaseStatus;
 }

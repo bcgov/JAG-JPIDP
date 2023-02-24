@@ -2,6 +2,8 @@ import { Router } from '@angular/router';
 
 import { Observable } from 'rxjs';
 
+import { AlertType } from '@bcgov/shared/ui';
+
 import { AccessRoutes } from '@app/features/access/access.routes';
 import { ShellRoutes } from '@app/features/shell/shell.routes';
 
@@ -55,6 +57,23 @@ export class DigitalEvidenceCaseManagementPortalSection
 
   public get hint(): string {
     return '5 min to complete';
+  }
+
+  public get status(): string {
+    const statusCode = this.getStatusCode();
+    debugger;
+    return statusCode === StatusCode.COMPLETED
+      ? 'Available'
+      : 'Pending DEMS Enrollment';
+  }
+
+  public get statusType(): AlertType {
+    let u = this.getStatusCode();
+    return this.getStatusCode() === StatusCode.AVAILABLE
+      ? 'success'
+      : this.getStatusCode() === StatusCode.PENDING
+      ? 'info'
+      : 'warn';
   }
 
   public performAction(): void | Observable<void> {

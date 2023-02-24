@@ -9,63 +9,79 @@
 
     </ui-page-section-subheader>
     <section>
-      <ui-page-subheader>Case Search</ui-page-subheader>
-      <p><i>Enter the case number to search for matching cases</i></p>
+      <ui-page-subheader>Case Lookup</ui-page-subheader>
+      <p><i>Enter the agency file number you wish to have access to</i></p>
       <mat-form-field class="w-20">
-        <input matInput placeholder="Agency Code" type="text" tabindex="1" (change)="onChangeAgencyCode()"
+        <input matInput placeholder="Agency Code" required type="text" tabindex="1" (change)="onChangeAgencyCode()"
           formControlName="agencyCode" />
         <mat-error>Required</mat-error>
       </mat-form-field>
 
-      <mat-form-field class="w-80">
-        <mat-label>Case Name</mat-label>
-        <input matInput autocomplete="off" formControlName="caseId" tabindex="2" [matAutocomplete]="auto" />
-        <mat-autocomplete #auto="matAutocomplete" autocomplete="off">
-
-        </mat-autocomplete>
-        <mat-hint>
-          Enter at least 3 characters
-        </mat-hint>
+      <mat-form-field class="w-60">
+        <mat-label>Case #</mat-label>
+        <input matInput formControlName="caseName" (input)="checkCaseInput()" placeholder="yy-nnnnnnn" tabindex="2" />
       </mat-form-field>
-
+      <button mat-stroked-button type="button" [disabled]="isFindDisabled" style="margin-left: 10px;" color="primary"
+        (click)="findCase()">
+        Find
+      </button>
 
     </section>
+    <section class="caseSelection" *ngIf="requestedCaseNotFound">
+      <mat-icon class="corner">error_outline</mat-icon><span>Requested case not found.</span>
+    </section>
+    <section class="caseSelection" *ngIf="requestedCase">
+
+      <b>Case Name:</b> {{ requestedCase?.name }}<br />
+      <b>Status:</b> {{ requestedCase?.status }}<br />
+
+      <p>
+
+      </p>
+      <button mat-stroked-button type="button" color="primary" (click)="addCaseRequest()">
+        Request Access
+      </button>
+    </section>
+
   </ui-page-section>
 
 
   <ui-page-section>
     <ui-page-section-subheader icon="assignment" heading="Case Listing">
     </ui-page-section-subheader>
-    <ng-container uiPageSectionSubheaderDesc
-      *ngIf="(identityProvider$ | async) == IdentityProvider.BCPS || (identityProvider$ | async) == IdentityProvider.IDIR">
-      Here you can see the list of cases you are requesting access to and cases you currently have access to.
-      <p *ngIf="caseListing.length === 0">
+    <ng-container uiPageSectionSubheaderDesc *ngIf="caseListing.length === 0">
+      <p>
         <b>You have no currently assigned cases or requested cases.<br />
           Search for cases for them to be added.</b>
       </p>
-      <table mat-table [dataSource]="dataSource">
+    </ng-container>
 
-        <ng-container matColumnDef="caseNumber">
-          <th *matHeaderCellDef mat-header-cell>Case</th>
-          <td *matCellDef="let case" mat-cell>{{ case.caseNumber }}</td>
+    <ng-container uiPageSectionSubheaderDesc
+      *ngIf="(identityProvider$ | async) === IdentityProvider.BCPS || (identityProvider$ | async) === IdentityProvider.IDIR && caseListing.length > 0">
+      Here you can see the list of cases you are requesting access to and cases you currently have access to.
+
+      <table mat-table [dataSource]="dataSource">
+        <ng-container matColumnDef="agencyFileNumber">
+          <th *matHeaderCellDef mat-header-cell>File Number</th>
+          <td *matCellDef="let case" mat-cell>{{ case.agencyFileNumber }}</td>
         </ng-container>
         <ng-container matColumnDef="name">
           <th *matHeaderCellDef mat-header-cell>Name</th>
           <td *matCellDef="let case" mat-cell>{{ case.name }}</td>
         </ng-container>
         <ng-container matColumnDef="requestedDate">
-          <th *matHeaderCellDef mat-header-cell>Requested Date</th>
-          <td *matCellDef="let case" mat-cell>{{ case.requestedDate | date: 'MM-dd-yy' }}</td>
+          <th *matHeaderCellDef mat-header-cell>Requested</th>
+          <td *matCellDef="let case" mat-cell>{{ case.requestedDate | date: 'MM-dd-yy hh:mm' }}</td>
         </ng-container>
         <ng-container matColumnDef="assignedDate">
-          <th *matHeaderCellDef mat-header-cell>Access Date</th>
-          <td *matCellDef="let case" mat-cell>{{ case.assignedDate | date: 'MM-dd-yy' }}</td>
+          <th *matHeaderCellDef mat-header-cell>Granted</th>
+          <td *matCellDef="let case" mat-cell>{{ case.assignedDate | date: 'MM-dd-yy hh:mm' }}</td>
         </ng-container>
-        <ng-container matColumnDef="status">
-          <th *matHeaderCellDef mat-header-cell>Status</th>
-          <td *matCellDef="let case" mat-cell class="centered-column capitalize"
-            [ngClass]="{'pending': case.status === 'PENDING', 'active': case.status === 'ACTIVE' }">{{ case.status }}
-          </td>
+
+        <ng-container matColumnDef="caseAction">
+          <th *matHeaderCellDef mat-header-cell>Action</th>
+          <td *matCellDef="let case" mat-cell class="centered-column"><i *ngIf="case.status !== 'REMOVE'"
+              (click)="onRemoveCase(case)"><mat-icon>delete</mat-icon></i></td>
         </ng-container>
         <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
         <tr *matRowDef="let row; columns: displayedColumns" mat-row></tr>
@@ -77,12 +93,7 @@
 
   <ui-page-footer [mode]="completed ? 'reverse' : 'normal'">
     <button mat-stroked-button uiPageFooterAction type="button" color="primary" (click)="onBack()">
-      {{ completed || pending ? 'Back Home' : 'Cancel Back Home' }}
-    </button>
-
-    <button *ngIf="!(completed || pending)" mat-flat-button uiPageFooterAction type="button" color="primary"
-      [disabled]="!formState.form.valid" (click)="onRequestAccess()">
-      Save Changes
+      Back Home
     </button>
   </ui-page-footer>
 

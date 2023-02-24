@@ -19,6 +19,7 @@ public class PidpConfiguration
     public MailServerConfiguration MailServer { get; set; } = new();
     public PlrClientConfiguration PlrClient { get; set; } = new();
     public JumClientConfiguration JumClient { get; set; } = new();
+    public EdtClientConfiguration EdtClient { get; set; } = new EdtClientConfiguration();
 
     public TelemeteryConfiguration Telemetry { get; set; } = new TelemeteryConfiguration();
 
@@ -75,6 +76,8 @@ public class PidpConfiguration
         public string BootstrapServers { get; set; } = string.Empty;
         public string ConsumerTopicName { get; set; } = string.Empty;
         public string ProducerTopicName { get; set; } = string.Empty;
+        public string CaseAccessRequestTopicName { get; set; } = string.Empty;
+        public string CaseAccessDeleteRequestTopicName { get; set; } = string.Empty;
         public string NotificationTopicName { get; set; } = string.Empty;
         public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientId { get; set; } = string.Empty;
@@ -101,6 +104,11 @@ public class PidpConfiguration
     {
         public string Url { get; set; } = string.Empty;
         public int Port { get; set; }
+    }
+
+    public class EdtClientConfiguration
+    {
+        public string Url { get; set; } = string.Empty;
     }
 
     public class PlrClientConfiguration

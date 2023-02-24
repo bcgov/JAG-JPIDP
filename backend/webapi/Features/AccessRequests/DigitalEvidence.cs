@@ -110,7 +110,7 @@ public class DigitalEvidence
                 try
                 {
                     var digitalEvidence = await this.SubmitDigitalEvidenceRequest(command); //save all trx at once for production(remove this and handle using idempotent)
-                    var key = Guid.NewGuid().ToString();
+                    string? key = Guid.NewGuid().ToString();
                     Serilog.Log.Logger.Information("Sending submission message for {0} to {1}", command.ParticipantId, dto.Email);
                     if (digitalEvidence != null)
                     {

@@ -5,25 +5,31 @@ using System.Threading.Tasks;
 using AutoMapper;
 using DomainResults.Common;
 using edt.service.Exceptions;
+using edt.service.Features.Cases;
 using edt.service.Infrastructure.Telemetry;
 using edt.service.Kafka.Model;
 using edt.service.ServiceEvents.UserAccountCreation.Models;
+using Google.Protobuf.WellKnownTypes;
+using MediatR;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Serilog;
 
 public class EdtClient : BaseClient, IEdtClient
 {
     private readonly IMapper mapper;
     private readonly OtelMetrics meters;
+    private readonly EdtServiceConfiguration configuration;
 
 
     public EdtClient(
-        HttpClient httpClient, OtelMetrics meters,
+        HttpClient httpClient, OtelMetrics meters, EdtServiceConfiguration edtServiceConfiguration,
         IMapper mapper,
         ILogger<EdtClient> logger)
         : base(httpClient, logger)
     {
         this.mapper = mapper;
         this.meters = meters;
+        this.configuration = edtServiceConfiguration;
     }
 
     public async Task<UserModificationEvent> CreateUser(EdtUserProvisioningModel accessRequest)
@@ -132,7 +138,7 @@ public class EdtClient : BaseClient, IEdtClient
             eventTime = DateTime.Now,
             accessRequestId = accessRequest.AccessRequestId,
             successful = true
-    };
+        };
 
         if (!result.IsSuccess)
         {
@@ -227,16 +233,61 @@ public class EdtClient : BaseClient, IEdtClient
 
         if (!result.IsSuccess)
         {
-            throw new EdtServiceException(string.Join(",",result.Errors));
+            throw new EdtServiceException(string.Join(",", result.Errors));
         }
 
         return result.Value.Version;
+    }
+
+    public async Task<CaseModel> FindCase(string caseIdOrKey)
+    {
+        //' /api/v1/org-units/1/cases/3:105: 23-472018/id
+
+        var searchString = this.configuration.EdtClient.SearchFieldId + ":" + caseIdOrKey;
+        Log.Logger.Information("Finding case {0}", searchString);
+
+        var caseSearch = await this.GetAsync<IEnumerable<CaseLookupModel>?>($"api/v1/org-units/1/cases/{searchString}/id");
+
+
+
+        if (caseSearch.IsSuccess)
+        {
+            IEnumerable<CaseLookupModel> caseSearchValue = caseSearch?.Value;
+
+            // Do something with the caseSearchValue
+            if (caseSearch.IsSuccess)
+            {
+                var caseDetail = caseSearch.Value.FirstOrDefault();
+                Log.Information("Case {0}", caseDetail);
+                var caseId = caseSearch.Value?.First().Id;
+                var result = await this.GetAsync<CaseModel?>($"api/v1/cases/{caseId}");
+                return result.Value;
+            }
+            else
+            {
+                throw new EdtServiceException(string.Join(",", caseSearch.Errors));
+            }
+        }
+        else
+        {
+            throw new EdtServiceException(string.Join(",", caseSearch.Errors));
+        }
+
+
+
+
+
+
+
+
+
     }
 
     public class AddUserToOuGroup
     {
         public string? UserIdOrKey { get; set; }
     }
+
 
 
 

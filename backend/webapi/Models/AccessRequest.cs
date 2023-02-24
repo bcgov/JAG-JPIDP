@@ -36,6 +36,15 @@ public class HcimAccountTransfer : AccessRequest
     public string LdapUsername { get; set; } = string.Empty;
 }
 
+[Table(nameof(DigitalEvidenceCase))]
+public class DigitalEvidenceCase : AccessRequest
+{
+    public int CaseId { get; set; }
+    public string AgencyFileNumber { get; set; } = string.Empty;
+
+    public bool RemoveRequested { get; set; }
+}
+
 [Table(nameof(HcimEnrolment))]
 public class HcimEnrolment : AccessRequest
 {

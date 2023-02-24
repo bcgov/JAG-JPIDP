@@ -70,6 +70,7 @@ public partial class ProfileStatus
             Locked,
             Error,
             Hidden,
+            Available,
             Pending
         }
     }

@@ -5,6 +5,7 @@ using Confluent.Kafka;
 using IdentityModel.Client;
 using Pidp.Extensions;
 using Pidp.Infrastructure.HttpClients.AddressAutocomplete;
+using Pidp.Infrastructure.HttpClients.Edt;
 using Pidp.Infrastructure.HttpClients.Jum;
 using Pidp.Infrastructure.HttpClients.Keycloak;
 using Pidp.Infrastructure.HttpClients.Ldap;
@@ -33,8 +34,9 @@ public static class HttpClientSetup
             });
 
         services.AddHttpClientWithBaseAddress<ILdapClient, LdapClient>(config.LdapClient.Url);
-
+        services.AddHttpClientWithBaseAddress<IEdtClient, EdtClient>(config.EdtClient.Url);
         services.AddHttpClientWithBaseAddress<IJumClient, JumClient>(config.JumClient.Url);
+
 
         services.AddHttpClientWithBaseAddress<IKeycloakAdministrationClient, KeycloakAdministrationClient>(config.Keycloak.AdministrationUrl)
             .WithBearerToken(new KeycloakAdministrationClientCredentials
