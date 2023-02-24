@@ -17,6 +17,7 @@ public class PidpConfiguration
     public KeycloakConfiguration Keycloak { get; set; } = new();
     public LdapClientConfiguration LdapClient { get; set; } = new();
     public MailServerConfiguration MailServer { get; set; } = new();
+    public BackGroundServicesConfiguration BackGroundServices { get; set; } = new();
     public PlrClientConfiguration PlrClient { get; set; } = new();
     public JumClientConfiguration JumClient { get; set; } = new();
 
@@ -29,8 +30,16 @@ public class PidpConfiguration
         public string ApiKey { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
     }
-
-    public class ConnectionStringConfiguration
+    public class BackGroundServicesConfiguration
+    {
+        public DecomissionCaseAccessService DecomissionCaseAccessService { get; set; } = new DecomissionCaseAccessService();
+    }
+    public class DecomissionCaseAccessService
+    {
+        public int PeriodicTimer { get; set; }
+        public int GracePeriod { get; set; }
+    }
+        public class ConnectionStringConfiguration
     {
         public string PidpDatabase { get; set; } = string.Empty;
     }
