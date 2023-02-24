@@ -66,7 +66,7 @@ public class SubmittingAgency
             if (!dto.AlreadyEnroled
                 || dto.Email == null) //user must be already enroled i.e access to DEMS
             {
-                this.logger.LogSubmittingAgencyAccessRequestDenied();
+                this.logger.LogUserNotEnroled(dto.Jpdid); //throw dems user not enroled error
                 return DomainResult.Failed();
             }
 
@@ -173,6 +173,8 @@ public class SubmittingAgency
 }
 public static partial class SUbmittingAgencyLoggingExtensions
 {
-    [LoggerMessage(1, LogLevel.Warning, "Submitting Agency Case Access Request denied due to the Request Record not meeting all prerequisites.")]
-    public static partial void LogSubmittingAgencyAccessRequestDenied(this ILogger logger);
+    [LoggerMessage(1, LogLevel.Error, "Submitting Agency Case Access Request denied due to the Request Record not meeting all prerequisites.")]
+    public static partial void LogSubmittingAgencyAccessRequestDenied(this ILogger logger, string exception);
+    [LoggerMessage(2, LogLevel.Information, "Submitting Agency Case Access Request denied due to user {username} is not enroled to DEMS.")]
+    public static partial void LogUserNotEnroled(this ILogger logger, string? username);
 }

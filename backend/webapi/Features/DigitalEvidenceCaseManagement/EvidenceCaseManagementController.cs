@@ -4,7 +4,6 @@ using DomainResults.Common;
 using DomainResults.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Pidp.Features.Admin;
 using Pidp.Features.DigitalEvidenceCaseManagement.Commands;
 using Pidp.Infrastructure.Auth;
 using Pidp.Infrastructure.Services;
