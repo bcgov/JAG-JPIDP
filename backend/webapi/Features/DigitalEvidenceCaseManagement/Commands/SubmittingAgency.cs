@@ -63,7 +63,7 @@ public class SubmittingAgency
             //        .Where(agencyIdp => agencyIdp.IdpHint == userIdp)
             //        .FirstOrDefaultAsync();
 
-            if (dto.AlreadyEnroled
+            if (!dto.AlreadyEnroled
                 || dto.Email == null) //user must be already enroled i.e access to DEMS
             {
                 this.logger.LogSubmittingAgencyAccessRequestDenied();
