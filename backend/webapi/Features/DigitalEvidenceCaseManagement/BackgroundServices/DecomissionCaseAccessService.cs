@@ -26,7 +26,7 @@ public class DecomissionCaseAccessService : BackgroundService
     {
         this.logger.LogDebug($"{nameof(DecomissionCaseAccessService)} in starting");
 
-        var period = TimeSpan.FromHours(this.config.BackGroundServices.DecomissionCaseAccessService.PeriodicTimer);
+        var period = TimeSpan.FromMinutes(this.config.BackGroundServices.DecomissionCaseAccessService.PeriodicTimer);
         stoppingToken.Register(() => this.logger.LogDebug("#1 DecomissionCaseAccessService background task is stopping."));
         using var timer = new PeriodicTimer(period);
         using var scope = this.serviceScopeFactory.CreateScope();
@@ -40,7 +40,7 @@ public class DecomissionCaseAccessService : BackgroundService
                 this.logger.LogDebug($"{nameof(DecomissionCaseAccessService)} background task is doing background work.");
 
                 var expiredCaseAccessrequest = await this.GetExpiredCaseAccessRequests();
-                if (expiredCaseAccessrequest.Count() > 0)
+                if (expiredCaseAccessrequest.Any())
                 {
 
                     this.context.SubmittingAgencyRequests.RemoveRange(expiredCaseAccessrequest);
@@ -64,8 +64,8 @@ public class DecomissionCaseAccessService : BackgroundService
     {
         foreach (var caseAccessRequest in subAgencyRequests)
         {
-            Serilog.Log.Logger.Information("Publishing Sub Agency Domain Event to topic {0} {1}", this.config.KafkaCluster.SubAgencyTopicName, caseAccessRequest.RequestId);
-            await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.CaseDeleteTopicName, $"{caseAccessRequest.RequestId}", new SubAgencyDomainEvent
+            Serilog.Log.Logger.Information("Publishing Evidence Auto Decomisison Domain Event to topic {0} {1}", this.config.KafkaCluster.CaseDecomissionTopicName, caseAccessRequest.RequestId);
+            await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.CaseDecomissionTopicName, $"{caseAccessRequest.RequestId}", new SubAgencyDomainEvent
             {
                 RequestId = caseAccessRequest.RequestId,
                 CaseNumber = caseAccessRequest.CaseNumber,
@@ -82,6 +82,7 @@ public class DecomissionCaseAccessService : BackgroundService
     {
         return await this.context.SubmittingAgencyRequests
             .Where(request => request.RequestedOn < this.clock.GetCurrentInstant().Minus(Duration.FromDays(this.config.BackGroundServices.DecomissionCaseAccessService.GracePeriod)))
+            .Include(party => party.Party)
             .ToListAsync();
     }
 }

@@ -39,7 +39,7 @@ public class PidpConfiguration
         public int PeriodicTimer { get; set; }
         public int GracePeriod { get; set; }
     }
-        public class ConnectionStringConfiguration
+    public class ConnectionStringConfiguration
     {
         public string PidpDatabase { get; set; } = string.Empty;
     }
@@ -88,6 +88,7 @@ public class PidpConfiguration
         public string CaseProcessedTopicName { get; set; } = string.Empty;
         public string CaseDeleteTopicName { get; set; } = string.Empty;
         public string CaseDeleteAckTopicName { get; set; } = string.Empty;
+        public string CaseDecomissionTopicName { get; set; } = string.Empty;
         public string NotificationTopicName { get; set; } = string.Empty;
         public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientId { get; set; } = string.Empty;

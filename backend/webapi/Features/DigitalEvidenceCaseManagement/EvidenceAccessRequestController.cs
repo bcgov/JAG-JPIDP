@@ -9,9 +9,9 @@ using Pidp.Infrastructure.Auth;
 using Pidp.Infrastructure.Services;
 
 [Route("api/[controller]")]
-public class EvidenceCaseManagementController : PidpControllerBase
+public class EvidenceAccessRequestController : PidpControllerBase
 {
-    public EvidenceCaseManagementController(IPidpAuthorizationService authService) : base(authService) { }
+    public EvidenceAccessRequestController(IPidpAuthorizationService authService) : base(authService) { }
 
     [HttpGet("requests/{requestId}")]
     [Authorize(Policy = Policies.AllDemsIdentityProvider)]
