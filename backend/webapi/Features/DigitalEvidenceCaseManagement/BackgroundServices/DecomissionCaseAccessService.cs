@@ -1,10 +1,13 @@
 namespace Pidp.Features.DigitalEvidenceCaseManagement.BackgroundServices;
 
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using NodaTime;
 using Pidp.Data;
+using Pidp.Features.AccessRequests;
 using Pidp.Kafka.Interfaces;
 using Pidp.Models;
+using Pidp.Models.OutBoxEvent;
 
 public class DecomissionCaseAccessService : BackgroundService
 {
@@ -42,6 +45,7 @@ public class DecomissionCaseAccessService : BackgroundService
                 var expiredCaseAccessrequest = await this.GetExpiredCaseAccessRequests();
                 if (expiredCaseAccessrequest.Any())
                 {
+                    this.AddOutbox(expiredCaseAccessrequest);
 
                     this.context.SubmittingAgencyRequests.RemoveRange(expiredCaseAccessrequest);
 
@@ -58,6 +62,28 @@ public class DecomissionCaseAccessService : BackgroundService
             }
 
         }
+
+    }
+    private void AddOutbox(IEnumerable<SubmittingAgencyRequest> subAgencyRequest)
+    {
+        this.context.ExportedEvents.AddRange(subAgencyRequest.AsEnumerable().Select(request => new ExportedEvent
+        {
+            AggregateType = $"SubmittingAgency.{request.AgencyCode}",
+            AggregateId = $"{request.RequestId}",
+            DateOccurred = this.clock.GetCurrentInstant(),
+            EventType = "CaseAccessRequestDeleted",
+            EventPayload = JsonConvert.SerializeObject(new SubAgencyDomainEvent
+            {
+                RequestId = request.RequestId,
+                CaseNumber = request.CaseNumber,
+                PartyId = request.PartyId,
+                AgencyCode = request.AgencyCode,
+                CaseGroup = request.CaseGroup,
+                Username = request.Party!.Jpdid,
+                RequestedOn = request.RequestedOn
+            })
+        }).ToList());
+
 
     }
     private async Task PublishSubAgencyAccessRequest(IEnumerable<SubmittingAgencyRequest> subAgencyRequests)
