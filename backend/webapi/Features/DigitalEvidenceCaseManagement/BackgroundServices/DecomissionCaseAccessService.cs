@@ -26,7 +26,7 @@ public class DecomissionCaseAccessService : BackgroundService
     {
         this.logger.LogDebug($"{nameof(DecomissionCaseAccessService)} in starting");
 
-        var period = TimeSpan.FromMinutes(this.config.BackGroundServices.DecomissionCaseAccessService.PeriodicTimer);
+        var period = TimeSpan.FromHours(this.config.BackGroundServices.DecomissionCaseAccessService.PeriodicTimer);
         stoppingToken.Register(() => this.logger.LogDebug("#1 DecomissionCaseAccessService background task is stopping."));
         using var timer = new PeriodicTimer(period);
         using var scope = this.serviceScopeFactory.CreateScope();
