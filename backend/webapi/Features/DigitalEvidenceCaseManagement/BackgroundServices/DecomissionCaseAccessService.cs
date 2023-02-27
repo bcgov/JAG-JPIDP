@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using NodaTime;
 using Pidp.Data;
-using Pidp.Features.AccessRequests;
 using Pidp.Kafka.Interfaces;
 using Pidp.Models;
 using Pidp.Models.OutBoxEvent;
@@ -90,12 +89,13 @@ public class DecomissionCaseAccessService : BackgroundService
     {
         foreach (var caseAccessRequest in subAgencyRequests)
         {
-            Serilog.Log.Logger.Information("Publishing Evidence Auto Decomisison Domain Event to topic {0} {1}", this.config.KafkaCluster.CaseDecomissionTopicName, caseAccessRequest.RequestId);
-            await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.CaseDecomissionTopicName, $"{caseAccessRequest.RequestId}", new SubAgencyDomainEvent
+            Serilog.Log.Logger.Information("Publishing Evidence Auto Decomisison Domain Event to topic {0} {1}", this.config.KafkaCluster.SubAgencyTopicName, caseAccessRequest.RequestId);
+            await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.SubAgencyTopicName, $"{caseAccessRequest.RequestId}", new SubAgencyDomainEvent
             {
                 RequestId = caseAccessRequest.RequestId,
                 CaseNumber = caseAccessRequest.CaseNumber,
                 PartyId = caseAccessRequest.PartyId,
+                EventType = CaseEventType.Decommission,
                 AgencyCode = caseAccessRequest.AgencyCode,
                 CaseGroup = caseAccessRequest.CaseGroup,
                 Username = caseAccessRequest.Party!.Jpdid,

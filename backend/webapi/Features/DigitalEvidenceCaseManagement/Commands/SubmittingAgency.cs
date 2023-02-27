@@ -69,9 +69,9 @@ public class SubmittingAgency
 
                 var subAgencyRequest = await this.SubmitAgencyCaseRequest(command); //save all trx at once for production(remove this and handle using idempotent)
 
-                var exportedEvent = this.AddOutbox(command, subAgencyRequest, dto);
+                var exportedEvent = this.AddOutbox(command, subAgencyRequest);
 
-                await this.PublishSubAgencyAccessRequest(dto, subAgencyRequest);
+                await this.PublishSubAgencyAccessRequest(subAgencyRequest);
 
                 await this.context.SaveChangesAsync();
                 await trx.CommitAsync();
@@ -89,7 +89,7 @@ public class SubmittingAgency
 
         }
 
-        private Task<Models.OutBoxEvent.ExportedEvent> AddOutbox(Command command, SubmittingAgencyRequest subAgencyRequest, PartyDto dto)
+        private Task<Models.OutBoxEvent.ExportedEvent> AddOutbox(Command command, SubmittingAgencyRequest subAgencyRequest)
         {
             var exportedEvent = this.context.ExportedEvents.Add(new Models.OutBoxEvent.ExportedEvent
             {
@@ -104,14 +104,14 @@ public class SubmittingAgency
                     PartyId = subAgencyRequest.PartyId,
                     AgencyCode = command.SubmittingAgencyCode,
                     CaseGroup = subAgencyRequest.CaseGroup,
-                    Username = dto.Jpdid,
+                    Username = subAgencyRequest.Party!.Jpdid,
                     RequestedOn = subAgencyRequest.RequestedOn
                 })
             });
             return Task.FromResult(exportedEvent.Entity);
         }
 
-        private async Task PublishSubAgencyAccessRequest(PartyDto dto, SubmittingAgencyRequest subAgencyRequest)
+        private async Task PublishSubAgencyAccessRequest(SubmittingAgencyRequest subAgencyRequest)
         {
             Serilog.Log.Logger.Information("Publishing Sub Agency Domain Event to topic {0} {1}", this.config.KafkaCluster.SubAgencyTopicName, subAgencyRequest.RequestId);
             await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.SubAgencyTopicName, $"{subAgencyRequest.RequestId}", new SubAgencyDomainEvent
@@ -120,8 +120,9 @@ public class SubmittingAgency
                 CaseNumber = subAgencyRequest.CaseNumber,
                 PartyId = subAgencyRequest.PartyId,
                 AgencyCode = subAgencyRequest.AgencyCode,
+                EventType = CaseEventType.Provisioning,
                 CaseGroup = subAgencyRequest.CaseGroup,
-                Username = dto.Jpdid,
+                Username = subAgencyRequest.Party!.Jpdid,
                 RequestedOn = subAgencyRequest.RequestedOn,
             });
         }

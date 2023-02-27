@@ -94,12 +94,13 @@ public class RemoveCaseAccess
         }
         private async Task PublishSubAgencyAccessRequest(PartyDto dto, SubmittingAgencyRequest subAgencyRequest)
         {
-            Serilog.Log.Logger.Information("Publishing Sub Agency Delete Domain Event to topic {0} {1}", this.config.KafkaCluster.CaseDeleteTopicName, subAgencyRequest.RequestId);
-            await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.CaseDeleteTopicName, $"{subAgencyRequest.RequestId}", new SubAgencyDomainEvent
+            Serilog.Log.Logger.Information("Publishing Sub Agency Delete Domain Event to topic {0} {1}", this.config.KafkaCluster.SubAgencyTopicName, subAgencyRequest.RequestId);
+            await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.SubAgencyTopicName, $"{subAgencyRequest.RequestId}", new SubAgencyDomainEvent
             {
                 RequestId = subAgencyRequest.RequestId,
                 CaseNumber = subAgencyRequest.CaseNumber,
                 PartyId = subAgencyRequest.PartyId,
+                EventType = CaseEventType.Decommission,
                 AgencyCode = subAgencyRequest.AgencyCode,
                 CaseGroup = subAgencyRequest.CaseGroup,
                 Username = dto.Jpdid,
