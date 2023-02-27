@@ -17,6 +17,8 @@ using Pidp.Models.Lookups;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
+using Azure.Core.Serialization;
+using Newtonsoft.Json;
 
 public class DigitalEvidence
 {
@@ -231,7 +233,7 @@ We will notify you when your account has been created<p/>{1}<p/>
                 AggregateType = AccessTypeCode.DigitalEvidence.ToString(),
                 AggregateId = $"{command.PartyId}",
                 EventType = "Access Request Created",
-                EventPayload = new EdtUserProvisioning
+                EventPayload = JsonConvert.SerializeObject(new EdtUserProvisioning
                 {
                     Key = $"{command.ParticipantId}",
                     UserName = dto.Jpdid,
@@ -241,7 +243,7 @@ We will notify you when your account has been created<p/>{1}<p/>
                     AccountType = "Saml",
                     Role = "User",
                     AssignedRegions = command.AssignedRegions
-                }
+                })
             });
             return Task.FromResult(exportedEvent.Entity);
         }

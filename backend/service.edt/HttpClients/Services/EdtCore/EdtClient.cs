@@ -248,8 +248,6 @@ public class EdtClient : BaseClient, IEdtClient
 
         var caseSearch = await this.GetAsync<IEnumerable<CaseLookupModel>?>($"api/v1/org-units/1/cases/{searchString}/id");
 
-
-
         if (caseSearch.IsSuccess)
         {
             IEnumerable<CaseLookupModel> caseSearchValue = caseSearch?.Value;

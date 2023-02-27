@@ -10,7 +10,6 @@ public static class HttpClientSetup
     {
         services.AddHttpClient<IAccessTokenClient, AccessTokenClient>();
 
-        //services.AddHttpClientWithBaseAddress<IAddressAutocompleteClient, AddressAutocompleteClient>(config.AddressAutocompleteClient.Url);
 
         services.AddHttpClientWithBaseAddress<IChesClient, ChesClient>(config.ChesClient.Url)
             .WithBearerToken(new ChesClientCredentials
@@ -19,18 +18,6 @@ public static class HttpClientSetup
                 ClientId = config.ChesClient.ClientId,
                 ClientSecret = config.ChesClient.ClientSecret
             });
-
-        //services.AddHttpClientWithBaseAddress<ILdapClient, LdapClient>(config.LdapClient.Url);
-
-        //services.AddHttpClientWithBaseAddress<IKeycloakAdministrationClient, KeycloakAdministrationClient>(config.Keycloak.AdministrationUrl)
-        //    .WithBearerToken(new KeycloakAdministrationClientCredentials
-        //    {
-        //        Address = config.Keycloak.TokenUrl,
-        //        ClientId = config.Keycloak.AdministrationClientId,
-        //        ClientSecret = config.Keycloak.AdministrationClientSecret
-        //    });
-
-        //services.AddHttpClientWithBaseAddress<IJustinParticipantClient, JustinParticipantClient>(config.JustinParticipantClient.Url);
 
         services.AddTransient<ISmtpEmailClient, SmtpEmailClient>();
 

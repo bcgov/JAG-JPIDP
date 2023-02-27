@@ -60,13 +60,14 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
                 var result = _consumer.Consume(cancellationToken);
                 if (result != null)
                 {
-                  var consumerResult =  await _handler.HandleAsync(_consumer.Name, result.Message.Key, result.Message.Value);
+
+                    Log.Logger.Information("Received message {0}", result.Message.Key);
+                    var consumerResult =  await _handler.HandleAsync(_consumer.Name, result.Message.Key, result.Message.Value);
 
                     if (consumerResult.Status == TaskStatus.RanToCompletion && consumerResult.Exception == null)
                     {
                         _consumer.Commit(result);
                     }
-                    
                 }
             }
             catch (OperationCanceledException)
@@ -76,7 +77,7 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
             catch (ConsumeException e)
             {
                 // Consumer errors should generally be ignored (or logged) unless fatal.
-                Console.WriteLine($"Consume error: {e.Error.Reason}");
+                Log.Logger.Warning($"Consume error: {e.Error.Reason}");
 
                 if (e.Error.IsFatal)
                 {
@@ -85,7 +86,7 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Unexpected error: {e}");
+                Log.Logger.Error($"Unexpected error: {e}");
                 break;
             }
         }

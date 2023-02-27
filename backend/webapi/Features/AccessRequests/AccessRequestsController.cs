@@ -25,6 +25,13 @@ public class AccessRequestsController : PidpControllerBase
         => await this.AuthorizePartyBeforeHandleAsync(query.PartyId, handler, query)
             .ToActionResultOfT();
 
+    //[HttpGet("{requestId}/digital-evidence-case-manangement")]
+    //[Authorize(Policy = Policies.AdminAuthentication)]
+    //[ProducesResponseType(StatusCodes.Status200OK)]
+    //[ProducesResponseType(StatusCodes.Status400BadRequest)]
+    //public async Task<ActionResult<List<DigitalEvidenceSubAgency.Model>>> GetSubAgencyRequests([FromServices] IQueryHandler<DigitalEvidenceSubAgency.Query, List<DigitalEvidenceSubAgency.Model>> handler)
+    //=> await handler.HandleAsync(new DigitalEvidenceSubAgency.Query());
+
     [HttpPost("driver-fitness")]
     [Authorize(Policy = Policies.BcscAuthentication)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -36,14 +43,28 @@ public class AccessRequestsController : PidpControllerBase
 
     [HttpPost("digital-evidence")]
     [Authorize(Policy = Policies.AllDemsIdentityProvider)]
-    //[Authorize(Policy = Policies.BcpsAuthentication)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateDigitalEvidenceEnrolment([FromServices] ICommandHandler<DigitalEvidence.Command, IDomainResult> handler,
                                                               [FromBody] DigitalEvidence.Command command)
     => await this.AuthorizePartyBeforeHandleAsync(command.PartyId, handler, command)
         .ToActionResult();
-
+    //    [HttpPost("digital-evidence-case-manangement")]
+    //    [Authorize(Policy = Policies.SubAgencyIdentityProvider)]
+    //    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    //    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    //    public async Task<IActionResult> CreateDigitalEvidenceSubAgencyEnrolment([FromServices] ICommandHandler<DigitalEvidenceSubAgency.Command, IDomainResult> handler,
+    //                                                          [FromBody] DigitalEvidenceSubAgency.Command command)
+    //=> await this.AuthorizePartyBeforeHandleAsync(command.PartyId, handler, command)
+    //    .ToActionResult();
+    //    [HttpPut("{requestId}/digital-evidence-case-manangement")]
+    //    [Authorize(Policy = Policies.SubAgencyIdentityProvider)]
+    //    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    //    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    //    public async Task<IActionResult> UpdateDigitalEvidenceSubAgencyEnrolment([FromServices] ICommandHandler<DigitalEvidenceSubAgency.Command, IDomainResult> handler,
+    //                                                      [FromBody] DigitalEvidenceSubAgency.Command command)
+    //=> await this.AuthorizePartyBeforeHandleAsync(command.PartyId, handler, command)
+    //.ToActionResult();
     [HttpPost("hcim-account-transfer")]
     [Authorize(Policy = Policies.AnyPartyIdentityProvider)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

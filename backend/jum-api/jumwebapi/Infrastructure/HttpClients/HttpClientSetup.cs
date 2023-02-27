@@ -46,7 +46,7 @@ public static class HttpClientSetup
             Serilog.Log.Logger.Information("JUSTIN Client configured with basic auth");
             var username = config.JustinParticipantClient.BasicAuthUsername;
             var password = config.JustinParticipantClient.BasicAuthPassword;
-            var svcCredentials = Convert.ToBase64String(ASCIIEncoding.ASCII.GetBytes(username + ":" + password));
+            var svcCredentials = Convert.ToBase64String(Encoding.ASCII.GetBytes(username + ":" + password));
             services.AddHttpClientWithBaseAddress<IJustinParticipantClient, JustinParticipantClient>(config.JustinParticipantClient.Url).ConfigureHttpClient(client => client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", svcCredentials));
 
         }

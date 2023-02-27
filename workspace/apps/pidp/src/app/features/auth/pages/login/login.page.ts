@@ -15,7 +15,7 @@ import { ConfirmDialogComponent } from '@bcgov/shared/ui';
 import { APP_CONFIG, AppConfig } from '@app/app.config';
 import { DocumentService } from '@app/core/services/document.service';
 import { LookupService } from '@app/modules/lookup/lookup.service';
-import { Lookup } from '@app/modules/lookup/lookup.types';
+import { AgencyLookup, Lookup } from '@app/modules/lookup/lookup.types';
 
 import { IdentityProvider } from '../../enums/identity-provider.enum';
 import { AuthService } from '../../services/auth.service';
@@ -30,6 +30,8 @@ export class LoginPage {
   public headerConfig: DashboardHeaderConfig;
   public loginCancelled: boolean;
   public organizations: Lookup[];
+  public submittingAgencies: AgencyLookup[];
+
   public bcscSupportUrl: string;
   public bcscMobileSetupUrl: string;
   public specialAuthorityUrl: string;
@@ -38,7 +40,7 @@ export class LoginPage {
 
   public IdentityProvider = IdentityProvider;
   // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
-  myControl: FormControl = new FormControl();
+  selectedAgency: FormControl = new FormControl();
 
   public constructor(
     @Inject(APP_CONFIG) private config: AppConfig,
@@ -56,6 +58,9 @@ export class LoginPage {
     this.loginCancelled = routeSnapshot.queryParams.action === 'cancelled';
     this.bcscSupportUrl = this.config.urls.bcscSupport;
     this.organizations = this.lookupService.organizations;
+    this.submittingAgencies = this.lookupService.submittingAgencies.filter(
+      (agency) => agency.idpHint?.length > 0
+    );
     this.bcscMobileSetupUrl = this.config.urls.bcscMobileSetup;
     this.specialAuthorityUrl = this.config.urls.specialAuthority;
     this.providerIdentitySupportEmail =
@@ -70,7 +75,15 @@ export class LoginPage {
     });
   }
 
-  public onLogin(idpHint?: IdentityProvider): void {
+  public onAgencyLogin(): void {
+    const idp = this.submittingAgencies.find(
+      (agency) => agency.name === this.selectedAgency.value
+    )?.idpHint;
+    console.log('IDP %s', idp);
+    this.onLogin(IdentityProvider.SUBMITTING_AGENCY, idp);
+  }
+
+  public onLogin(idpHint?: IdentityProvider, idpStringVal?: string): void {
     if (this.idpHint === IdentityProvider.AZUREIDIR) {
       this.login(this.idpHint);
       return;
@@ -88,10 +101,25 @@ export class LoginPage {
       .afterClosed()
       .pipe(
         exhaustMap((result) =>
-          result ? this.login(idpHint ?? this.idpHint) : EMPTY
+          result
+            ? idpStringVal != null
+              ? this.loginDyanmicIdp(idpStringVal)
+              : this.login(idpHint ?? this.idpHint)
+            : EMPTY
         )
       )
       .subscribe();
+  }
+
+  private loginDyanmicIdp(idpHint: string): Observable<void> {
+    const endorsementToken =
+      this.route.snapshot.queryParamMap.get('endorsement-token');
+    return this.authService.login({
+      idpHint: idpHint,
+      redirectUri:
+        this.config.applicationUrl +
+        (endorsementToken ? `?endorsement-token=${endorsementToken}` : ''),
+    });
   }
 
   private login(idpHint: IdentityProvider): Observable<void> {

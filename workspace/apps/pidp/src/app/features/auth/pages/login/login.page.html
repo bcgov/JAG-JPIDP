@@ -116,23 +116,19 @@
           Government User
         </button>
         <br /><br />
-        <!--<mat-form-field class="example-form">
-          <input
-            #inputField
-            type="text"
-            placeholder="Select your organization"
-            matInput
-            aria-label="Number"
-            [formControl]="myControl"
-            [matAutocomplete]="auto" />
-          <mat-autocomplete #auto="matAutocomplete">
-            <mat-option
-              *ngFor="let organization of organizations"
-              [value]="organization.name">
-              {{ organization.name }}
+        <mat-form-field class="login-form">
+          <input #inputField type="text" placeholder="Select your agency" matInput aria-label="Number"
+            [formControl]="selectedAgency" [matAutocomplete]="auto" />
+          <mat-autocomplete class="smaller" #auto="matAutocomplete">
+            <mat-option *ngFor="let agency of submittingAgencies" [value]="agency.name">
+              {{ agency.name }}
             </mat-option>
           </mat-autocomplete>
-        </mat-form-field>-->
+
+        </mat-form-field>
+        <button mat-stroked-button class="agency-login-btn" *ngIf="selectedAgency.value" (click)="onAgencyLogin()">
+          Agency Login
+        </button>
       </div>
     </div>
   </ng-template>

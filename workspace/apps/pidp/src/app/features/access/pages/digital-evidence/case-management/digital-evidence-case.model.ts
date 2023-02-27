@@ -22,7 +22,7 @@ export interface DigitalEvidenceCase {
 }
 
 export interface DigitalEvidenceCaseRequest extends DigitalEvidenceCase {
-  requestedDate: Date;
-  assignedDate: Date | null;
+  requestedOn: Date;
+  assignedOn: Date | null;
   requestStatus: CaseStatus;
 }

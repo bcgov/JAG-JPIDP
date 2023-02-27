@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using NodaTime;
 using NotificationService.Data;
 using NotificationService.HttpClients.Mail;

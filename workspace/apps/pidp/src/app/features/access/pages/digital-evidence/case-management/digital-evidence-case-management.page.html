@@ -33,7 +33,10 @@
     <section class="caseSelection" *ngIf="requestedCase">
 
       <b>Case Name:</b> {{ requestedCase?.name }}<br />
+      <b>Accused Full Name:</b> {{ getCaseAttribute(47) }}<br />
       <b>Status:</b> {{ requestedCase?.status }}<br />
+      <b>Investigating Officer:</b> {{ getCaseAttribute(25) }}<br />
+      <b>Offence Date (earliest):</b> {{ getCaseAttribute(67) }}<br />
 
       <p>
 
@@ -65,18 +68,15 @@
           <th *matHeaderCellDef mat-header-cell>File Number</th>
           <td *matCellDef="let case" mat-cell>{{ case.agencyFileNumber }}</td>
         </ng-container>
-        <ng-container matColumnDef="name">
-          <th *matHeaderCellDef mat-header-cell>Name</th>
-          <td *matCellDef="let case" mat-cell>{{ case.name }}</td>
+        <ng-container matColumnDef="requestStatus">
+          <th *matHeaderCellDef mat-header-cell>Status</th>
+          <td *matCellDef="let case" mat-cell>{{ case.requestStatus }}</td>
         </ng-container>
-        <ng-container matColumnDef="requestedDate">
+        <ng-container matColumnDef="requestedOn">
           <th *matHeaderCellDef mat-header-cell>Requested</th>
-          <td *matCellDef="let case" mat-cell>{{ case.requestedDate | date: 'MM-dd-yy hh:mm' }}</td>
+          <td *matCellDef="let case" mat-cell>{{ case.requestedOn | date: 'MM-dd-yy hh:mm' }}</td>
         </ng-container>
-        <ng-container matColumnDef="assignedDate">
-          <th *matHeaderCellDef mat-header-cell>Granted</th>
-          <td *matCellDef="let case" mat-cell>{{ case.assignedDate | date: 'MM-dd-yy hh:mm' }}</td>
-        </ng-container>
+
 
         <ng-container matColumnDef="caseAction">
           <th *matHeaderCellDef mat-header-cell>Action</th>

@@ -10,6 +10,7 @@ import {
   Observable,
   catchError,
   debounceTime,
+  exhaustMap,
   filter,
   map,
   noop,
@@ -17,6 +18,12 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
+
+import {
+  ConfirmDialogComponent,
+  DialogOptions,
+  HtmlComponent,
+} from '@bcgov/shared/ui';
 
 import { APP_CONFIG, AppConfig } from '@app/app.config';
 import { AbstractFormPage } from '@app/core/classes/abstract-form-page.class';
@@ -80,9 +87,8 @@ export class DigitalEvidenceCaseManagementPage
   public dataSource: MatTableDataSource<DigitalEvidenceCaseRequest>;
   public displayedColumns: string[] = [
     'agencyFileNumber',
-    'name',
-    'requestedDate',
-    'assignedDate',
+    'requestedOn',
+    'requestStatus',
     'caseAction',
   ];
 
@@ -101,7 +107,7 @@ export class DigitalEvidenceCaseManagementPage
     documentService: DocumentService,
     accessTokenService: AccessTokenService,
     private authorizedUserService: AuthorizedUserService,
-    private digitalEvidenceCaseResource: DigitalEvidenceCaseResource,
+    private digitalEvidenceCaseResource: DigitalEvidenceCaseManagementResource,
     fb: FormBuilder
   ) {
     super(dialog, formUtilsService);
@@ -139,6 +145,9 @@ export class DigitalEvidenceCaseManagementPage
     this.isCaseSearchInProgress = false;
     this.isFindDisabled = true;
     this.formControlNames = ['ParticipantId', 'CaseListing'];
+
+    // get current case requests
+    this.getPartyRequests();
   }
 
   public onBack(): void {
@@ -150,8 +159,25 @@ export class DigitalEvidenceCaseManagementPage
   }
 
   public onRemoveCase(requestedCase: DigitalEvidenceCaseRequest): void {
-    alert('Remove ' + requestedCase.id);
     requestedCase.status = CaseStatus.RemoveRequested;
+    const data: DialogOptions = {
+      title: 'Remove case access',
+      component: HtmlComponent,
+      data: {
+        content: `You are about request removal from case ${requestedCase.agencyFileNumber}. Continue?`,
+      },
+    };
+    this.dialog
+      .open(ConfirmDialogComponent, { data })
+      .afterClosed()
+      .pipe(
+        exhaustMap((result) =>
+          result
+            ? this.digitalEvidenceCaseResource.removeCaseRequest(requestedCase)
+            : EMPTY
+        )
+      )
+      .subscribe();
   }
 
   public showFormControl(formControlName: string): boolean {
@@ -160,6 +186,18 @@ export class DigitalEvidenceCaseManagementPage
 
   public onChangeAgencyCode(): void {
     alert(this.formState.agencyCode.value);
+  }
+
+  public getPartyRequests(): void {
+    this.digitalEvidenceCaseResource
+      .getPartyCaseRequests(this.partyService.partyId)
+      .pipe()
+      .subscribe(
+        (digitalEvidenceCaseRequests: DigitalEvidenceCaseRequest[]) => {
+          this.caseListing = digitalEvidenceCaseRequests;
+          this.dataSource.data = this.caseListing;
+        }
+      );
   }
 
   public findCase(): void {
@@ -193,26 +231,15 @@ export class DigitalEvidenceCaseManagementPage
         this.toastService.openErrorToast('Case already requested');
       } else {
         this.onRequestAccess();
-        const extendedDigitalEvidenceCase: DigitalEvidenceCaseRequest = {
-          name: this.requestedCase.name,
-          agencyFileNumber:
-            this.requestedCase.fields.find((c) => c.name === 'Agency File No.')
-              ?.value || '',
-          description: this.requestedCase.description,
-          id: this.requestedCase.id,
-          key: this.requestedCase.key,
-          fields: [],
-          requestedDate: new Date(),
-          assignedDate: null,
-          status: this.requestedCase.status,
-          requestStatus: CaseStatus.NewRequest,
-        };
-        this.caseListing.push(extendedDigitalEvidenceCase);
-        this.requestedCase = null;
-        this.formState.caseName.patchValue('');
-        this.dataSource.data = this.caseListing;
       }
     }
+  }
+
+  public getCaseAttribute(fieldId: number): string {
+    return (
+      this.requestedCase?.fields?.find((c) => c.id === fieldId)?.value ||
+      'Not set'
+    );
   }
 
   public onRequestAccess(): void {
@@ -227,7 +254,7 @@ export class DigitalEvidenceCaseManagementPage
           agencyFileNumber
         )
         .pipe(
-          tap(() => (this.completed = true)),
+          tap(() => this.getPartyRequests()),
           catchError((error: HttpErrorResponse) => {
             if (error.status === HttpStatusCode.NotFound) {
               this.navigateToRoot();

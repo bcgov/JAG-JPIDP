@@ -20,6 +20,7 @@ public class PidpConfiguration
     public PlrClientConfiguration PlrClient { get; set; } = new();
     public JumClientConfiguration JumClient { get; set; } = new();
     public EdtClientConfiguration EdtClient { get; set; } = new EdtClientConfiguration();
+    public EdtCaseManagementClientConfiguration EdtCaseManagementClient { get; set; } = new EdtCaseManagementClientConfiguration();
 
     public TelemeteryConfiguration Telemetry { get; set; } = new TelemeteryConfiguration();
 
@@ -107,6 +108,11 @@ public class PidpConfiguration
     }
 
     public class EdtClientConfiguration
+    {
+        public string Url { get; set; } = string.Empty;
+    }
+
+    public class EdtCaseManagementClientConfiguration
     {
         public string Url { get; set; } = string.Empty;
     }

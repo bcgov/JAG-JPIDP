@@ -17,11 +17,19 @@
 }
 
 //
-.example-form {
+.login-form {
   min-width: 150px;
   max-width: 500px;
   width: 100%;
   background-color: white;
+  .mat-option-text > span {
+    font-size: small;
+    color: aqua;
+  }
+
+  .agency-login-btn {
+    margin-top: 10px;
+  }
 }
 // BCSC Login
 //

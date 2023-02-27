@@ -21,6 +21,7 @@ using static Pidp.Features.Parties.ProfileStatus.ProfileStatusDto;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using System.Globalization;
+using System.Runtime.InteropServices;
 
 public partial class ProfileStatus
 {
@@ -158,6 +159,15 @@ public partial class ProfileStatus
 
             }
 
+            // if an agency account then we'll mark as complete to prevent any changes
+            var submittingAgency = await this.GetSubmittingAgency(command.User);
+            if (submittingAgency != null)
+            {
+                profile.UserIsInSubmittingAgency = true;
+                profile.SubmittingAgency = submittingAgency;
+                profile.EmployeeIdentifier = command.User.GetUserId().ToString();
+            }
+
             if (profile.OrganizationDetailEntered && profile.OrganizationCode == OrganizationCode.JusticeSector && orgJusticeSecDetail != null)
             {
                 var accessToken = await this.httpContextAccessor.HttpContext.GetTokenAsync("access_token");
@@ -234,6 +244,31 @@ public partial class ProfileStatus
 
             return newCpn;
         }
+
+        private async Task<SubmittingAgency> GetSubmittingAgency(ClaimsPrincipal user)
+        {
+            // create an instance of the Query class
+            var query = new Pidp.Features.Lookups.Index.Query();
+
+            // create an instance of the QueryHandler class
+            var handler = new Pidp.Features.Lookups.Index.QueryHandler(context);
+
+            // execute the query and get the result
+            var result = handler.HandleAsync(query);
+
+            // get the SubmittingAgencies list from the result
+            var submittingAgencies = result.Result.SubmittingAgencies;
+
+            var agency = submittingAgencies.Find(agency => agency.IdpHint.Equals(user.GetIdentityProvider()));
+
+            if (agency != null)
+            {
+                return agency;
+            }
+
+            return null;
+        }
+
         private async Task<JustinUser?> RecheckJustinUser(OrganizationCode organizationCode, string personalId)
         {
             var newUser = new JustinUser();
@@ -271,6 +306,7 @@ public partial class ProfileStatus
         public CorrectionServiceCode? CorrectionServiceCode { get; set; }
         public string? CorrectionService { get; set; }
         public JusticeSectorCode? JusticeSectorCode { get; set; }
+        public SubmittingAgency? SubmittingAgency { get; set; }
         public string? JusticeSectorService { get; set; }
         public string? EmployeeIdentifier { get; set; }
         //public bool OrganizationDetailEntered { get; set; }
@@ -301,6 +337,10 @@ public partial class ProfileStatus
         //public bool UserIsBcps => this.User.GetIdentityProvider() == ClaimValues.Bcps;
         public bool UserIsBcps => this.User.GetIdentityProvider() == ClaimValues.Bcps && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpApi).Contains(DefaultRoles.Bcps);
         public bool UserIsIdir => this.User.GetIdentityProvider() == ClaimValues.Idir;
+        public bool UserIsVicPd => this.User.GetIdentityProvider() == ClaimValues.VicPd;
+
+        public bool UserIsInSubmittingAgency;
+
         [MemberNotNullWhen(true, nameof(LicenceDeclaration))]
         public bool HasDeclaredLicence => this.LicenceDeclaration?.HasNoLicence == false;
 

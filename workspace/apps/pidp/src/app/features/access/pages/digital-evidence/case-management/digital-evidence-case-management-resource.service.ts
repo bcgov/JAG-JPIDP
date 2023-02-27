@@ -12,7 +12,10 @@ import { PortalResource } from '@app/features/portal/portal-resource.service';
 
 import { DemsAccount } from '../digital-evidence-account.model';
 import { DigitalEvidenceCaseFindResponse } from './digital-evidence-case-find-response.model';
-import { DigitalEvidenceCase } from './digital-evidence-case.model';
+import {
+  DigitalEvidenceCase,
+  DigitalEvidenceCaseRequest,
+} from './digital-evidence-case.model';
 
 @Injectable({
   providedIn: 'root',
@@ -28,12 +31,36 @@ export class DigitalEvidenceCaseManagementResource {
     return this.portalResource.getProfileStatus(partyId);
   }
 
+  public removeCaseRequest(
+    requestedCase: DigitalEvidenceCaseRequest
+  ): Observable<DigitalEvidenceCaseRequest> {
+    alert('Removing ' + requestedCase.id);
+    return this.apiResource.delete(
+      `evidence-case-management/` + requestedCase.id,
+      {}
+    );
+  }
+
+  public getPartyCaseRequests(
+    partyId: number
+  ): Observable<DigitalEvidenceCaseRequest[]> {
+    return this.apiResource.get(`evidence-case-management`, {
+      params: {
+        partyId: partyId,
+      },
+    });
+  }
+
   public findCase(
     agencyCode: string,
     caseName: string
   ): Observable<DigitalEvidenceCase> {
     const search = agencyCode + ': ' + caseName;
-    return this.apiResource.get(`digital-evidence-cases/${search}`);
+    return this.apiResource.get(`evidence-case-management/search`, {
+      params: {
+        AgencyFileNumber: search,
+      },
+    });
   }
 
   public requestAccess(
@@ -42,7 +69,7 @@ export class DigitalEvidenceCaseManagementResource {
     agencyFileNumber: string
   ): NoContent {
     return this.apiResource
-      .post<NoContent>('digital-evidence-cases', {
+      .post<NoContent>('evidence-case-management', {
         partyId,
         caseId,
         agencyFileNumber,

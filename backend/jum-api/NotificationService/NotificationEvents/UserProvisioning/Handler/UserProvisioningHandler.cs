@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using NotificationService.Data;
 using NotificationService.HttpClients.Mail;
 using NotificationService.Kafka.Interfaces;
@@ -44,10 +44,6 @@ public class UserProvisioningHandler : IKafkaHandler<string, Notification>
         }
 
         //Send Notification to user
-
-
-
-           
         var emailLogs = await _context.EmailLogs
              .Where(log => log.Tag == value.Tag && log.LatestStatus != ChesStatus.Completed)
              .ToListAsync();

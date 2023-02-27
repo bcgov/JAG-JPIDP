@@ -61,14 +61,12 @@ export class DigitalEvidenceCaseManagementPortalSection
 
   public get status(): string {
     const statusCode = this.getStatusCode();
-    debugger;
     return statusCode === StatusCode.COMPLETED
       ? 'Available'
       : 'Pending DEMS Enrollment';
   }
 
   public get statusType(): AlertType {
-    let u = this.getStatusCode();
     return this.getStatusCode() === StatusCode.AVAILABLE
       ? 'success'
       : this.getStatusCode() === StatusCode.PENDING

@@ -1,4 +1,4 @@
-namespace Pidp.Features.DigitalEvidenceCases;
+namespace Pidp.Features.DigitalEvidenceCaseManagement.Commands;
 
 using System.Diagnostics;
 using DomainResults.Common;
@@ -68,7 +68,7 @@ public class DigitalEvidenceCaseCommand
                 var party = await this.GetPidpUser(command);
 
                 // validate from a valid submitting agency?
-               
+
                 // add database access request
                 using var trx = this.context.Database.BeginTransaction();
 
@@ -106,7 +106,7 @@ public class DigitalEvidenceCaseCommand
         private async Task<IDomainResult> SubmitToRequestTopic(Command command, PartyDto party, DigitalEvidenceCase caseRequest)
         {
             Serilog.Log.Information("Case request submitting to topic {0} {1}", command.PartyId, command.CaseId);
-            
+
 
             return DomainResult.Success();
 
@@ -115,7 +115,7 @@ public class DigitalEvidenceCaseCommand
         private async Task<DigitalEvidenceCase> StoreCaseRequest(Command command)
         {
 
-            var caseRequest = new Models.DigitalEvidenceCase
+            var caseRequest = new DigitalEvidenceCase
             {
                 PartyId = command.PartyId,
                 Status = AccessRequestStatus.Pending,
