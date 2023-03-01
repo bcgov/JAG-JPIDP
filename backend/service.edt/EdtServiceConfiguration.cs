@@ -111,6 +111,10 @@ public class EdtServiceConfiguration
     {
         public string Url { get; set; } = string.Empty;
     }
+
+
+
+
     public class KeycloakConfiguration
     {
         //public string RealmUrl { get; set; } = string.Empty;

@@ -24,3 +24,10 @@ table.mat-table {
   border-radius: 5px;
   border: 2px palette.theme-palette(blue) solid;
 }
+
+.caseSelectionInvalid {
+  width: 100%;
+  padding: 5px;
+  border-radius: 5px;
+  border: 2px palette.theme-palette(red) solid;
+}

@@ -5,10 +5,10 @@ using System.Net;
 using System.Threading.Tasks;
 using Pidp.Models;
 
-public class EdtClient : BaseClient, IEdtClient
+public class EdtCaseManagementClient : BaseClient, IEdtCaseManagementClient
 {
 
-    public EdtClient(HttpClient httpClient, ILogger<EdtClient> logger) : base(httpClient, logger) { }
+    public EdtCaseManagementClient(HttpClient httpClient, ILogger<EdtCaseManagementClient> logger) : base(httpClient, logger) { }
 
     public async Task<DigitalEvidenceCaseModel?> FindCase(string caseName)
     {

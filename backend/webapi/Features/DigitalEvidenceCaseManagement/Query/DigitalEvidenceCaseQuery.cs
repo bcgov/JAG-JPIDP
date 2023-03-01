@@ -11,9 +11,9 @@ public class DigitalEvidenceCaseQuery
 
     public class QueryHandler : IQueryHandler<Query, Models.DigitalEvidenceCaseModel>
     {
-        private readonly IEdtClient client;
+        private readonly IEdtCaseManagementClient client;
 
-        public QueryHandler(IEdtClient client) => this.client = client;
+        public QueryHandler(IEdtCaseManagementClient client) => this.client = client;
 
         public async Task<Models.DigitalEvidenceCaseModel> HandleAsync(Query query) => await this.client.FindCase(query.AgencyFileNumber);
     }

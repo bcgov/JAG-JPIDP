@@ -1,25 +1,104 @@
-var builder = WebApplication.CreateBuilder(args);
+namespace edt.service;
 
-// Add services to the container.
+using System.Reflection;
+using edt.casemanagement;
+using log4net;
+using Serilog;
+using Serilog.Events;
+using Serilog.Formatting.Json;
+using Serilog.Sinks.SystemConsole.Themes;
 
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+public class Program
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+
+
+    public static int Main(string[] args)
+    {
+        CreateLogger();
+
+        try
+        {
+            Log.Information("Starting web host");
+            CreateHostBuilder(args)
+                .Build()
+                .Run();
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            Log.Fatal(ex, "Host terminated unexpectedly");
+            return 1;
+        }
+        finally
+        {
+            // Ensure buffered logs are written to their target sink
+            Log.CloseAndFlush();
+        }
+    }
+
+    public static IHostBuilder CreateHostBuilder(string[] args) =>
+        Host.CreateDefaultBuilder(args)
+            .ConfigureWebHostDefaults(webBuilder => webBuilder.UseStartup<Startup>())
+            .UseSerilog();
+
+    private static void CreateLogger(
+        )
+    {
+        var path = Environment.GetEnvironmentVariable("LogFilePath") ?? "logs";
+
+        var config = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.json", optional: true)
+            .Build();
+
+        var seqEndpoint = Environment.GetEnvironmentVariable("Seq__Url");
+        seqEndpoint ??= config.GetValue<string>("Seq:Url");
+
+        if (string.IsNullOrEmpty(seqEndpoint))
+        {
+            Console.WriteLine("SEQ Log Host is not configured - check Seq environment");
+            Environment.Exit(100);
+        }
+
+
+        try
+        {
+            if (EdtServiceConfiguration.IsDevelopment())
+            {
+                Directory.CreateDirectory(path);
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Creating the logging directory failed: {0}", e.ToString());
+        }
+
+        var name = Assembly.GetExecutingAssembly().GetName();
+        var outputTemplate = "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}";
+
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Information()
+            .Filter.ByExcluding("RequestPath like '/health%'")
+            .Filter.ByExcluding("RequestPath like '/metrics%'")
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+            .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
+            .MinimumLevel.Override("System", LogEventLevel.Warning)
+            .Enrich.FromLogContext()
+            .Enrich.WithMachineName()
+            .Enrich.WithProperty("Assembly", $"{name.Name}")
+            .Enrich.WithProperty("Version", $"{name.Version}")
+            .WriteTo.Seq(seqEndpoint)
+            .WriteTo.Console(
+                outputTemplate: outputTemplate,
+                theme: AnsiConsoleTheme.Code)
+            .WriteTo.Async(a => a.File(
+                $@"{path}/edtservice.log",
+                outputTemplate: outputTemplate,
+                rollingInterval: RollingInterval.Day,
+                shared: true))
+            .WriteTo.Async(a => a.File(
+                new JsonFormatter(),
+                $@"{path}/edtcasemanagement.json",
+                rollingInterval: RollingInterval.Day))
+            .CreateLogger();
+    }
 }
-
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();

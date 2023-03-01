@@ -26,14 +26,14 @@ public class DigitalEvidenceByPartyQuery
         {
             return await this.context.SubmittingAgencyRequests
                 .Where(request => request.PartyId == query.PartyId)
-                .Select(party => new DigitalEvidenceCaseModel
+                .Select(caseRequest => new DigitalEvidenceCaseModel
                 {
-                    PartyId = party.PartyId,
-                    Id = party.CaseId,
-                    AgencyFileNumber = party.AgencyFileNumber,
-                    RequestedOn = party.RequestedOn,
-                    LastUpdated = party.Modified,
-                    RequestStatus = party.RequestStatus,
+                    Id = caseRequest.CaseId,
+                    RequestId = caseRequest.RequestId,
+                    AgencyFileNumber = caseRequest.AgencyFileNumber,
+                    RequestedOn = caseRequest.RequestedOn,
+                    LastUpdated = caseRequest.Modified,
+                    RequestStatus = caseRequest.RequestStatus,
                 })
                 .ToListAsync();
         }

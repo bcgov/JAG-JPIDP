@@ -4,6 +4,7 @@ using DomainResults.Common;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using NodaTime;
 using Pidp.Data;
 using Pidp.Features.AccessRequests;
 using Pidp.Kafka.Interfaces;
@@ -53,12 +54,15 @@ public class RemoveCaseAccess
             try
             {
 
-                this.context.SubmittingAgencyRequests.Remove(subAgencyRequest);
-                await this.context.SaveChangesAsync();
+                subAgencyRequest.RequestStatus = AgencyRequestStatus.RemovalPending;
 
+                await this.context.SaveChangesAsync();
                 var exportedEvent = this.AddOutbox(subAgencyRequest, dto);
 
-                await this.PublishSubAgencyAccessRequest(dto, subAgencyRequest);
+                await this.PublishSubAgencyAccessRemovalRequest(dto, subAgencyRequest);
+
+                await trx.CommitAsync();
+
             }
             catch (Exception ex)
             {
@@ -83,21 +87,26 @@ public class RemoveCaseAccess
                     PartyId = subAgencyRequest.PartyId,
                     AgencyFileNumber = subAgencyRequest.AgencyFileNumber,
                     Username = dto.Jpdid,
+                    UserId = dto.UserId,
                     RequestedOn = subAgencyRequest.RequestedOn
                 })
             });
             return Task.FromResult(exportedEvent.Entity);
         }
-        private async Task PublishSubAgencyAccessRequest(PartyDto dto, SubmittingAgencyRequest subAgencyRequest)
+        private async Task PublishSubAgencyAccessRemovalRequest(PartyDto dto, SubmittingAgencyRequest subAgencyRequest)
         {
             Serilog.Log.Logger.Information("Publishing Sub Agency Delete Domain Event to topic {0} {1}", this.config.KafkaCluster.CaseAccessRequestTopicName, subAgencyRequest.RequestId);
+
+
             await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.CaseAccessRequestTopicName, $"{subAgencyRequest.RequestId}", new SubAgencyDomainEvent
             {
                 RequestId = subAgencyRequest.RequestId,
                 CaseId = subAgencyRequest.CaseId,
                 PartyId = subAgencyRequest.PartyId,
                 AgencyFileNumber = subAgencyRequest.AgencyFileNumber,
+                EventType = CaseEventType.Decommission,
                 Username = dto.Jpdid,
+                UserId = dto.UserId,
                 RequestedOn = subAgencyRequest.RequestedOn
             });
         }

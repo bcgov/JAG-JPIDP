@@ -32,4 +32,7 @@ public static class AgencyRequestStatus
     public const string Approved = "Approved";
     public const string Dismissed = "Dismissed";
     public const string Expired = "Expired";
+    public const string RemovalPending = "Removal Pending";
 }
+
+

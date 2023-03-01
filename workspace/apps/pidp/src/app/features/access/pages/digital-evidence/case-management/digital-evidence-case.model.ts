@@ -9,6 +9,7 @@ export interface Field {
   id: number;
   name: string;
   value: any;
+  display: boolean;
 }
 
 export interface DigitalEvidenceCase {
@@ -23,6 +24,8 @@ export interface DigitalEvidenceCase {
 
 export interface DigitalEvidenceCaseRequest extends DigitalEvidenceCase {
   requestedOn: Date;
+  requestId: number;
   assignedOn: Date | null;
+  removalRequest: boolean;
   requestStatus: CaseStatus;
 }

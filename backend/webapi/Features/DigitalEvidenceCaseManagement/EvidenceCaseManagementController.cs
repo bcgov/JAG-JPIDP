@@ -40,7 +40,7 @@ public class EvidenceCaseManagementController : PidpControllerBase
         .ToActionResult();
 
     [HttpPut("{requestId}")]
-    [Authorize(Policy = Policies.SubAgencyIdentityProvider)]
+  //  [Authorize(Policy = Policies.SubAgencyIdentityProvider)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> RemoveDigitalEvidenceSubAgencyCaseAccessRequest([FromServices] ICommandHandler<RemoveCaseAccess.Command, IDomainResult> handler,

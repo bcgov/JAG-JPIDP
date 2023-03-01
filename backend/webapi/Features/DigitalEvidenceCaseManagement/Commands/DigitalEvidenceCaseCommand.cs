@@ -17,6 +17,8 @@ public class DigitalEvidenceCaseCommand
     {
         public int PartyId { get; set; }
         public int CaseId { get; set; }
+
+        public bool RemoveRequested { get; set; }
         public string AgencyFileNumber { get; set; } = string.Empty;
 
     }

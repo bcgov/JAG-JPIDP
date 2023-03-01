@@ -31,14 +31,15 @@ export class DigitalEvidenceCaseManagementResource {
     return this.portalResource.getProfileStatus(partyId);
   }
 
-  public removeCaseRequest(
-    requestedCase: DigitalEvidenceCaseRequest
-  ): Observable<DigitalEvidenceCaseRequest> {
-    alert('Removing ' + requestedCase.id);
-    return this.apiResource.delete(
-      `evidence-case-management/` + requestedCase.id,
-      {}
-    );
+  public removeCaseAccessRequest(requestId: number): NoContent {
+    return this.apiResource
+      .put<NoContent>(`evidence-case-management/${requestId}`, {})
+      .pipe(
+        NoContentResponse,
+        catchError((error: HttpErrorResponse) => {
+          return throwError(() => error);
+        })
+      );
   }
 
   public getPartyCaseRequests(

@@ -1,7 +1,9 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
+import { MatSort, Sort } from '@angular/material/sort';
+import { MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -43,7 +45,6 @@ import { OrganizationUserType } from '../../../../../features/admin/shared/usert
 import { BcpsAuthResourceService } from '../auth/bcps-auth-resource.service';
 import { DigitalEvidenceCaseManagementFormState } from './digital-evidence-case-management-form.state';
 import { DigitalEvidenceCaseManagementResource } from './digital-evidence-case-management-resource.service';
-import { DigitalEvidenceCaseResource } from './digital-evidence-case-resource.service';
 import {
   CaseStatus,
   DigitalEvidenceCase,
@@ -80,6 +81,7 @@ export class DigitalEvidenceCaseManagementPage
   public accessRequestFailed: boolean;
   public requestedCaseNotFound: boolean;
   public isFindDisabled: boolean;
+  public requestedCaseInactive: boolean;
   public hasCaseListingResults: boolean;
   //@Input() public form!: FormGroup;
   public formControlNames: string[];
@@ -144,7 +146,9 @@ export class DigitalEvidenceCaseManagementPage
     this.requestedCaseNotFound = false;
     this.isCaseSearchInProgress = false;
     this.isFindDisabled = true;
-    this.formControlNames = ['ParticipantId', 'CaseListing'];
+    this.requestedCaseInactive = false;
+
+    this.formControlNames = ['caseName', 'agencyCode'];
 
     // get current case requests
     this.getPartyRequests();
@@ -173,11 +177,17 @@ export class DigitalEvidenceCaseManagementPage
       .pipe(
         exhaustMap((result) =>
           result
-            ? this.digitalEvidenceCaseResource.removeCaseRequest(requestedCase)
+            ? this.digitalEvidenceCaseResource.removeCaseAccessRequest(
+                requestedCase.requestId
+              )
             : EMPTY
         )
       )
-      .subscribe();
+      .subscribe({
+        complete: () => {
+          this.getPartyRequests();
+        },
+      });
   }
 
   public showFormControl(formControlName: string): boolean {
@@ -202,6 +212,7 @@ export class DigitalEvidenceCaseManagementPage
 
   public findCase(): void {
     this.requestedCaseNotFound = false;
+    this.requestedCaseInactive = false;
     this.digitalEvidenceCaseResource
       .findCase(this.formState.agencyCode.value, this.formState.caseName.value)
       .pipe(
@@ -212,6 +223,9 @@ export class DigitalEvidenceCaseManagementPage
       )
       .subscribe((digitalEvidenceCase: DigitalEvidenceCase | null) => {
         this.requestedCaseNotFound = !digitalEvidenceCase ? true : false;
+        if (digitalEvidenceCase?.status !== 'Active') {
+          this.requestedCaseInactive = true;
+        }
         this.requestedCase = digitalEvidenceCase;
       });
   }
@@ -284,33 +298,33 @@ export class DigitalEvidenceCaseManagementPage
 
     this.formState.agencyCode.patchValue('105');
 
-    this.formState.caseName.valueChanges
-      .pipe(
-        debounceTime(400),
-        filter((value: string) => value.length > 12),
-        switchMap((value: string) => {
-          this.isCaseSearchInProgress = true;
-          this.isCaseFound = false;
+    // this.formState.caseName.valueChanges
+    //   .pipe(
+    //     debounceTime(400),
+    //     filter((value: string) => value.length > 12),
+    //     switchMap((value: string) => {
+    //       this.isCaseSearchInProgress = true;
+    //       this.isCaseFound = false;
 
-          return this.digitalEvidenceCaseResource.findCase(
-            this.formState.agencyCode.value,
-            value
-          );
-        }),
-        tap((digitalEvidenceCase: any) => {
-          // Set a value on completion of the observable
-          // For example, you could set a boolean flag to indicate completion
-          console.log(digitalEvidenceCase);
-          this.isCaseFound = true;
+    //       return this.digitalEvidenceCaseResource.findCase(
+    //         this.formState.agencyCode.value,
+    //         value
+    //       );
+    //     }),
+    //     tap((digitalEvidenceCase: any) => {
+    //       // Set a value on completion of the observable
+    //       // For example, you could set a boolean flag to indicate completion
+    //       console.log(digitalEvidenceCase);
+    //       this.isCaseFound = true;
 
-          this.isCaseSearchInProgress = false;
-        })
-      )
-      .subscribe((digitalEvidenceCase: DigitalEvidenceCase | null) => {
-        // Do something with the search results here
-        this.requestedCase = digitalEvidenceCase;
-        console.log(digitalEvidenceCase);
-      });
+    //       this.isCaseSearchInProgress = false;
+    //     })
+    //   )
+    //   .subscribe((digitalEvidenceCase: DigitalEvidenceCase | null) => {
+    //     // Do something with the search results here
+    //     this.requestedCase = digitalEvidenceCase;
+    //     console.log(digitalEvidenceCase);
+    //   });
   }
 
   private navigateToRoot(): void {

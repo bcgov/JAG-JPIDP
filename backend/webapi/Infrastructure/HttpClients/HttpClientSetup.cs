@@ -34,7 +34,7 @@ public static class HttpClientSetup
             });
 
         services.AddHttpClientWithBaseAddress<ILdapClient, LdapClient>(config.LdapClient.Url);
-        services.AddHttpClientWithBaseAddress<IEdtClient, EdtClient>(config.EdtClient.Url);
+        services.AddHttpClientWithBaseAddress<IEdtCaseManagementClient, EdtCaseManagementClient>(config.EdtCaseManagementClient.Url);
         services.AddHttpClientWithBaseAddress<IJumClient, JumClient>(config.JumClient.Url);
 
 
@@ -107,6 +107,7 @@ public static class HttpClientSetup
         services.AddScoped<IKafkaHandler<string, NotificationAckModel>, NotificationAckHandler>();
         services.AddSingleton(typeof(IKafkaConsumer<,>), typeof(KafkaConsumer<,>));
         services.AddHostedService<NotificationAckService>();
+      //  services.AddHostedService<DecomissionCaseAccessService>();
 
         return services;
     }

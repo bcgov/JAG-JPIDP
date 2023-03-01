@@ -1,9 +1,8 @@
-import { FormBuilder, FormControl } from '@angular/forms';
+import { FormBuilder, FormControl, Validators } from '@angular/forms';
 
 import { AbstractFormState, FormControlValidators } from '@bcgov/shared/ui';
 
 import { DemsAccount } from '../digital-evidence-account.model';
-import { DigitalEvidenceCase } from './digital-evidence-case.model';
 
 export class DigitalEvidenceCaseManagementFormState extends AbstractFormState<DemsAccount> {
   public constructor(private fb: FormBuilder) {
@@ -11,12 +10,7 @@ export class DigitalEvidenceCaseManagementFormState extends AbstractFormState<De
 
     this.buildForm();
   }
-  public get OrganizationType(): FormControl {
-    return this.formInstance.get('OrganizationType') as FormControl;
-  }
-  public get OrganizationName(): FormControl {
-    return this.formInstance.get('OrganizationName') as FormControl;
-  }
+
   public get ParticipantId(): FormControl {
     return this.formInstance.get('ParticipantId') as FormControl;
   }
@@ -52,8 +46,18 @@ export class DigitalEvidenceCaseManagementFormState extends AbstractFormState<De
 
   public buildForm(): void {
     this.formInstance = this.fb.group({
-      agencyCode: [null, [FormControlValidators.requiredBoolean]],
-      caseName: [null, [FormControlValidators.alphanumeric]],
+      agencyCode: [
+        null,
+        [FormControlValidators.alphanumeric, Validators.minLength(2)],
+      ],
+      caseName: [
+        null,
+        [
+          FormControlValidators.alphanumeric,
+          Validators.minLength(8),
+          Validators.maxLength(12),
+        ],
+      ],
     });
   }
 }

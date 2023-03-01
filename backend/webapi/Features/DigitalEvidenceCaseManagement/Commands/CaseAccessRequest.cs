@@ -19,6 +19,8 @@ public class CaseAccessRequest
         public string SubmittingAgencyCode { get; set; } = string.Empty;
         public string AgencyFileNumber { get; set; } = string.Empty;
 
+        public int RequestId { get; set; }
+
         public int CaseId { get; set; }
         public string CaseNumber { get; set; } = string.Empty;
         public string CaseGroup { get; set; } = string.Empty;
@@ -43,7 +45,7 @@ public class CaseAccessRequest
         private readonly PidpDbContext context;
         private readonly IKafkaProducer<string, SubAgencyDomainEvent> kafkaProducer;
 
-        public CommandHandler(IClock clock, ILogger<CommandHandler> logger, PidpConfiguration config, PidpDbContext context, IKafkaProducer<string, SubAgencyDomainEvent> kafkaProducer)
+        public CommandHandler(IClock clock, ILogger<CommandHandler> logger, PidpConfiguration config, PidpDbContext context,  IKafkaProducer<string, SubAgencyDomainEvent> kafkaProducer)
         {
             this.clock = clock;
             this.logger = logger;
@@ -65,7 +67,7 @@ public class CaseAccessRequest
             if (!dto.AlreadyEnroled
                 || dto.Email == null) //user must be already enroled i.e access to DEMS
             {
-                this.logger.LogSubmittingAgencyAccessRequestDenied(command.PartyId, command.CaseId);
+                this.logger.LogUserNotEnroled(dto.Jpdid); //throw dems user not enroled error
                 return DomainResult.Failed();
             }
 
@@ -111,6 +113,7 @@ public class CaseAccessRequest
                     PartyId = subAgencyRequest.PartyId,
                     AgencyFileNumber = command.AgencyFileNumber,
                     Username = dto.Jpdid,
+                    UserId = dto.UserId,
                     RequestedOn = subAgencyRequest.RequestedOn
                 })
             });
@@ -125,8 +128,10 @@ public class CaseAccessRequest
                 RequestId = subAgencyRequest.RequestId,
                 CaseId = subAgencyRequest.CaseId,
                 PartyId = subAgencyRequest.PartyId,
+                EventType = CaseEventType.Provisioning,
                 AgencyFileNumber = subAgencyRequest.AgencyFileNumber,
                 Username = dto.Jpdid,
+                UserId = dto.UserId,
                 RequestedOn = subAgencyRequest.RequestedOn,
             });
         }
@@ -144,6 +149,7 @@ public class CaseAccessRequest
             this.context.SubmittingAgencyRequests.Add(subAgencyAccessRequest);
 
             await this.context.SaveChangesAsync();
+
             return subAgencyAccessRequest;
         }
 
@@ -171,5 +177,6 @@ public static partial class SubmittingAgencyLoggingExtensions
 {
     [LoggerMessage(1, LogLevel.Error, "Request for case access denied for party {partyId} and case {caseId}")]
     public static partial void LogSubmittingAgencyAccessRequestDenied(this ILogger logger,int partyId, int caseId);
-
+    [LoggerMessage(2, LogLevel.Information, "Submitting Agency Case Access Request denied due to user {username} is not enroled to DEMS.")]
+    public static partial void LogUserNotEnroled(this ILogger logger, string? username);
 }

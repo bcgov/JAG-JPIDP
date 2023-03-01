@@ -48,6 +48,9 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
     public async Task<Task> HandleAsync(string consumerName, string key, EdtUserProvisioningModel accessRequestModel)
     {
 
+        var plainTextTopic = Environment.GetEnvironmentVariable("USER_CREATION_PLAINTEXT_TOPIC");
+
+
         Serilog.Log.Logger.Information("Db {0} {1}", this.context.Database.CanConnect(), this.context.Database.GetConnectionString());
 
         // set acitivty info
@@ -94,17 +97,25 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
                     Tag = msgKey
                 });
 
+         
+
                 if (string.IsNullOrEmpty(this.configuration.SchemaRegistry.Url))
                 {
                     throw new EdtServiceException("Schema registry is not configured");
                 }
 
                 var producer = new SchemaAwareProducer(ConsumerSetup.GetProducerConfig(), this.userModificationProducer, this.configuration);
+
                 // publish to the user creation topic for others to consume
                 bool publishResultOk;
                 if (result.eventType == UserModificationEvent.UserEvent.Create)
                 {
                     Serilog.Log.Information("Publishing EDT user creation event {0} {1}", msgKey, accessRequestModel.Key);
+                    if (!string.IsNullOrEmpty(plainTextTopic))
+                    {
+                        Serilog.Log.Information("Publishing EDT user creation event to secondary topic", msgKey, accessRequestModel.Key);
+                        await this.userModificationProducer.ProduceAsync(plainTextTopic, key: msgKey, result);
+                    }
                     publishResultOk = await producer.ProduceAsync(this.configuration.KafkaCluster.UserCreationTopicName, key: msgKey, result);
                 }
                 else

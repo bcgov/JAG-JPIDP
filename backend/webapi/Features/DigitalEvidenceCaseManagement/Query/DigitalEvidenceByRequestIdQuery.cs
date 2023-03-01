@@ -37,6 +37,7 @@ public class DigitalEvidenceByRequestIdQuery
                 {
                     PartyId = access.PartyId,
                     Id = access.CaseId,
+                    RequestId = query.RequestId,
                     AgencyFileNumber = access.AgencyFileNumber,
                     RequestedOn = access.RequestedOn,
                     LastUpdated = access.Modified,

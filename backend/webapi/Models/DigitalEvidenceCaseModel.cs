@@ -10,6 +10,7 @@ public class DigitalEvidenceCaseModel
 
 
     public int Id { get; set; }
+    public int RequestId { get; set; }
 
     public int PartyId { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -32,4 +33,6 @@ public class Field
     public int Id { get; set; }
     public string Name { get; set; }
     public object Value { get; set; }
+
+    public bool Display { get; set; }
 }
