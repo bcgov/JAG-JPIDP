@@ -54,6 +54,13 @@ public class Startup
             Environment.Exit(-1);
         }
 
+
+        var workAroundTopic = Environment.GetEnvironmentVariable("USER_CREATION_PLAINTEXT_TOPIC");
+        if (!string.IsNullOrEmpty(workAroundTopic))
+        {
+            Log.Information("*** Plain text user creation topic is configured {0} ***", workAroundTopic);
+        }
+
         if (!string.IsNullOrEmpty(config.Telemetry.CollectorUrl))
         {
 
