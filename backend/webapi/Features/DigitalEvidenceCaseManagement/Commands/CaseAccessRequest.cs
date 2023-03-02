@@ -138,6 +138,7 @@ public class CaseAccessRequest
 
         private async Task<SubmittingAgencyRequest> SubmitAgencyCaseRequest(Command command)
         {
+
             var subAgencyAccessRequest = new SubmittingAgencyRequest
             {
                 CaseId = command.CaseId,

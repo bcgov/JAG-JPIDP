@@ -6,10 +6,10 @@ import {
   OnInit,
   ViewChild,
 } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { MatPaginator } from '@angular/material/paginator';
-import { MatSort, Sort } from '@angular/material/sort';
+import { MatPaginator, PageEvent } from '@angular/material/paginator';
+import { MatSort} from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -104,6 +104,7 @@ export class DigitalEvidenceCaseManagementPage
   ];
   // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
   @ViewChild('caseTblSortWithObject') sort = new MatSort();
+  // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
   public constructor(
@@ -366,7 +367,7 @@ export class DigitalEvidenceCaseManagementPage
     return requestedOn >= twentyFiveDaysAgo && requestedOn <= now;
   }
 
-  public onPaginationChange(event: any): void {
+  public onPaginationChange(event: PageEvent): void {
     this.pageSize = event.pageSize;
     this.pageIndex = event.pageIndex;
     // fetch data for the current page using slice method

@@ -1,16 +1,15 @@
 <ui-page [formGroup]="formState.form">
   <ui-page-header>{{ title }}</ui-page-header>
   <ui-page-section>
-    <ui-page-section-subheader icon="assignment" heading="Digital Evidence Case Management">
+    <ui-page-section-subheader icon="assignment" heading="Digital Evidence and Disclosure Case Management">
       <ng-container uiPageSectionSubheaderDesc>
-        From this page you can request access to individual cases in the Digital Evidence and Disclosure Management
+        Request access to individual cases in the Digital Evidence and Disclosure Management
         System for the purpose of uploading documents.
       </ng-container>
 
     </ui-page-section-subheader>
     <section>
-      <ui-page-subheader>Case Lookup</ui-page-subheader>
-      <p><i>Enter the agency file number you wish to have access to</i></p>
+      <ui-page-subheader icon="search">Case Lookup</ui-page-subheader>
       <mat-form-field class="w-20">
         <input matInput placeholder="Agency Code" required type="text" tabindex="1" formControlName="agencyCode" />
         <mat-error>Required</mat-error>
@@ -18,7 +17,9 @@
 
       <mat-form-field class="w-60">
         <mat-label>File #</mat-label>
-        <input matInput formControlName="caseName" (input)="checkCaseInput()" placeholder="yy-nnnnnnn" tabindex="2" />
+        <input matInput formControlName="caseName" (input)="checkCaseInput()"
+          matTooltip="Enter the agency file number you wish to have access to and click Find" placeholder="yy-nnnnnnn"
+          tabindex="2" />
       </mat-form-field>
       <button mat-stroked-button type="button" tabindex="3" [disabled]="isFindDisabled" style="margin-left: 10px;"
         color="primary" (click)="findCase()">
@@ -57,7 +58,7 @@
     </section>
   </ui-page-section>
   <ui-page-section>
-    <ui-page-section-subheader icon="assignment" heading="Case Listing">
+    <ui-page-section-subheader icon="table_chart" heading="Case Listing">
     </ui-page-section-subheader>
     <ng-container>
 
