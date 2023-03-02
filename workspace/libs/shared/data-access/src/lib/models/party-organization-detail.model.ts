@@ -5,6 +5,7 @@ export interface PartyOrganizationDetails {
   orgName: string;
   organizationCode: OrganizationCode;
   correctionService: string;
+  submittingAgency: any;
   justiceSectorCode: number;
   correctionServiceCode: CorrectionServiceCode;
   justiceSectorService: string;

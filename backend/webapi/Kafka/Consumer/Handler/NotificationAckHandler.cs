@@ -22,27 +22,75 @@ public class NotificationAckHandler : IKafkaHandler<string, NotificationAckModel
             return Task.CompletedTask;
         }
 
-        var accessRequest = await this.context.AccessRequests
-            .Where(request => request.Id == value.AccessRequestId).SingleOrDefaultAsync();
-        if (accessRequest != null)
+        // access request notification
+        if (value.Subject.Equals(NotificationSubject.None) || value.Subject.Equals(NotificationSubject.AccessRequest))
         {
-            using var trx = this.context.Database.BeginTransaction();
 
-            try
+            var accessRequest = await this.context.AccessRequests
+                .Where(request => request.Id == value.AccessRequestId).SingleOrDefaultAsync();
+            if (accessRequest != null)
             {
-                accessRequest.Status = value.Status;
-                await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
-                await this.context.SaveChangesAsync();
-                trx.Commit();
+                using var trx = this.context.Database.BeginTransaction();
 
-                return Task.CompletedTask;
-            }
-            catch (Exception)
-            {
-                //await trx.RollbackAsync();
-                return Task.FromException(new InvalidOperationException());
+                try
+                {
+                    accessRequest.Status = value.Status;
+                    await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
+                    await this.context.SaveChangesAsync();
+                    trx.Commit();
+
+                    return Task.CompletedTask;
+                }
+                catch (Exception)
+                {
+                    //await trx.RollbackAsync();
+                    return Task.FromException(new InvalidOperationException());
+                }
             }
         }
+
+        if (value.Subject.Equals(NotificationSubject.CaseAccessRequest))
+        {
+            var accessRequest = await this.context.SubmittingAgencyRequests
+              .Where(request => request.RequestId == value.AccessRequestId).SingleOrDefaultAsync();
+            if (accessRequest != null)
+            {
+                using var trx = this.context.Database.BeginTransaction();
+
+                try
+                {
+
+                    if (string.IsNullOrEmpty(value.EventType))
+                    {
+                        await trx.RollbackAsync();
+                        Log.Error("No event type in notification message {0}", value.ToString());
+                        return Task.FromException(new InvalidOperationException());
+                    }
+
+                    if (value.EventType.Equals("Decommission", StringComparison.Ordinal))
+                    {
+                        Log.Information("Removing case access request {0}", accessRequest.RequestId);
+                        this.context.Entry(accessRequest).State = EntityState.Deleted;
+                    }
+                    else
+                    {
+                        accessRequest.RequestStatus = value.Status;
+                    }
+
+                    await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
+                    await this.context.SaveChangesAsync();
+                    trx.Commit();
+
+                    return Task.CompletedTask;
+                }
+                catch (Exception)
+                {
+                    await trx.RollbackAsync();
+                    return Task.FromException(new InvalidOperationException());
+                }
+            }
+        }
+
         return Task.FromException(new InvalidOperationException()); //create specific exception handler later
     }
 }

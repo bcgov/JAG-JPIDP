@@ -1,0 +1,44 @@
+@use 'palette' as palette;
+
+table.mat-table {
+  width: 100%;
+  td.centered-column {
+    text-align: center;
+  }
+}
+
+.refresh {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+mat-icon.warning-icon {
+  font-size: 16px;
+  color: darkorange;
+}
+
+.capitalize {
+  text-transform: lowercase;
+}
+.pending {
+  background-color: palette.theme-palette(blue);
+}
+
+.active {
+  background-color: palette.theme-palette(green);
+}
+
+.caseSelection {
+  width: 100%;
+  padding: 5px;
+  border-radius: 5px;
+  border: 2px palette.theme-palette(blue) solid;
+}
+
+.caseSelectionInvalid {
+  width: 100%;
+  padding: 5px;
+  border-radius: 5px;
+  border: 2px palette.theme-palette(red) solid;
+}

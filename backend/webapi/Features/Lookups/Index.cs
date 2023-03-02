@@ -24,6 +24,7 @@ public class Index
         public List<CorrectionService> CorrectionServices { get; set; } = new();
         public List<LawSociety> LawSocieties { get; set; } = new();
         public List<CrownRegion> CrownRegions { get; set; } = new();
+        public List<SubmittingAgency> SubmittingAgencies { get; set; } = new();
     }
 
     public class QueryHandler : IQueryHandler<Query, Model>
@@ -57,6 +58,8 @@ public class Index
                 LawSocieties = await this.context.Set<LawSociety>()
                     .ToListAsync(),
                 CrownRegions = await this.context.Set<CrownRegion>()
+                    .ToListAsync(),
+                SubmittingAgencies = await this.context.Set<SubmittingAgency>()
                     .ToListAsync()
 
             };

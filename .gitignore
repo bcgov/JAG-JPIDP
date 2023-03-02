@@ -370,3 +370,4 @@ FodyWeavers.xsd
 
 # Dev settings
 **/appsettings.Development.json
+**/launchSettings.json

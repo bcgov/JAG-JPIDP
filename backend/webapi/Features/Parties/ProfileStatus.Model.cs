@@ -109,6 +109,7 @@ public partial class ProfileStatus
             public HealthAuthorityCode? HealthAuthorityCode { get; set; }
             public JusticeSectorCode? JusticeSectorCode { get; set; }
             public CorrectionServiceCode? CorrectionServiceCode { get; set; }
+            public SubmittingAgency? SubmittingAgency { get; set; }
             public string? EmployeeIdentifier { get; set; }
             public string? orgName { get; set; }
             public string? CorrectionService { get; set; }
@@ -119,6 +120,7 @@ public partial class ProfileStatus
                 this.EmployeeIdentifier = profile.EmployeeIdentifier;
                 this.JusticeSectorCode = profile.JusticeSectorCode;
                 this.CorrectionServiceCode = profile.CorrectionServiceCode;
+                this.SubmittingAgency = profile.SubmittingAgency;
                 this.orgName = profile.OrgName;
                 this.CorrectionService = profile.CorrectionService;
             }
@@ -127,7 +129,7 @@ public partial class ProfileStatus
             {
                 // LJW - remove access to Idir for BCPS - re-enable for testing if necessary
                 Log.Logger.Information("*** IDIR Currently permits BCPS access for testing ***");
-                if (!(profile.UserIsPhsa || profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsIdir))
+                if (!(profile.UserIsPhsa || profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsIdir || profile.UserIsVicPd))
                 {
                     this.StatusCode = StatusCode.Hidden;
                     return;
@@ -144,7 +146,8 @@ public partial class ProfileStatus
                     this.StatusCode = StatusCode.Incomplete;
                     return;
                 }
-                if (!profile.IsJumUser)
+
+                if (!profile.IsJumUser && !profile.UserIsInSubmittingAgency)
                 {
                     this.Alerts.Add(Alert.JumValidationError);
                     this.StatusCode = StatusCode.Error;
@@ -163,7 +166,7 @@ public partial class ProfileStatus
 
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
-                if (!(profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsIdir))
+                if (!(profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsIdir || profile.UserIsInSubmittingAgency))
                 {
                     this.StatusCode = StatusCode.Hidden;
                     return;
@@ -191,6 +194,42 @@ public partial class ProfileStatus
                 }
 
                 this.StatusCode = StatusCode.Incomplete;
+            }
+        }
+
+        public class DigitalEvidenceCaseManagement : ProfileSection
+        {
+            internal override string SectionName => "digitalEvidenceCaseManagement";
+
+            public DigitalEvidenceCaseManagement(ProfileStatusDto profile) : base(profile) { }
+
+            protected override void SetAlertsAndStatus(ProfileStatusDto profile)
+            {
+                // todo - this should be for SubmittingAgencies only
+
+                if (!( profile.UserIsInSubmittingAgency || profile.UserIsIdir))
+                {
+                    this.StatusCode = StatusCode.Hidden;
+                    return;
+                }
+
+
+                if (profile.CompletedEnrolments.Contains(AccessTypeCode.DigitalEvidence))
+                {
+                    this.StatusCode = StatusCode.Complete;
+                    return;
+                }
+
+                if (!profile.DemographicsEntered
+                    || !profile.CollegeCertificationEntered
+                    || !profile.OrganizationDetailEntered
+                    || !profile.PlrStanding.HasGoodStanding)
+                {
+                    this.StatusCode = StatusCode.Locked;
+                    return;
+                }
+
+                this.StatusCode = StatusCode.Pending;
             }
         }
 

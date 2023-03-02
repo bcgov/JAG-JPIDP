@@ -6,4 +6,5 @@ export enum IdentityProvider {
   ADFS = 'ADFS',
   OIDC = 'oidc',
   AZUREIDIR = 'oidcazure',
+  SUBMITTING_AGENCY = 'submitting_agency',
 }

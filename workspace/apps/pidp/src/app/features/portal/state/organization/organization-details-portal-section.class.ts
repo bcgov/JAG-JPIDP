@@ -52,7 +52,7 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
       correctionService,
       justiceSectorService,
     } = this.getSectionStatus();
-    return [StatusCode.ERROR, StatusCode.COMPLETED].includes(statusCode)
+    let response = [StatusCode.ERROR, StatusCode.COMPLETED].includes(statusCode)
       ? [
           {
             key: 'orgName',
@@ -64,15 +64,7 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
             value: employeeIdentifier,
             label: 'Identity Verification:',
           },
-          {
-            key: 'status',
-            value:
-              statusCode !== StatusCode.ERROR &&
-              demographicsStatusCode === StatusCode.COMPLETED
-                ? 'Verified'
-                : 'Not Verified',
-            label: 'JUSTIN User Status:',
-          },
+
           {
             key: 'CorrectionService',
             value: correctionService,
@@ -83,6 +75,26 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
           },
         ]
       : [];
+
+    if (!this.profileStatus.status.organizationDetails?.submittingAgency) {
+      response.push({
+        key: 'status',
+        value:
+          statusCode !== StatusCode.ERROR &&
+          demographicsStatusCode === StatusCode.COMPLETED
+            ? 'Verified'
+            : 'Not Verified',
+        label: 'JUSTIN User Status:',
+      });
+    } else {
+      response.push({
+        key: 'agencyCode',
+        value:
+          this.profileStatus.status.organizationDetails?.submittingAgency.code,
+        label: 'Agency Code:',
+      });
+    }
+    return response;
   }
   public get action(): PortalSectionAction {
     const demographicsStatusCode =

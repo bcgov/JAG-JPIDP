@@ -1,4 +1,4 @@
-﻿using Confluent.Kafka;
+using Confluent.Kafka;
 using jumwebapi.Extensions;
 using jumwebapi.Kafka.Producer;
 using jumwebapi.Kafka.Producer.Interfaces;
@@ -119,7 +119,7 @@ namespace jumwebapi.Infrastructure.Auth
                 options.AddPolicy("Administrator", policy => policy.Requirements.Add(new RealmAccessRoleRequirement("administrator")));
             });
             return services;
-            
+
         }
     }
 

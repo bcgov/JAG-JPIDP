@@ -292,5 +292,5 @@
 //         Assert.Equal(saEformsStatus, profileStatus.Section<SAEforms>().StatusCode);
 //     }
 
-//     public static T Section<T>(this Model profileStatus) where T : ProfileSection => profileStatus.Status.Values.OfType<T>().Single();
+//     public static T Section<T>(this Model profileStatus) where T : ProfileSection => profileStatus.RequestStatus.Values.OfType<T>().Single();
 // }

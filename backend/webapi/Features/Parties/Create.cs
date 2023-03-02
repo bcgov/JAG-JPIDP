@@ -8,7 +8,7 @@ using Pidp.Data;
 using Pidp.Extensions;
 using Pidp.Infrastructure.Auth;
 using Pidp.Models;
-
+using Pidp.Features.Lookups;
 public class Create
 {
     public class Command : ICommand<int>
@@ -20,26 +20,55 @@ public class Create
         public string FirstName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
+
+
     }
 
     public class CommandValidator : AbstractValidator<Command>
     {
-        public CommandValidator(IHttpContextAccessor accessor)
+        public CommandValidator(PidpDbContext context, IHttpContextAccessor accessor)
         {
             var user = accessor?.HttpContext?.User;
+
 
             this.RuleFor(x => x.UserId).NotEmpty().Equal(user.GetUserId());
             this.RuleFor(x => x.FirstName).NotEmpty().MatchesUserClaim(user, Claims.GivenName);
             this.RuleFor(x => x.LastName).NotEmpty().MatchesUserClaim(user, Claims.FamilyName);
 
-            this.Include<AbstractValidator<Command>>(x => user.GetIdentityProvider() switch
+
+            // create an instance of the Query class
+            var query = new Pidp.Features.Lookups.Index.Query();
+
+            // create an instance of the QueryHandler class
+            var handler = new Pidp.Features.Lookups.Index.QueryHandler(context);
+
+            // execute the query and get the result
+            var result = handler.HandleAsync(query);
+
+            // get the SubmittingAgencies list from the result
+            var submittingAgencies = result.Result.SubmittingAgencies;
+
+            // see if user is a member of a submitting agency
+            var idp = user.GetIdentityProvider();
+
+            var agency = submittingAgencies.Find(agency => agency.IdpHint.Equals(idp));
+
+            if (agency != null)
             {
-                ClaimValues.BCServicesCard => new BcscValidator(user),
-                ClaimValues.Phsa => new PhsaValidator(),
-                ClaimValues.Bcps => new BcpsValidator(user),
-                ClaimValues.Idir => new IdirValidator(user),
-                _ => throw new NotImplementedException("Given Identity Provider is not supported")
-            });
+                Serilog.Log.Information("User {0} is from agency {1}", user.GetUserId(), agency.Name);
+            }
+            else
+            {
+                this.Include<AbstractValidator<Command>>(x => user.GetIdentityProvider() switch
+                {
+                    ClaimValues.BCServicesCard => new BcscValidator(user),
+                    ClaimValues.Phsa => new PhsaValidator(),
+                    ClaimValues.Bcps => new BcpsValidator(user),
+                    ClaimValues.Idir => new IdirValidator(user),
+                    ClaimValues.VicPd => new VicPdValidator(user),
+                    _ => throw new NotImplementedException("Given Identity Provider is not supported")
+                });
+            }
         }
 
         private class BcscValidator : AbstractValidator<Command>
@@ -75,6 +104,14 @@ public class Create
         private class IdirValidator : AbstractValidator<Command>
         {
             public IdirValidator(ClaimsPrincipal? user)
+            {
+                this.RuleFor(x => x.Jpdid).NotEmpty().MatchesUserClaim(user, Claims.PreferredUsername);
+                this.RuleFor(x => x.Birthdate).Empty();
+            }
+        }
+        private class VicPdValidator : AbstractValidator<Command>
+        {
+            public VicPdValidator(ClaimsPrincipal? user)
             {
                 this.RuleFor(x => x.Jpdid).NotEmpty().MatchesUserClaim(user, Claims.PreferredUsername);
                 this.RuleFor(x => x.Birthdate).Empty();

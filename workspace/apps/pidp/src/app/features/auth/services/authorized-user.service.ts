@@ -2,11 +2,14 @@ import { Injectable } from '@angular/core';
 
 import { Observable, combineLatest, map } from 'rxjs';
 
+import { LookupService } from '@app/modules/lookup/lookup.service';
+
 import { IdentityProvider } from '../enums/identity-provider.enum';
 import { BcpsResolver } from '../models/bcps-user.model';
 import { BcscResolver } from '../models/bcsc-user.model';
 import { IdirResolver } from '../models/idir-user.model';
 import { PhsaResolver } from '../models/phsa-user.model';
+import { SubmittingAgencyResolver } from '../models/submitting-agency-resolver';
 import { UserIdentity } from '../models/user-identity.model';
 import { IUserResolver, User } from '../models/user.model';
 import { AccessTokenService } from './access-token.service';
@@ -15,7 +18,10 @@ import { AccessTokenService } from './access-token.service';
   providedIn: 'root',
 })
 export class AuthorizedUserService {
-  public constructor(private accessTokenService: AccessTokenService) {}
+  public constructor(
+    private accessTokenService: AccessTokenService,
+    private lookupService: LookupService
+  ) {}
 
   /**
    * @description
@@ -62,6 +68,16 @@ export class AuthorizedUserService {
    * on identity provider.
    */
   private getUserResolver(userIdentity: UserIdentity): IUserResolver<User> {
+    // see if came from submitting agency
+    const submittingAgency = this.lookupService.submittingAgencies.find(
+      (agency) =>
+        agency.idpHint === userIdentity.accessTokenParsed.identity_provider
+    );
+
+    if (submittingAgency != null) {
+      return new SubmittingAgencyResolver(userIdentity);
+    }
+
     switch (userIdentity.accessTokenParsed.identity_provider) {
       case IdentityProvider.IDIR:
         return new IdirResolver(userIdentity);
@@ -71,6 +87,8 @@ export class AuthorizedUserService {
         return new PhsaResolver(userIdentity);
       case IdentityProvider.BCPS:
         return new BcpsResolver(userIdentity);
+      case IdentityProvider.SUBMITTING_AGENCY:
+        return new SubmittingAgencyResolver(userIdentity);
       default:
         throw new Error('Identity provider not recognized');
     }

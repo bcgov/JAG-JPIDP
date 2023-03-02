@@ -43,7 +43,7 @@ public class Startup
     public void ConfigureServices(IServiceCollection services)
     {
         var config = this.InitializeConfiguration(services);
-       // var jsonSerializerOptions = this.Configuration.GenerateJsonSerializerOptions();
+        // var jsonSerializerOptions = this.Configuration.GenerateJsonSerializerOptions();
         services
           .AddAutoMapper(typeof(Startup))
           .AddHttpClients(config)

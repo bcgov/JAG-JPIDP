@@ -1,6 +1,7 @@
 namespace edt.service;
 
 using System.Text.Json;
+using System.Transactions;
 
 public class EdtServiceConfiguration
 {
@@ -41,6 +42,8 @@ public class EdtServiceConfiguration
     {
         public string ApiKey { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
+
+        public int SearchFieldId { get; set; }
     }
     public class ConnectionStringConfiguration
     {
@@ -108,6 +111,10 @@ public class EdtServiceConfiguration
     {
         public string Url { get; set; } = string.Empty;
     }
+
+
+
+
     public class KeycloakConfiguration
     {
         //public string RealmUrl { get; set; } = string.Empty;

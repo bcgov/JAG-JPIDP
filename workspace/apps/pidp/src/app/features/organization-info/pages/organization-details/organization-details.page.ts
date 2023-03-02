@@ -18,9 +18,10 @@ import { PartyService } from '@app/core/party/party.service';
 import { FormUtilsService } from '@app/core/services/form-utils.service';
 import { LoggerService } from '@app/core/services/logger.service';
 import { IdentityProvider } from '@app/features/auth/enums/identity-provider.enum';
+import { SubmittingAgencyResolver } from '@app/features/auth/models/submitting-agency-resolver';
 import { AuthorizedUserService } from '@app/features/auth/services/authorized-user.service';
 import { LookupService } from '@app/modules/lookup/lookup.service';
-import { Lookup } from '@app/modules/lookup/lookup.types';
+import { AgencyLookup, Lookup } from '@app/modules/lookup/lookup.types';
 
 import { OrganizationDetailsFormState } from './organization-details-form-state';
 import { OrganizationDetailsResource } from './organization-details-resource.service';
@@ -41,6 +42,8 @@ export class OrganizationDetailsPage
   public healthAuthorities: Lookup[];
   public lawEnforcements: Lookup[];
   public justiceSectors: Lookup[];
+  public submittingAgencies: AgencyLookup[];
+
   public correctionServices: Lookup[];
   public lawSocieties: Lookup[];
   public IdentityProvider = IdentityProvider;
@@ -63,9 +66,13 @@ export class OrganizationDetailsPage
     const routeData = this.route.snapshot.data;
     this.title = routeData.title;
     this.formState = new OrganizationDetailsFormState(fb);
+    this.submittingAgencies = this.lookupService.submittingAgencies.filter(
+      (agency) => agency.idpHint?.length > 0
+    );
 
     this.authorizedUserService.identityProvider$.subscribe((val) => {
       //console.log(val);
+
       if (val === IdentityProvider.BCPS) {
         this.organizations = this.lookupService.organizations.map(
           (organization) => ({
@@ -77,6 +84,18 @@ export class OrganizationDetailsPage
           })
         );
       } else if (val === IdentityProvider.BCSC) {
+        this.organizations = this.lookupService.organizations.map(
+          (organization) => ({
+            ...organization,
+            disabled: !(
+              organization.code === OrganizationCode.correctionService ||
+              organization.code === OrganizationCode.LawSociety
+            ),
+          })
+        );
+      } else if (val === IdentityProvider.SUBMITTING_AGENCY) {
+        //
+        debugger;
         this.organizations = this.lookupService.organizations.map(
           (organization) => ({
             ...organization,

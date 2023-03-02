@@ -22,6 +22,9 @@ public class PidpDbContext : DbContext
     public DbSet<HcimAccountTransfer> HcimAccountTransfers { get; set; } = default!;
     public DbSet<HcimEnrolment> HcimEnrolments { get; set; } = default!;
     public DbSet<DigitalEvidence> DigitalEvidences { get; set; } = default!;
+
+    public DbSet<DigitalEvidenceCase> DigitalEvidenceCases { get; set; } = default!;
+
     public DbSet<PartyLicenceDeclaration> PartyLicenceDeclarations { get; set; } = default!;
     public DbSet<Party> Parties { get; set; } = default!;
     public DbSet<ExportedEvent> ExportedEvents { get; set; } = default!;
@@ -30,6 +33,8 @@ public class PidpDbContext : DbContext
     public DbSet<PartyOrgainizationDetail> PartyOrgainizationDetails { get; set; } = default!;
     public DbSet<JusticeSectorDetail> JusticeSectorDetails { get; set; } = default!;
     public DbSet<CorrectionServiceDetail> CorrectionServiceDetails { get; set; } = default!;
+    public DbSet<SubmittingAgencyRequest> SubmittingAgencyRequests { get; set; } = default!;
+    public DbSet<AgencyRequestAttachment> AgencyRequestAttachments { get; set; } = default!;
     public override int SaveChanges()
     {
         this.ApplyAudits();
@@ -53,8 +58,8 @@ public class PidpDbContext : DbContext
             .HasKey(x => new { x.MessageId, x.Consumer });
 
         modelBuilder.Entity<ExportedEvent>()
-             .ToTable("OutBoxedExportedEvent")
-             .Property(x => x.JsonEventPayload).HasColumnName("EventPayload");
+             .ToTable("OutBoxedExportedEvent");
+        //.Property(x => x.JsonEventPayload).HasColumnName("EventPayload");
 
         modelBuilder.Entity<ExportedEvent>()
             .ToTable("OutBoxedExportedEvent")

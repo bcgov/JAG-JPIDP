@@ -8,6 +8,7 @@ import { Role } from '@app/shared/enums/roles.enum';
 
 import { StatusCode } from '../enums/status-code.enum';
 import { ProfileStatus } from '../models/profile-status.model';
+import { DigitalEvidenceCaseManagementPortalSection } from './access/digital-evidence-case-management-section.class';
 import { DigitalEvidencePortalSection } from './access/digital-evidence-portal-section.class';
 import { DriverFitnessPortalSection } from './access/driver-fitness-portal-section.class';
 import { HcimAccountTransferPortalSection } from './access/hcim-account-transfer-portal-section.class';
@@ -179,6 +180,16 @@ export class PortalStateBuilder {
         this.permissionsService.hasGroup([Group.BSPS]) ||
           this.insertSection('digitalEvidence', profileStatus),
         () => [new DigitalEvidencePortalSection(profileStatus, this.router)]
+      ),
+      ...ArrayUtils.insertResultIf<IPortalSection>(
+        this.permissionsService.hasGroup([Group.BSPS]) ||
+          this.insertSection('digitalEvidenceCaseManagement', profileStatus),
+        () => [
+          new DigitalEvidenceCaseManagementPortalSection(
+            profileStatus,
+            this.router
+          ),
+        ]
       ),
       ...ArrayUtils.insertResultIf<IPortalSection>(
         // TODO remove permissions when ready for production

@@ -9,7 +9,6 @@ using edt.service.Infrastructure.Telemetry;
 using edt.service.Kafka;
 using edt.service.ServiceEvents.UserAccountCreation.ConsumerRetry;
 using edt.service.ServiceEvents.UserAccountCreation.Handler;
-using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -23,11 +22,14 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using Serilog;
 using Swashbuckle.AspNetCore.Filters;
-using System.Diagnostics.Metrics;
 using Azure.Monitor.OpenTelemetry.Exporter;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Prometheus;
+using MediatR;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
+using FluentValidation.AspNetCore;
+using NodaTime.Serialization.SystemTextJson;
 
 public class Startup
 {
@@ -114,15 +116,25 @@ public class Startup
             //options.AddPolicy("Administrator", policy => policy.Requirements.Add(new RealmAccessRoleRequirement("administrator")));
         });
 
+
+
         services.AddDbContext<EdtDataStoreDbContext>(options => options
             .UseSqlServer(config.ConnectionStrings.EdtDataStore, sql => sql.UseNodaTime())
             .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
+
+        services.AddMediatR(typeof(Startup).Assembly);
 
         services.AddHealthChecks()
                 .AddCheck("liveliness", () => HealthCheckResult.Healthy())
                 .AddSqlServer(config.ConnectionStrings.EdtDataStore, tags: new[] { "services" }).ForwardToPrometheus();
 
-        services.AddControllers();
+        services.AddControllers(options => options.Conventions.Add(new RouteTokenTransformerConvention(new KabobCaseParameterTransformer())))
+             .AddFluentValidation(options => options.RegisterValidatorsFromAssemblyContaining<Startup>())
+             .AddJsonOptions(options =>
+             {
+                 options.JsonSerializerOptions.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
+                 options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+             });
         services.AddHttpClient();
 
         services.AddSingleton<OtelMetrics>();

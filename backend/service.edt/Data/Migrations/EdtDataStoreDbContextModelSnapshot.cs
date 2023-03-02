@@ -25,11 +25,11 @@ namespace edt.service.Data.Migrations
 
             modelBuilder.Entity("edt.service.ServiceEvents.UserAccountCreation.Models.EmailLog", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("CaseId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CaseId"), 1L, 1);
 
                     b.Property<string>("Body")
                         .IsRequired()
@@ -72,7 +72,7 @@ namespace edt.service.Data.Migrations
                     b.Property<int>("UpdateCount")
                         .HasColumnType("int");
 
-                    b.HasKey("Id");
+                    b.HasKey("CaseId");
 
                     b.ToTable("EmailLog", "edt");
                 });

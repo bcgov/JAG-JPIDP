@@ -1,4 +1,5 @@
-﻿using Confluent.Kafka;
+using System.Net;
+using Confluent.Kafka;
 using NotificationService.Extensions;
 using NotificationService.Kafka.Interfaces;
 using NotificationService.NotificationEvents;
@@ -50,8 +51,9 @@ public static class ConsumerSetup
 
         var consumerConfig = new ConsumerConfig(clientConfig)
         {
-            GroupId = config.KafkaCluster.ConsumerGroupId,
+            GroupId = config.KafkaCluster.ConsumerGroupId + "_" + Dns.GetHostName(),
             EnableAutoCommit = true,
+            ClientId = Dns.GetHostName(),
             AutoOffsetReset = AutoOffsetReset.Earliest,
             SaslOauthbearerClientId = config.KafkaCluster.SaslOauthbearerConsumerClientId,
             SaslOauthbearerClientSecret = config.KafkaCluster.SaslOauthbearerConsumerClientSecret,
