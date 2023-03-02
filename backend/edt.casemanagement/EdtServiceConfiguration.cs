@@ -93,7 +93,7 @@ public class EdtServiceConfiguration
 
         public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;
 
-
+        public string AckTopicName { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientId { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientSecret { get; set; } = string.Empty;
         public string SaslOauthbearerConsumerClientId { get; set; } = string.Empty;

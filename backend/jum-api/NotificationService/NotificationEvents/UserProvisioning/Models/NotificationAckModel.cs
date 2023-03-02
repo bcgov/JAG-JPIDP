@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace NotificationService.NotificationEvents.UserProvisioning.Models;
 public class NotificationAckModel
@@ -9,5 +9,13 @@ public class NotificationAckModel
     public string EmailAddress { get; set; } =string.Empty;
     public string Consumer { get; set; } = string.Empty;
     public int AccessRequestId { get; set; }
+    public NotificationSubject Subject { get; set; } = NotificationSubject.None;
+
 }
 
+public enum NotificationSubject
+{
+    AccessRequest,
+    CaseAccessRequest,
+    None
+}

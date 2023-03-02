@@ -1,8 +1,9 @@
 export enum CaseStatus {
-  NewRequest = 'REQUESTED',
-  RemoveRequested = 'REMOVE',
-  Active = 'ACTIVE',
-  Pending = 'PENDING',
+  NewRequest = 'Queued',
+  RemoveRequested = 'Remove Requested',
+  Active = 'Active',
+  Pending = 'Pending',
+  Completed = 'Completed',
 }
 
 export interface Field {

@@ -1,6 +1,7 @@
 namespace edt.casemanagement.HttpClients.Services.EdtCore;
 
 using System.Diagnostics.Metrics;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using AutoMapper;
 using DomainResults.Common;
@@ -84,6 +85,48 @@ public class EdtClient : BaseClient, IEdtClient
     }
 
 
+    public async Task<IEnumerable<int>> GetUserCases(string userKey)
+    {
+        var result = await this.GetAsync<JsonArray>($"/api/v1/org-units/1/users/{userKey}/cases");
+        Log.Logger.Information("Got user cases {0} user {1}", result, userKey);
+
+        return null;
+    }
+
+    public async Task<bool> AddUserToCase(string userId, int caseId)
+    {
+
+        Log.Logger.Information("Adding user {0} to case {0}", userId, caseId);
+        var result = await this.PostAsync<JsonObject>($"/api/v1/cases/{caseId}/case-users/{userId}");
+
+        if (result.IsSuccess)
+        {
+            Log.Information("Successfully added user {0} to case {1}", userId, caseId);
+        }
+        else
+        {
+            Log.Error("Failed to add user {0} to case {1} [{3}]", userId, caseId, string.Join(',', result.Errors));
+        }
+
+        return result.IsSuccess;
+    }
+
+
+    public async Task<bool> RemoveUserFromCase(string userId, int caseId)
+    {
+        // var result = await this.PostAsync<>($"api/v1/version");
+        var result = await this.DeleteAsync($"/api/v1/cases/{caseId}/case-users/remove/{userId}");
+
+        if (result.IsSuccess)
+        {
+            Log.Information("Successfully removed user {0} from case {1}", userId, caseId);
+        }
+        else
+        {
+            Log.Error("Failed to remove user {0} from case {1} [{3}]", userId, caseId, string.Join(',', result.Errors));
+        }
+        return result.IsSuccess;
+    }
 
 
     public async Task<CaseModel> FindCase(string caseIdOrKey)
@@ -215,12 +258,12 @@ public class EdtClient : BaseClient, IEdtClient
         if (accessRequest.EventType.Equals("Provisioning", StringComparison.Ordinal))
         {
             Log.Information("Case provision request {0} {1}", userKey, accessRequest.CaseId);
-
-
+            var result = this.AddUserToCase(edtUser.Id, accessRequest.CaseId);
         }
         else if (accessRequest.EventType.Equals("Decommission", StringComparison.Ordinal))
         {
             Log.Information("Case decomission request {0} {1}", userKey, accessRequest.CaseId);
+            var result = this.RemoveUserFromCase(edtUser.Id, accessRequest.CaseId);
         }
         else
         {

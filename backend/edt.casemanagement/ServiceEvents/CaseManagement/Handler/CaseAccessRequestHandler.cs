@@ -4,7 +4,10 @@ using edt.casemanagement.Exceptions;
 using edt.casemanagement.HttpClients.Services.EdtCore;
 using edt.casemanagement.Kafka.Interfaces;
 using edt.casemanagement.ServiceEvents.CaseManagement.Models;
+using edt.casemanagement.ServiceEvents.UserAccountCreation.Models;
 using EdtService.HttpClients.Keycloak;
+using Google.Protobuf.WellKnownTypes;
+using Microsoft.Extensions.Configuration;
 
 public class CaseAccessRequestHandler : IKafkaHandler<string, SubAgencyDomainEvent>
 {
@@ -14,11 +17,13 @@ public class CaseAccessRequestHandler : IKafkaHandler<string, SubAgencyDomainEve
     private readonly IEdtClient edtClient;
     private readonly ILogger logger;
     private readonly IKeycloakAdministrationClient keycloakAdministrationClient;
+    private readonly IKafkaProducer<string, NotificationAckModel> producer;
 
 
     public CaseAccessRequestHandler(
     EdtServiceConfiguration configuration,
     IKeycloakAdministrationClient keycloakAdministrationClient,
+    IKafkaProducer<string, NotificationAckModel> producer,
     IEdtClient edtClient,
      ILogger logger)
     {
@@ -26,6 +31,7 @@ public class CaseAccessRequestHandler : IKafkaHandler<string, SubAgencyDomainEve
         this.keycloakAdministrationClient = keycloakAdministrationClient;
         this.logger = logger;
         this.edtClient = edtClient;
+        this.producer = producer;
     }
 
     public async Task<Task> HandleAsync(string consumerName, string key, SubAgencyDomainEvent caseEvent)
@@ -56,7 +62,24 @@ public class CaseAccessRequestHandler : IKafkaHandler<string, SubAgencyDomainEve
             {
                 var result = await this.edtClient.HandleCaseRequest(partId, caseEvent);
 
+                if (result != null)
+                {
+                    if (result.IsCompleted)
+                    {
+                        var uniqueKey = Guid.NewGuid().ToString();
 
+                        await this.producer.ProduceAsync(this.configuration.KafkaCluster.AckTopicName, key: uniqueKey, new NotificationAckModel
+                        {
+                            Status = "Completed",
+                            AccessRequestId = caseEvent.RequestId,
+                            PartId = partId,
+                            EmailAddress = userInfo.Email,
+                            Subject = NotificationSubject.CaseAccessRequest,
+                            EventType = caseEvent.EventType
+                        });
+                    }
+                }
+           
             }
 
 

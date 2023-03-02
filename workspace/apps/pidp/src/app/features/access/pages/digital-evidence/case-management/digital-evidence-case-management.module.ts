@@ -1,4 +1,7 @@
 import { NgModule } from '@angular/core';
+import { FlexLayoutModule } from '@angular/flex-layout';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatSortModule } from '@angular/material/sort';
 
 import { SharedModule } from '@app/shared/shared.module';
 
@@ -12,6 +15,9 @@ import { DigitalEvidenceCaseManagementPage } from './digital-evidence-case-manag
     DigitalEvidenceCaseManagementRoutingModule,
     SharedModule,
     AccessModule,
+    MatSortModule,
+    MatPaginatorModule,
+    FlexLayoutModule,
   ],
 })
 export class DigitalEvidenceCaseManagementModule {}

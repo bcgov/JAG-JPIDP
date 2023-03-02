@@ -1,9 +1,15 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
-import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  Inject,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
+import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, Sort } from '@angular/material/sort';
-import { MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -11,13 +17,12 @@ import {
   EMPTY,
   Observable,
   catchError,
-  debounceTime,
   exhaustMap,
-  filter,
+  interval,
   map,
   noop,
   of,
-  switchMap,
+  takeWhile,
   tap,
 } from 'rxjs';
 
@@ -58,7 +63,7 @@ import {
 })
 export class DigitalEvidenceCaseManagementPage
   extends AbstractFormPage<DigitalEvidenceCaseManagementFormState>
-  implements OnInit
+  implements OnInit, AfterViewInit
 {
   public formState: DigitalEvidenceCaseManagementFormState;
   public title: string;
@@ -75,14 +80,18 @@ export class DigitalEvidenceCaseManagementPage
   public pending: boolean | null;
   public policeAgency: Observable<string>;
   public result: string;
+  public pageSize: number;
+  public pageIndex: number;
   public requestedCase!: DigitalEvidenceCase | null;
   public isCaseSearchInProgress: boolean;
   public isCaseFound: boolean;
   public accessRequestFailed: boolean;
   public requestedCaseNotFound: boolean;
   public isFindDisabled: boolean;
+  public refreshEnabled: boolean;
   public requestedCaseInactive: boolean;
   public hasCaseListingResults: boolean;
+  public refreshCount: number;
   //@Input() public form!: FormGroup;
   public formControlNames: string[];
   public selectedOption = 0;
@@ -93,6 +102,9 @@ export class DigitalEvidenceCaseManagementPage
     'requestStatus',
     'caseAction',
   ];
+  // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
+  @ViewChild('caseTblSortWithObject') sort = new MatSort();
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
 
   public constructor(
     @Inject(APP_CONFIG) private config: AppConfig,
@@ -103,7 +115,6 @@ export class DigitalEvidenceCaseManagementPage
     private partyService: PartyService,
     private resource: DigitalEvidenceCaseManagementResource,
     private usertype: PartyUserTypeResource,
-    private userOrgunit: BcpsAuthResourceService,
     private logger: LoggerService,
     private toastService: ToastService,
     documentService: DocumentService,
@@ -117,8 +128,7 @@ export class DigitalEvidenceCaseManagementPage
     this.title = routeData.title;
     this.organizationType = new OrganizationUserType();
     const partyId = this.partyService.partyId;
-    this.dataSource = new MatTableDataSource();
-    //this.userType$ = this.usertype.getUserType(partyId);
+    this.dataSource = new MatTableDataSource(this.caseListing);
     this.identityProvider$ = this.authorizedUserService.identityProvider$;
     this.result = '';
     this.policeAgency = accessTokenService
@@ -130,7 +140,7 @@ export class DigitalEvidenceCaseManagementPage
       this.result = n.identity_provider;
     });
     this.usertype.getUserType(partyId).subscribe((data: any) => {
-      this.organizationType.organizationType = data['organizationType'];
+      this.organizationType.organizationType = data['organzationType'];
       this.organizationType.participantId = data['participantId'];
       this.organizationType.organizationName = data['organizationName'];
     });
@@ -147,11 +157,18 @@ export class DigitalEvidenceCaseManagementPage
     this.isCaseSearchInProgress = false;
     this.isFindDisabled = true;
     this.requestedCaseInactive = false;
-
+    this.refreshEnabled = false;
+    this.refreshCount = 0;
+    this.pageSize = 20;
+    this.pageIndex = 0;
     this.formControlNames = ['caseName', 'agencyCode'];
 
     // get current case requests
     this.getPartyRequests();
+  }
+
+  public ngAfterViewInit(): void {
+    this.dataSource.sort = this.sort;
   }
 
   public onBack(): void {
@@ -185,6 +202,8 @@ export class DigitalEvidenceCaseManagementPage
       )
       .subscribe({
         complete: () => {
+          this.refreshEnabled = true;
+          this.refreshCount = 0;
           this.getPartyRequests();
         },
       });
@@ -194,18 +213,40 @@ export class DigitalEvidenceCaseManagementPage
     return this.formControlNames.includes(formControlName);
   }
 
-  public onChangeAgencyCode(): void {
-    alert(this.formState.agencyCode.value);
-  }
-
   public getPartyRequests(): void {
     this.digitalEvidenceCaseResource
       .getPartyCaseRequests(this.partyService.partyId)
       .pipe()
       .subscribe(
         (digitalEvidenceCaseRequests: DigitalEvidenceCaseRequest[]) => {
+          // if eveything complete then quit refreshing
+          this.refreshEnabled = digitalEvidenceCaseRequests.some(
+            (caseRequest) => caseRequest.requestStatus !== CaseStatus.Completed
+          );
+
           this.caseListing = digitalEvidenceCaseRequests;
+          // Create a new instance of MatTableDataSource with the loaded data
+          this.dataSource = new MatTableDataSource(this.caseListing);
+          // Set the sorting and pagination properties of the dataSource
           this.dataSource.data = this.caseListing;
+          this.dataSource.sort = this.sort;
+
+          this.dataSource.sortingDataAccessor = (
+            row: DigitalEvidenceCaseRequest,
+            columnName: string
+          ): string => {
+            const columnValue =
+              row[columnName as keyof DigitalEvidenceCaseRequest];
+            return columnValue?.toString() ?? '';
+          };
+          this.refreshTable();
+          if (this.refreshEnabled) {
+            this.refreshCount++;
+            if (this.refreshCount >= 3) {
+              this.refreshEnabled = false;
+              this.refreshCount = 0;
+            }
+          }
         }
       );
   }
@@ -242,11 +283,19 @@ export class DigitalEvidenceCaseManagementPage
       );
 
       if (idExists) {
-        this.toastService.openErrorToast('Case already requested');
+        this.toastService.openErrorToast('Case already in active list');
       } else {
         this.onRequestAccess();
       }
     }
+  }
+
+  public refreshTable(): void {
+    interval(8000)
+      .pipe(takeWhile(() => this.refreshEnabled))
+      .subscribe(() => {
+        this.getPartyRequests();
+      });
   }
 
   public getCaseAttribute(fieldId: number): string {
@@ -258,6 +307,7 @@ export class DigitalEvidenceCaseManagementPage
 
   public onRequestAccess(): void {
     if (this.requestedCase !== null) {
+      this.refreshEnabled = true;
       const agencyFileNumber = this.requestedCase.fields.find(
         (c) => c.name === 'Agency File No.'
       )?.value;
@@ -277,12 +327,20 @@ export class DigitalEvidenceCaseManagementPage
             return of(noop());
           })
         )
-        .subscribe();
+        .subscribe(() => {
+          this.formState.caseName.patchValue('');
+          this.requestedCase = null;
+          this.refreshCount = 0;
+          this.refreshTable();
+        });
     }
   }
 
   public ngOnInit(): void {
     const partyId = this.partyService.partyId;
+    this.dataSource.paginator = this.paginator;
+
+    this.refreshTable();
 
     if (!partyId) {
       this.logger.error('No party ID was provided');
@@ -297,34 +355,24 @@ export class DigitalEvidenceCaseManagementPage
     // this.formState.agencyCode.patchValue(this.partyService.partyId);
 
     this.formState.agencyCode.patchValue('105');
+  }
 
-    // this.formState.caseName.valueChanges
-    //   .pipe(
-    //     debounceTime(400),
-    //     filter((value: string) => value.length > 12),
-    //     switchMap((value: string) => {
-    //       this.isCaseSearchInProgress = true;
-    //       this.isCaseFound = false;
+  public isWithin25Days(requestedOn: Date): boolean {
+    const now = new Date();
+    const twentyfiveDaysInMilliseconds = 5 * 24 * 60 * 60 * 1000;
+    const twentyFiveDaysAgo = new Date(
+      now.getTime() - twentyfiveDaysInMilliseconds
+    );
+    return requestedOn >= twentyFiveDaysAgo && requestedOn <= now;
+  }
 
-    //       return this.digitalEvidenceCaseResource.findCase(
-    //         this.formState.agencyCode.value,
-    //         value
-    //       );
-    //     }),
-    //     tap((digitalEvidenceCase: any) => {
-    //       // Set a value on completion of the observable
-    //       // For example, you could set a boolean flag to indicate completion
-    //       console.log(digitalEvidenceCase);
-    //       this.isCaseFound = true;
-
-    //       this.isCaseSearchInProgress = false;
-    //     })
-    //   )
-    //   .subscribe((digitalEvidenceCase: DigitalEvidenceCase | null) => {
-    //     // Do something with the search results here
-    //     this.requestedCase = digitalEvidenceCase;
-    //     console.log(digitalEvidenceCase);
-    //   });
+  public onPaginationChange(event: any): void {
+    this.pageSize = event.pageSize;
+    this.pageIndex = event.pageIndex;
+    // fetch data for the current page using slice method
+    const startIndex = this.pageIndex * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.dataSource.data = this.caseListing.slice(startIndex, endIndex);
   }
 
   private navigateToRoot(): void {

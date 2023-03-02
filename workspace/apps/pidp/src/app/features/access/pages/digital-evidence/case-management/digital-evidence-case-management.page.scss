@@ -7,6 +7,17 @@ table.mat-table {
   }
 }
 
+.refresh {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+mat-icon.warning-icon {
+  font-size: 16px;
+  color: darkorange;
+}
+
 .capitalize {
   text-transform: lowercase;
 }
