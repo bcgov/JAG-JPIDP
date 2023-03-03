@@ -1,6 +1,5 @@
 namespace edt.casemanagement.HttpClients.Services.EdtCore;
 
-using System.Diagnostics.Metrics;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -10,9 +9,6 @@ using edt.casemanagement.Features.Cases;
 using edt.casemanagement.Infrastructure.Telemetry;
 using edt.casemanagement.ServiceEvents.CaseManagement.Models;
 using edt.casemanagement.ServiceEvents.UserAccountCreation.Models;
-using Google.Protobuf.WellKnownTypes;
-using MediatR;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Serilog;
 
 public class EdtClient : BaseClient, IEdtClient
@@ -93,6 +89,9 @@ public class EdtClient : BaseClient, IEdtClient
         return null;
     }
 
+
+
+
     public async Task<bool> AddUserToCase(string userId, int caseId)
     {
 
@@ -102,6 +101,21 @@ public class EdtClient : BaseClient, IEdtClient
         if (result.IsSuccess)
         {
             Log.Information("Successfully added user {0} to case {1}", userId, caseId);
+
+            var caseGroupId = await this.GetCaseGroupId(caseId, this.configuration.EdtClient.SubmittingAgencyGroup);
+
+            if (caseGroupId > 0)
+            {
+                var addUserToCaseGroup = await this.AddUserToCaseGroup(userId, caseId, caseGroupId);
+                if (!addUserToCaseGroup)
+                {
+                    throw new CaseAssignmentException($"Failed to add user {userId} to case group {this.configuration.EdtClient.SubmittingAgencyGroup} not assigned to case {caseId}");
+                }
+            }
+            else
+            {
+                throw new CaseAssignmentException($"{this.configuration.EdtClient.SubmittingAgencyGroup} not assigned to case {caseId}");
+            }
         }
         else
         {
@@ -197,7 +211,7 @@ public class EdtClient : BaseClient, IEdtClient
                                 }
                             }
 
-                            if(!defn.Display && !removeValues.Contains(field.Id))
+                            if (!defn.Display && !removeValues.Contains(field.Id))
                             {
                                 //removeValues.Add(field.Id);
                                 field.Display = false;
@@ -273,10 +287,61 @@ public class EdtClient : BaseClient, IEdtClient
         return Task.CompletedTask;
     }
 
+    public async Task<int> GetCaseGroupId(int caseId, string groupName)
+    {
+        Log.Debug("Getting case {0} group id for {1}", caseId, groupName);
+
+        var result = await this.GetAsync<IEnumerable<CaseGroupModel>?>($"/api/v1/cases/{caseId}/groups");
+
+        if (result.IsSuccess)
+        {
+            var matchingGroup = result?.Value?.FirstOrDefault(group => group.Name.Equals(groupName, StringComparison.Ordinal));
+            if (matchingGroup != null)
+            {
+                return matchingGroup.Id;
+            }
+            else
+            {
+                return -1;
+            }
+        }
+        else
+        {
+            throw new CaseAssignmentException("Failed to get groups for case " + caseId);
+        }
+
+
+    }
+
+    public async Task<bool> AddUserToCaseGroup(string userId, int caseId, int caseGroupId)
+    {
+        Log.Debug("Adding user {0} in case {1} to group {2}", userId, caseId, caseGroupId);
+
+        var result = await this.PutAsync($"/api/v1/cases/{caseId}/case-users/{userId}/groups/{caseGroupId}");
+
+        if (result.IsSuccess)
+        {
+            Log.Information("Added user {0} to group {1} for case {2}", userId, caseGroupId, caseId);
+            return true;
+        }
+        else
+        {
+            Log.Error("Failed to add user {0} to group {1} for case {2} [{3}]", userId, caseGroupId, caseId, string.Join(',', result.Errors));
+            return false;
+        }
+
+    }
+
     public static class CaseEventType
     {
         public const string Provisioning = "Provisioning";
         public const string Decommission = "Decommission";
         public const string None = "None";
+    }
+
+    public class CaseGroupModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
     }
 }

@@ -27,7 +27,7 @@ public static class AgencyRequestStatus
     public const string Completed = "Completed";
     public const string Failed = "Failed";
     public const string Pending = "Pending";
-    public const string Queued = "Queued";
+    public const string Queued = "In Progress";
     public const string Submitted = "Submitted";
     public const string Approved = "Approved";
     public const string Dismissed = "Dismissed";

@@ -33,12 +33,12 @@ public class EdtServiceConfiguration
 
     }
 
- 
+
     public class EdtClientConfiguration
     {
         public string ApiKey { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
-
+        public string SubmittingAgencyGroup { get; set; } = string.Empty;
         public int SearchFieldId { get; set; }
     }
     public class ConnectionStringConfiguration
