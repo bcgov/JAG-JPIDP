@@ -26,11 +26,8 @@
     font-size: small;
     color: aqua;
   }
-
-  .agency-login-btn {
-    margin-top: 10px;
-  }
 }
+
 // BCSC Login
 //
 
@@ -172,3 +169,7 @@
     height: auto;
   }
 }
+
+// ::ng-deep .mat-autocomplete-panel {
+//   display: none !important;
+// }

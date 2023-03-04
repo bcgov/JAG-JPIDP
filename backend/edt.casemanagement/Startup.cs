@@ -28,6 +28,7 @@ using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using FluentValidation.AspNetCore;
 using NodaTime.Serialization.SystemTextJson;
 using edt.casemanagement.ServiceEvents.CaseManagement.Handler;
+using edt.casemanagement.HttpClients.Services;
 
 public class Startup
 {
@@ -105,6 +106,8 @@ public class Startup
           .AddAutoMapper(typeof(Startup))
           .AddKafkaConsumer(config)
           .AddHttpClients(config)
+          // .AddScoped<IEdtAuthorizationService, IEdtAuthorizationService>() // add to control authorization to endpoints beyond having a valid jwt
+
           .AddSingleton<IClock>(SystemClock.Instance)
           .AddSingleton<Microsoft.Extensions.Logging.ILogger>(svc => svc.GetRequiredService<ILogger<CaseAccessRequestHandler>>());
 

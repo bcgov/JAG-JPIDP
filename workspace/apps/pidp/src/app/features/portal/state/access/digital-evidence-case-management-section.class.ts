@@ -50,7 +50,8 @@ export class DigitalEvidenceCaseManagementPortalSection
       disabled: !(
         digitalEvidenceStatusCode === StatusCode.COMPLETED &&
         demographicsStatusCode === StatusCode.COMPLETED &&
-        organizationStatusCode === StatusCode.COMPLETED
+        (organizationStatusCode === StatusCode.COMPLETED ||
+          organizationStatusCode === StatusCode.LOCKED_COMPLETE)
       ),
     };
   }

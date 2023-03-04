@@ -19,7 +19,4 @@ public class PartyOrgainizationDetail : BaseAuditable
 
     public Organization? Organization { get; set; }
 
-    //public HealthAuthorityCode HealthAuthorityCode { get; set; }
-
-    //public string EmployeeIdentifier { get; set; } = string.Empty;
 }

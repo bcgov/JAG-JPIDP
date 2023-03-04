@@ -5,4 +5,6 @@ export enum StatusCode {
   ERROR,
   HIDDEN,
   PENDING,
+  HIDDEN_COMPLETE,
+  LOCKED_COMPLETE,
 }

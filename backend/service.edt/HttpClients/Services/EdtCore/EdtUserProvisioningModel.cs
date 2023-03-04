@@ -17,7 +17,8 @@ public class EdtUserProvisioningModel : UserProvisoningRetry
     public string? AccountType { get; set; }
 
     public int AccessRequestId { get; set; }
-
+    public string? OrganizationType { get; set; }
+    public string? OrganizationName { get; set; }
     public override string ToString() => JsonSerializer.Serialize(this);
 
 }

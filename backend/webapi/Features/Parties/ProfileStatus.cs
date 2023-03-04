@@ -72,7 +72,9 @@ public partial class ProfileStatus
             Error,
             Hidden,
             Available,
-            Pending
+            Pending,
+            Hidden_Complete,   // not shown the in UI but completed
+            Locked_Complete    // shown in the UI but not editable
         }
     }
 
@@ -165,7 +167,8 @@ public partial class ProfileStatus
             {
                 profile.UserIsInSubmittingAgency = true;
                 profile.SubmittingAgency = submittingAgency;
-                profile.EmployeeIdentifier = command.User.GetUserId().ToString();
+                profile.Email = "lee.@test.com";
+                profile.OrganizationCode = OrganizationCode.SubmittingAgency;
             }
 
             if (profile.OrganizationDetailEntered && profile.OrganizationCode == OrganizationCode.JusticeSector && orgJusticeSecDetail != null)
@@ -325,7 +328,7 @@ public partial class ProfileStatus
 
         // Computed Properties
         [MemberNotNullWhen(true, nameof(Email), nameof(Phone))]
-        public bool DemographicsEntered => this.User.GetIdentityProvider() == ClaimValues.Bcps || this.User.GetIdentityProvider() == ClaimValues.Idir || this.User.GetIdentityProvider() == ClaimValues.Adfs ? this.Email != null : this.Email != null && this.Phone != null;
+        public bool DemographicsEntered =>  this.User.GetIdentityProvider() == ClaimValues.Bcps || this.User.GetIdentityProvider() == ClaimValues.Idir || this.User.GetIdentityProvider() == ClaimValues.Adfs ? this.Email != null : this.Email != null && this.Phone != null;
         [MemberNotNullWhen(true, nameof(CollegeCode), nameof(LicenceNumber))]
         public bool CollegeCertificationEntered => this.CollegeCode.HasValue && this.LicenceNumber != null;
         [MemberNotNullWhen(true, nameof(OrganizationCode), nameof(EmployeeIdentifier))]

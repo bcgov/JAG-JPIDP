@@ -19,6 +19,7 @@ public class EdtClient : BaseClient, IEdtClient
     private readonly IMapper mapper;
     private readonly OtelMetrics meters;
     private readonly EdtServiceConfiguration configuration;
+    private readonly string SUBMITTING_AGENCY = "SubmittingAgency";
 
 
     public EdtClient(
@@ -57,10 +58,22 @@ public class EdtClient : BaseClient, IEdtClient
 
         if (getUser != null)
         {
-            var addGroupToUser = await this.UpdateUserAssignedGroups(getUser.Id!, accessRequest.AssignedRegions!, userModificationResponse);
-            if (!addGroupToUser)
+            if (accessRequest.OrganizationType != null && accessRequest.OrganizationType.Equals(SUBMITTING_AGENCY, StringComparison.Ordinal))
             {
-                Log.Logger.Error("Failed to add EDT user to group user {0}", string.Join(",", result.Errors));
+                Log.Logger.Information("Adding user {0} {1} to submitting agency group", accessRequest.Id, accessRequest.Key);
+                var addGroupToUser = await this.AddUserToSubmittingAgencyGroup(accessRequest, getUser.Id);
+                if (!addGroupToUser)
+                {
+                    Log.Logger.Error("Failed to add EDT user to group user {0}", string.Join(",", result.Errors));
+                }
+            }
+            else
+            {
+                var addGroupToUser = await this.UpdateUserAssignedGroups(getUser.Id!, accessRequest.AssignedRegions!, userModificationResponse);
+                if (!addGroupToUser)
+                {
+                    Log.Logger.Error("Failed to add EDT user to group user {0}", string.Join(",", result.Errors));
+                }
             }
         }
         else
@@ -124,6 +137,39 @@ public class EdtClient : BaseClient, IEdtClient
         return true;
 
     }
+
+    private async Task<bool> AddUserToSubmittingAgencyGroup(EdtUserProvisioningModel accessRequest, string userId)
+    {
+        if (accessRequest == null)
+        {
+            return false;
+        }
+        var groupId = await this.GetOuGroupId("Submitting Agency");
+
+        if (groupId > 0)
+        {
+            var result = await this.PostAsync($"api/v1/org-units/1/groups/{groupId}/users", new AddUserToOuGroup() { UserIdOrKey = userId });
+
+            if (!result.IsSuccess)
+            {
+                Log.Logger.Error("Failed to add user {0} to submitting agency group due to {1}", userId, string.Join(",", result.Errors));
+                return false;
+            }
+            else
+            {
+                Log.Information("User {0} added to submitting agency group", userId);
+                return true;
+            } 
+        }
+        else
+        {
+            Log.Error("Failed to determine group Id for Submitting Agency users");
+            return false;
+        } 
+
+
+    }
+
     public async Task<UserModificationEvent> UpdateUser(EdtUserProvisioningModel accessRequest, EdtUserDto previousRequest)
     {
 

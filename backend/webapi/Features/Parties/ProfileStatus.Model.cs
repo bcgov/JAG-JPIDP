@@ -99,7 +99,7 @@ public partial class ProfileStatus
                 this.Phone = profile.Phone;
             }
 
-            protected override void SetAlertsAndStatus(ProfileStatusDto profile) => this.StatusCode = profile.DemographicsEntered ? StatusCode.Complete : StatusCode.Incomplete;
+            protected override void SetAlertsAndStatus(ProfileStatusDto profile) => this.StatusCode = profile.DemographicsEntered || profile.SubmittingAgency != null ? StatusCode.Complete : StatusCode.Incomplete;
         }
 
         public class OrganizationDetails : ProfileSection
@@ -135,6 +135,12 @@ public partial class ProfileStatus
                     return;
                 }
 
+                // user is from an authenticated agency - no need to enter organization details or view/change them
+                if (profile.UserIsInSubmittingAgency)
+                {
+                    this.StatusCode = StatusCode.Hidden_Complete;
+                    return;
+                }
 
                 if (!profile.DemographicsEntered)
                 {

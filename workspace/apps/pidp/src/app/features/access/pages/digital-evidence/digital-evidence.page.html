@@ -64,6 +64,11 @@
       <ui-page-section-subheader heading="Digital Evidence and Disclosure Management System">
         <ng-container uiPageSectionSubheaderDesc>
           Provide details for your DEMS Access Request.
+
+          <div class="submitting-agency" *ngIf="userInAgency()">
+            As a member of a submitting agency you will only be able to request case access etc....
+
+          </div>
         </ng-container>
       </ui-page-section-subheader>
 
@@ -90,7 +95,7 @@
         </mat-form-field>
       </div>
 
-      <div class="col-12">
+      <div class="col-12" *ngIf="!userInAgency()">
         <table mat-table [dataSource]="assignedRegions">
           <ng-container matColumnDef="regionName">
             <th *matHeaderCellDef mat-header-cell>Region Name</th>

@@ -1,5 +1,5 @@
 export enum CaseStatus {
-  NewRequest = 'Queued',
+  NewRequest = 'In Progress',
   RemoveRequested = 'Remove Requested',
   Active = 'Active',
   Pending = 'Pending',

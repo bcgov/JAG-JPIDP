@@ -1,14 +1,11 @@
 <mat-card class="ui-card" [class]="class">
-  <mat-card-header
-    *ngIf="icon || heading"
-    [class]="{
+  <mat-card-header *ngIf="icon || heading" [class]="{
       'icon-only': icon && !heading,
       'title-only': !icon && heading
     }">
     <div *ngIf="icon" mat-card-avatar>
       <!-- Using <mat-icon> to maintain specificity and allow mixins to override -->
-      <mat-icon
-        [class]="{
+      <mat-icon [class]="{
           'material-icons-outlined': iconType === 'outlined',
           'material-icons-round': iconType === 'round',
           'material-icons-sharp': iconType === 'sharp'

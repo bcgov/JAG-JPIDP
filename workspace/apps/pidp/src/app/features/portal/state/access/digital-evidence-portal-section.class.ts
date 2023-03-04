@@ -1,26 +1,17 @@
 import { Router } from '@angular/router';
 
-
-
 import { Observable } from 'rxjs';
-
-
 
 import { AlertType } from '@bcgov/shared/ui';
 
-
-
 import { AccessRoutes } from '@app/features/access/access.routes';
 import { ShellRoutes } from '@app/features/shell/shell.routes';
-
-
 
 import { StatusCode } from '../../enums/status-code.enum';
 import { ProfileStatus } from '../../models/profile-status.model';
 import { PortalSectionAction } from '../portal-section-action.model';
 import { PortalSectionKey } from '../portal-section-key.type';
 import { IPortalSection } from '../portal-section.model';
-
 
 export class DigitalEvidencePortalSection implements IPortalSection {
   public readonly key: PortalSectionKey;
@@ -57,8 +48,9 @@ export class DigitalEvidencePortalSection implements IPortalSection {
           : 'Request',
       route: AccessRoutes.routePath(AccessRoutes.DIGITAL_EVIDENCE),
       disabled: !(
-        demographicsStatusCode === StatusCode.COMPLETED &&
-        organizationStatusCode === StatusCode.COMPLETED
+        (demographicsStatusCode === StatusCode.COMPLETED &&
+          organizationStatusCode === StatusCode.COMPLETED) ||
+        organizationStatusCode === StatusCode.LOCKED_COMPLETE
       ),
     };
   }

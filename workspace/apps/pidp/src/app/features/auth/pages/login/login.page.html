@@ -117,16 +117,15 @@
         </button>
         <br /><br />
         <mat-form-field class="login-form">
-          <input #inputField type="text" placeholder="Select your agency" matInput aria-label="Number"
+          <input #inputField type="text" placeholder="Agency" matInput aria-label="Agency name"
             [formControl]="selectedAgency" [matAutocomplete]="auto" />
-          <mat-autocomplete class="smaller" #auto="matAutocomplete">
-            <mat-option *ngFor="let agency of submittingAgencies" [value]="agency.name">
+          <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSelectionChanged($event)">
+            <mat-option *ngFor="let agency of filteredAgencies | async" [value]="agency.name">
               {{ agency.name }}
             </mat-option>
           </mat-autocomplete>
-
         </mat-form-field>
-        <button mat-stroked-button class="agency-login-btn" *ngIf="selectedAgency.value" (click)="onAgencyLogin()">
+        <button mat-stroked-button class="agency-login-btn" [disabled]="!agencySelected()" (click)="onAgencyLogin()">
           Agency Login
         </button>
       </div>

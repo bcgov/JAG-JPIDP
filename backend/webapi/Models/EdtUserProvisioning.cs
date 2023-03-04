@@ -11,6 +11,8 @@ public class EdtUserProvisioning
     public List<AssignedRegion> AssignedRegions { get; set; } = new List<AssignedRegion>();
     public bool? IsActive => true;
     public string? AccountType { get; set; }
+    public string? OrganizationType { get; set; }
+    public string? OrganizationName { get; set; }
 
     public int AccessRequestId { get; set; }
 }
