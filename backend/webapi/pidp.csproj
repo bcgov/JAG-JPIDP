@@ -75,4 +75,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Features\DigitalEvidenceCaseManagement\BackgroundServices\CaseAccessRequest\Handlers\" />
+  </ItemGroup>
 </Project>

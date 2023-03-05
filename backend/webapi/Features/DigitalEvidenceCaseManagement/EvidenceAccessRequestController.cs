@@ -14,12 +14,20 @@ public class EvidenceAccessRequestController : PidpControllerBase
     public EvidenceAccessRequestController(IPidpAuthorizationService authService) : base(authService) { }
 
     [HttpGet("requests/{requestId}")]
-    [Authorize(Policy = Policies.AllDemsIdentityProvider)]
+    [Authorize(Policy = Policies.SubAgencyIdentityProvider)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<Query.SubmittingAgency.Model?>> GetSubAgencyRequests([FromServices] IQueryHandler<Query.SubmittingAgency.Query, Query.SubmittingAgency.Model?> handler,
                                                                                        [FromRoute] Query.SubmittingAgency.Query query)
         => await handler.HandleAsync(new Query.SubmittingAgency.Query(query.RequestId));
+
+    [HttpGet("cases/{caseNumber}")]
+    [Authorize(Roles = Roles.SubmittingAgencyClient)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<List<Query.SubmittingAgencyByCaseId.Model>>> GetSubAgencyRequestsByCaseId([FromServices] IQueryHandler<Query.SubmittingAgencyByCaseId.Query, List<Query.SubmittingAgencyByCaseId.Model>> handler,
+                                                                                   [FromRoute] Query.SubmittingAgencyByCaseId.Query query)
+    => await handler.HandleAsync(new Query.SubmittingAgencyByCaseId.Query(query.CaseNumber));
 
     [HttpGet("parties/{partyId}")]
     [Authorize(Policy = Policies.SubAgencyIdentityProvider, Roles = Roles.SubmittingAgency)]
