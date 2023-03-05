@@ -5,9 +5,16 @@ using Microsoft.EntityFrameworkCore;
 using NodaTime;
 using Pidp.Data;
 using Pidp.Models;
+using Prometheus;
 
 public class DigitalEvidenceByRequestIdQuery
 {
+
+    private static readonly Counter RCCActiveQueryCount = Metrics
+    .CreateCounter("case_rcc_active_user_query_count", "Number of requests to see RCC assigned users.");
+
+    private static readonly Histogram RCCSearchDuration = Metrics
+    .CreateHistogram("case_rcc_active_user_query_duration", "Histogram  of requests to see RCC assigned users.");
 
     public sealed record Query(int RequestId) : IQuery<DigitalEvidenceCaseModel?>;
     public class QueryValidator : AbstractValidator<Query>
@@ -30,7 +37,13 @@ public class DigitalEvidenceByRequestIdQuery
             //        AttachmentType = attachment.AttachmentType,
             //        UploadStatus = attachment.UploadStatus
             //    }).ToListAsync(); //this can be removed, but an option to add attachment to sub-agency case access request
-            return await this.context.SubmittingAgencyRequests
+
+            RCCActiveQueryCount.Inc();
+
+            using (RCCSearchDuration.NewTimer())
+            {
+
+                return await this.context.SubmittingAgencyRequests
                 .Where(access => access.RequestId == query.RequestId)
                 .OrderByDescending(access => access.RequestedOn)
                 .Select(access => new DigitalEvidenceCaseModel
@@ -44,6 +57,7 @@ public class DigitalEvidenceByRequestIdQuery
                     RequestStatus = access.RequestStatus,
                 })
                 .SingleOrDefaultAsync();
+            }
         }
     }
 
