@@ -55,7 +55,7 @@ public class SubmittingAgency
         {
             var dto = await this.GetPidpUser(command);
 
-            if (dto.AlreadyEnroled
+            if (!dto.AlreadyEnroled
                 || dto.Email == null) //user must be already enroled i.e access to DEMS
             {
                 this.logger.LogUserNotEnroled(dto.Jpdid); //throw dems user not enroled error
