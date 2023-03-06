@@ -3,11 +3,13 @@ namespace Pidp.Models.OutBoxEvent;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Newtonsoft.Json;
+using NodaTime;
 
 [Table(nameof(ExportedEvent))]
 public class ExportedEvent
 {
-    [Required]
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int EventId { get; set; }
     [Required]
     public string AggregateType { get; set; } = string.Empty;
@@ -21,11 +23,6 @@ public class ExportedEvent
     ///
     [Column(TypeName = "jsonb")]
     public string? EventPayload { get; set; }
-    //[NotMapped]
-    //public EdtUserProvisioning? EventPayload
-    //{
-    //    get => (this.JsonEventPayload == null) ? null : JsonConvert.DeserializeObject<EdtUserProvisioning>(this.JsonEventPayload);
-    //    set => this.JsonEventPayload = JsonConvert.SerializeObject(value);
-    //}
-    //internal string JsonEventPayload { get; set; } = string.Empty;
+    public Instant DateOccurred { get; set; }
+
 }

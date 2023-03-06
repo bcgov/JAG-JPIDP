@@ -23,9 +23,7 @@ public class PidpDbContext : DbContext
     public DbSet<HcimEnrolment> HcimEnrolments { get; set; } = default!;
     public DbSet<DigitalEvidence> DigitalEvidences { get; set; } = default!;
 
-    public DbSet<DigitalEvidenceCase> DigitalEvidenceCases { get; set; } = default!;
-
-    public DbSet<PartyLicenceDeclaration> PartyLicenceDeclarations { get; set; } = default!;
+   public DbSet<PartyLicenceDeclaration> PartyLicenceDeclarations { get; set; } = default!;
     public DbSet<Party> Parties { get; set; } = default!;
     public DbSet<ExportedEvent> ExportedEvents { get; set; } = default!;
     public DbSet<IdempotentConsumer> IdempotentConsumers { get; set; } = default!;
@@ -62,8 +60,8 @@ public class PidpDbContext : DbContext
         //.Property(x => x.JsonEventPayload).HasColumnName("EventPayload");
 
         modelBuilder.Entity<ExportedEvent>()
-            .ToTable("OutBoxedExportedEvent")
-            .HasKey(x => new { x.EventId, x.AggregateId });
+            .ToTable("OutBoxedExportedEvent");
+        //.HasKey(x => new { x.EventId, x.AggregateId });
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(PidpDbContext).Assembly);
     }

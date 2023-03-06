@@ -30,6 +30,8 @@ public static class ClaimValues
     public const string Bcps = "adfscert";
     public const string Adfs = "adfs"; // test
     public const string VicPd = "vicpd";
+    public const string AzureIdir = "oidcazure";
+
     public const string SubmittingAgency = "subgenc";
 
 }

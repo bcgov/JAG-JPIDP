@@ -128,7 +128,7 @@ public partial class ProfileStatus
                 .FirstOrDefaultAsync()
                 : null;
 
-    
+
 
 
             //if (profile.CollegeCertificationEntered && profile.Ipc == null)
@@ -220,7 +220,8 @@ public partial class ProfileStatus
                     new Model.DigitalEvidenceCaseManagement(profile),
                     new Model.MSTeams(profile),
                     new Model.SAEforms(profile),
-                    new Model.Uci(profile)
+                    new Model.Uci(profile),
+                    new Model.SubmittingAgencyCaseManagement(profile),
                 }
                 .ToDictionary(section => section.SectionName, section => section)
             };

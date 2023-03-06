@@ -23,6 +23,7 @@ public class CaseAccessRequest
 
         public int CaseId { get; set; }
         public string CaseNumber { get; set; } = string.Empty;
+        public string CaseName { get; set; } = string.Empty;
         public string CaseGroup { get; set; } = string.Empty;
         public string RequestStatus { get; set; } = string.Empty;
     }
@@ -41,7 +42,6 @@ public class CaseAccessRequest
         private readonly IClock clock;
         private readonly ILogger logger;
         private readonly PidpConfiguration config;
-        //private readonly HttpContext httpContext;
         private readonly PidpDbContext context;
         private readonly IKafkaProducer<string, SubAgencyDomainEvent> kafkaProducer;
 
@@ -57,12 +57,6 @@ public class CaseAccessRequest
         public async Task<IDomainResult> HandleAsync(Command command)
         {
             var dto = await this.GetPidpUser(command);
-
-            //var userIdp = this.httpContext.User.GetIdentityProvider();
-
-            //var subAgency = await this.context.Set<Models.Lookups.SubmittingAgency>()
-            //        .Where(agencyIdp => agencyIdp.IdpHint == userIdp)
-            //        .FirstOrDefaultAsync();
 
             if (!dto.AlreadyEnroled
                 || dto.Email == null) //user must be already enroled i.e access to DEMS
@@ -102,10 +96,10 @@ public class CaseAccessRequest
         {
             var exportedEvent = this.context.ExportedEvents.Add(new Models.OutBoxEvent.ExportedEvent
             {
-                EventId = subAgencyRequest.RequestId,
-                AggregateType = command.SubmittingAgencyCode,
-                AggregateId = $"{command.PartyId}",
-                EventType = subAgencyRequest.Created < this.clock.GetCurrentInstant() ? "Case.AccessRequest.Submitted" : "Case.AccessRequest.Updated",
+                AggregateType = $"SubmittingAgency.{command.SubmittingAgencyCode}",
+                AggregateId = $"{subAgencyRequest.RequestId}",
+                DateOccurred = this.clock.GetCurrentInstant(),
+                EventType = subAgencyRequest.Created < this.clock.GetCurrentInstant() ? "CaseAccessRequestCreated" : "CaseAccessRequestUpdated",
                 EventPayload = JsonConvert.SerializeObject(new SubAgencyDomainEvent
                 {
                     RequestId = subAgencyRequest.RequestId,

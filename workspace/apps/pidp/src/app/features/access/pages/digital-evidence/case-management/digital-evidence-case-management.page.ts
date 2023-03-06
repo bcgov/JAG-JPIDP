@@ -6,10 +6,10 @@ import {
   OnInit,
   ViewChild,
 } from '@angular/core';
-import { FormBuilder, } from '@angular/forms';
+import { FormBuilder } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
-import { MatSort} from '@angular/material/sort';
+import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -358,13 +358,14 @@ export class DigitalEvidenceCaseManagementPage
     this.formState.agencyCode.patchValue('105');
   }
 
-  public isWithin25Days(requestedOn: Date): boolean {
+  public isWithin25Days(requestedOnStr: string): boolean {
     const now = new Date();
-    const twentyfiveDaysInMilliseconds = 5 * 24 * 60 * 60 * 1000;
+    const requestedOn = new Date(requestedOnStr);
+    const twentyfiveDaysInMilliseconds = 25 * 24 * 60 * 60 * 1000;
     const twentyFiveDaysAgo = new Date(
       now.getTime() - twentyfiveDaysInMilliseconds
     );
-    return requestedOn >= twentyFiveDaysAgo && requestedOn <= now;
+    return requestedOn <= twentyFiveDaysAgo;
   }
 
   public onPaginationChange(event: PageEvent): void {

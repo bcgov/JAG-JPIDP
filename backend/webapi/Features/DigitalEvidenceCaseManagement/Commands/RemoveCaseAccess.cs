@@ -25,14 +25,16 @@ public class RemoveCaseAccess
     public class CommandHandler : ICommandHandler<Command, IDomainResult>
     {
         private readonly ILogger logger;
+        private readonly IClock clock;
         private readonly PidpConfiguration config;
         private readonly PidpDbContext context;
         private readonly IKafkaProducer<string, SubAgencyDomainEvent> kafkaProducer;
 
-        public CommandHandler(ILogger<CommandHandler> logger, PidpConfiguration config, PidpDbContext context, IKafkaProducer<string, SubAgencyDomainEvent> kafkaProducer)
+        public CommandHandler(ILogger<CommandHandler> logger, IClock clock, PidpConfiguration config, PidpDbContext context, IKafkaProducer<string, SubAgencyDomainEvent> kafkaProducer)
         {
             this.logger = logger;
             this.config = config;
+            this.clock = clock;
             this.context = context;
             this.kafkaProducer = kafkaProducer;
         }

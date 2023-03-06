@@ -138,6 +138,22 @@ export class DigitalEvidencePage
       this.formState.ParticipantId.patchValue(
         this.organizationType.participantId
       );
+
+      this.identityProvider$.subscribe((idp) => {
+        // todo - remove IDIR
+        if (idp === IdentityProvider.BCPS || idp === IdentityProvider.IDIR) {
+          // if BCPS then get the crown-regions
+          this.userOrgunit
+            .getUserOrgUnit(
+              partyId,
+              Number(this.organizationType.participantId)
+            )
+            .subscribe((data: any) => {
+              this.assignedRegions = data;
+              this.formState.AssignedRegions.patchValue(this.assignedRegions);
+            });
+        }
+      });
     });
 
     this.formState = new DigitalEvidenceFormState(fb);
@@ -277,27 +293,6 @@ export class DigitalEvidencePage
 
   public ngOnInit(): void {
     const partyId = this.partyService.partyId;
-    this.formState.OrganizationName.patchValue(
-      this.organizationType.organizationName
-    );
-    this.formState.OrganizationType.patchValue(
-      this.organizationType.organizationType
-    );
-    this.formState.ParticipantId.patchValue(
-      this.organizationType.participantId
-    );
-
-    this.identityProvider$.subscribe((idp) => {
-      if (idp === IdentityProvider.BCPS) {
-        // if BCPS then get the crown-regions
-        this.userOrgunit
-          .getUserOrgUnit(partyId, Number(this.organizationType.participantId))
-          .subscribe((data: any) => {
-            this.assignedRegions = data;
-            this.formState.AssignedRegions.patchValue(this.assignedRegions);
-          });
-      }
-    });
 
     // this.form = new FormGroup({
     //   userType: new FormControl('', [Validators.required]),

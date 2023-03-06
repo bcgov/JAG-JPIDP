@@ -43,7 +43,7 @@ public class EdtServiceConfiguration
     }
     public class ConnectionStringConfiguration
     {
-        public string EdtDataStore { get; set; } = string.Empty;
+        public string CaseManagementDataStore { get; set; } = string.Empty;
     }
 
     public class KeycloakConfiguration

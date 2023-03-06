@@ -29,6 +29,7 @@ using FluentValidation.AspNetCore;
 using NodaTime.Serialization.SystemTextJson;
 using edt.casemanagement.ServiceEvents.CaseManagement.Handler;
 using edt.casemanagement.HttpClients.Services;
+using edt.casemanagement.Data;
 
 public class Startup
 {
@@ -116,17 +117,15 @@ public class Startup
             //options.AddPolicy("Administrator", policy => policy.Requirements.Add(new RealmAccessRoleRequirement("administrator")));
         });
 
-
-
-        //services.AddDbContext<EdtDataStoreDbContext>(options => options
-        //    .UseSqlServer(config.ConnectionStrings.EdtDataStore, sql => sql.UseNodaTime())
-        //    .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
+        services.AddDbContext<CaseManagementDataStoreDbContext>(options => options
+            .UseNpgsql(config.ConnectionStrings.CaseManagementDataStore, sql => sql.UseNodaTime())
+            .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
 
         services.AddMediatR(typeof(Startup).Assembly);
 
         services.AddHealthChecks()
                 .AddCheck("liveliness", () => HealthCheckResult.Healthy())
-                .AddSqlServer(config.ConnectionStrings.EdtDataStore, tags: new[] { "services" }).ForwardToPrometheus();
+                .AddNpgSql(config.ConnectionStrings.CaseManagementDataStore, tags: new[] { "services" }).ForwardToPrometheus();
 
         services.AddControllers(options => options.Conventions.Add(new RouteTokenTransformerConvention(new KabobCaseParameterTransformer())))
              .AddFluentValidation(options => options.RegisterValidatorsFromAssemblyContaining<Startup>())

@@ -57,9 +57,10 @@ public static class AuthenticationSetup
             options.AddPolicy(Policies.AdminAuthentication, policy => policy
                     .RequireAuthenticatedUser()
                     .RequireClaim(Claims.IdentityProvider, ClaimValues.Idir, ClaimValues.Bcps));
+
             options.AddPolicy(Policies.SubAgencyIdentityProvider, policy => policy
                     .RequireAuthenticatedUser()
-                    .RequireClaim(Claims.IdentityProvider, ClaimValues.VicPd));
+                    .RequireClaim(Claims.IdentityProvider, ClaimValues.VicPd, ClaimValues.SubmittingAgency, ClaimValues.Idir));
 
             options.AddPolicy(Policies.UserOwnsResource, policy => policy.Requirements.Add(new UserOwnsResourceRequirement()));
 

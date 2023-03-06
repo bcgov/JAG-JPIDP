@@ -62,7 +62,7 @@ public static class AuthenticationSetup
             // REMOVE IDIR FROM HERE LATER!
             options.AddPolicy(Policies.SubAgencyIdentityProvider, policy => policy
                     .RequireAuthenticatedUser()
-                    .RequireClaim(Claims.IdentityProvider, ClaimValues.VicPd, ClaimValues.SubmittingAgency, ClaimValues.Idir));
+                    .RequireClaim(Claims.IdentityProvider, ClaimValues.SubmittingAgency, ClaimValues.Idir));
 
             options.AddPolicy(Policies.UserOwnsResource, policy => policy.Requirements.Add(new UserOwnsResourceRequirement()));
 

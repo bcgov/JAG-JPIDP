@@ -24,7 +24,7 @@ public class CaseController : ControllerBase
     }
 
     [HttpGet("{caseName}")]
-    [Authorize(Policy = Policies.SubAgencyIdentityProvider)]
+    //[Authorize(Policy = Policies.SubAgencyIdentityProvider)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

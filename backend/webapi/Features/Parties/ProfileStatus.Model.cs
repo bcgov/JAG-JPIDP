@@ -202,6 +202,37 @@ public partial class ProfileStatus
                 this.StatusCode = StatusCode.Incomplete;
             }
         }
+        public class SubmittingAgencyCaseManagement : ProfileSection
+        {
+            internal override string SectionName => "submittingAgencyCaseManagement";
+
+            public SubmittingAgencyCaseManagement(ProfileStatusDto profile) : base(profile) { }
+
+            protected override void SetAlertsAndStatus(ProfileStatusDto profile)
+            {
+                if (!profile.UserIsVicPd)
+                {
+                    this.StatusCode = StatusCode.Hidden;
+                    return;
+                }
+
+                //if (profile.AccessRequestStatus.Contains(AccessRequestStatus.Pending))
+                //{
+                //    this.StatusCode = StatusCode.Pending;
+                //    return;
+                //}
+
+                if (!profile.DemographicsEntered
+                    || !profile.CollegeCertificationEntered
+                    || !profile.CompletedEnrolments.Contains(AccessTypeCode.DigitalEvidence)
+                    || !profile.OrganizationDetailEntered
+                    || !profile.PlrStanding.HasGoodStanding)
+                {
+                    this.StatusCode = StatusCode.Locked;
+                    return;
+                }
+            }
+        }
 
         public class DigitalEvidenceCaseManagement : ProfileSection
         {
