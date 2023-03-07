@@ -94,8 +94,6 @@ export class OrganizationDetailsPage
           })
         );
       } else if (val === IdentityProvider.SUBMITTING_AGENCY) {
-        //
-        debugger;
         this.organizations = this.lookupService.organizations.map(
           (organization) => ({
             ...organization,

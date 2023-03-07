@@ -21,9 +21,6 @@ export class DigitalEvidenceCaseManagementResolver
   ) {}
 
   public resolve(): Observable<StatusCode | null> {
-    // eslint-disable-next-line no-debugger
-    debugger;
-
     if (!this.partyService.partyId) {
       return of(null);
     }
