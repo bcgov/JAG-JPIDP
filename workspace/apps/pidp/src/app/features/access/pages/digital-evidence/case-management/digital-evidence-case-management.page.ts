@@ -1,11 +1,5 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
-import {
-  AfterViewInit,
-  Component,
-  Inject,
-  OnInit,
-  ViewChild,
-} from '@angular/core';
+import { AfterViewInit, Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
@@ -13,24 +7,15 @@ import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import {
-  EMPTY,
-  Observable,
-  catchError,
-  exhaustMap,
-  interval,
-  map,
-  noop,
-  of,
-  takeWhile,
-  tap,
-} from 'rxjs';
 
-import {
-  ConfirmDialogComponent,
-  DialogOptions,
-  HtmlComponent,
-} from '@bcgov/shared/ui';
+
+import { EMPTY, Observable, catchError, exhaustMap, interval, map, noop, of, takeWhile, tap } from 'rxjs';
+
+
+
+import { ConfirmDialogComponent, DialogOptions, HtmlComponent } from '@bcgov/shared/ui';
+
+
 
 import { APP_CONFIG, AppConfig } from '@app/app.config';
 import { AbstractFormPage } from '@app/core/classes/abstract-form-page.class';
@@ -43,18 +28,18 @@ import { AccessTokenService } from '@app/features/auth/services/access-token.ser
 import { AuthorizedUserService } from '@app/features/auth/services/authorized-user.service';
 import { StatusCode } from '@app/features/portal/enums/status-code.enum';
 
+
+
 import { FormUtilsService } from '@core/services/form-utils.service';
+
+
 
 import { PartyUserTypeResource } from '../../../../../features/admin/shared/usertype-resource.service';
 import { OrganizationUserType } from '../../../../../features/admin/shared/usertype-service.model';
-import { BcpsAuthResourceService } from '../auth/bcps-auth-resource.service';
 import { DigitalEvidenceCaseManagementFormState } from './digital-evidence-case-management-form.state';
 import { DigitalEvidenceCaseManagementResource } from './digital-evidence-case-management-resource.service';
-import {
-  CaseStatus,
-  DigitalEvidenceCase,
-  DigitalEvidenceCaseRequest,
-} from './digital-evidence-case.model';
+import { CaseStatus, DigitalEvidenceCase, DigitalEvidenceCaseRequest } from './digital-evidence-case.model';
+
 
 @Component({
   selector: 'app-digital-evidence',
@@ -140,12 +125,18 @@ export class DigitalEvidenceCaseManagementPage
       console.log(n.identity_provider);
       this.result = n.identity_provider;
     });
+
+    this.formState = new DigitalEvidenceCaseManagementFormState(fb);
+
     this.usertype.getUserType(partyId).subscribe((data: any) => {
       this.organizationType.organizationType = data['organzationType'];
       this.organizationType.participantId = data['participantId'];
       this.organizationType.organizationName = data['organizationName'];
+      this.organizationType.submittingAgencyCode = data['submittingAgencyCode'];
+      this.formState.agencyCode.patchValue(
+        this.organizationType.submittingAgencyCode
+      );
     });
-    this.formState = new DigitalEvidenceCaseManagementFormState(fb);
     this.collectionNotice =
       documentService.getDigitalEvidenceCollectionNotice();
     this.completed =
@@ -330,7 +321,10 @@ export class DigitalEvidenceCaseManagementPage
         )
         .subscribe(() => {
           this.formState.caseName.patchValue('');
-          this.requestedCase = null;
+            this.formState.agencyCode.patchValue(
+              this.organizationType.submittingAgencyCode
+            );
+            this.requestedCase = null;
           this.refreshCount = 0;
           this.refreshTable();
         });
@@ -352,10 +346,6 @@ export class DigitalEvidenceCaseManagementPage
       this.logger.error('No status code was provided');
       return this.navigateToRoot();
     }
-
-    // this.formState.agencyCode.patchValue(this.partyService.partyId);
-
-    this.formState.agencyCode.patchValue('105');
   }
 
   public isWithin25Days(requestedOnStr: string): boolean {

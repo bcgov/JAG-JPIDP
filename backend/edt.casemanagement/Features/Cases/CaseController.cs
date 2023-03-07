@@ -5,6 +5,7 @@ using edt.casemanagement.Infrastructure.Auth;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Prometheus;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -12,13 +13,14 @@ public class CaseController : ControllerBase
 {
 
     private readonly IMediator _mediator;
-
+    private static readonly Histogram CaseFindDuration = Metrics
+.CreateHistogram("case_search_duration", "Histogram of case searches.");
     //public CaseController(IMediator mediator, IEdtAuthorizationService authService) : base(authService)
     //{
     //    _mediator = mediator;
     //}
 
-    public CaseController(IMediator mediator) 
+    public CaseController(IMediator mediator)
     {
         _mediator = mediator;
     }
@@ -28,9 +30,20 @@ public class CaseController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<CaseModel> SearchCases([FromRoute] string caseName)
+    public async Task<ActionResult<CaseModel>> SearchCases([FromRoute] string caseName)
     {
-        return  await this._mediator.Send(new CaseLookupQuery(caseName));
+        using (CaseFindDuration.NewTimer())
+        {
+            var response = await this._mediator.Send(new CaseLookupQuery(caseName));
+            if (response == null)
+            {
+                return NotFound();
+            }
+            else
+            {
+                return Ok(response);
+            }
+        }
     }
 
 }

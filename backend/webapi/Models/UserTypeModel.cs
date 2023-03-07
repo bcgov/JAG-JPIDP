@@ -6,5 +6,7 @@ public class UserTypeModel
     public string OrganizationName { get;set; } = string.Empty;
     public string ParticipantId { get; set; } = string.Empty;
 
-    public Boolean IsSubmittingAgency { get; set; }
+    public bool IsSubmittingAgency { get; set; }
+
+    public string SubmittingAgencyCode { get; set; } = string.Empty;
 }

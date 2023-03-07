@@ -9,6 +9,7 @@ using Pidp.Data;
 using Pidp.Features.AccessRequests;
 using Pidp.Kafka.Interfaces;
 using Pidp.Models;
+using Prometheus;
 
 public class RemoveCaseAccess
 {
@@ -29,6 +30,8 @@ public class RemoveCaseAccess
         private readonly PidpConfiguration config;
         private readonly PidpDbContext context;
         private readonly IKafkaProducer<string, SubAgencyDomainEvent> kafkaProducer;
+        private static readonly Histogram CaseQueueRemovalDuration = Metrics
+    .CreateHistogram("pipd_case_removal_request_duration", "Histogram of case removal call durations.");
 
         public CommandHandler(ILogger<CommandHandler> logger, IClock clock, PidpConfiguration config, PidpDbContext context, IKafkaProducer<string, SubAgencyDomainEvent> kafkaProducer)
         {
@@ -41,39 +44,46 @@ public class RemoveCaseAccess
         public async Task<IDomainResult> HandleAsync(Command command)
         {
 
-            var subAgencyRequest = await this.context.SubmittingAgencyRequests
+            using (CaseQueueRemovalDuration.NewTimer())
+            {
+
+                var subAgencyRequest = await this.context.SubmittingAgencyRequests
                 .Where(request => request.RequestId == command.RequestId)
                 .SingleAsync();
 
-            var dto = await this.GetPidpUser(subAgencyRequest.PartyId);
+                var dto = await this.GetPidpUser(subAgencyRequest.PartyId);
 
-            if (subAgencyRequest == null)
-            {
-                return DomainResult.Failed();
+                if (subAgencyRequest == null)
+                {
+                    return DomainResult.Failed();
+                }
+                using var trx = this.context.Database.BeginTransaction();
+
+                try
+                {
+
+                    subAgencyRequest.RequestStatus = AgencyRequestStatus.RemovalPending;
+
+                    await this.context.SaveChangesAsync();
+                    var exportedEvent = this.AddOutbox(subAgencyRequest, dto);
+
+                    await this.PublishSubAgencyAccessRemovalRequest(dto, subAgencyRequest);
+
+                    await trx.CommitAsync();
+
+                }
+                catch (Exception ex)
+                {
+                    this.logger.LogDigitalEvidenceAccessTrxFailed(ex.Message.ToString());
+                    await trx.RollbackAsync();
+                    return DomainResult.Failed();
+                }
+                return DomainResult.Success();
             }
-            using var trx = this.context.Database.BeginTransaction();
 
-            try
-            {
-
-                subAgencyRequest.RequestStatus = AgencyRequestStatus.RemovalPending;
-
-                await this.context.SaveChangesAsync();
-                var exportedEvent = this.AddOutbox(subAgencyRequest, dto);
-
-                await this.PublishSubAgencyAccessRemovalRequest(dto, subAgencyRequest);
-
-                await trx.CommitAsync();
-
-            }
-            catch (Exception ex)
-            {
-                this.logger.LogDigitalEvidenceAccessTrxFailed(ex.Message.ToString());
-                await trx.RollbackAsync();
-                return DomainResult.Failed();
-            }
-            return DomainResult.Success();
         }
+
+
         private Task<Models.OutBoxEvent.ExportedEvent> AddOutbox(SubmittingAgencyRequest subAgencyRequest, PartyDto dto)
         {
             var exportedEvent = this.context.ExportedEvents.Add(new Models.OutBoxEvent.ExportedEvent

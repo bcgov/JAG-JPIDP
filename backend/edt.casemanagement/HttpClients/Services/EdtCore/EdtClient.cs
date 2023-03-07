@@ -1,5 +1,6 @@
 namespace edt.casemanagement.HttpClients.Services.EdtCore;
 
+using System.Diagnostics.Metrics;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -9,6 +10,8 @@ using edt.casemanagement.Features.Cases;
 using edt.casemanagement.Infrastructure.Telemetry;
 using edt.casemanagement.ServiceEvents.CaseManagement.Models;
 using edt.casemanagement.ServiceEvents.UserAccountCreation.Models;
+using Microsoft.AspNetCore.Mvc;
+using Prometheus;
 using Serilog;
 
 public class EdtClient : BaseClient, IEdtClient
@@ -16,8 +19,14 @@ public class EdtClient : BaseClient, IEdtClient
     private readonly IMapper mapper;
     private readonly OtelMetrics meters;
     private readonly EdtServiceConfiguration configuration;
-
-
+    private static readonly Counter CaseSearches = Metrics
+        .CreateCounter("case_search_count", "Number of case search requests.");
+    private static readonly Counter CaseSearchFailures = Metrics
+        .CreateCounter("case_search_failure_count", "Number of case search requests not found.");
+    private static readonly Counter CaseAssignments = Metrics
+        .CreateCounter("case_assignment_count", "Number of cases assigned");
+    private static readonly Counter CaseRemovals = Metrics
+        .CreateCounter("case_removal_count", "Number of cases removed");
     public EdtClient(
         HttpClient httpClient, OtelMetrics meters, EdtServiceConfiguration edtServiceConfiguration,
         IMapper mapper,
@@ -101,7 +110,7 @@ public class EdtClient : BaseClient, IEdtClient
         if (result.IsSuccess)
         {
             Log.Information("Successfully added user {0} to case {1}", userId, caseId);
-
+            CaseAssignments.Inc();
             var caseGroupId = await this.GetCaseGroupId(caseId, this.configuration.EdtClient.SubmittingAgencyGroup);
 
             if (caseGroupId > 0)
@@ -133,6 +142,7 @@ public class EdtClient : BaseClient, IEdtClient
 
         if (result.IsSuccess)
         {
+            CaseRemovals.Inc();
             Log.Information("Successfully removed user {0} from case {1}", userId, caseId);
         }
         else
@@ -146,7 +156,7 @@ public class EdtClient : BaseClient, IEdtClient
     public async Task<CaseModel> FindCase(string caseIdOrKey)
     {
         //' /api/v1/org-units/1/cases/3:105: 23-472018/id
-
+        CaseSearches.Inc();
         var searchString = this.configuration.EdtClient.SearchFieldId + ":" + caseIdOrKey;
         Log.Logger.Information("Finding case {0}", searchString);
 
@@ -157,106 +167,110 @@ public class EdtClient : BaseClient, IEdtClient
             var caseSearchValue = caseSearch?.Value;
 
             // Do something with the caseSearchValue
-            if (caseSearch.IsSuccess)
+
+            if (caseSearchValue.Count() == 0)
             {
-                // see if we have multiple cases with the same id - if e do then ew want the one with a key
-                var cases = caseSearch.Value;
-                int caseId;
+                Log.Information("No cases found for {0}", searchString);
+                CaseSearchFailures.Inc();
+                return null;
+            }
 
-                if (cases.Count() > 1)
-                {
-                    Log.Information("Multiple cases found for {0}", searchString.ToString());
-                    caseId = cases.FirstOrDefault(c => c.Key != null).Id;
-                }
-                else
-                {
-                    caseId = cases.First().Id;
-                }
+            // see if we have multiple cases with the same id - if e do then ew want the one with a key
+            var cases = caseSearch?.Value;
+            int caseId;
 
-                var result = await this.GetAsync<CaseModel?>($"api/v1/cases/{caseId}");
+            if (cases.Count() > 1)
+            {
+                Log.Information("Multiple cases found for {0}", searchString.ToString());
+                caseId = cases.FirstOrDefault(c => c.Key != null).Id;
+            }
+            else
+            {
+                caseId = cases.First().Id;
+            }
 
-                if (result.IsSuccess)
+            var result = await this.GetAsync<CaseModel?>($"api/v1/cases/{caseId}");
+
+            if (result.IsSuccess)
+            {
+                if (result != null)
                 {
-                    if (result != null)
+                    // filter out unwanted data
+                    var customFieldsArray = this.configuration.CaseDisplayCustomFields.Select(f => f.Id).ToArray();
+                    var customFieldsIds = this.configuration.CaseDisplayCustomFields.Select(f => f.Id).ToList();
+                    var filteredFields = result.Value.Fields.Where(f => customFieldsIds.Contains(f.Id)).ToList();
+
+                    var removeValues = new List<int>();
+
+                    foreach (var field in filteredFields)
                     {
-                        // filter out unwanted data
-                        var customFieldsArray = this.configuration.CaseDisplayCustomFields.Select(f => f.Id).ToArray();
-                        var customFieldsIds = this.configuration.CaseDisplayCustomFields.Select(f => f.Id).ToList();
-                        var filteredFields = result.Value.Fields.Where(f => customFieldsIds.Contains(f.Id)).ToList();
-
-                        var removeValues = new List<int>();
-
-                        foreach (var field in filteredFields)
+                        var defn = this.configuration.CaseDisplayCustomFields.FirstOrDefault(f => f.Id == field.Id);
+                        if (defn.RelatedId > 0)
                         {
-                            var defn = this.configuration.CaseDisplayCustomFields.FirstOrDefault(f => f.Id == field.Id);
-                            if (defn.RelatedId > 0)
+                            var relatedField = result.Value.Fields.FirstOrDefault(f => f.Id == defn.RelatedId);
+                            if (relatedField != null)
                             {
-                                var relatedField = result.Value.Fields.FirstOrDefault(f => f.Id == defn.RelatedId);
-                                if (relatedField != null)
+                                if (defn.RelatedValueEmpty)
                                 {
-                                    if (defn.RelatedValueEmpty)
+                                    if (relatedField.Value != null && !string.IsNullOrEmpty(relatedField.Value.ToString()))
                                     {
-                                        if (relatedField.Value != null && !string.IsNullOrEmpty(relatedField.Value.ToString()))
-                                        {
-                                            removeValues.Add(field.Id);
-                                        }
+                                        removeValues.Add(field.Id);
                                     }
-                                    else
+                                }
+                                else
+                                {
+                                    if (relatedField.Value == null || string.IsNullOrEmpty(relatedField.Value.ToString()))
                                     {
-                                        if (relatedField.Value == null || string.IsNullOrEmpty(relatedField.Value.ToString()))
-                                        {
-                                            removeValues.Add(field.Id);
-                                        }
+                                        removeValues.Add(field.Id);
                                     }
                                 }
                             }
-
-                            if (!defn.Display && !removeValues.Contains(field.Id))
-                            {
-                                //removeValues.Add(field.Id);
-                                field.Display = false;
-                            }
                         }
 
-                        if (removeValues.Count > 0)
+                        if (!defn.Display && !removeValues.Contains(field.Id))
                         {
-                            filteredFields = filteredFields.Where(f => !removeValues.Contains(f.Id)).ToList();
+                            //removeValues.Add(field.Id);
+                            field.Display = false;
                         }
-
-
-                        filteredFields.Sort((f1, f2) =>
-                        {
-                            var index1 = Array.IndexOf(customFieldsArray, f1.Id);
-                            var index2 = Array.IndexOf(customFieldsArray, f2.Id);
-                            return index1.CompareTo(index2);
-                        });
-
-                        result.Value.Fields = filteredFields;
-                        return result.Value;
                     }
-                    else
+
+                    if (removeValues.Count > 0)
                     {
-                        throw new EdtServiceException("No data found for case query");
+                        filteredFields = filteredFields.Where(f => !removeValues.Contains(f.Id)).ToList();
                     }
 
+
+                    filteredFields.Sort((f1, f2) =>
+                    {
+                        var index1 = Array.IndexOf(customFieldsArray, f1.Id);
+                        var index2 = Array.IndexOf(customFieldsArray, f2.Id);
+                        return index1.CompareTo(index2);
+                    });
+
+                    result.Value.Fields = filteredFields;
+                    return result.Value;
                 }
                 else
                 {
-                    throw new EdtServiceException(string.Join(",", result.Errors));
+                    throw new EdtServiceException("No data found for case query");
                 }
 
             }
             else
             {
-                throw new EdtServiceException(string.Join(",", caseSearch.Errors));
+                throw new EdtServiceException(string.Join(",", result.Errors));
             }
+
         }
         else
         {
             throw new EdtServiceException(string.Join(",", caseSearch.Errors));
-        }
 
+        }
     }
+
+
+
 
     public async Task<Task> HandleCaseRequest(string userKey, SubAgencyDomainEvent accessRequest)
     {

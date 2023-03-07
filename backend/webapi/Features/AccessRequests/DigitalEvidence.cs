@@ -232,7 +232,6 @@ We will notify you when your account has been created<p/>{1}<p/>
         {
             var exportedEvent = this.context.ExportedEvents.Add(new Models.OutBoxEvent.ExportedEvent
             {
-                EventId = digitalEvidence.Id,
                 AggregateType = AccessTypeCode.DigitalEvidence.ToString(),
                 AggregateId = $"{command.PartyId}",
                 EventType = "Access Request Created",

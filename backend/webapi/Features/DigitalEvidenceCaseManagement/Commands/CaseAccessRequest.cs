@@ -10,6 +10,7 @@ using Pidp.Features.AccessRequests;
 using Pidp.Kafka.Interfaces;
 using Pidp.Models;
 using Pidp.Models.Lookups;
+using Prometheus;
 
 public class CaseAccessRequest
 {
@@ -44,6 +45,8 @@ public class CaseAccessRequest
         private readonly PidpConfiguration config;
         private readonly PidpDbContext context;
         private readonly IKafkaProducer<string, SubAgencyDomainEvent> kafkaProducer;
+        private static readonly Histogram CaseQueueRequestDuration = Metrics
+            .CreateHistogram("pipd_case_request_duration", "Histogram of case request call durations.");
 
         public CommandHandler(IClock clock, ILogger<CommandHandler> logger, PidpConfiguration config, PidpDbContext context,  IKafkaProducer<string, SubAgencyDomainEvent> kafkaProducer)
         {
@@ -56,40 +59,43 @@ public class CaseAccessRequest
 
         public async Task<IDomainResult> HandleAsync(Command command)
         {
-            var dto = await this.GetPidpUser(command);
-
-            if (!dto.AlreadyEnroled
-                || dto.Email == null) //user must be already enroled i.e access to DEMS
-            {
-                this.logger.LogUserNotEnroled(dto.Jpdid); //throw dems user not enroled error
-                return DomainResult.Failed();
-            }
-
-            using var trx = this.context.Database.BeginTransaction();
-
-            try
+            using (CaseQueueRequestDuration.NewTimer())
             {
 
-                var subAgencyRequest = await this.SubmitAgencyCaseRequest(command); //save all trx at once for production(remove this and handle using idempotent)
+                var dto = await this.GetPidpUser(command);
 
-                var exportedEvent = this.AddOutbox(command, subAgencyRequest, dto);
+                if (!dto.AlreadyEnroled
+                    || dto.Email == null) //user must be already enroled i.e access to DEMS
+                {
+                    this.logger.LogUserNotEnroled(dto.Jpdid); //throw dems user not enroled error
+                    return DomainResult.Failed();
+                }
 
-                await this.PublishSubAgencyAccessRequest(dto, subAgencyRequest);
+                using var trx = this.context.Database.BeginTransaction();
 
-                await this.context.SaveChangesAsync();
-                await trx.CommitAsync();
+                try
+                {
+
+                    var subAgencyRequest = await this.SubmitAgencyCaseRequest(command); //save all trx at once for production(remove this and handle using idempotent)
+
+                    var exportedEvent = this.AddOutbox(command, subAgencyRequest, dto);
+
+                    await this.PublishSubAgencyAccessRequest(dto, subAgencyRequest);
+
+                    await this.context.SaveChangesAsync();
+                    await trx.CommitAsync();
+                }
+                catch (Exception ex)
+                {
+
+                    this.logger.LogDigitalEvidenceAccessTrxFailed(ex.Message.ToString());
+                    await trx.RollbackAsync();
+                    return DomainResult.Failed();
+                }
+
+                return DomainResult.Success();
+
             }
-            catch (Exception ex)
-            {
-
-                this.logger.LogDigitalEvidenceAccessTrxFailed(ex.Message.ToString());
-                await trx.RollbackAsync();
-                return DomainResult.Failed();
-            }
-
-            return DomainResult.Success();
-
-
         }
 
         private Task<Models.OutBoxEvent.ExportedEvent> AddOutbox(Command command, SubmittingAgencyRequest subAgencyRequest, PartyDto dto)

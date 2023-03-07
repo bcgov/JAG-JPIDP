@@ -103,7 +103,8 @@ public class UserTypeService : IUserTypeService
                     OrganizationType = nameof(OrganizationCode.SubmittingAgency),
                     OrganizationName = orgCode.Organization.Name,
                     ParticipantId = orgCode.Party.Email,
-                    IsSubmittingAgency = true
+                    IsSubmittingAgency = true,
+                    SubmittingAgencyCode = agency.Code,
                 };
             }
 

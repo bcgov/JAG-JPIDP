@@ -65,9 +65,10 @@
         <ng-container uiPageSectionSubheaderDesc>
           Provide details for your DEMS Access Request.
 
-          <div class="submitting-agency" *ngIf="userInAgency()">
-            As a member of a submitting agency you will only be able to request case access etc....
-
+          <div class="submitting-agency mat-elevation-z4" *ngIf="userInAgency()">
+            As a member of a submitting agency you will be able to request access to individual cases.
+            Once you have completed this section and your on-boarding to DEMS is complete you will be able
+            to access to Digital Evidence and Disclosure Case Management services.
           </div>
         </ng-container>
       </ui-page-section-subheader>
