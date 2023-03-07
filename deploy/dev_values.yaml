@@ -5,7 +5,7 @@ global:
   licenseplate: "e27db1"
   environment: "dev"
   image:
-    tag: telemetry
+    tag: develop
 
 route:
   enabled: false

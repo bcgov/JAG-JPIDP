@@ -85,6 +85,8 @@ spec:
                 secretKeyRef:
                   name: {{ include "edt-service.fullname" . }}-jum-database
                   key: DB_USER
+            - name: USER_CREATION_PLAINTEXT_TOPIC
+              value: digitalevidence-usercreation-plain-topic
             - name: DATABASE_NAME
               value: jum
             - name: DOTNET_BUNDLE_EXTRACT_BASE_DIR

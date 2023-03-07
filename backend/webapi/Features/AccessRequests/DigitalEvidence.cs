@@ -113,9 +113,10 @@ public class DigitalEvidence
                 {
                     var digitalEvidence = await this.SubmitDigitalEvidenceRequest(command); //save all trx at once for production(remove this and handle using idempotent)
                     string? key = Guid.NewGuid().ToString();
-                    Serilog.Log.Logger.Information("Sending submission message for {0} to {1}", command.ParticipantId, dto.Email);
-                    if (digitalEvidence != null)
+                    // no email notifications for submitting agencies currently
+                    if (digitalEvidence != null && !command.OrganizationType.Equals(nameof(OrganizationCode.SubmittingAgency)))
                     {
+                        Serilog.Log.Logger.Information("Sending submission message for {0} to {1}", command.ParticipantId, dto.Email);
 
                         // send notification to user of sumission
                         await this.kafkaNotificationProducer.ProduceAsync(this.config.KafkaCluster.NotificationTopicName, key: key, new Notification
@@ -202,7 +203,9 @@ We will notify you when your account has been created<p/>{1}<p/>
                 AccountType = "Saml",
                 Role = "User",
                 AssignedRegions = command.AssignedRegions,
-                AccessRequestId = digitalEvidence.Id
+                AccessRequestId = digitalEvidence.Id,
+                OrganizationType = digitalEvidence.OrganizationType,
+                OrganizationName = digitalEvidence.OrganizationName,
             });
         }
 
@@ -229,7 +232,6 @@ We will notify you when your account has been created<p/>{1}<p/>
         {
             var exportedEvent = this.context.ExportedEvents.Add(new Models.OutBoxEvent.ExportedEvent
             {
-                EventId = digitalEvidence.Id,
                 AggregateType = AccessTypeCode.DigitalEvidence.ToString(),
                 AggregateId = $"{command.PartyId}",
                 EventType = "Access Request Created",

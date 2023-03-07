@@ -1,0 +1,51 @@
+{{- if .Values.migrations.enabled }}
+{{ $release := .Release.Name }}
+{{ $ocEnv := regexFind "([^-]*$)" .Release.Namespace }}
+{{ $isPR := hasPrefix "pr-" .Release.Name }}
+## Derived release name
+{{ $drn := ternary $release $ocEnv $isPR }}
+#
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "edt-casemgmt.fullname" . }}-migrations
+  annotations:
+    helm.sh/hook: pre-install, pre-upgrade
+    helm.sh/hook-weight: "10"
+  labels:
+    {{- include "edt-casemgmt.labels" . | nindent 4 }}
+spec:
+  ttlSecondsAfterFinished: 30
+  template:
+    spec:
+      containers:
+      - name: migrations
+        image: {{ .Values.global.image.registry }}/{{ .Values.image.repository }}:{{ .Values.global.image.tag | default .Chart.AppVersion }}
+        imagePullPolicy: Always
+        command: ['./efbundle', '--connection', '$(ConnectionStrings__CaseManagementDataStore)']
+        env:
+          - name: DB_HOST
+            value: pidp-postgresql
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "edt-casemgmt.fullname" . }}-database
+                key: database-password
+          - name: DB_USER
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "edt-casemgmt.fullname" . }}-database
+                key: database-username
+          - name: DATABASE_NAME
+            value: jum
+          - name: DOTNET_BUNDLE_EXTRACT_BASE_DIR
+            value: /tmp
+          - name: ConnectionStrings__CaseManagementDataStore
+            valueFrom:
+                configMapKeyRef:
+                  name: edt-casemgmt-api-database
+                  key: CONNECTION_STRINGS_DB
+      restartPolicy: Never
+  backoffLimit: 3
+{{- end }}
+

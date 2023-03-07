@@ -27,6 +27,10 @@ export class CardSummaryComponent {
     this.action = new EventEmitter<void>();
   }
 
+  public hasActions(): boolean {
+    return (this.actionLabel && this.actionLabel?.length > 0) || false;
+  }
+
   public onAction(): void {
     this.action.emit();
   }

@@ -1,9 +1,10 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
+import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { EMPTY, Observable, exhaustMap } from 'rxjs';
+import { EMPTY, Observable, exhaustMap, map, startWith } from 'rxjs';
 
 import {
   DashboardHeaderConfig,
@@ -25,12 +26,14 @@ import { AuthService } from '../../services/auth.service';
   templateUrl: './login.page.html',
   styleUrls: ['./login.page.scss'],
 })
-export class LoginPage {
+export class LoginPage implements OnInit {
   public title: string;
   public headerConfig: DashboardHeaderConfig;
   public loginCancelled: boolean;
   public organizations: Lookup[];
+  public filteredAgencies!: Observable<AgencyLookup[]>;
   public submittingAgencies: AgencyLookup[];
+  public agency: AgencyLookup | undefined;
 
   public bcscSupportUrl: string;
   public bcscMobileSetupUrl: string;
@@ -58,14 +61,14 @@ export class LoginPage {
     this.loginCancelled = routeSnapshot.queryParams.action === 'cancelled';
     this.bcscSupportUrl = this.config.urls.bcscSupport;
     this.organizations = this.lookupService.organizations;
-    this.submittingAgencies = this.lookupService.submittingAgencies.filter(
-      (agency) => agency.idpHint?.length > 0
-    );
     this.bcscMobileSetupUrl = this.config.urls.bcscMobileSetup;
     this.specialAuthorityUrl = this.config.urls.specialAuthority;
     this.providerIdentitySupportEmail =
       this.config.emails.providerIdentitySupport;
     this.idpHint = routeSnapshot.data.idpHint;
+    this.submittingAgencies = this.lookupService.submittingAgencies.filter(
+      (agency) => agency.idpHint?.length > 0
+    );
   }
 
   public onScrollToAnchor(): void {
@@ -76,11 +79,14 @@ export class LoginPage {
   }
 
   public onAgencyLogin(): void {
-    const idp = this.submittingAgencies.find(
-      (agency) => agency.name === this.selectedAgency.value
-    )?.idpHint;
-    console.log('IDP %s', idp);
-    this.onLogin(IdentityProvider.SUBMITTING_AGENCY, idp);
+    this.onLogin(IdentityProvider.SUBMITTING_AGENCY, this.agency?.idpHint);
+  }
+
+  public ngOnInit(): void {
+    this.filteredAgencies = this.selectedAgency.valueChanges.pipe(
+      startWith(''),
+      map((value) => this.filterAgencies(value || ''))
+    );
   }
 
   public onLogin(idpHint?: IdentityProvider, idpStringVal?: string): void {
@@ -120,6 +126,27 @@ export class LoginPage {
         this.config.applicationUrl +
         (endorsementToken ? `?endorsement-token=${endorsementToken}` : ''),
     });
+  }
+
+  private filterAgencies(value: string): AgencyLookup[] {
+    if (this.agency && value !== this.agency.name) {
+      this.agency = undefined;
+    }
+
+    const filterValue = value.toLowerCase();
+
+    const response = this.submittingAgencies.filter((option) =>
+      option.name.toLowerCase().includes(filterValue)
+    );
+    return response.length === 1 ? response : [];
+  }
+
+  public agencySelected(): boolean {
+    return this.agency !== undefined;
+  }
+
+  public onSelectionChanged(event: MatAutocompleteSelectedEvent): void {
+    this.agency = event.option.value;
   }
 
   private login(idpHint: IdentityProvider): Observable<void> {

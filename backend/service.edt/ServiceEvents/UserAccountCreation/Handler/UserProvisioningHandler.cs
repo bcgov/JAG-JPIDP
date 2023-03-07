@@ -84,8 +84,6 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
 
                 var msgKey = Guid.NewGuid().ToString();
 
-
-                // TODO - fix typo (is partyId used for anything?)
                 await this.producer.ProduceAsync(this.configuration.KafkaCluster.ProducerTopicName, key: key, new Notification
                 {
                     To = accessRequestModel.Email,
@@ -96,8 +94,6 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
                     PartyId = accessRequestModel.Key!,
                     Tag = msgKey
                 });
-
-         
 
                 if (string.IsNullOrEmpty(this.configuration.SchemaRegistry.Url))
                 {

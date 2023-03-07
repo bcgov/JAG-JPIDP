@@ -4,6 +4,7 @@ using System.Net;
 using Confluent.Kafka;
 using IdentityModel.Client;
 using Pidp.Extensions;
+using Pidp.Features.DigitalEvidenceCaseManagement.BackgroundServices;
 using Pidp.Infrastructure.HttpClients.AddressAutocomplete;
 using Pidp.Infrastructure.HttpClients.Edt;
 using Pidp.Infrastructure.HttpClients.Jum;
@@ -107,7 +108,8 @@ public static class HttpClientSetup
         services.AddScoped<IKafkaHandler<string, NotificationAckModel>, NotificationAckHandler>();
         services.AddSingleton(typeof(IKafkaConsumer<,>), typeof(KafkaConsumer<,>));
         services.AddHostedService<NotificationAckService>();
-      //  services.AddHostedService<DecomissionCaseAccessService>();
+
+        services.AddHostedService<DecomissionCaseAccessService>();
 
         return services;
     }

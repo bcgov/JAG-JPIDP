@@ -1,13 +1,15 @@
 namespace edt.casemanagement.ServiceEvents.CaseManagement.Handler;
 
+using edt.casemanagement.Data;
 using edt.casemanagement.Exceptions;
 using edt.casemanagement.HttpClients.Services.EdtCore;
 using edt.casemanagement.Kafka.Interfaces;
+using edt.casemanagement.Models;
 using edt.casemanagement.ServiceEvents.CaseManagement.Models;
 using edt.casemanagement.ServiceEvents.UserAccountCreation.Models;
 using EdtService.HttpClients.Keycloak;
-using Google.Protobuf.WellKnownTypes;
-using Microsoft.Extensions.Configuration;
+using NodaTime.Extensions;
+using Prometheus;
 
 public class CaseAccessRequestHandler : IKafkaHandler<string, SubAgencyDomainEvent>
 {
@@ -18,18 +20,23 @@ public class CaseAccessRequestHandler : IKafkaHandler<string, SubAgencyDomainEve
     private readonly ILogger logger;
     private readonly IKeycloakAdministrationClient keycloakAdministrationClient;
     private readonly IKafkaProducer<string, NotificationAckModel> producer;
-
+    private readonly CaseManagementDataStoreDbContext context;
+    private static readonly Histogram CaseRequestDuration = Metrics
+    .CreateHistogram("case_request_duration", "Histogram of case request call durations.");
 
     public CaseAccessRequestHandler(
     EdtServiceConfiguration configuration,
     IKeycloakAdministrationClient keycloakAdministrationClient,
     IKafkaProducer<string, NotificationAckModel> producer,
+    CaseManagementDataStoreDbContext context,
+
     IEdtClient edtClient,
      ILogger logger)
     {
         this.configuration = configuration;
         this.keycloakAdministrationClient = keycloakAdministrationClient;
         this.logger = logger;
+        this.context = context;
         this.edtClient = edtClient;
         this.producer = producer;
     }
@@ -44,49 +51,81 @@ public class CaseAccessRequestHandler : IKafkaHandler<string, SubAgencyDomainEve
         // get the cases the user currently has access to
         // var currentCases = edtClient.GetUserCases(
 
-        var userInfo = await this.keycloakAdministrationClient.GetUser(caseEvent.UserId);
+        using (CaseRequestDuration.NewTimer())
+        {
+            var userInfo = await this.keycloakAdministrationClient.GetUser(caseEvent.UserId);
 
-        if (userInfo == null)
-        {
-            throw new EdtServiceException($"serinfo not found for {caseEvent.UserId}");
-        }
-        else
-        {
-            var partId = userInfo.Attributes.GetValueOrDefault("partId").FirstOrDefault();
-            if (string.IsNullOrEmpty(partId))
+            if (userInfo == null)
             {
-                // get the EDT user info
-                Serilog.Log.Error("No partId found for {0} - possible attempt to bypass security", caseEvent.UserId);
+                throw new EdtServiceException($"serinfo not found for {caseEvent.UserId}");
             }
             else
             {
-                var result = await this.edtClient.HandleCaseRequest(partId, caseEvent);
 
-                if (result != null)
+                using var trx = context.Database.BeginTransaction();
+
+
+                var partId = userInfo.Attributes.GetValueOrDefault("partId").FirstOrDefault();
+                if (string.IsNullOrEmpty(partId))
                 {
-                    if (result.IsCompleted)
-                    {
-                        var uniqueKey = Guid.NewGuid().ToString();
-
-                        await this.producer.ProduceAsync(this.configuration.KafkaCluster.AckTopicName, key: uniqueKey, new NotificationAckModel
-                        {
-                            Status = "Completed",
-                            AccessRequestId = caseEvent.RequestId,
-                            PartId = partId,
-                            EmailAddress = userInfo.Email,
-                            Subject = NotificationSubject.CaseAccessRequest,
-                            EventType = caseEvent.EventType
-                        });
-                    }
+                    // get the EDT user info
+                    Serilog.Log.Error("No partId found for {0} - possible attempt to bypass security", caseEvent.UserId);
                 }
-           
+                else
+                {
+                    var result = await this.edtClient.HandleCaseRequest(partId, caseEvent);
+
+                    try
+                    {
+                        //save notification ref in notification table database
+                        await this.context.CaseRequests.AddAsync(new CaseRequest
+                        {
+                            AgencFileNumber = caseEvent.AgencyFileNumber,
+                            PartyId = caseEvent.PartyId,
+                            CaseId = caseEvent.CaseId,
+                            RemoveRequested = caseEvent.EventType.Equals(CaseEventType.Decommission, StringComparison.Ordinal),
+                            Requested = caseEvent.RequestedOn.ToInstant()
+                        });
+                        await this.context.SaveChangesAsync();
+
+
+                        if (result != null)
+                        {
+                            if (result.IsCompleted)
+                            {
+                                var uniqueKey = Guid.NewGuid().ToString();
+
+                                await this.producer.ProduceAsync(this.configuration.KafkaCluster.AckTopicName, key: uniqueKey, new NotificationAckModel
+                                {
+                                    Status = "Completed",
+                                    AccessRequestId = caseEvent.RequestId,
+                                    PartId = partId,
+                                    EmailAddress = userInfo.Email,
+                                    Subject = NotificationSubject.CaseAccessRequest,
+                                    EventType = caseEvent.EventType
+                                });
+                            }
+                        }
+
+                        await trx.CommitAsync();
+
+                    }
+                    catch (Exception ex)
+                    {
+                        Serilog.Log.Error("Failed to process request {0}", string.Join(", ", ex.Message));
+                        await trx.RollbackAsync();
+                        return Task.FromException(new CaseAssignmentException($"Failed to process request {caseEvent}"));
+
+                    }
+
+                }
+
+
+
             }
 
-
-
+            return Task.CompletedTask;
         }
-
-        return Task.CompletedTask;
     }
 
 

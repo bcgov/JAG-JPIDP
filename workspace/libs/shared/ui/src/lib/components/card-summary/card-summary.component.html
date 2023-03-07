@@ -8,21 +8,16 @@
 <ng-template #card>
   <ui-card [icon]="icon" [heading]="heading">
     <!-- Work around for ngProjectAs not passing directive reference when applied to ng-content -->
-    <ng-container uiCardHint>
+    <ng-container uiCardHint *ngIf="hasActions()">
       <ng-content select="[uiCardSummaryHint]"></ng-content>
     </ng-container>
     <!-- Work around for ngProjectAs not passing directive reference when applied to ng-content -->
     <ng-container uiCardContent>
       <ng-content select="[uiCardSummaryContent]"></ng-content>
     </ng-container>
-    <ng-container uiCardActions>
+    <ng-container uiCardActions *ngIf="hasActions()">
       <span>
-        <button
-          *ngIf="actionLabel"
-          mat-stroked-button
-          type="button"
-          color="primary"
-          [disabled]="actionDisabled"
+        <button *ngIf="actionLabel" mat-stroked-button type="button" color="primary" [disabled]="actionDisabled"
           (click)="onAction()">
           {{ actionLabel }}
         </button>

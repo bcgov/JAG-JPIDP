@@ -99,7 +99,7 @@ public partial class ProfileStatus
                 this.Phone = profile.Phone;
             }
 
-            protected override void SetAlertsAndStatus(ProfileStatusDto profile) => this.StatusCode = profile.DemographicsEntered ? StatusCode.Complete : StatusCode.Incomplete;
+            protected override void SetAlertsAndStatus(ProfileStatusDto profile) => this.StatusCode = profile.DemographicsEntered || profile.SubmittingAgency != null ? StatusCode.Complete : StatusCode.Incomplete;
         }
 
         public class OrganizationDetails : ProfileSection
@@ -135,6 +135,12 @@ public partial class ProfileStatus
                     return;
                 }
 
+                // user is from an authenticated agency - no need to enter organization details or view/change them
+                if (profile.UserIsInSubmittingAgency)
+                {
+                    this.StatusCode = StatusCode.Hidden_Complete;
+                    return;
+                }
 
                 if (!profile.DemographicsEntered)
                 {
@@ -194,6 +200,37 @@ public partial class ProfileStatus
                 }
 
                 this.StatusCode = StatusCode.Incomplete;
+            }
+        }
+        public class SubmittingAgencyCaseManagement : ProfileSection
+        {
+            internal override string SectionName => "submittingAgencyCaseManagement";
+
+            public SubmittingAgencyCaseManagement(ProfileStatusDto profile) : base(profile) { }
+
+            protected override void SetAlertsAndStatus(ProfileStatusDto profile)
+            {
+                if (!profile.UserIsVicPd)
+                {
+                    this.StatusCode = StatusCode.Hidden;
+                    return;
+                }
+
+                //if (profile.AccessRequestStatus.Contains(AccessRequestStatus.Pending))
+                //{
+                //    this.StatusCode = StatusCode.Pending;
+                //    return;
+                //}
+
+                if (!profile.DemographicsEntered
+                    || !profile.CollegeCertificationEntered
+                    || !profile.CompletedEnrolments.Contains(AccessTypeCode.DigitalEvidence)
+                    || !profile.OrganizationDetailEntered
+                    || !profile.PlrStanding.HasGoodStanding)
+                {
+                    this.StatusCode = StatusCode.Locked;
+                    return;
+                }
             }
         }
 

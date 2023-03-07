@@ -8,7 +8,8 @@ using Pidp.Data;
 using Pidp.Extensions;
 using Pidp.Infrastructure.Auth;
 using Pidp.Models;
-using Pidp.Features.Lookups;
+using Pidp.Models.Lookups;
+
 public class Create
 {
     public class Command : ICommand<int>
@@ -36,17 +37,8 @@ public class Create
             this.RuleFor(x => x.LastName).NotEmpty().MatchesUserClaim(user, Claims.FamilyName);
 
 
-            // create an instance of the Query class
-            var query = new Pidp.Features.Lookups.Index.Query();
-
-            // create an instance of the QueryHandler class
-            var handler = new Pidp.Features.Lookups.Index.QueryHandler(context);
-
-            // execute the query and get the result
-            var result = handler.HandleAsync(query);
-
             // get the SubmittingAgencies list from the result
-            var submittingAgencies = result.Result.SubmittingAgencies;
+            var submittingAgencies = this.GetSubmittingAgencies(context);
 
             // see if user is a member of a submitting agency
             var idp = user.GetIdentityProvider();
@@ -69,6 +61,21 @@ public class Create
                     _ => throw new NotImplementedException("Given Identity Provider is not supported")
                 });
             }
+        }
+
+        public List<SubmittingAgency> GetSubmittingAgencies(PidpDbContext context)
+        {
+            // create an instance of the Query class
+            var query = new Lookups.Index.Query();
+
+            // create an instance of the QueryHandler class
+            var handler = new Lookups.Index.QueryHandler(context);
+
+            // execute the query and get the result
+            var result = handler.HandleAsync(query);
+
+            // get the SubmittingAgencies list from the result
+            return result.Result.SubmittingAgencies;
         }
 
         private class BcscValidator : AbstractValidator<Command>
@@ -122,11 +129,19 @@ public class Create
     public class CommandHandler : ICommandHandler<Command, int>
     {
         private readonly PidpDbContext context;
+        private readonly IHttpContextAccessor httpContextAccessor;
 
-        public CommandHandler(PidpDbContext context) => this.context = context;
+        public CommandHandler(PidpDbContext context, IHttpContextAccessor httpContextAccessor)
+        {
+            this.context = context;
+            this.httpContextAccessor = httpContextAccessor;
+        }
 
         public async Task<int> HandleAsync(Command command)
         {
+            var user = httpContextAccessor.HttpContext.User;
+            Serilog.Log.Information("Adding new party {0}", command.UserId);
+
             var party = new Party
             {
                 UserId = command.UserId,
@@ -140,9 +155,68 @@ public class Create
 
             this.context.Parties.Add(party);
 
-            await this.context.SaveChangesAsync();
 
+
+            // if this user is a verified user we'll also create the organization entry
+            if (! (user.GetIdentityProvider().Equals(ClaimValues.Bcps, StringComparison.Ordinal) || user.GetIdentityProvider().Equals(ClaimValues.Idir, StringComparison.Ordinal)))
+            {
+                // check if from submitting agency (or later verified credentials )
+                var idp = user.GetIdentityProvider();
+                var submittingAgencies = this.GetSubmittingAgencies(this.context);
+
+                var agency = submittingAgencies.Find(agency => agency.IdpHint.Equals(idp, StringComparison.Ordinal));
+
+                if (agency != null)
+                {
+                    Serilog.Log.Information("User {0} is from agency {1} - automatically assigning organization", user.GetUserId(), agency.Name);
+                    var organization = this.GetOrganization(this.context, agency.IdpHint);
+
+                    if (organization != null)
+                    {
+                        var org = new PartyOrgainizationDetail
+                        {
+                            Party = party,
+                            Organization = organization
+                        };
+                        this.context.PartyOrgainizationDetails.Add(org);
+                    }
+                }
+            }
+
+
+            await this.context.SaveChangesAsync();
             return party.Id;
         }
+
+        public Organization? GetOrganization(PidpDbContext context, string idpHint)
+        {
+            // create an instance of the Query class
+            var query = new Lookups.Index.Query();
+
+            // create an instance of the QueryHandler class
+            var handler = new Lookups.Index.QueryHandler(context);
+
+            // execute the query and get the result
+            var result = handler.HandleAsync(query);
+
+            // get the SubmittingAgencies list from the result
+            return result.Result.Organizations.FirstOrDefault(org => org.IdpHint.Equals(idpHint,StringComparison.Ordinal));
+        }
+
+        public List<SubmittingAgency> GetSubmittingAgencies(PidpDbContext context)
+        {
+            // create an instance of the Query class
+            var query = new Lookups.Index.Query();
+
+            // create an instance of the QueryHandler class
+            var handler = new Lookups.Index.QueryHandler(context);
+
+            // execute the query and get the result
+            var result = handler.HandleAsync(query);
+
+            // get the SubmittingAgencies list from the result
+            return result.Result.SubmittingAgencies;
+        }
     }
+
 }

@@ -42,8 +42,17 @@ dependencies:
   - name: edt-service
     repository: "file://../edt-service"
     version: "0.1.3"
+  - name: edt-casemgmt
+    repository: "file://../edt-casemgmt"
+    version: "0.1.0"
   - name: plr-intake
     repository: "file://../plr-intake"
+    version: "0.1.2"
+  - name: backend
+    repository: "file://../backend"
+    version: "0.1.2"
+  - name: notification
+    repository: "file://../notification"
     version: "0.1.2"
   - name: nginx
     repository: "file://../nginx"

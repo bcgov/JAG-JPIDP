@@ -12,6 +12,6 @@ public class AgencyRequestAttachment : BaseAuditable
     public string AttachmentName { get; set; } = string.Empty;
     [Required]
     public string AttachmentType { get; set; } = string.Empty;
-    public string UploadStatus { get; set; } = AgencyRequestStatus.Queued;
+    public string UploadStatus { get; set; } = AgencyRequestStatus.Pending;
     public SubmittingAgencyRequest SubmittingAgencyRequest { get; set; } = new SubmittingAgencyRequest();
 }

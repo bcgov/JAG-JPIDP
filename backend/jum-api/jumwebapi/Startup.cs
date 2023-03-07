@@ -33,6 +33,7 @@ using jumwebapi.Features.Users.Services;
 using jumwebapi.Infrastructure.HttpClients;
 using jumwebapi.Data.Seed;
 using jumwebapi.Helpers.Mapping;
+using Prometheus;
 
 namespace jumwebapi;
 public class Startup
@@ -181,12 +182,16 @@ public class Startup
         });
         app.UseRouting();
         app.UseCors("CorsPolicy");
+        app.UseMetricServer();
+        app.UseHttpMetrics();
+
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseEndpoints(endpoints =>
         {
             endpoints.MapControllers();
-            // endpoints.MapHealthChecks("/health");
+            endpoints.MapMetrics();
+            endpoints.MapHealthChecks("/health/liveness").AllowAnonymous();
         });
 
     }
