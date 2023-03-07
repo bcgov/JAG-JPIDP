@@ -9,16 +9,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "edt-service.fullname" . }}
+  name: {{ include "edt-casemgmt.fullname" . }}
   labels:
-    {{- include "edt-service.labels" . | nindent 4 }}
+    {{- include "edt-casemgmt.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "edt-service.selectorLabels" . | nindent 6 }}
+      {{- include "edt-casemgmt.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       annotations:
@@ -31,13 +31,13 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "edt-service.selectorLabels" . | nindent 8 }}
+        {{- include "edt-casemgmt.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "edt-service.serviceAccountName" . }}
+      serviceAccountName: {{ include "edt-casemgmt.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
 
@@ -66,36 +66,34 @@ spec:
             - name: KafkaCluster__SaslOauthbearerProducerClientId
               valueFrom:
                 secretKeyRef:
-                  name: kafkaconfig-edt
+                  name: kafkaconfig-casemgmt
                   key: KafkaCluster__ProducerClientId
             - name: KafkaCluster__SaslOauthbearerConsumerClientId
               valueFrom:
                 secretKeyRef:
-                  name: kafkaconfig-edt
+                  name: kafkaconfig-casemgmt
                   key: KafkaCluster__ConsumerClientId
             - name: KafkaCluster__ConsumerGroupId
-              value: {{ include "edt-service.fullname" . }}-consumer-group
-            - name: DB_PASSWORD
+              value: {{ include "edt-casemgmt.fullname" . }}-consumer-group
+            - name: database-password
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "edt-service.fullname" . }}-jum-database
-                  key: DB_PASSWORD
-            - name: DB_USER
+                  name: {{ include "edt-casemgmt.fullname" . }}-database
+                  key: database-password
+            - name: database-username
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "edt-service.fullname" . }}-jum-database
-                  key: DB_USER
-            - name: USER_CREATION_PLAINTEXT_TOPIC
-              value: digitalevidence-usercreation-plain-topic
+                  name: {{ include "edt-casemgmt.fullname" . }}-database
+                  key: database-username
             - name: DATABASE_NAME
-              value: jum
+              value: casemgmt
             - name: DOTNET_BUNDLE_EXTRACT_BASE_DIR
               value: /tmp
-            - name: ConnectionStrings__EdtDataStore
+            - name: ConnectionStrings__CaseManagementDataStore
               valueFrom:
                 configMapKeyRef:
-                  name: jum-api-database
-                  key: CONNECTION_STRINGS_JUM         
+                  name: edt-casemgmt-api-database
+                  key: CONNECTION_STRINGS_DB        
             - name: SchemaRegistry__Url
               valueFrom:
                 secretKeyRef:
@@ -114,48 +112,53 @@ spec:
             - name: KafkaCluster__BootstrapServers
               valueFrom:
                 secretKeyRef:
-                  name: kafkaconfig-edt
+                  name: kafkaconfig-casemgmt
                   key: KafkaCluster__BootstrapServers
             - name: KafkaCluster__ConsumerTopicName
               valueFrom:
                 secretKeyRef:
-                  name: kafkaconfig-edt
+                  name: kafkaconfig-casemgmt
                   key: KafkaCluster__ConsumerTopicName
+            - name: KafkaCluster__CaseAccessRequestTopicName
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-casemgmt
+                  key: KafkaCluster__CaseAccessRequestTopicName
             - name: KafkaCluster__ProducerTopicName
               valueFrom:
                 secretKeyRef:
-                  name: kafkaconfig-edt
+                  name: kafkaconfig-casemgmt
                   key: KafkaCluster__ProducerTopicName
             - name: KafkaCluster__NotificationTopicName
               valueFrom:
                 secretKeyRef:
-                  name: kafkaconfig-edt
+                  name: kafkaconfig-casemgmt
                   key: KafkaCluster__NotificationTopicName
             - name: KafkaCluster__UserCreationTopicName
               valueFrom:
                 secretKeyRef:
-                  name: kafkaconfig-edt
+                  name: kafkaconfig-casemgmt
                   key: KafkaCluster__UserCreationTopicName
             - name: KafkaCluster__UserModificationTopicName
               valueFrom:
                 secretKeyRef:
-                  name: kafkaconfig-edt
+                  name: kafkaconfig-casemgmt
                   key: KafkaCluster__UserModificationTopicName
             - name: KafkaCluster__SaslOauthbearerConsumerClientSecret
               valueFrom:
                 secretKeyRef:
-                  name: kafkaconfig-edt
+                  name: kafkaconfig-casemgmt
                   key: KafkaCluster__SaslOauthbearerConsumerClientSecret
             - name: KafkaCluster__SaslOauthbearerProducerClientSecret
               valueFrom:
                 secretKeyRef:
-                  name: kafkaconfig-edt
+                  name: kafkaconfig-casemgmt
                   key: KafkaCluster__SaslOauthbearerProducerClientSecret
 
             - name: KafkaCluster__SaslOauthbearerTokenEndpointUrl
               valueFrom:
                 secretKeyRef:
-                  name: kafkaconfig-edt
+                  name: kafkaconfig-casemgmt
                   key: KafkaCluster__SaslOauthbearerTokenEndpointUrl
             - name: ApplicationUrl
               value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"
