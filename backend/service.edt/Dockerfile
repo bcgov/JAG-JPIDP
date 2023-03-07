@@ -4,15 +4,19 @@ WORKDIR /source
 ENV DOTNET_CLI_HOME="/opt"
 ENV PATH="$PATH:/opt/.dotnet/tools"
 
+RUN echo "*********** Installing ef ***************"
+
 RUN dotnet tool install --global dotnet-ef
 
 COPY *.csproj .
-RUN dotnet restore -r linux-musl-x64 /p:PublishReadyToRun=true
+RUN dotnet restore -v d -r linux-musl-x64 /p:PublishReadyToRun=true
 
 COPY . .
-RUN dotnet publish -c Release -o /app -r linux-musl-x64 --self-contained false --no-restore
+RUN dotnet publish -v d -c Release -o /app -r linux-musl-x64 --self-contained false --no-restore
 
-RUN dotnet ef --verbose migrations bundle
+RUN echo "*********** Building migrations ***************"
+RUN dotnet ef migrations bundle
+RUN echo "*********** Migrations built ***************"
 
 #----------------------------------------------------------------#
 FROM mcr.microsoft.com/dotnet/aspnet:6.0-alpine
@@ -25,6 +29,7 @@ ENV \
     DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false \
     LC_ALL=en_US.UTF-8 \
     LANG=en_US.UTF-8
+
 RUN apk add --no-cache icu-libs
 
 COPY --from=build-env /app .
