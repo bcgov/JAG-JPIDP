@@ -12,7 +12,7 @@ RUN dotnet restore -r linux-musl-x64 /p:PublishReadyToRun=true
 COPY . .
 RUN dotnet publish -c Release -o /app -r linux-musl-x64 --self-contained false --no-restore
 
-RUN dotnet ef --verbose migrations bundle
+RUN dotnet ef migrations bundle
 
 #----------------------------------------------------------------#
 FROM mcr.microsoft.com/dotnet/aspnet:6.0-alpine
@@ -25,6 +25,7 @@ ENV \
     DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false \
     LC_ALL=en_US.UTF-8 \
     LANG=en_US.UTF-8
+
 RUN apk add --no-cache icu-libs
 
 COPY --from=build-env /app .
@@ -32,4 +33,4 @@ COPY --from=build-env /source/efbundle .
 
 EXPOSE 8080
 
-CMD ["./edt.service"]
+CMD ["./edt.casemanagement"]
