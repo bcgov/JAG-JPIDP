@@ -12,7 +12,7 @@ RUN dotnet restore -r linux-musl-x64 /p:PublishReadyToRun=true
 COPY . .
 RUN dotnet publish -c Release -o /app -r linux-musl-x64 --self-contained false --no-restore
 
-RUN dotnet ef migrations bundle
+RUN dotnet ef --verbose --no-color migrations bundle --force
 
 #----------------------------------------------------------------#
 FROM mcr.microsoft.com/dotnet/aspnet:6.0-alpine
