@@ -4,7 +4,7 @@ WORKDIR /source
 ENV DOTNET_CLI_HOME="/opt"
 ENV PATH="$PATH:/opt/.dotnet/tools"
 
-RUN dotnet tool install --global dotnet-ef --version 6.0.10
+RUN dotnet tool install --global dotnet-ef
 
 COPY *.csproj .
 RUN dotnet restore -r linux-musl-x64 /p:PublishReadyToRun=true
@@ -12,18 +12,12 @@ RUN dotnet restore -r linux-musl-x64 /p:PublishReadyToRun=true
 COPY . .
 RUN dotnet publish -c Release -o /app -r linux-musl-x64 --self-contained false --no-restore
 
-RUN echo "************* VERSION **********************"
-RUN dotnet ef --version
-RUN echo "*********************************************"
-
-RUN dotnet ef --verbose migrations bundle
-RUN echo "*************END MIGRATION************************"
+RUN dotnet ef migrations bundle
 
 #----------------------------------------------------------------#
 FROM mcr.microsoft.com/dotnet/aspnet:6.0-alpine
 WORKDIR /app
 
-RUN echo "*********************************************"
 ENV ASPNETCORE_ENVIRONMENT="Production"
 ENV ASPNETCORE_URLS="http://+:8080"
 
@@ -32,11 +26,7 @@ ENV \
     LC_ALL=en_US.UTF-8 \
     LANG=en_US.UTF-8
 
-RUN echo "*********************************************"
-
-RUN apk add --no-cache --verbose icu-libs
-RUN echo "*********************************************"
-
+RUN apk add --no-cache icu-libs
 
 COPY --from=build-env /app .
 COPY --from=build-env /source/efbundle .
