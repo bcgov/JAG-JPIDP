@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:7.0 as build-env
+FROM mcr.microsoft.com/dotnet/sdk:7.0-alpine as build-env
 WORKDIR /source
 
 ENV DOTNET_CLI_HOME="/opt"
@@ -15,7 +15,7 @@ RUN dotnet publish -c Release -o /app -r linux-musl-x64 --self-contained false -
 RUN dotnet ef --verbose migrations bundle
 
 #----------------------------------------------------------------#
-FROM mcr.microsoft.com/dotnet/aspnet:7.0
+FROM mcr.microsoft.com/dotnet/aspnet:7.0-alpine
 WORKDIR /app
 
 ENV ASPNETCORE_ENVIRONMENT="Production"
