@@ -9,6 +9,8 @@ public class NotificationAckModel
     public string EmailAddress { get; set; } =string.Empty;
     public string Consumer { get; set; } = string.Empty;
     public int AccessRequestId { get; set; }
+
+    public string Details { get; set; } = string.Empty;
     public NotificationSubject Subject { get; set; } = NotificationSubject.None;
 
 }

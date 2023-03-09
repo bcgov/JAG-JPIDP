@@ -78,7 +78,7 @@ public class CaseAccessRequestHandler : IKafkaHandler<string, SubAgencyDomainEve
                     try
                     {
                         //save notification ref in notification table database
-                        await this.context.CaseRequests.AddAsync(new CaseRequest
+                        var response = await this.context.CaseRequests.AddAsync(new CaseRequest
                         {
                             AgencFileNumber = caseEvent.AgencyFileNumber,
                             PartyId = caseEvent.PartyId,
@@ -89,13 +89,15 @@ public class CaseAccessRequestHandler : IKafkaHandler<string, SubAgencyDomainEve
                         await this.context.SaveChangesAsync();
 
 
-                        if (result != null)
+                        if (result != null && result.Status == TaskStatus.RanToCompletion && result.Exception == null)
                         {
+                            Serilog.Log.Information($"Sending completed response for user {caseEvent.UserId} and case {caseEvent.CaseId}");
+
                             if (result.IsCompleted)
                             {
                                 var uniqueKey = Guid.NewGuid().ToString();
 
-                                await this.producer.ProduceAsync(this.configuration.KafkaCluster.AckTopicName, key: uniqueKey, new NotificationAckModel
+                                var producerRespose = await this.producer.ProduceAsync(this.configuration.KafkaCluster.AckTopicName, key: uniqueKey, new NotificationAckModel
                                 {
                                     Status = "Completed",
                                     AccessRequestId = caseEvent.RequestId,
@@ -104,7 +106,27 @@ public class CaseAccessRequestHandler : IKafkaHandler<string, SubAgencyDomainEve
                                     Subject = NotificationSubject.CaseAccessRequest,
                                     EventType = caseEvent.EventType
                                 });
+
+                                Serilog.Log.Information($"Response {producerRespose}");
+
                             }
+                        }
+                        else
+                        {
+                            Serilog.Log.Error($"Sending failure response for user {caseEvent.UserId} and case {caseEvent.CaseId} [{string.Join(",", result.Exception)}]");
+
+                            var uniqueKey = Guid.NewGuid().ToString();
+
+                            await this.producer.ProduceAsync(this.configuration.KafkaCluster.AckTopicName, key: uniqueKey, new NotificationAckModel
+                            {
+                                Status = "Failure",
+                                AccessRequestId = caseEvent.RequestId,
+                                PartId = partId,
+                                Details = (result?.Exception != null) ? result.Exception.Message : "No details provided",
+                                EmailAddress = userInfo.Email,
+                                Subject = NotificationSubject.CaseAccessRequest,
+                                EventType = caseEvent.EventType
+                            });
                         }
 
                         await trx.CommitAsync();

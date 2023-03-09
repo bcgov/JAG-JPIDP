@@ -34,6 +34,7 @@ public class DigitalEvidenceByPartyQuery
                     RequestedOn = caseRequest.RequestedOn,
                     LastUpdated = caseRequest.Modified,
                     RequestStatus = caseRequest.RequestStatus,
+                    Details = caseRequest.Details
                 })
                 .ToListAsync();
         }

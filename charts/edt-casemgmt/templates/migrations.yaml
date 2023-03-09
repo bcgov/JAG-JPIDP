@@ -22,7 +22,7 @@ spec:
       - name: migrations
         image: {{ .Values.global.image.registry }}/{{ .Values.image.repository }}:{{ .Values.global.image.tag | default .Chart.AppVersion }}
         imagePullPolicy: Always
-        command: ['./efbundle', '--connection', '$(ConnectionStrings__CaseManagementDataStore)']
+        command: ['./efbundle','--verbose', '--connection', '$(ConnectionStrings__CaseManagementDataStore)']
         env:
           - name: DB_HOST
             value: pidp-postgresql
@@ -37,7 +37,7 @@ spec:
                 name: {{ include "edt-casemgmt.fullname" . }}-database
                 key: database-username
           - name: DATABASE_NAME
-            value: jum
+            value: casemgmt
           - name: DOTNET_BUNDLE_EXTRACT_BASE_DIR
             value: /tmp
           - name: ConnectionStrings__CaseManagementDataStore
@@ -48,4 +48,3 @@ spec:
       restartPolicy: Never
   backoffLimit: 3
 {{- end }}
-

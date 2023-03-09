@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using AutoMapper;
 using DomainResults.Common;
 using edt.service.Exceptions;
-using edt.service.Features.Cases;
 using edt.service.Infrastructure.Telemetry;
 using edt.service.Kafka.Model;
 using edt.service.ServiceEvents.UserAccountCreation.Models;
@@ -58,8 +57,9 @@ public class EdtClient : BaseClient, IEdtClient
 
         if (getUser != null)
         {
-            if (accessRequest.OrganizationType != null && accessRequest.OrganizationType.Equals(SUBMITTING_AGENCY, StringComparison.Ordinal))
+            if (accessRequest.OrganizationType != null && accessRequest.OrganizationType.Equals(this.SUBMITTING_AGENCY, StringComparison.Ordinal))
             {
+                userModificationResponse.submittingAgencyUser = true;
                 Log.Logger.Information("Adding user {0} {1} to submitting agency group", accessRequest.Id, accessRequest.Key);
                 var addGroupToUser = await this.AddUserToSubmittingAgencyGroup(accessRequest, getUser.Id);
                 if (!addGroupToUser)
@@ -194,10 +194,23 @@ public class EdtClient : BaseClient, IEdtClient
         var user = await this.GetUser(accessRequest.Key!);
         if (user != null)
         {
-            var addGroupToUser = await this.UpdateUserAssignedGroups(user.Id!, accessRequest.AssignedRegions!, userModificationResponse);
-            if (!addGroupToUser)
+            if (accessRequest.OrganizationType != null && accessRequest.OrganizationType.Equals(this.SUBMITTING_AGENCY, StringComparison.Ordinal))
             {
-                userModificationResponse.successful = false;
+                userModificationResponse.submittingAgencyUser = true;
+                Log.Logger.Information("Adding user {0} {1} to submitting agency group", accessRequest.Id, accessRequest.Key);
+                var addGroupToUser = await this.AddUserToSubmittingAgencyGroup(accessRequest, user.Id);
+                if (!addGroupToUser)
+                {
+                    Log.Logger.Error("Failed to add EDT user to group user {0}", string.Join(",", result.Errors));
+                }
+            }
+            else
+            {
+                var addGroupToUser = await this.UpdateUserAssignedGroups(user.Id!, accessRequest.AssignedRegions!, userModificationResponse);
+                if (!addGroupToUser)
+                {
+                    userModificationResponse.successful = false;
+                }
             }
         }
         else
@@ -285,47 +298,7 @@ public class EdtClient : BaseClient, IEdtClient
         return result.Value.Version;
     }
 
-    public async Task<CaseModel> FindCase(string caseIdOrKey)
-    {
-        //' /api/v1/org-units/1/cases/3:105: 23-472018/id
 
-        var searchString = this.configuration.EdtClient.SearchFieldId + ":" + caseIdOrKey;
-        Log.Logger.Information("Finding case {0}", searchString);
-
-        var caseSearch = await this.GetAsync<IEnumerable<CaseLookupModel>?>($"api/v1/org-units/1/cases/{searchString}/id");
-
-        if (caseSearch.IsSuccess)
-        {
-            IEnumerable<CaseLookupModel> caseSearchValue = caseSearch?.Value;
-
-            // Do something with the caseSearchValue
-            if (caseSearch.IsSuccess)
-            {
-                var caseDetail = caseSearch.Value.FirstOrDefault();
-                Log.Information("Case {0}", caseDetail);
-                var caseId = caseSearch.Value?.First().Id;
-                var result = await this.GetAsync<CaseModel?>($"api/v1/cases/{caseId}");
-                return result.Value;
-            }
-            else
-            {
-                throw new EdtServiceException(string.Join(",", caseSearch.Errors));
-            }
-        }
-        else
-        {
-            throw new EdtServiceException(string.Join(",", caseSearch.Errors));
-        }
-
-
-
-
-
-
-
-
-
-    }
 
     public class AddUserToOuGroup
     {

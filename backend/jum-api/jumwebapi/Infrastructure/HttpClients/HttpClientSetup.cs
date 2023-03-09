@@ -43,7 +43,7 @@ public static class HttpClientSetup
         }
         else if (!(string.IsNullOrEmpty(config.JustinParticipantClient.BasicAuthUsername) && string.IsNullOrEmpty(config.JustinParticipantClient.BasicAuthPassword)))
         {
-            Serilog.Log.Logger.Information("JUSTIN Client configured with basic auth");
+            Serilog.Log.Logger.Information($"JUSTIN Client configured with basic auth for user {config.JustinParticipantClient.BasicAuthUsername}");
             var username = config.JustinParticipantClient.BasicAuthUsername;
             var password = config.JustinParticipantClient.BasicAuthPassword;
             var svcCredentials = Convert.ToBase64String(Encoding.ASCII.GetBytes(username + ":" + password));

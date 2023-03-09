@@ -22,7 +22,7 @@ spec:
       - name: migrations
         image: {{ .Values.global.image.registry }}/{{ .Values.image.repository }}:{{ .Values.global.image.tag | default .Chart.AppVersion }}
         imagePullPolicy: Always
-        command: ['./efbundle', '--connection', '$(ConnectionStrings__EdtDataStore)']
+        command: ['./efbundle', '--verbose','--connection', '$(ConnectionStrings__EdtDataStore)']
         env:
           - name: DB_HOST
             value: jum-database

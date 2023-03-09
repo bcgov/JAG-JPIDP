@@ -18,6 +18,7 @@ export interface DigitalEvidenceCase {
   description: string;
   key: string;
   agencyFileNumber: string;
+  details: string;
   status: string;
   fields: Field[] | [];
   id: number;

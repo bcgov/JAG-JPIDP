@@ -18,6 +18,9 @@ public class AccessRequest : BaseAuditable
 
     public Instant RequestedOn { get; set; }
 
+    public string Details { get; set; } = string.Empty;
+
+
     public AccessTypeCode AccessTypeCode { get; set; }
     public string Status { get; set; } = AccessRequestStatus.Pending;
 }

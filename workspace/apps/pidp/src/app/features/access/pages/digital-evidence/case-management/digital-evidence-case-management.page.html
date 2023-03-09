@@ -78,7 +78,8 @@
           <td *matCellDef="let case" mat-cell>{{ case.requestedOn | date: 'MM-dd-yy hh:mm' }}
             <mat-icon class="warning-icon" matTooltip="Case will be removed within the next 5 days"
               *ngIf="isWithin25Days(case.requestedOn)">warning</mat-icon>
-
+            <mat-icon class="warning-icon" matTooltip="{{case.details}}"
+              *ngIf="case.requestStatus === 'Failure'">error</mat-icon>
           </td>
         </ng-container>
 
@@ -86,7 +87,7 @@
         <ng-container matColumnDef="caseAction">
           <th *matHeaderCellDef mat-header-cell>Action </th>
           <td *matCellDef="let case" mat-cell class="centered-column"><i matTooltip="Remove access to this case"
-              *ngIf="case.requestStatus !== 'Removal Pending'"
+              *ngIf="case.requestStatus === 'Completed'"
               (click)="onRemoveCase(case)"><mat-icon>delete_outline</mat-icon></i></td>
         </ng-container>
         <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>

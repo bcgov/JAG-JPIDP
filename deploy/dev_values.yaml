@@ -43,6 +43,9 @@ pidp-sso:
   secretKeys:
     postgresPassword: password
 
+edt-casemgmt:
+  migrations:
+    enabled: false
 
 
 postgresql:
@@ -71,7 +74,9 @@ keycloak:
 
 edt-service:
   image:
-    tag: main
+    tag: develop
+  migrations:
+    enabled: false
 
 redis:
   enabled: false
@@ -84,7 +89,7 @@ nginx:
 
 frontend:
   image:
-    repository: frontend
+    repository: pidp-frontend
     pullPolicy: Always
   tag: "develop"
   replicaCount: 1

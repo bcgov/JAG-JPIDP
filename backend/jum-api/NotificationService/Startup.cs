@@ -11,6 +11,7 @@ using NotificationService.Services;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using NotificationService.Data;
 using Microsoft.EntityFrameworkCore;
+using Prometheus;
 
 namespace NotificationService;
 public class Startup
@@ -38,9 +39,11 @@ public class Startup
             .UseSqlServer(config.ConnectionStrings.JumDatabase, sql => sql.UseNodaTime())
             .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
 
+
+
         services.AddHealthChecks()
                 .AddCheck("liveliness", () => HealthCheckResult.Healthy())
-                .AddSqlServer(config.ConnectionStrings.JumDatabase, tags: new[] { "services" });
+                .AddSqlServer(config.ConnectionStrings.JumDatabase, tags: new[] { "services" }).ForwardToPrometheus();
 
         services.AddControllers();
         services.AddHttpClient();
@@ -88,6 +91,21 @@ public class Startup
         });
         services.AddFluentValidationRulesToSwagger();
 
+        // Validate EF migrations on startup
+        using (var serviceScope = services.BuildServiceProvider().CreateScope())
+        {
+            var dbContext = serviceScope.ServiceProvider.GetRequiredService<NotificationDbContext>();
+            try
+            {
+                dbContext.Database.Migrate();
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Database migration failure {string.Join(",", ex.Message)}");
+                throw;
+            }
+        }
+
         //services.AddKafkaConsumer(config);
 
     }
@@ -122,6 +140,11 @@ public class Startup
             //    diagnosticContext.Set("User", userId);
             //}
         });
+
+
+        app.UseMetricServer();
+        app.UseHttpMetrics();
+
         app.UseRouting();
         app.UseCors("CorsPolicy");
         app.UseAuthentication();
@@ -129,6 +152,7 @@ public class Startup
         app.UseEndpoints(endpoints =>
         {
             endpoints.MapControllers();
+            endpoints.MapMetrics();
             endpoints.MapHealthChecks("/health/liveness").AllowAnonymous();
         });
 

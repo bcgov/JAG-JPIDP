@@ -14,14 +14,14 @@ dependencies:
 - name: plr-intake
   repository: file://../plr-intake
   version: 0.1.2
-- name: backend
-  repository: file://../backend
+- name: jum-backend
+  repository: file://../jum-backend
   version: 0.1.2
-- name: notification
-  repository: file://../notification
+- name: jum-notification
+  repository: file://../jum-notification
   version: 0.1.2
 - name: nginx
   repository: file://../nginx
   version: 9.7.3
-digest: sha256:fdd60d2c213f20ac92f31c24104ebd9baef17f1eeb84204e68d3ed4b1788902d
-generated: "2023-03-07T12:48:32.5693433-08:00"
+digest: sha256:fc71aa42a58fec594f69bf9259614deb8d049ba263fa696ed3631e355bb10c11
+generated: "2023-03-08T17:34:00.5141865-08:00"

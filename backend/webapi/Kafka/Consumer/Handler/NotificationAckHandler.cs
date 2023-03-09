@@ -75,6 +75,7 @@ public class NotificationAckHandler : IKafkaHandler<string, NotificationAckModel
                     else
                     {
                         accessRequest.RequestStatus = value.Status;
+                        accessRequest.Details = value.Details;
                     }
 
                     await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
