@@ -107,6 +107,8 @@ webapi:
     tag: develop
   aspnetcore:
     environment: Staging
+  migrations:
+    enabled: false
 
 plr-intake:
   replicaCount: 1
