@@ -29,7 +29,7 @@ ENV \
 RUN apk add --no-cache icu-libs
 
 COPY --from=build-env /app .
-COPY --from=build-env /source/efbundle .
+#COPY --from=build-env /source/efbundle .
 
 EXPOSE 8080
 
