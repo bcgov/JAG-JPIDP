@@ -17,14 +17,23 @@
 }
 
 //
-.login-form {
+.agency-field {
   min-width: 150px;
   max-width: 500px;
   width: 100%;
+  border-top-right-radius: 5px;
+  border-top-left-radius: 5px;
+  padding-left: 10px;
+  padding-right: 10px;
   background-color: white;
+  margin-bottom: 5px;
   .mat-option-text > span {
-    font-size: small;
-    color: aqua;
+    font-size: large;
+  }
+  input {
+    background-color: aliceblue;
+    padding-top: 3px;
+    padding-bottom: 3px;
   }
 }
 
@@ -173,3 +182,6 @@
 // ::ng-deep .mat-autocomplete-panel {
 //   display: none !important;
 // }
+::ng-deep .mat-form-field-underline {
+  display: none;
+}

@@ -189,6 +189,24 @@ public class Startup
 
         services.AddKafkaConsumer(config);
 
+        // Validate EF migrations on startup
+        using (var serviceScope = services.BuildServiceProvider().CreateScope())
+        {
+            var dbContext = serviceScope.ServiceProvider.GetRequiredService<CaseManagementDataStoreDbContext>();
+            try
+            {
+                dbContext.Database.Migrate();
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Database migration failure {string.Join(",", ex.Message)}");
+                throw;
+            }
+        }
+
+        Log.Logger.Information("### EDT Case Management Configuration complete");
+
+
     }
     private EdtServiceConfiguration InitializeConfiguration(IServiceCollection services)
     {

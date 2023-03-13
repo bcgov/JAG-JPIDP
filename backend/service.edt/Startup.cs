@@ -195,6 +195,25 @@ public class Startup
             ContractResolver = new CamelCasePropertyNamesContractResolver()
         };
 
+        // Validate EF migrations on startup
+        using (var serviceScope = services.BuildServiceProvider().CreateScope())
+        {
+            var dbContext = serviceScope.ServiceProvider.GetRequiredService<EdtDataStoreDbContext>();
+            try
+            {
+                dbContext.Database.Migrate();
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Database migration failure {string.Join(",", ex.Message)}");
+                throw;
+            }
+        }
+
+        Log.Logger.Information("### EDT Service Configuration complete");
+
+
+
         //services.AddKafkaConsumer(config);
 
     }

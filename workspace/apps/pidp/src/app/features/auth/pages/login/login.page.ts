@@ -69,6 +69,15 @@ export class LoginPage implements OnInit {
     this.submittingAgencies = this.lookupService.submittingAgencies.filter(
       (agency) => agency.idpHint?.length > 0
     );
+
+    // add government agency
+    const governmentAgency: AgencyLookup = {
+      code: 0,
+      idpHint: 'oidcazure',
+      name: 'Government user',
+    };
+
+    this.submittingAgencies.push(governmentAgency);
   }
 
   public onScrollToAnchor(): void {
