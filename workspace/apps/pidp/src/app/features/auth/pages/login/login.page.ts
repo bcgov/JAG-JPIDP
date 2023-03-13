@@ -73,7 +73,7 @@ export class LoginPage implements OnInit {
     // add government agency
     const governmentAgency: AgencyLookup = {
       code: 0,
-      idpHint: 'oidcazure',
+      idpHint: IdentityProvider.AZUREIDIR,
       name: 'Government user',
     };
 
