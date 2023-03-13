@@ -14,7 +14,7 @@ public class CaseController : ControllerBase
 
     private readonly IMediator _mediator;
     private static readonly Histogram CaseFindDuration = Metrics
-.CreateHistogram("case_search_duration", "Histogram of case searches.");
+        .CreateHistogram("case_search_duration", "Histogram of case searches.");
     //public CaseController(IMediator mediator, IEdtAuthorizationService authService) : base(authService)
     //{
     //    _mediator = mediator;

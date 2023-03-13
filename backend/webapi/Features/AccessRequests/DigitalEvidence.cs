@@ -97,6 +97,7 @@ public class DigitalEvidence
                 if (dto.AlreadyEnroled
                     || dto.Email == null)
                 {
+                    Serilog.Log.Logger.Warning($"DigitalEvidence Request denied for user {command.PartyId} Enrolled {dto.AlreadyEnroled}, Email {dto.Email}");
                     this.logger.LogDigitalEvidenceAccessRequestDenied();
                     return DomainResult.Failed();
                 }

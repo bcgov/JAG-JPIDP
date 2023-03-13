@@ -12,12 +12,16 @@ using edt.service.Kafka;
 using edt.service.Kafka.Interfaces;
 using edt.service.Kafka.Model;
 using edt.service.ServiceEvents.UserAccountCreation.Models;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using static edt.service.EdtServiceConfiguration;
 
 public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioningModel>
 {
     private readonly IKafkaProducer<string, Notification> producer;
+    private readonly IKafkaProducer<string, NotificationAckModel> ackProducer;
+
     private readonly IKafkaProducer<string, EdtUserProvisioningModel> retryProducer;
     private readonly IKafkaProducer<string, UserModificationEvent> userModificationProducer;
 
@@ -30,13 +34,16 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
 
     public UserProvisioningHandler(
         IKafkaProducer<string, Notification> producer,
-        IKafkaProducer<string, UserModificationEvent> userModificationProducer,
+          IKafkaProducer<string, NotificationAckModel> ackProducer,
+
+    IKafkaProducer<string, UserModificationEvent> userModificationProducer,
         EdtServiceConfiguration configuration,
         IEdtClient edtClient,
         EdtDataStoreDbContext context,
         IKafkaProducer<string, EdtUserProvisioningModel> retryProducer, ILogger logger)
     {
         this.producer = producer;
+        this.ackProducer = ackProducer;
         this.userModificationProducer = userModificationProducer;
         this.configuration = configuration;
         this.context = context;
@@ -82,57 +89,85 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
 
                 await this.context.SaveChangesAsync();
 
-                var msgKey = Guid.NewGuid().ToString();
-
-                await this.producer.ProduceAsync(this.configuration.KafkaCluster.ProducerTopicName, key: key, new Notification
+                if (result.submittingAgencyUser)
                 {
-                    To = accessRequestModel.Email,
-                    From = "jpsprovideridentityportal@gov.bc.ca",
-                    FirstName = accessRequestModel.FullName!.Split(' ').FirstOrDefault(),
-                    Subject = "Digital Evidence Management System Enrollment Confirmation",
-                    MsgBody = MsgBody(accessRequestModel.FullName?.Split(' ').FirstOrDefault()),
-                    PartyId = accessRequestModel.Key!,
-                    Tag = msgKey
-                });
+                    Serilog.Log.Information($"User {result.partId} was for submitting agency - publishing event change only");
+                    var msgKey = Guid.NewGuid().ToString();
 
-                if (string.IsNullOrEmpty(this.configuration.SchemaRegistry.Url))
-                {
-                    throw new EdtServiceException("Schema registry is not configured");
-                }
-
-                var producer = new SchemaAwareProducer(ConsumerSetup.GetProducerConfig(), this.userModificationProducer, this.configuration);
-
-                // publish to the user creation topic for others to consume
-                bool publishResultOk;
-                if (result.eventType == UserModificationEvent.UserEvent.Create)
-                {
-                    Serilog.Log.Information("Publishing EDT user creation event {0} {1}", msgKey, accessRequestModel.Key);
-                    if (!string.IsNullOrEmpty(plainTextTopic))
+                    try
                     {
-                        Serilog.Log.Information("Publishing EDT user creation event to secondary topic", msgKey, accessRequestModel.Key);
-                        await this.userModificationProducer.ProduceAsync(plainTextTopic, key: msgKey, result);
+                        await this.ackProducer.ProduceAsync(this.configuration.KafkaCluster.AckTopicName, key: key, new NotificationAckModel
+                        {
+                            Subject = NotificationSubject.AccessRequest,
+                            AccessRequestId = accessRequestModel.AccessRequestId,
+                            Status = "Completed"
+                        });
+
+                        await trx.CommitAsync();
+                        Serilog.Log.Information($"User {result.partId} provision event published to {this.configuration.KafkaCluster.AckTopicName}");
+
                     }
-                    publishResultOk = await producer.ProduceAsync(this.configuration.KafkaCluster.UserCreationTopicName, key: msgKey, result);
+                    catch (Exception ex)
+                    {
+                        Serilog.Log.Logger.Error($"Failed to publish to user notification topic - rolling back transaction [{string.Join(",",ex.Message)}");
+                        await trx.RollbackAsync();
+                    }
                 }
                 else
                 {
-                    Serilog.Log.Information("Publishing EDT user modification event {0} {1}", msgKey, accessRequestModel.Key);
-                    publishResultOk = await producer.ProduceAsync(this.configuration.KafkaCluster.UserModificationTopicName, key: msgKey, result);
+
+                    var msgKey = Guid.NewGuid().ToString();
+
+                    await this.producer.ProduceAsync(this.configuration.KafkaCluster.ProducerTopicName, key: key, new Notification
+                    {
+                        To = accessRequestModel.Email,
+                        From = "jpsprovideridentityportal@gov.bc.ca",
+                        FirstName = accessRequestModel.FullName!.Split(' ').FirstOrDefault(),
+                        Subject = "Digital Evidence Management System Enrollment Confirmation",
+                        MsgBody = MsgBody(accessRequestModel.FullName?.Split(' ').FirstOrDefault()),
+                        PartyId = accessRequestModel.Key!,
+                        Tag = msgKey
+                    });
+
+                    if (string.IsNullOrEmpty(this.configuration.SchemaRegistry.Url))
+                    {
+                        throw new EdtServiceException("Schema registry is not configured");
+                    }
+
+                    var producer = new SchemaAwareProducer(ConsumerSetup.GetProducerConfig(), this.userModificationProducer, this.configuration);
+
+                    // publish to the user creation topic for others to consume
+                    bool publishResultOk;
+                    if (result.eventType == UserModificationEvent.UserEvent.Create)
+                    {
+                        Serilog.Log.Information("Publishing EDT user creation event {0} {1}", msgKey, accessRequestModel.Key);
+                        if (!string.IsNullOrEmpty(plainTextTopic))
+                        {
+                            Serilog.Log.Information("Publishing EDT user creation event to secondary topic", msgKey, accessRequestModel.Key);
+                            await this.userModificationProducer.ProduceAsync(plainTextTopic, key: msgKey, result);
+                        }
+                        publishResultOk = await producer.ProduceAsync(this.configuration.KafkaCluster.UserCreationTopicName, key: msgKey, result);
+                    }
+                    else
+                    {
+                        Serilog.Log.Information("Publishing EDT user modification event {0} {1}", msgKey, accessRequestModel.Key);
+                        publishResultOk = await producer.ProduceAsync(this.configuration.KafkaCluster.UserModificationTopicName, key: msgKey, result);
+                    }
+
+
+                    if (publishResultOk)
+                    {
+                        await trx.CommitAsync();
+                    }
+                    else
+                    {
+                        Serilog.Log.Logger.Error("Failed to publish to user notification topic - rolling back transaction");
+                        await trx.RollbackAsync();
+                    }
+
+                    return Task.FromResult(publishResultOk);
+
                 }
-
-
-                if (publishResultOk)
-                {
-                    await trx.CommitAsync();
-                }
-                else
-                {
-                    Serilog.Log.Logger.Error("Failed to publish to user notification topic - rolling back transaction");
-                    await trx.RollbackAsync();
-                }
-
-                return Task.FromResult(publishResultOk);
-
             }
         }
         catch (Exception ex)

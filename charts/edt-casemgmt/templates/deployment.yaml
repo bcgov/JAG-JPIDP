@@ -124,6 +124,11 @@ spec:
                 secretKeyRef:
                   name: kafkaconfig-casemgmt
                   key: KafkaCluster__CaseAccessRequestTopicName
+            - name: KafkaCluster__AckTopicName
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-casemgmt
+                  key: KafkaCluster__AckTopicName
             - name: KafkaCluster__ProducerTopicName
               valueFrom:
                 secretKeyRef:
@@ -166,12 +171,22 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: edt-client
-                  key: Url           
+                  key: EdtClient__Url          
+            - name: EdtClient__SubmittingAgencyGroup
+              valueFrom:
+                secretKeyRef:
+                  name: edt-client
+                  key: EdtClient__SubmittingAgencyGroup           
             - name: EdtClient__Apikey
               valueFrom:
                 secretKeyRef:
                   name: edt-client
-                  key: Apikey
+                  key: EdtClient__Apikey
+            - name: EdtClient__SearchFieldId
+              valueFrom:
+                secretKeyRef:
+                  name: edt-client
+                  key: EdtClient__SearchFieldId
             - name: Telemetry__CollectorUrl
               valueFrom: 
                 secretKeyRef:

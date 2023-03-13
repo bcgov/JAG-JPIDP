@@ -9,16 +9,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "notification.fullname" . }}
+  name: {{ include "backend.fullname" . }}
   labels:
-    {{- include "notification.labels" . | nindent 4 }}
+    {{- include "backend.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "notification.selectorLabels" . | nindent 6 }}
+      {{- include "backend.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       annotations:
@@ -29,8 +29,12 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "notification.selectorLabels" . | nindent 8 }}
+        {{- include "backend.selectorLabels" . | nindent 8 }}
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       serviceAccountName: {{ .Values.global.licenseplate }}-vault
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
@@ -47,32 +51,15 @@ spec:
               value: /opt/kafka/certificates/client-ca.crt
             - name: KafkaCluster__SslKeyLocation
               value: /opt/kafka/certificates/client.key
-            - name: KafkaCluster__BoostrapServers
-              valueFrom:
-                secretKeyRef:
-                  name: jum-kafka-config-notification
-                  key: KafkaCluster__BootstrapServers
-            - name: KafkaCluster__TopicName
-              valueFrom:
-                secretKeyRef:
-                  name: jum-kafka-config-notification
-                  key: KafkaCluster__TopicName
-            - name: KafkaCluster__AckTopicName
-              valueFrom:
-                secretKeyRef:
-                  name: jum-kafka-config-notification
-                  key: KafkaCluster__AckTopicName
-            - name: KafkaCluster__NotificationTopic
-              valueFrom:
-                secretKeyRef:
-                  name: jum-kafka-config-notification
-                  key: KafkaCluster__NotificationTopic
             - name: DB_HOST
               value: jum-database
             - name: SA_PASSWORD
-              value:
+              valueFrom:
+                secretKeyRef:
+                  name: jum-db-jum-database-secret
+                  key: sapassword
             - name: SA_USER
-              value: admin
+              value: sa
             - name: DATABASE
               value: JumDB
             - name: ConnectionStrings__JumDatabase
@@ -80,12 +67,42 @@ spec:
                 configMapKeyRef:
                   name: jum-api-database
                   key: CONNECTION_STRINGS_JUM
+            - name: KafkaCluster__BoostrapServers
+              valueFrom:
+                secretKeyRef:
+                  name: jum-kafka-config
+                  key: KafkaCluster__BootstrapServers
+            - name: KafkaCluster__TopicName
+              valueFrom:
+                secretKeyRef:
+                  name: jum-kafka-config
+                  key: KafkaCluster__TopicName
+            - name: KafkaCluster__AckTopicName
+              valueFrom:
+                secretKeyRef:
+                  name: jum-kafka-config
+                  key: KafkaCluster__AckTopicName
             - name: ApplicationUrl
               value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"
+            - name: JustinParticipantClient__Url
+              valueFrom:
+                secretKeyRef:
+                  name: jum-api-config
+                  key: url
+            - name: JustinParticipantClient__BasicAuthUsername
+              valueFrom:
+                secretKeyRef:
+                  name: jum-api-config
+                  key: JustinParticipantClient__BasicAuthUsername
+            - name: JustinParticipantClient__BasicAuthPassword
+              valueFrom:
+                secretKeyRef:
+                  name: jum-api-config
+                  key: JustinParticipantClient__BasicAuthPassword
           volumeMounts:
             - name: kafka-truststore
               mountPath: "/opt/kafka/certificates"
-              readOnly: true
+              readOnly: true          
           envFrom:
             - secretRef:
                 name: keycloak-secrets
@@ -94,28 +111,29 @@ spec:
             - configMapRef:
                 name: mail-settings
             - secretRef:
-                name: jum-kafka-config-notification
+                name: kafka-config
           ports:
             - name: http
               containerPort: 8080
               protocol: TCP
-         # livenessProbe:
-         #   httpGet:
+          livenessProbe:
+            httpGet:
+              path: /health/liveness
+              port: http
+              scheme: HTTP
+            timeoutSeconds: 5
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 3
+         # startupProbe:
+        #    httpGet:
          #     path: /health/liveness
          #     port: http
+          #    scheme: HTTP
          #   timeoutSeconds: 1
          #   periodSeconds: 10
-         #   successThreshold: 1
-         #   failureThreshold: 3
-         # startupProbe:
-          #  httpGet:
-          #    path: /health/liveness
-          #    port: http
-         #     scheme: HTTP
-         #   timeoutSeconds: 1
-          #  periodSeconds: 10
-            #successThreshold: 1
-            #failureThreshold: 30
+          #  successThreshold: 1
+          #  failureThreshold: 30
           # readinessProbe:
           #   httpGet:
           #     path: /

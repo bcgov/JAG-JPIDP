@@ -1,8 +1,6 @@
 namespace edt.service.HttpClients.Services.EdtCore;
 
-using edt.service.Features.Cases;
 using edt.service.Kafka.Model;
-using edt.service.ServiceEvents.UserAccountCreation.Models;
 
 public interface IEdtClient
 {
@@ -44,11 +42,5 @@ public interface IEdtClient
     /// <returns></returns>
     Task<bool> RemoveUserFromGroup(string userIdOrKey, EdtUserGroup group);
 
-    /// <summary>
-    /// Get a case based on the KEY (case Number)
-    /// </summary>
-    /// <param name="caseNumber"></param>
-    /// <returns></returns>
-    Task<CaseModel> FindCase(string caseNumber);
 
 }

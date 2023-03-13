@@ -129,6 +129,8 @@ public class Startup
             .UseNpgsql(config.ConnectionStrings.PidpDatabase, npg => npg.UseNodaTime())
             .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
 
+
+
         services.Scan(scan => scan
             .FromAssemblyOf<Startup>()
             .AddClasses(classes => classes.AssignableTo<IRequestHandler>())
@@ -165,6 +167,22 @@ public class Startup
             ContractResolver = new CamelCasePropertyNamesContractResolver()
         };
 
+
+        // Validate EF migrations on startup
+        using (var serviceScope = services.BuildServiceProvider().CreateScope())
+        {
+            var dbContext = serviceScope.ServiceProvider.GetRequiredService<PidpDbContext>();
+            try
+            {
+                dbContext.Database.Migrate();
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Database migration failure {string.Join(",", ex.Message)}");
+                throw;
+            }
+        }
+
         Log.Logger.Information("Startup configuration complete");
 
 
@@ -187,6 +205,7 @@ public class Startup
         {
             Log.Logger.Warning("*** JUSTIN EMAIL VERIFICATION IS DISABLED ***");
         }
+
 
         return config;
     }

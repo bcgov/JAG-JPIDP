@@ -19,14 +19,10 @@ public class EdtClient : BaseClient, IEdtClient
     private readonly IMapper mapper;
     private readonly OtelMetrics meters;
     private readonly EdtServiceConfiguration configuration;
-    private static readonly Counter CaseSearches = Metrics
+    private static readonly Counter ProcessedJobCount = Metrics
         .CreateCounter("case_search_count", "Number of case search requests.");
-    private static readonly Counter CaseSearchFailures = Metrics
-        .CreateCounter("case_search_failure_count", "Number of case search requests not found.");
-    private static readonly Counter CaseAssignments = Metrics
-        .CreateCounter("case_assignment_count", "Number of cases assigned");
-    private static readonly Counter CaseRemovals = Metrics
-        .CreateCounter("case_removal_count", "Number of cases removed");
+
+
     public EdtClient(
         HttpClient httpClient, OtelMetrics meters, EdtServiceConfiguration edtServiceConfiguration,
         IMapper mapper,
@@ -92,7 +88,7 @@ public class EdtClient : BaseClient, IEdtClient
 
     public async Task<IEnumerable<int>> GetUserCases(string userKey)
     {
-        var result = await this.GetAsync<JsonArray>($"/api/v1/org-units/1/users/{userKey}/cases");
+        var result = await this.GetAsync<JsonArray>($"api/v1/org-units/1/users/{userKey}/cases");
         Log.Logger.Information("Got user cases {0} user {1}", result, userKey);
 
         return null;
@@ -105,12 +101,12 @@ public class EdtClient : BaseClient, IEdtClient
     {
 
         Log.Logger.Information("Adding user {0} to case {0}", userId, caseId);
-        var result = await this.PostAsync<JsonObject>($"/api/v1/cases/{caseId}/case-users/{userId}");
+        var result = await this.PostAsync<JsonObject>($"api/v1/cases/{caseId}/case-users/{userId}");
 
         if (result.IsSuccess)
         {
             Log.Information("Successfully added user {0} to case {1}", userId, caseId);
-            CaseAssignments.Inc();
+
             var caseGroupId = await this.GetCaseGroupId(caseId, this.configuration.EdtClient.SubmittingAgencyGroup);
 
             if (caseGroupId > 0)
@@ -118,17 +114,20 @@ public class EdtClient : BaseClient, IEdtClient
                 var addUserToCaseGroup = await this.AddUserToCaseGroup(userId, caseId, caseGroupId);
                 if (!addUserToCaseGroup)
                 {
+                    Log.Error($"Failed to add user {userId} to case group {this.configuration.EdtClient.SubmittingAgencyGroup} not assigned to case {caseId}");
                     throw new CaseAssignmentException($"Failed to add user {userId} to case group {this.configuration.EdtClient.SubmittingAgencyGroup} not assigned to case {caseId}");
                 }
             }
             else
             {
+                Log.Error($"{this.configuration.EdtClient.SubmittingAgencyGroup} not assigned to case {caseId}");
                 throw new CaseAssignmentException($"{this.configuration.EdtClient.SubmittingAgencyGroup} not assigned to case {caseId}");
             }
         }
         else
         {
-            Log.Error("Failed to add user {0} to case {1} [{3}]", userId, caseId, string.Join(',', result.Errors));
+            Log.Error("Failed to add user {0} to case {1} [{2}]", userId, caseId, string.Join(',', result.Errors));
+            throw new CaseAssignmentException($"Failed to add user {userId} to case {caseId} [{string.Join(',', result.Errors)}]");
         }
 
         return result.IsSuccess;
@@ -138,11 +137,10 @@ public class EdtClient : BaseClient, IEdtClient
     public async Task<bool> RemoveUserFromCase(string userId, int caseId)
     {
         // var result = await this.PostAsync<>($"api/v1/version");
-        var result = await this.DeleteAsync($"/api/v1/cases/{caseId}/case-users/remove/{userId}");
+        var result = await this.DeleteAsync($"api/v1/cases/{caseId}/case-users/remove/{userId}");
 
         if (result.IsSuccess)
         {
-            CaseRemovals.Inc();
             Log.Information("Successfully removed user {0} from case {1}", userId, caseId);
         }
         else
@@ -156,7 +154,7 @@ public class EdtClient : BaseClient, IEdtClient
     public async Task<CaseModel> FindCase(string caseIdOrKey)
     {
         //' /api/v1/org-units/1/cases/3:105: 23-472018/id
-        CaseSearches.Inc();
+        ProcessedJobCount.Inc();
         var searchString = this.configuration.EdtClient.SearchFieldId + ":" + caseIdOrKey;
         Log.Logger.Information("Finding case {0}", searchString);
 
@@ -171,7 +169,6 @@ public class EdtClient : BaseClient, IEdtClient
             if (caseSearchValue.Count() == 0)
             {
                 Log.Information("No cases found for {0}", searchString);
-                CaseSearchFailures.Inc();
                 return null;
             }
 
@@ -283,19 +280,27 @@ public class EdtClient : BaseClient, IEdtClient
             throw new EdtServiceException("Invalid Edt user " + userKey);
         }
 
-        if (accessRequest.EventType.Equals("Provisioning", StringComparison.Ordinal))
+        try
         {
-            Log.Information("Case provision request {0} {1}", userKey, accessRequest.CaseId);
-            var result = this.AddUserToCase(edtUser.Id, accessRequest.CaseId);
+
+            if (accessRequest.EventType.Equals("Provisioning", StringComparison.Ordinal))
+            {
+                Log.Information("Case provision request {0} {1}", userKey, accessRequest.CaseId);
+                await this.AddUserToCase(edtUser.Id, accessRequest.CaseId);
+            }
+            else if (accessRequest.EventType.Equals("Decommission", StringComparison.Ordinal))
+            {
+                Log.Information("Case decomission request {0} {1}", userKey, accessRequest.CaseId);
+                await this.RemoveUserFromCase(edtUser.Id, accessRequest.CaseId);
+            }
+            else
+            {
+                throw new EdtServiceException("Invalid case request event type " + accessRequest.EventType);
+            }
         }
-        else if (accessRequest.EventType.Equals("Decommission", StringComparison.Ordinal))
+        catch (Exception ex)
         {
-            Log.Information("Case decomission request {0} {1}", userKey, accessRequest.CaseId);
-            var result = this.RemoveUserFromCase(edtUser.Id, accessRequest.CaseId);
-        }
-        else
-        {
-            throw new EdtServiceException("Invalid case request event type " + accessRequest.EventType);
+            return Task.FromException(ex);
         }
 
         return Task.CompletedTask;
@@ -305,7 +310,7 @@ public class EdtClient : BaseClient, IEdtClient
     {
         Log.Debug("Getting case {0} group id for {1}", caseId, groupName);
 
-        var result = await this.GetAsync<IEnumerable<CaseGroupModel>?>($"/api/v1/cases/{caseId}/groups");
+        var result = await this.GetAsync<IEnumerable<CaseGroupModel>?>($"api/v1/cases/{caseId}/groups");
 
         if (result.IsSuccess)
         {
@@ -331,7 +336,7 @@ public class EdtClient : BaseClient, IEdtClient
     {
         Log.Debug("Adding user {0} in case {1} to group {2}", userId, caseId, caseGroupId);
 
-        var result = await this.PutAsync($"/api/v1/cases/{caseId}/case-users/{userId}/groups/{caseGroupId}");
+        var result = await this.PutAsync($"api/v1/cases/{caseId}/case-users/{userId}/groups/{caseGroupId}");
 
         if (result.IsSuccess)
         {
@@ -345,6 +350,7 @@ public class EdtClient : BaseClient, IEdtClient
         }
 
     }
+
 
     public static class CaseEventType
     {

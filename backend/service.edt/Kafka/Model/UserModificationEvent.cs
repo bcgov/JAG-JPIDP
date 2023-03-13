@@ -34,6 +34,9 @@ public class UserModificationEvent : AuditEvent
 
     public bool successful { get; set; }
 
+    public bool submittingAgencyUser { get; set; }
+
+
     public override string ToString() => JsonConvert.SerializeObject(this);
 
 

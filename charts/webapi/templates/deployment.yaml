@@ -47,10 +47,15 @@ spec:
           env:
             - name: PlrClient__Url
               value: http://{{ $release }}-plr-intake:8080/api
+            - name: EdtCaseManagementClient__Url
+              valueFrom:
+                secretKeyRef:
+                  name: pidp-edt-casemgmt-api
+                  key: url
             - name: JumClient__Url
               valueFrom:
                 secretKeyRef:
-                  name: pidp-jum-backend-jum-api
+                  name: pidp-backend-jum-api
                   key: url
             #- name: JumClient__Url
             #  value: {{ .Values.jumClientURL }}
@@ -175,8 +180,8 @@ spec:
             httpGet:
               path: /health/liveness
               port: http
-            timeoutSeconds: 1
-            periodSeconds: 10
+            timeoutSeconds: 5
+            periodSeconds: 30
             successThreshold: 1
             failureThreshold: 3
           startupProbe:
@@ -184,8 +189,8 @@ spec:
               path: /health/liveness
               port: http
               scheme: HTTP
-            timeoutSeconds: 1
-            periodSeconds: 10
+            timeoutSeconds: 5
+            periodSeconds: 30
             successThreshold: 1
             failureThreshold: 30
           # readinessProbe:

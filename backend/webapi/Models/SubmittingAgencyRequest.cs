@@ -15,6 +15,9 @@ public class SubmittingAgencyRequest : BaseAuditable
     public int CaseId { get; set; }
     [Required]
     public string AgencyFileNumber { get; set; } = string.Empty;
+
+    public string Details { get; set; } = string.Empty;
+
     public Instant RequestedOn { get; set; }
     [Required]
     public string RequestStatus { get; set; } = AgencyRequestStatus.Submitted;

@@ -14,6 +14,9 @@ public class DigitalEvidenceCaseModel
 
     public int PartyId { get; set; }
     public string Name { get; set; } = string.Empty;
+
+    public string Details { get; set; } = string.Empty;
+
     public string AgencyFileNumber { get; set; } = string.Empty;
     public string Key { get; set; } = string.Empty;
 
