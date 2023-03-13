@@ -112,13 +112,10 @@
           BCPS User
         </button>
 
-        <button mat-stroked-button (click)="onLogin(IdentityProvider.AZUREIDIR)">
-          Government User
-        </button>
         <br /><br />
-        <mat-form-field class="login-form">
-          <input #inputField type="text" placeholder="Agency" matInput aria-label="Agency name"
-            [formControl]="selectedAgency" [matAutocomplete]="auto" />
+        <mat-form-field class="agency-field">
+          <input type="text" placeholder="Agency" matInput aria-label="Agency name" [formControl]="selectedAgency"
+            [matAutocomplete]="auto" />
           <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSelectionChanged($event)">
             <mat-option *ngFor="let agency of filteredAgencies | async" [value]="agency.name">
               {{ agency.name }}
