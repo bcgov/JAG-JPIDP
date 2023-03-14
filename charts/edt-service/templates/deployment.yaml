@@ -111,6 +111,11 @@ spec:
                 secretKeyRef:
                   name: apicurio-registry
                   key: SchemaRegistry__ClientSecret
+            - name: KafkaCluster__AckTopicName
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-edt
+                  key: KafkaCluster__AckTopicName
             - name: KafkaCluster__BootstrapServers
               valueFrom:
                 secretKeyRef:
