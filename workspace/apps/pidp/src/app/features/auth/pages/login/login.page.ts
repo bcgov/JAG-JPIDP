@@ -40,7 +40,11 @@ export class LoginPage implements OnInit {
   public specialAuthorityUrl: string;
   public providerIdentitySupportEmail: string;
   public idpHint: IdentityProvider;
-
+  public governmentAgency: AgencyLookup = {
+    code: 0,
+    idpHint: IdentityProvider.AZUREIDIR,
+    name: 'Government User',
+  };
   public IdentityProvider = IdentityProvider;
   // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
   selectedAgency: FormControl = new FormControl();
@@ -69,15 +73,7 @@ export class LoginPage implements OnInit {
     this.submittingAgencies = this.lookupService.submittingAgencies.filter(
       (agency) => agency.idpHint?.length > 0
     );
-
-    // add government agency
-    const governmentAgency: AgencyLookup = {
-      code: 0,
-      idpHint: IdentityProvider.AZUREIDIR,
-      name: 'Government User',
-    };
-
-    this.submittingAgencies.push(governmentAgency);
+    this.submittingAgencies.push(this.governmentAgency);
   }
 
   public onScrollToAnchor(): void {
@@ -155,14 +151,9 @@ export class LoginPage implements OnInit {
   }
 
   public onSelectionChanged(event: MatAutocompleteSelectedEvent): void {
-    if (event.option.value === 'Government User') {
+    if (event.option.value === this.governmentAgency.name) {
       // add government agency
-      const governmentAgency: AgencyLookup = {
-        code: 0,
-        idpHint: IdentityProvider.AZUREIDIR,
-        name: 'Government User',
-      };
-      this.agency = governmentAgency;
+      this.agency = this.governmentAgency;
     } else {
       this.agency = this.lookupService.submittingAgencies.filter(
         (agency) => agency.name === event.option.value
