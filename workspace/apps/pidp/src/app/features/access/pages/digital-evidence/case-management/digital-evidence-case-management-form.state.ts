@@ -53,7 +53,6 @@ export class DigitalEvidenceCaseManagementFormState extends AbstractFormState<De
       caseName: [
         null,
         [
-          Validators.required,
           Validators.pattern(/^[a-zA-Z0-9]+(-[a-zA-Z0-9]+)*$/),
           Validators.minLength(3),
           Validators.maxLength(12),
