@@ -23,7 +23,9 @@ public class EdtServiceConsumer : BackgroundService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"{(int)HttpStatusCode.InternalServerError} ConsumeFailedOnTopic - {this.config.KafkaCluster.ConsumerTopicName}, {ex}");
+            var errStr = $"{(int)HttpStatusCode.InternalServerError} ConsumeFailedOnTopic - {this.config.KafkaCluster.ConsumerTopicName}, {ex}";
+            Serilog.Log.Warning(errStr);
+            Console.WriteLine(errStr);
         }
     }
 

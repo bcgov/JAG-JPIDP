@@ -77,6 +77,23 @@ spec:
                 secretKeyRef:
                   name: jum-kafka-config
                   key: KafkaCluster__TopicName
+
+            - name: KafkaCluster__SaslOauthbearerTokenEndpointUrl
+              valueFrom:
+                secretKeyRef:
+                  name: jum-kafka-config
+                  key: KafkaCluster__SaslOauthbearerTokenEndpointUrl
+            - name: KafkaCluster__SaslOauthbearerConsumerClientId
+              valueFrom:
+                secretKeyRef:
+                  name: jum-kafka-config
+                  key: KafkaCluster__SaslOauthbearerConsumerClientId
+            - name: KafkaCluster__SaslOauthbearerConsumerClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: jum-kafka-config
+                  key: KafkaCluster__SaslOauthbearerConsumerClientSecret
+
             - name: KafkaCluster__AckTopicName
               valueFrom:
                 secretKeyRef:
