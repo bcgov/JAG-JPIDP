@@ -4,8 +4,6 @@ using NodaTime;
 namespace edt.casemanagement.ServiceEvents.UserAccountCreation.Models;
 public class NotificationAckModel
 {
-
-    public Guid NotificationId { get; set; }
     public string Status { get; set; } = string.Empty;
     public string PartId { get; set; } = string.Empty;
     public string EmailAddress { get; set; } = string.Empty;
