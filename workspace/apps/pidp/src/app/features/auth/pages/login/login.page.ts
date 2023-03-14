@@ -74,7 +74,7 @@ export class LoginPage implements OnInit {
     const governmentAgency: AgencyLookup = {
       code: 0,
       idpHint: IdentityProvider.AZUREIDIR,
-      name: 'Government user',
+      name: 'Government User',
     };
 
     this.submittingAgencies.push(governmentAgency);
@@ -155,7 +155,19 @@ export class LoginPage implements OnInit {
   }
 
   public onSelectionChanged(event: MatAutocompleteSelectedEvent): void {
-    this.agency = event.option.value;
+    if (event.option.value === 'Government User') {
+      // add government agency
+      const governmentAgency: AgencyLookup = {
+        code: 0,
+        idpHint: IdentityProvider.AZUREIDIR,
+        name: 'Government User',
+      };
+      this.agency = governmentAgency;
+    } else {
+      this.agency = this.lookupService.submittingAgencies.filter(
+        (agency) => agency.name === event.option.value
+      )[0];
+    }
   }
 
   private login(idpHint: IdentityProvider): Observable<void> {
