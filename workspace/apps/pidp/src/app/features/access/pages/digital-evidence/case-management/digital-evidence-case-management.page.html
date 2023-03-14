@@ -21,7 +21,7 @@
           matTooltip="Enter the agency file number you wish to have access to and click Find" placeholder="yy-nnnnnnn"
           tabindex="2" />
       </mat-form-field>
-      <button mat-stroked-button type="button" tabindex="3" [disabled]="isFindDisabled" style="margin-left: 10px;"
+      <button mat-stroked-button type="button" tabindex="3" [disabled]="checkCaseInput()" style="margin-left: 10px;"
         color="primary" (click)="findCase()">
         Find
       </button>

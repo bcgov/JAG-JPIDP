@@ -1,5 +1,11 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
-import { AfterViewInit, Component, Inject, OnInit, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  Inject,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
@@ -7,15 +13,24 @@ import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
 
+import {
+  EMPTY,
+  Observable,
+  catchError,
+  exhaustMap,
+  interval,
+  map,
+  noop,
+  of,
+  takeWhile,
+  tap,
+} from 'rxjs';
 
-
-import { EMPTY, Observable, catchError, exhaustMap, interval, map, noop, of, takeWhile, tap } from 'rxjs';
-
-
-
-import { ConfirmDialogComponent, DialogOptions, HtmlComponent } from '@bcgov/shared/ui';
-
-
+import {
+  ConfirmDialogComponent,
+  DialogOptions,
+  HtmlComponent,
+} from '@bcgov/shared/ui';
 
 import { APP_CONFIG, AppConfig } from '@app/app.config';
 import { AbstractFormPage } from '@app/core/classes/abstract-form-page.class';
@@ -28,18 +43,17 @@ import { AccessTokenService } from '@app/features/auth/services/access-token.ser
 import { AuthorizedUserService } from '@app/features/auth/services/authorized-user.service';
 import { StatusCode } from '@app/features/portal/enums/status-code.enum';
 
-
-
 import { FormUtilsService } from '@core/services/form-utils.service';
-
-
 
 import { PartyUserTypeResource } from '../../../../../features/admin/shared/usertype-resource.service';
 import { OrganizationUserType } from '../../../../../features/admin/shared/usertype-service.model';
 import { DigitalEvidenceCaseManagementFormState } from './digital-evidence-case-management-form.state';
 import { DigitalEvidenceCaseManagementResource } from './digital-evidence-case-management-resource.service';
-import { CaseStatus, DigitalEvidenceCase, DigitalEvidenceCaseRequest } from './digital-evidence-case.model';
-
+import {
+  CaseStatus,
+  DigitalEvidenceCase,
+  DigitalEvidenceCaseRequest,
+} from './digital-evidence-case.model';
 
 @Component({
   selector: 'app-digital-evidence',
@@ -167,8 +181,11 @@ export class DigitalEvidenceCaseManagementPage
     this.navigateToRoot();
   }
 
-  public checkCaseInput(): void {
-    this.isFindDisabled = this.formState.caseName.value.length < 6;
+  public checkCaseInput(): boolean {
+    this.isFindDisabled =
+      this.formState.caseName.value &&
+      this.formState.caseName?.value.length < 6;
+    return this.isFindDisabled;
   }
 
   public onRemoveCase(requestedCase: DigitalEvidenceCaseRequest): void {
@@ -321,10 +338,10 @@ export class DigitalEvidenceCaseManagementPage
         )
         .subscribe(() => {
           this.formState.caseName.patchValue('');
-            this.formState.agencyCode.patchValue(
-              this.organizationType.submittingAgencyCode
-            );
-            this.requestedCase = null;
+          this.formState.agencyCode.patchValue(
+            this.organizationType.submittingAgencyCode
+          );
+          this.requestedCase = null;
           this.refreshCount = 0;
           this.refreshTable();
         });
