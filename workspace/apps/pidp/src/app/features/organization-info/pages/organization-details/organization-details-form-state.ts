@@ -39,7 +39,6 @@ export class OrganizationDetailsFormState extends AbstractFormState<Organization
     if (!this.formInstance || !model) {
       return;
     }
-
     this.formInstance.patchValue(model);
   }
 

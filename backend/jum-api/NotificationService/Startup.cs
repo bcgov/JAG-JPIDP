@@ -1,3 +1,5 @@
+namespace NotificationService;
+
 using Microsoft.OpenApi.Models;
 using NodaTime;
 using Serilog;
@@ -13,7 +15,6 @@ using NotificationService.Data;
 using Microsoft.EntityFrameworkCore;
 using Prometheus;
 
-namespace NotificationService;
 public class Startup
 {
     public IConfiguration Configuration { get; }
@@ -27,7 +28,9 @@ public class Startup
           .AddAutoMapper(typeof(Startup))
           .AddKafkaConsumer(config)
           .AddHttpClients(config)
+          .AddScoped<IEmailTemplateCache, LocalEMailTemplateCache>()
           .AddScoped<IEmailService, EmailService>()
+
           .AddSingleton<IClock>(SystemClock.Instance);
 
         services.AddAuthorization(options =>

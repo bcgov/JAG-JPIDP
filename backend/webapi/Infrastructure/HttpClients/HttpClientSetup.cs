@@ -62,7 +62,8 @@ public static class HttpClientSetup
             SslEndpointIdentificationAlgorithm = SslEndpointIdentificationAlgorithm.Https,
             SslCaLocation = config.KafkaCluster.SslCaLocation,
             SslCertificateLocation = config.KafkaCluster.SslCertificateLocation,
-            SslKeyLocation = config.KafkaCluster.SslKeyLocation
+            SslKeyLocation = config.KafkaCluster.SslKeyLocation,
+            ConnectionsMaxIdleMs = 2147483647
         };
 
         var producerConfig = new ProducerConfig
@@ -82,7 +83,6 @@ public static class HttpClientSetup
             SslCertificateLocation = config.KafkaCluster.SslCertificateLocation,
             SslKeyLocation = config.KafkaCluster.SslKeyLocation,
             EnableIdempotence = true,
-            RetryBackoffMs = 1000,
             MessageSendMaxRetries = 3
         };
 
@@ -95,10 +95,10 @@ public static class HttpClientSetup
             SaslOauthbearerClientSecret = config.KafkaCluster.SaslOauthbearerConsumerClientSecret,
             EnableAutoOffsetStore = false,
             ClientId = Dns.GetHostName(),
-            AutoCommitIntervalMs = 4000,
             BootstrapServers = config.KafkaCluster.BootstrapServers,
             SaslMechanism = SaslMechanism.OAuthBearer,
-            SecurityProtocol = SecurityProtocol.SaslSsl
+            SecurityProtocol = SecurityProtocol.SaslSsl,
+            HeartbeatIntervalMs = 60000
         };
 
         services.AddSingleton(consumerConfig);

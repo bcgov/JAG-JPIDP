@@ -18,7 +18,7 @@ public class ChesEmailRequestParams
 
     public ChesEmailRequestParams(Email email)
     {
-        this.Attachments = email.Attachments.Select(file => new ChesAttachment()
+        this.Attachments = email.Attachments?.Select(file => new ChesAttachment()
         {
             Content = Convert.ToBase64String(file.Data),
             ContentType = file.MediaType,
@@ -79,6 +79,7 @@ public static class ChesStatus
     public const string Accepted = "accepted";
     public const string Cancelled = "cancelled";
     public const string Completed = "completed";
+    public const string Sent = "sent";
     public const string Failed = "failed";
     public const string Pending = "pending";
 }

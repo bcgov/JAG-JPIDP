@@ -1,100 +1,111 @@
+namespace NotificationService.NotificationEvents.UserProvisioning.Handler;
+
+using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NotificationService.Data;
+using NotificationService.Exceptions;
 using NotificationService.HttpClients.Mail;
 using NotificationService.Kafka.Interfaces;
+using NotificationService.Models;
 using NotificationService.NotificationEvents.UserProvisioning.Models;
 using NotificationService.Services;
 using Prometheus;
 
-namespace NotificationService.NotificationEvents.UserProvisioning.Handler;
 public class UserProvisioningHandler : IKafkaHandler<string, Notification>
 {
-    private readonly IKafkaProducer<string, NotificationAckModel> _producer;
-    private readonly NotificationServiceConfiguration _configuration;
-    private readonly IEmailService _emailService;
-    private readonly NotificationDbContext _context;
+    private readonly IKafkaProducer<string, NotificationAckModel> producer;
+    private readonly NotificationServiceConfiguration configuration;
+    private readonly IEmailService emailService;
+    private readonly NotificationDbContext context;
     private readonly IChesClient chesClient;
 
-    private static readonly Counter _consumeCount = Metrics.CreateCounter("jum_notify_consume_count", "Number of notification messages consumed");
-    private static readonly Counter _duplicateConsumeCount = Metrics.CreateCounter("jum_notify_dup_consume_count", "Number of duplicated notification messages consumed");
+    private static readonly Counter consumeCount = Metrics.CreateCounter("jum_notify_consume_count", "Number of notification messages consumed");
+    private static readonly Counter duplicateConsumeCount = Metrics.CreateCounter("jum_notify_dup_consume_count", "Number of duplicated notification messages consumed");
 
     public UserProvisioningHandler(NotificationServiceConfiguration configuration, IKafkaProducer<string, NotificationAckModel> producer, IEmailService emailService, NotificationDbContext context, IChesClient chesClient)
     {
-        _producer = producer;
-        _configuration = configuration;
-        _emailService = emailService;
-        _context = context;
+        this.producer = producer;
+        this.configuration = configuration;
+        this.emailService = emailService;
+        this.context = context;
         this.chesClient = chesClient;
     }
     public async Task<Task> HandleAsync(string consumerName, string key, Notification value)
     {
         //check wheather this message has been processed before
-        Guid? msgId = Guid.Empty;
-        _consumeCount.Inc();
+        Guid? sendResponseId = Guid.Empty;
+        consumeCount.Inc();
 
+        // notification id is the message topic key
+        value.NotificationId = Guid.Parse(key);
 
         Serilog.Log.Information($"Checking if message {key} has already been processed by {consumerName}");
 
-        if (await _context.HasBeenProcessed(key, consumerName))
+        if (await this.context.HasBeenProcessed(key, consumerName))
         {
             Serilog.Log.Information($"Message {key} has already been processed");
-            _duplicateConsumeCount.Inc();
+            duplicateConsumeCount.Inc();
             return Task.CompletedTask;
         }
-        //check wheater the message tag has already been processed via ches
 
-        if (await _context.EmailLogs.AnyAsync(tag =>tag.Tag == value.Tag && tag.LatestStatus == ChesStatus.Completed))
+        //check whether the message tag has already been processed via ches
+        if (await this.context.EmailLogs.AnyAsync(emailLog => emailLog.NotificationId == value.NotificationId && emailLog.LatestStatus == ChesStatus.Completed))
         {
             return Task.CompletedTask;
         }
 
-        if (!await _context.EmailLogs.AnyAsync(tag => tag.Tag == value.Tag))
+
+        if (!await this.context.EmailLogs.AnyAsync(emailLog => emailLog.NotificationId == value.NotificationId))
         {
-            msgId = await this.SendConfirmationEmailAsync(value);
+            sendResponseId = await this.SendConfirmationEmailAsync(value);
         }
 
-        //Send Notification to user
-        var emailLogs = await _context.EmailLogs
-             .Where(log => log.Tag == value.Tag && log.LatestStatus != ChesStatus.Completed)
+        var emailLogs = await this.context.EmailLogs
+             .Where(emailLog => emailLog.NotificationId.Equals(value.NotificationId) && emailLog.LatestStatus != ChesStatus.Completed)
              .ToListAsync();
 
-        using var trx = _context.Database.BeginTransaction();
+        using var trx = this.context.Database.BeginTransaction();
         try
         {
             //new notification? check message status
-            if (emailLogs != null && emailLogs.Count == 1 && emailLogs.FirstOrDefault()!.MsgId!.Value != Guid.Empty)
+            if (emailLogs != null && emailLogs.Count == 1 && emailLogs.FirstOrDefault()!.NotificationId!.Value != Guid.Empty)
             {
                 var emailLog = emailLogs.FirstOrDefault();
-                var status = await this.chesClient.GetStatusAsync(emailLog!.MsgId!.Value);
+                var status = await this.chesClient.GetStatusAsync(emailLog!.SentResponseId!.Value);
 
                 if (status != null && emailLog.LatestStatus != status)
                 {
                     emailLog.LatestStatus = status;
                 }
 
-                await _context.IdempotentConsumer(messageId: key, consumer: consumerName);
+                await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
 
                 //save notification ref in notification table database
-                await _context.Notifications.AddAsync(new NotificationAckModel
+                await this.context.Notifications.AddAsync(new NotificationAckModel
                 {
-                    PartId = value.ParyId,
-                    NotificationId = new Guid(value.Tag!),
+                    PartId = value.EventData.ContainsKey("partyId") ? value.EventData["partyId"] : "",
+                    NotificationId = value.NotificationId,
+                    DomainEvent = value.DomainEvent,
                     EmailAddress = value.To!,
                     Status = ChesStatus.Completed,
+                    EventData = value.EventData != null ? JsonConvert.SerializeObject(value.EventData) : "",
                     Consumer = consumerName,
-                    AccessRequestId = Convert.ToInt32(key)
+                    AccessRequestId = value.EventData.ContainsKey("accessRequestId") ? Convert.ToInt32(value.EventData["accessRequestId"]) : -1
                 });
-                await _context.SaveChangesAsync();
+
+                await this.context.SaveChangesAsync();
 
                 //After successful operation, we can produce message for other service's consumption
 
-                await _producer.ProduceAsync(_configuration.KafkaCluster.AckTopicName, key: value.Tag!, new NotificationAckModel
+                await this.producer.ProduceAsync(this.configuration.KafkaCluster.AckTopicName, key: value.NotificationId.ToString()!, new NotificationAckModel
                 {
-                    PartId = value.ParyId,
-                    NotificationId = new Guid(value.Tag!),
+                    PartId = !string.IsNullOrEmpty(value.EventData["partyId"]) ? value.EventData["partyId"] : "",
+                    NotificationId = value.NotificationId,
                     EmailAddress = value.To!,
                     Status = ChesStatus.Completed,
-                    AccessRequestId = Convert.ToInt32(key)
+                    AccessRequestId = value.EventData.ContainsKey("accessRequestId") ? Convert.ToInt32(value.EventData["accessRequestId"]) : -1
                 });
 
 
@@ -103,34 +114,18 @@ public class UserProvisioningHandler : IKafkaHandler<string, Notification>
                 return Task.CompletedTask;
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Serilog.Log.Error($"Failed to update emaillog and store notification {string.Join(",", ex.Message)}");
             await trx.RollbackAsync();
-            return Task.FromException(new ApplicationException());
+            return Task.FromException(new NotificationException(string.Join(",", ex.Message)));
         }
 
-        return Task.FromException(new ApplicationException());
+        return Task.FromException(new NotificationException());
     }
     private async Task<Guid?> SendConfirmationEmailAsync(Notification model)
     {
-        // TODO email text
-
-    //    string msgBody = string.Format(@"<html>
-    //        <head>
-    //            <title>Justin User Account Provisiong</title>
-    //        </head>
-    //            <body> 
-    //            <img src='https://drive.google.com/uc?export=view&id=16JU6XoVz5FvFUXXWCN10JvN-9EEeuEmr'width='' height='50'/><br/><br/><div style='border-top: 3px solid #22BCE5'><span style = 'font-family: Arial; font-size: 10pt' ><br/> Hello {0},<br/><br/> Your Justin user account has been provisioned.<br/><br/>
-    //            You can Log in to the <a href='{1}'> JIPD Portal </a> with your IDIR <b>{2}</b> to continue your onboarding into the Digital Evidence Management System by clicking on the above link. <br/><br/> Thanks <br/> Justin User Management.
-    //            </span></div></body></html> ", 
-    //firstName, "https://dev.pidp-e27db1-dev.apps.gold.devops.gov.bc.ca/", username);
-        var email = new Email(
-            from: model.From ?? EmailService.NotificationServiceEmail,
-            to: model.To!,
-            subject: model.Subject!,
-            body: model.MsgBody!
-        );
-      return await _emailService.SendAsync(email, model.Tag!);
+      return await emailService.SendAsync(model);
     }
 }
 

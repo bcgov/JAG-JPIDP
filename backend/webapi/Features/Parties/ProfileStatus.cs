@@ -167,7 +167,6 @@ public partial class ProfileStatus
             {
                 profile.UserIsInSubmittingAgency = true;
                 profile.SubmittingAgency = submittingAgency;
-                profile.Email = "lee.@test.com";
                 profile.OrganizationCode = OrganizationCode.SubmittingAgency;
             }
 

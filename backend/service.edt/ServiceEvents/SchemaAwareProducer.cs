@@ -1,6 +1,8 @@
 namespace edt.service.ServiceEvents.UserAccountCreation.Handler;
 
 using System.Diagnostics;
+using System.Threading.Tasks;
+using Avro;
 using Chr.Avro.Confluent;
 using Confluent.Kafka;
 using Confluent.SchemaRegistry;
@@ -8,6 +10,9 @@ using Confluent.SchemaRegistry.Serdes;
 using edt.service.Infrastructure.Telemetry;
 using edt.service.Kafka.Interfaces;
 using edt.service.Kafka.Model;
+using Google.Protobuf.WellKnownTypes;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Schema;
 using Serilog;
 
 /// <summary>
@@ -53,10 +58,15 @@ public class SchemaAwareProducer
 
         using var schemaRegistry = new CachedSchemaRegistryClient(schemaRegistryConfig);
 
+        var subjectName = $"{nameof(UserModificationEvent)}-value";
+
         await Task.WhenAll(this.builder.SetAvroKeySerializer(schemaRegistry, $"{nameof(UserModificationEvent)}-key", registerAutomatically: AutomaticRegistrationBehavior.Always),
-        this.builder.SetAvroValueSerializer(schemaRegistry, $"{nameof(UserModificationEvent)}-value", AutomaticRegistrationBehavior.Always));
+        this.builder.SetAvroValueSerializer(schemaRegistry, subjectName, AutomaticRegistrationBehavior.Always));
+
+
 
         var registryAwareProducer = this.builder.Build();
+
         var activity = Diagnostics.Producer.Start(userModificationTopicName, message);
 
         try
@@ -73,6 +83,10 @@ public class SchemaAwareProducer
                     Log.Logger.Error("Failed to produce message {0}", task.Exception);
                 }
             });
+        }
+        catch (Exception ex)
+        {
+            Log.Logger.Error("Failed to produce message {0}", ex.Message);
         }
         finally
         {

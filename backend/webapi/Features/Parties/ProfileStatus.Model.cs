@@ -99,7 +99,8 @@ public partial class ProfileStatus
                 this.Phone = profile.Phone;
             }
 
-            protected override void SetAlertsAndStatus(ProfileStatusDto profile) => this.StatusCode = profile.DemographicsEntered || profile.SubmittingAgency != null ? StatusCode.Complete : StatusCode.Incomplete;
+            // submitting ageny user details are locked
+            protected override void SetAlertsAndStatus(ProfileStatusDto profile) => this.StatusCode = profile.DemographicsEntered || profile.SubmittingAgency != null ? ( profile.SubmittingAgency != null ) ? StatusCode.Locked_Complete : StatusCode.Complete : StatusCode.Incomplete;
         }
 
         public class OrganizationDetails : ProfileSection
@@ -138,7 +139,7 @@ public partial class ProfileStatus
                 // user is from an authenticated agency - no need to enter organization details or view/change them
                 if (profile.UserIsInSubmittingAgency)
                 {
-                    this.StatusCode = StatusCode.Hidden_Complete;
+                    this.StatusCode = StatusCode.Locked_Complete;
                     return;
                 }
 

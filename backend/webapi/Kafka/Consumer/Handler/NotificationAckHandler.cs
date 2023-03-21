@@ -47,6 +47,11 @@ public class NotificationAckHandler : IKafkaHandler<string, NotificationAckModel
                     return Task.FromException(new InvalidOperationException());
                 }
             }
+            else
+            {
+                Log.Error($"Access request {value.AccessRequestId} is unknown");
+                return Task.CompletedTask;
+            }
         }
 
         if (value.Subject.Equals(NotificationSubject.CaseAccessRequest))

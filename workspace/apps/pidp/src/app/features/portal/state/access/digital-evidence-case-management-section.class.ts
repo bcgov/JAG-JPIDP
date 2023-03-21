@@ -49,7 +49,8 @@ export class DigitalEvidenceCaseManagementPortalSection
       ),
       disabled: !(
         digitalEvidenceStatusCode === StatusCode.COMPLETED &&
-        demographicsStatusCode === StatusCode.COMPLETED &&
+        (demographicsStatusCode === StatusCode.COMPLETED ||
+          demographicsStatusCode === StatusCode.LOCKED_COMPLETE) &&
         (organizationStatusCode === StatusCode.COMPLETED ||
           organizationStatusCode === StatusCode.LOCKED_COMPLETE)
       ),
@@ -61,8 +62,9 @@ export class DigitalEvidenceCaseManagementPortalSection
   }
 
   public get status(): string {
-    const statusCode = this.getStatusCode();
-    return statusCode === StatusCode.COMPLETED
+    const digitalEvidenceStatusCode =
+      this.profileStatus.status.digitalEvidence.statusCode;
+    return digitalEvidenceStatusCode === StatusCode.COMPLETED
       ? 'Available'
       : 'Pending DEMS Enrollment';
   }

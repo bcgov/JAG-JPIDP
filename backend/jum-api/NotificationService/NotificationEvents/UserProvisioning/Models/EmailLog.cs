@@ -1,9 +1,10 @@
-﻿using NodaTime;
+namespace NotificationService.NotificationEvents.UserProvisioning.Models;
+
+using NodaTime;
 using NotificationService.HttpClients.Mail;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace NotificationService.NotificationEvents.UserProvisioning.Models;
 [Table(nameof(EmailLog))]
 public class EmailLog : BaseAuditable
 {
@@ -12,16 +13,15 @@ public class EmailLog : BaseAuditable
 
     public string SendType { get; set; } = string.Empty;
 
-    public Guid? MsgId { get; set; }
-    public string Tag { get; set; } = String.Empty;
+    // The notification ID - will be the key of the notification in the topic
+    public Guid? NotificationId { get; set; }
+
+    public Guid? SentResponseId { get; set; }
+
 
     public string SentTo { get; set; } = string.Empty;
 
     public string Cc { get; set; } = string.Empty;
-
-    public string Subject { get; set; } = string.Empty;
-
-    public string Body { get; set; } = string.Empty;
 
     public Instant? DateSent { get; set; }
 
@@ -33,15 +33,12 @@ public class EmailLog : BaseAuditable
 
     public EmailLog() { }
 
-    public EmailLog(Email email, string sendType, Guid? msgId, string? tag, Instant dateSent)
+    public EmailLog(Email email, string sendType, Guid? notificationId, Instant dateSent)
     {
-        this.Body = email.Body;
-        this.Cc = string.Join(",", email.Cc);
-        this.DateSent = dateSent;
-        this.MsgId = msgId;
+        this.Cc = email.Cc != null ? string.Join(",", email.Cc) : "";
         this.SendType = sendType;
         this.SentTo = string.Join(",", email.To);
-        this.Subject = email.Subject;
-        this.Tag = tag;
+        this.NotificationId = notificationId;
+        this.LatestStatus = ChesStatus.Pending;
     }
 }

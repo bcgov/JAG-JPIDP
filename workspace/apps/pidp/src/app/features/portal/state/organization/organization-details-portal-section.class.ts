@@ -91,6 +91,12 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
       });
     } else {
       response.push({
+        key: 'organizationName',
+        value:
+          this.profileStatus.status.organizationDetails?.submittingAgency.name,
+        label: 'Organization:',
+      });
+      response.push({
         key: 'agencyCode',
         value:
           this.profileStatus.status.organizationDetails?.submittingAgency.code,

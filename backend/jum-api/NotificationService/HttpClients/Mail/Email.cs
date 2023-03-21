@@ -4,12 +4,19 @@ using System.Net.Mail;
 
 public class Email
 {
+
     public string From { get; set; }
     public IEnumerable<string> To { get; set; }
     public IEnumerable<string> Cc { get; set; }
     public string Subject { get; set; }
     public string Body { get; set; }
     public IEnumerable<Pdf> Attachments { get; set; }
+
+    public string Priority { get; set; } = "normal";
+
+    public Dictionary<string, string> TemplateData { get; set; } = new Dictionary<string, string>();
+
+    public Email() { }
 
     public Email(string from, string to, string subject, string body)
         : this(from, new[] { to }, Enumerable.Empty<string>(), subject, body, Enumerable.Empty<Pdf>())

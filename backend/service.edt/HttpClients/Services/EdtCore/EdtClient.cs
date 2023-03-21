@@ -15,6 +15,7 @@ using Serilog;
 
 public class EdtClient : BaseClient, IEdtClient
 {
+    private const string SUBMITTING_AGENCY_GROUP_NAME = "Submitting Agency";
     private readonly IMapper mapper;
     private readonly OtelMetrics meters;
     private readonly EdtServiceConfiguration configuration;
@@ -144,7 +145,7 @@ public class EdtClient : BaseClient, IEdtClient
         {
             return false;
         }
-        var groupId = await this.GetOuGroupId("Submitting Agency");
+        var groupId = await this.GetOuGroupId(SUBMITTING_AGENCY_GROUP_NAME);
 
         if (groupId > 0)
         {
@@ -197,11 +198,23 @@ public class EdtClient : BaseClient, IEdtClient
             if (accessRequest.OrganizationType != null && accessRequest.OrganizationType.Equals(this.SUBMITTING_AGENCY, StringComparison.Ordinal))
             {
                 userModificationResponse.submittingAgencyUser = true;
-                Log.Logger.Information("Adding user {0} {1} to submitting agency group", accessRequest.Id, accessRequest.Key);
-                var addGroupToUser = await this.AddUserToSubmittingAgencyGroup(accessRequest, user.Id);
-                if (!addGroupToUser)
+
+                // get user groups
+                var groups = await this.GetAssignedOUGroups(user.Id);
+                var alreadyMember = groups.Any(group => group.Name.Equals(SUBMITTING_AGENCY_GROUP_NAME, StringComparison.Ordinal));
+
+                if (alreadyMember)
                 {
-                    Log.Logger.Error("Failed to add EDT user to group user {0}", string.Join(",", result.Errors));
+                    Log.Logger.Information($"User {accessRequest.Key} already member of { SUBMITTING_AGENCY_GROUP_NAME}");
+                }
+                else
+                {
+                    Log.Logger.Information($"Adding user {accessRequest.Key} to {SUBMITTING_AGENCY_GROUP_NAME}");
+                    var addGroupToUser = await this.AddUserToSubmittingAgencyGroup(accessRequest, user.Id);
+                    if (!addGroupToUser)
+                    {
+                        Log.Logger.Error($"Failed to add user {user.Id} to group {SUBMITTING_AGENCY_GROUP_NAME} {string.Join(",", result.Errors)}");
+                    }
                 }
             }
             else

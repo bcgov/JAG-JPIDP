@@ -33,7 +33,6 @@ public class UserModificationEvent : AuditEvent
     public int accessRequestId { get; set; }
 
     public bool successful { get; set; }
-
     public bool submittingAgencyUser { get; set; }
 
 

@@ -131,5 +131,6 @@ public class EdtServiceConfiguration
     {
         public string Url { get; set; } = string.Empty;
         public int Port { get; set; }
+
     }
 }

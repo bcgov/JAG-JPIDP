@@ -47,7 +47,12 @@
     </section>
 
     <section class="caseSelectionInvalid mat-elevation-z4" *ngIf="requestedCase && requestedCaseInactive">
-      The selected case is inactive.<br />In order to upload to this case you will need to perform the following......
+      This case shows as inactive.<br />To upload to this case, please check:
+      <ul>
+        <li>case has been submitted or re-submitted through PRIME-JUSTIN.</li>
+        <li>confirm that the case has not been concluded.</li>
+        <li>this case is being managed in BCPS DEMS.</li>
+      </ul>
       <p></p>
       <b>Case Name:</b> {{ requestedCase?.name }}<br />
       <div *ngFor="let field of requestedCase.fields">
@@ -91,8 +96,8 @@
         <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
-            You have no currently assigned cases or requested cases.<br />
-            Find cases and request access for them to be added.
+            You do not have access to any cases currently.<br />
+            Please request access.
           </td>
         </tr>
         <tr *matRowDef="let row; columns: displayedColumns" mat-row></tr>
