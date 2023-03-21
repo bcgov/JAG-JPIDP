@@ -62,7 +62,7 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
                 {
 
                     Log.Logger.Information("Received message {0}", result.Message.Key);
-                    var consumerResult =  await _handler.HandleAsync(_consumer.Name, result.Message.Key, result.Message.Value);
+                    var consumerResult = await _handler.HandleAsync(_consumer.Name, result.Message.Key, result.Message.Value);
 
                     if (consumerResult.Status == TaskStatus.RanToCompletion && consumerResult.Exception == null)
                     {

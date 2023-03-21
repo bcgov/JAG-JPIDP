@@ -136,7 +136,6 @@ export class DigitalEvidenceCaseManagementPage
       .pipe(map((token) => token?.identity_provider ?? ''));
 
     accessTokenService.decodeToken().subscribe((n) => {
-      console.log(n.identity_provider);
       this.result = n.identity_provider;
     });
 

@@ -30,16 +30,19 @@ export class DemographicsPortalSection implements IPortalSection {
   }
 
   public get hint(): string {
-    return [StatusCode.ERROR, StatusCode.COMPLETED].includes(
-      this.getStatusCode()
-    )
+    return [
+      StatusCode.ERROR,
+      StatusCode.COMPLETED,
+      StatusCode.LOCKED_COMPLETE,
+    ].includes(this.getStatusCode())
       ? ''
       : '1 min to complete';
   }
 
   public get properties(): PortalSectionProperty[] {
     const { firstName, lastName, email, phone } = this.getSectionStatus();
-    return this.getStatusCode() === StatusCode.COMPLETED
+    return this.getStatusCode() === StatusCode.COMPLETED ||
+      this.getStatusCode() === StatusCode.LOCKED_COMPLETE
       ? [
           {
             key: 'fullName',
@@ -64,7 +67,7 @@ export class DemographicsPortalSection implements IPortalSection {
   public get action(): PortalSectionAction {
     const statusCode = this.getStatusCode();
     return {
-      label: 'Update',
+      label: statusCode === StatusCode.LOCKED_COMPLETE ? '' : 'Update',
       route: ProfileRoutes.routePath(ProfileRoutes.PERSONAL_INFO),
       disabled:
         statusCode === StatusCode.ERROR ||
@@ -76,7 +79,8 @@ export class DemographicsPortalSection implements IPortalSection {
     const statusCode = this.getStatusCode();
     return statusCode === StatusCode.ERROR
       ? 'danger'
-      : statusCode === StatusCode.COMPLETED
+      : statusCode === StatusCode.COMPLETED ||
+        statusCode === StatusCode.LOCKED_COMPLETE
       ? 'success'
       : 'warn';
   }
@@ -85,7 +89,8 @@ export class DemographicsPortalSection implements IPortalSection {
     const statusCode = this.getStatusCode();
     return statusCode === StatusCode.ERROR
       ? ''
-      : statusCode === StatusCode.COMPLETED
+      : statusCode === StatusCode.COMPLETED ||
+        statusCode === StatusCode.LOCKED_COMPLETE
       ? 'Completed'
       : 'Incomplete';
   }

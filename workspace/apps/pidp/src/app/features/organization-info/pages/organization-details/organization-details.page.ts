@@ -1,6 +1,6 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -69,20 +69,24 @@ export class OrganizationDetailsPage
     this.submittingAgencies = this.lookupService.submittingAgencies.filter(
       (agency) => agency.idpHint?.length > 0
     );
-
+    this.healthAuthorities = this.lookupService.healthAuthorities;
+    this.justiceSectors = this.lookupService.justiceSectors;
+    this.lawEnforcements = this.lookupService.lawEnforcements;
+    this.correctionServices = this.lookupService.correctionServices;
+    this.lawSocieties = this.lookupService.lawSocieties;
     this.authorizedUserService.identityProvider$.subscribe((val) => {
       //console.log(val);
 
       if (val === IdentityProvider.BCPS) {
-        this.organizations = this.lookupService.organizations.map(
-          (organization) => ({
-            ...organization,
-            disabled: !(
-              (organization.code === OrganizationCode.JusticeSector)
-              //organization.code === OrganizationCode.correctionService
-            ),
-          })
-        );
+        this.organizations = this.lookupService.organizations
+          .filter(
+            (org: Lookup<OrganizationCode>) =>
+              org.code === OrganizationCode.JusticeSector
+          )
+          .map((org: Lookup<OrganizationCode>) => ({
+            ...org,
+            disabled: false,
+          }));
       } else if (val === IdentityProvider.BCSC) {
         this.organizations = this.lookupService.organizations.map(
           (organization) => ({
@@ -105,9 +109,6 @@ export class OrganizationDetailsPage
         );
       }
     });
-    // if (idp == IdentityProvider.BCPS) {
-    //   console.log(idp);
-    // }
 
     this.organizations = this.lookupService.organizations.map(
       (organization) => ({
@@ -115,11 +116,6 @@ export class OrganizationDetailsPage
         disabled: organization.code === null,
       })
     );
-    this.healthAuthorities = this.lookupService.healthAuthorities;
-    this.justiceSectors = this.lookupService.justiceSectors;
-    this.lawEnforcements = this.lookupService.lawEnforcements;
-    this.correctionServices = this.lookupService.correctionServices;
-    this.lawSocieties = this.lookupService.lawSocieties;
   }
 
   public onBack(): void {
@@ -160,9 +156,14 @@ export class OrganizationDetailsPage
     this.resource
       .get(partyId)
       .pipe(
-        tap((model: OrganizationDetails | null) =>
-          this.formState.patchValue(model)
-        ),
+        tap((model: OrganizationDetails | null) => {
+          if (model?.organizationCode === 0) {
+            if (this.organizations.length === 1) {
+              model.organizationCode = this.organizations[0].code;
+            }
+          }
+          this.formState.patchValue(model);
+        }),
         catchError((error: HttpErrorResponse) => {
           if (error.status === HttpStatusCode.NotFound) {
             this.navigateToRoot();

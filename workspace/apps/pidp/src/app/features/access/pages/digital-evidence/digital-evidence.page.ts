@@ -117,11 +117,9 @@ export class DigitalEvidencePage
       .pipe(map((token) => token?.identity_provider ?? ''));
 
     accessTokenService.decodeToken().subscribe((n) => {
-      console.log(n.identity_provider);
       this.result = n.identity_provider;
     });
     this.usertype.getUserType(partyId).subscribe((data: any) => {
-      console.log('Got data %o', data);
       this.organizationType.organizationType = data['organizationType'];
       this.organizationType.participantId = data['participantId'];
       this.organizationType.organizationName = data['organizationName'];
@@ -246,8 +244,6 @@ export class DigitalEvidencePage
   //   console.log(this.form.value);
   // }
   public onRequestAccess(): void {
-    console.log('Submiting');
-    console.log(this.formState.ParticipantId.value);
     if (this.selectedOption == 1) {
       this.resource
         .requestAccess(

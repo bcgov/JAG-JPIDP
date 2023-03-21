@@ -19,6 +19,9 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using Azure.Core.Serialization;
 using Newtonsoft.Json;
+using System.Security.Cryptography;
+using Pidp.Features.Parties;
+using Pidp.Features.Organization.OrgUnitService;
 
 public class DigitalEvidence
 {
@@ -58,8 +61,10 @@ public class DigitalEvidence
         private readonly ILogger logger;
         private readonly PidpConfiguration config;
         private readonly PidpDbContext context;
+        private readonly IOrgUnitService orgUnitService;
         private readonly IKafkaProducer<string, EdtUserProvisioning> kafkaProducer;
         private readonly IKafkaProducer<string, Notification> kafkaNotificationProducer;
+        private readonly string SUBMITTING_AGENCY = "SubmittingAgency";
 
 
         public CommandHandler(
@@ -67,6 +72,7 @@ public class DigitalEvidence
             IKeycloakAdministrationClient keycloakClient,
             ILogger<CommandHandler> logger,
             PidpConfiguration config,
+            IOrgUnitService orgUnitService,
             PidpDbContext context,
             IKafkaProducer<string, EdtUserProvisioning> kafkaProducer,
             IKafkaProducer<string, Notification> kafkaNotificationProducer)
@@ -78,6 +84,7 @@ public class DigitalEvidence
             this.kafkaProducer = kafkaProducer;
             this.config = config;
             this.kafkaNotificationProducer = kafkaNotificationProducer;
+            this.orgUnitService = orgUnitService;
         }
 
         public async Task<IDomainResult> HandleAsync(Command command)
@@ -115,21 +122,25 @@ public class DigitalEvidence
                     var digitalEvidence = await this.SubmitDigitalEvidenceRequest(command); //save all trx at once for production(remove this and handle using idempotent)
                     string? key = Guid.NewGuid().ToString();
                     // no email notifications for submitting agencies currently
-                    if (digitalEvidence != null && !command.OrganizationType.Equals(nameof(OrganizationCode.SubmittingAgency)))
+                    if (digitalEvidence != null && !command.OrganizationType.Equals(nameof(OrganizationCode.SubmittingAgency), StringComparison.Ordinal))
                     {
                         Serilog.Log.Logger.Information("Sending submission message for {0} to {1}", command.ParticipantId, dto.Email);
 
-                        // send notification to user of sumission
+                        var eventData = new Dictionary<string, string>
+                    {
+                        { "FirstName", dto.FirstName! },
+                        { "AccessRequestId", "" + digitalEvidence.Id },
+                        { "ParticipantId", command.ParticipantId! },
+                        { "PartyId", "" + command.PartyId! }
+                    };
+
                         await this.kafkaNotificationProducer.ProduceAsync(this.config.KafkaCluster.NotificationTopicName, key: key, new Notification
                         {
                             To = dto.Email,
-                            From = "jpsprovideridentityportal@gov.bc.ca",
-                            FirstName = dto.FirstName,
-                            Subject = "Digital Evidence Management System Enrollment Request",
-                            MsgBody = MsgBodySubmissionReceived(dto.FirstName),
-                            PartyId = command.ParticipantId!,
-                            Tag = key
+                            DomainEvent = "digitalevidence-bcps-usercreation-request",
+                            EventData = eventData,
                         });
+
                     }
 
                     //publish accessRequest Event (Sending Events to the Outbox)
@@ -156,23 +167,6 @@ public class DigitalEvidence
 
         }
 
-        private static string MsgBodySubmissionReceived(string? firstName)
-        {
-            var msgBody = string.Format(CultureInfo.CurrentCulture, @"<html>
-            <head>
-                <title>Digital Evidence Management System Enrollment Notification</title>
-            </head>
-                <body> 
-                <img src='https://drive.google.com/uc?export=view&id=16JU6XoVz5FvFUXXWCN10JvN-9EEeuEmr' width='' height='50'/><br/><br/>
-    <div style='border-top: 3px solid #22BCE5'><span style = 'font-family: Arial; font-size: 10pt' >
-<br/> Hello {0},<br/><br/>Your BCPS DEMS access request has been received.<br/>
-We will notify you when your account has been created<p/>{1}<p/>
-<div style='border-top: 3px solid #22BCE5'>
-                </span></div></body></html> ",
-                    firstName, GetSupportMessage());
-            return msgBody;
-        }
-
         private async Task<PartyDto> GetPidpUser(Command command)
         {
             return await this.context.Parties
@@ -193,8 +187,27 @@ We will notify you when your account has been created<p/>{1}<p/>
 
         private async Task PublishAccessRequest(Command command, PartyDto dto, Models.DigitalEvidence digitalEvidence)
         {
-            Serilog.Log.Logger.Information("Adding message to topic {0} {1}", this.config.KafkaCluster.ProducerTopicName, command.ParticipantId);
-            await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.ProducerTopicName, $"{digitalEvidence.Id}", new EdtUserProvisioning
+            var taskId = Guid.NewGuid().ToString();
+            Serilog.Log.Logger.Information("Adding message to topic {0} {1} {2}", this.config.KafkaCluster.ProducerTopicName, command.ParticipantId, taskId);
+            var regions = new List<AssignedRegion>();
+
+            if (!digitalEvidence.OrganizationType.Equals(this.SUBMITTING_AGENCY, StringComparison.Ordinal))
+            {
+                // get the assigned regions again - this prevents sending requests with an altered list of regions
+                var query = new CrownRegionQuery.Query(command.PartyId, Convert.ToDecimal(command.ParticipantId));
+
+                // create an instance of the QueryHandler class
+                var handler = new CrownRegionQuery.QueryHandler(this.orgUnitService);
+
+                IEnumerable<OrgUnitModel?>? orgUnits = await handler.HandleAsync(query);
+                regions = this.ConvertOrgUnitRegions(orgUnits);
+
+                // execute the query and get the result
+                var result = handler.HandleAsync(query);
+            }
+
+            // use UUIDs for topic keys
+            await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.ProducerTopicName, taskId, new EdtUserProvisioning
             {
                 Key = $"{command.ParticipantId}",
                 UserName = dto.Jpdid,
@@ -203,11 +216,28 @@ We will notify you when your account has been created<p/>{1}<p/>
                 FullName = $"{dto.FirstName} {dto.LastName}",
                 AccountType = "Saml",
                 Role = "User",
-                AssignedRegions = command.AssignedRegions,
+                AssignedRegions = regions,
                 AccessRequestId = digitalEvidence.Id,
                 OrganizationType = digitalEvidence.OrganizationType,
                 OrganizationName = digitalEvidence.OrganizationName,
             });
+        }
+
+        private List<AssignedRegion?>? ConvertOrgUnitRegions(IEnumerable<OrgUnitModel?> orgUnits)
+        {
+            var regions = new List<AssignedRegion>();
+            foreach (var orgUnit in orgUnits)
+            {
+
+                regions.Add(new AssignedRegion
+                {
+                    AssignedAgency = orgUnit.AssignedAgency,
+                    RegionId = orgUnit.RegionId,
+                    RegionName = orgUnit.RegionName
+                });
+
+            }
+            return regions;
         }
 
         private async Task<Models.DigitalEvidence> SubmitDigitalEvidenceRequest(Command command)
@@ -250,9 +280,6 @@ We will notify you when your account has been created<p/>{1}<p/>
             });
             return Task.FromResult(exportedEvent.Entity);
         }
-
-        private static string GetSupportMessage() => "<p/>If you require any assistance, please contact <a href = \"mailto:bcps.disclosure.support@gov.bc.ca\">bcps.disclosure.support@gov.bc.ca</a><p/><p/>Thank you,<br/>BCPS DEMS Support<p/>";
-
 
         private async Task<bool> UpdateKeycloakUser(Guid userId, IEnumerable<AssignedRegion> assignedGroup, string partId)
         {

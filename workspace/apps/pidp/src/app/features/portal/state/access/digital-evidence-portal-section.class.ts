@@ -28,7 +28,7 @@ export class DigitalEvidencePortalSection implements IPortalSection {
   }
 
   public get hint(): string {
-    return '1 min to complete';
+    return '2 min to complete';
   }
   /**
    * @description
@@ -66,6 +66,7 @@ export class DigitalEvidencePortalSection implements IPortalSection {
 
   public get status(): string {
     const statusCode = this.getStatusCode();
+
     return statusCode === StatusCode.AVAILABLE
       ? 'For existing users of DEMS only'
       : statusCode === StatusCode.COMPLETED

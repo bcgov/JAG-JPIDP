@@ -1,3 +1,5 @@
+using DomainResults.Common;
+using NotificationService.Exceptions;
 using NotificationService.HttpClients;
 
 namespace NotificationService.HttpClients.Mail;
@@ -6,15 +8,16 @@ public class ChesClient : BaseClient, IChesClient
 {
     public ChesClient(HttpClient httpClient, ILogger<ChesClient> logger) : base(httpClient, logger) { }
 
-    public async Task<Guid?> SendAsync(Email email)
+    public async Task<EmailSuccessResponse?> SendAsync(Email email)
     {
         var result = await this.PostAsync<EmailSuccessResponse>("email", new ChesEmailRequestParams(email));
         if (!result.IsSuccess)
         {
-            return null;
+            Serilog.Log.Error("CHES Email error {0} [{1}]", string.Join(",", result.Errors), email);
+            throw new DeliveryException(string.Join(",", result.Errors));
         }
 
-        return result.Value.Messages.Single().MsgId;
+        return result.Value;
     }
 
     public async Task<string?> GetStatusAsync(Guid msgId)
