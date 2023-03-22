@@ -101,6 +101,8 @@ spec:
             - name: kafka-truststore
               mountPath: "/opt/kafka/certificates"
               readOnly: true
+            - name: templates-volume
+              mountPath: /opt/emailtemplates
           envFrom:
             - secretRef:
                 name: keycloak-secrets
@@ -151,6 +153,9 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
+        - name: templates-volume
+          configMap:
+            name: notification-templates
         - name: kafka-truststore
           secret:
             secretName: kafka-cluster-client-truststore
