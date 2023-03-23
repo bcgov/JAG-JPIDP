@@ -3,77 +3,80 @@ global:
   vanityURL: "test.jpidp.justice.gov.bc.ca"
   commit_sha: ""
   licenseplate: "e27db1"
-  environment: "test"
+  environment: "dev"
   image:
-    tag: telemetry
+    tag: develop
 
-notification:
-  image:
-    repository: jum-notification
-    pullPolicy: Always
-    # Overrides the image tag whose default is the chart appVersion.
-    tag: "build-test"
-
-backend:
-  route:
+route:
   enabled: false
 
-ingress:
-    enabled: true
-  annotations:
-    route.openshift.io/termination: "passthrough" 
-
-  tls: {}
-    #- hosts:
-      #- "pidp-e27db1-test.apps.gold.devops.gov.bc.ca"
-      #secretName: tls-secret
-#postgresql:
-#  createSecret: true
-#  database: pidpdb
-#  auth:
-#    postgresPassword: "postgres"
-#    username: postgres
-#  secretKeys:
-#    adminPasswordKey: admin-password
-#    userPasswordKey: jps-password
-#  primary:
-#    database: pidpdb
-#    initdb:
-#      scriptsConfigMap: pipd-postgres-init
+pidp-sso:
+  keycloak:
+    realm: https://test.common-sso.justice.gov.bc.ca/auth/realms/DEMSTEST
+  auth:
+  existingSecret: pidp-sso-postgresql
+  secretKeys:
+    postgresPassword: password
 
 postgresql:
-  createSecret: true
-  database: pidpdb
+  postgresqlDatabase: jps-pidp
   auth:
     postgresPassword: "postgres"
     username: postgres
-    database: pidpdb
+  existingSecret: postgresql
   secretKeys:
     adminPasswordKey: admin-password
     userPasswordKey: jps-password
   primary:
-    database: pidpdb
-    auth:
-      postgresPassword: "postgres"
-      username: postgres
-#    initdb:
-#      scriptsConfigMap: pipd-postgres-init
-
-edt-service:
-  image:
-    tag: telemetry
+    initdb:
+      scriptsConfigMap: pipd-postgres-init
 
 
+route:
+  enabled: false
 
-keycloak:
-  realmName: DEMSTEST
-  auth: https://test.common-sso.justice.gov.bc.ca/auth/realms/DEMSTEST
-  base: https://test.common-sso.justice.gov.bc.ca/auth
+pidp-sso:
+  keycloak:
+    realm: https://dev.common-sso.justice.gov.bc.ca/auth/realms/DEMSDEV
+  auth:
+  existingSecret: pidp-sso-postgresql
+  secretKeys:
+    postgresPassword: password
+
+edt-casemgmt:
+  migrations:
+    enabled: false
+
+
+postgresql:
+  postgresqlDatabase: jps-pidp
+  auth:
+    username: postgres
+  existingSecret: postgresql
+  secretKeys:
+    adminPasswordKey: admin-password
+    userPasswordKey: jps-password
+  primary:
+    initdb:
+      scriptsConfigMap: pipd-postgres-init
+
 
 database:
   autoCreate: false
   # databaseHost: dev-patroni
   # existingSecret: dev-patroni-secret
+  # trigger
+
+keycloak:
+  realm: DEMSTEST
+  auth: https://test.common-sso.justice.gov.bc.ca/auth/realms/DEMSTEST
+  base: https://test.common-sso.justice.gov.bc.ca/auth
+
+edt-service:
+  image:
+    tag: develop
+  migrations:
+    enabled: false
 
 redis:
   enabled: false
@@ -84,22 +87,28 @@ redis:
 nginx:
   replicaCount: 2
 
-    
 frontend:
+  image:
+    repository: pidp-frontend
+    pullPolicy: Always
+  tag: "develop"
   replicaCount: 1
   settings:
-    environmentName: test
+    environmentName: dev
     keycloak:
       url: https://test.common-sso.justice.gov.bc.ca/auth
-      realm: "DEMSTEST"
+      realm: DEMSTEST
+
 
 webapi:
   jumClientURL: https://jum-api-e27db1-test.apps.gold.devops.gov.bc.ca/api
   replicaCount: 1
+  image:
+    tag: develop
   aspnetcore:
     environment: Staging
-
+  migrations:
+    enabled: false
 
 plr-intake:
   replicaCount: 1
-
