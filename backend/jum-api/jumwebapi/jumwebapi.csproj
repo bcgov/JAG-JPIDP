@@ -86,6 +86,8 @@
   <ItemGroup>
     <Folder Include="Data\Models\" />
     <Folder Include="Features\AgencyAssignments\" />
+    <Folder Include="Features\UserChangeManagement\Commands\" />
+    <Folder Include="Features\UserChangeManagement\Queries\" />
   </ItemGroup>
 
 </Project>

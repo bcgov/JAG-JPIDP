@@ -1,3 +1,5 @@
+namespace jumwebapi;
+
 using FluentValidation.AspNetCore;
 using jumwebapi.Data;
 using jumwebapi.Infrastructure;
@@ -20,7 +22,6 @@ using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
 using jumwebapi.Core.Http;
 using MediatR;
-using jumwebapi.Features.Players;
 using jumwebapi.PipelineBehaviours;
 using MediatR.Extensions.FluentValidation.AspNetCore;
 using jumwebapi.Features.Participants.Services;
@@ -35,7 +36,7 @@ using jumwebapi.Data.Seed;
 using jumwebapi.Helpers.Mapping;
 using Prometheus;
 
-namespace jumwebapi;
+
 public class Startup
 {
     public IConfiguration Configuration { get; }
@@ -71,7 +72,6 @@ public class Startup
             options.AddPolicy("Administrator", policy => policy.Requirements.Add(new RealmAccessRoleRequirement("administrator")));
         });
 
-        services.AddScoped<IPlayersService, PlayersService>();
         services.AddScoped<IPartyTypeService, PartyTypeService>();
         services.AddScoped<IDigitalParticipantService, DigitalParticipantService>();
         services.AddScoped<IPersonService, PersonService>();
@@ -106,7 +106,7 @@ public class Startup
 
         services.AddHealthChecks()
             .AddCheck("liveliness", () => HealthCheckResult.Healthy());
-            //.AddSqlServer(config.ConnectionStrings.JumDatabase, tags: new[] { "services" });
+          //  .AddSqlServer(config.ConnectionStrings.JumDatabase, tags: new[] { "services" });
 
         services.AddApiVersioning(options =>
         {
@@ -147,6 +147,23 @@ public class Startup
             options.CustomSchemaIds(x => x.FullName);
         });
         services.AddFluentValidationRulesToSwagger();
+
+        // Validate EF migrations on startup
+        using (var serviceScope = services.BuildServiceProvider().CreateScope())
+        {
+            var dbContext = serviceScope.ServiceProvider.GetRequiredService<JumDbContext>();
+            try
+            {
+                dbContext.Database.Migrate();
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Database migration failure {string.Join(",", ex.Message)}");
+                throw;
+            }
+        }
+
+        Log.Logger.Information("### JUM Service Configuration complete");
 
     }
     private jumwebapiConfiguration InitializeConfiguration(IServiceCollection services)
