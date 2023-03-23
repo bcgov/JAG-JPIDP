@@ -8,6 +8,7 @@ using DomainResults.Common;
 using edt.casemanagement.Exceptions;
 using edt.casemanagement.Features.Cases;
 using edt.casemanagement.Infrastructure.Telemetry;
+using edt.casemanagement.Models;
 using edt.casemanagement.ServiceEvents.CaseManagement.Models;
 using edt.casemanagement.ServiceEvents.UserAccountCreation.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -86,36 +87,74 @@ public class EdtClient : BaseClient, IEdtClient
     }
 
 
-    public async Task<IEnumerable<int>> GetUserCases(string userKey)
+    public async Task<IEnumerable<KeyIdPair>> GetUserCases(string userKey)
     {
-        var result = await this.GetAsync<JsonArray>($"api/v1/org-units/1/users/{userKey}/cases");
+        var result = await this.GetAsync<IEnumerable<KeyIdPair>>($"api/v1/org-units/1/users/{userKey}/cases");
         Log.Logger.Information("Got user cases {0} user {1}", result, userKey);
-
-        return null;
-    }
-
-
-
-
-    public async Task<bool> AddUserToCase(string userId, int caseId)
-    {
-
-        Log.Logger.Information("Adding user {0} to case {0}", userId, caseId);
-        var result = await this.PostAsync<JsonObject>($"api/v1/cases/{caseId}/case-users/{userId}");
 
         if (result.IsSuccess)
         {
-            Log.Information("Successfully added user {0} to case {1}", userId, caseId);
+            return result.Value;
+        }
+        else
+        {
+            throw new CaseAssignmentException($"Unable to get user cases for user {userKey}");
+        }
+    }
+
+    public async Task<IEnumerable<UserCaseGroup>> GetUserCaseGroups(string userKey, int caseId)
+    {
+        var result = await this.GetAsync<IEnumerable<UserCaseGroup>>($"api/v1/cases/{caseId}/case-users/{userKey}/groups");
+        Log.Logger.Information("Got user cases {0} user {1}", result, userKey);
+
+        if (result.IsSuccess)
+        {
+            return result.Value;
+        }
+        else
+        {
+            throw new CaseAssignmentException($"Unable to get user case groups for user {userKey} and case {caseId}");
+        }
+
+    }
+
+
+    public async Task<bool> AddUserToCase(string userKey, int caseId)
+    {
+
+        Log.Logger.Information("Adding user {0} to case {0}", userKey, caseId);
+        var result = await this.PostAsync<JsonObject>($"api/v1/cases/{caseId}/case-users/{userKey}");
+
+        if (result.IsSuccess)
+        {
+            Log.Information("Successfully added user {0} to case {1}", userKey, caseId);
 
             var caseGroupId = await this.GetCaseGroupId(caseId, this.configuration.EdtClient.SubmittingAgencyGroup);
 
             if (caseGroupId > 0)
             {
-                var addUserToCaseGroup = await this.AddUserToCaseGroup(userId, caseId, caseGroupId);
-                if (!addUserToCaseGroup)
+                // see if the user is already in the user/case/group combination
+                var userCaseGroups = await this.GetUserCaseGroups(userKey, caseId);
+
+                var existing = userCaseGroups.Any((caseGroup) => caseGroup.UserId == userKey && caseGroup.GroupId == caseGroupId);
+
+                if (existing)
                 {
-                    Log.Error($"Failed to add user {userId} to case group {this.configuration.EdtClient.SubmittingAgencyGroup} not assigned to case {caseId}");
-                    throw new CaseAssignmentException($"Failed to add user {userId} to case group {this.configuration.EdtClient.SubmittingAgencyGroup} not assigned to case {caseId}");
+                    Log.Information($"User {userKey} already assigned to case {caseId}");
+                }
+                else
+                {
+
+                    var addUserToCaseGroup = await this.AddUserToCaseGroup(userKey, caseId, caseGroupId);
+                    if (!addUserToCaseGroup)
+                    {
+                        Log.Error($"Failed to add user {userKey} to case group {this.configuration.EdtClient.SubmittingAgencyGroup} not assigned to case {caseId}");
+                        throw new CaseAssignmentException($"Failed to add user {userKey} to case group {this.configuration.EdtClient.SubmittingAgencyGroup} not assigned to case {caseId}");
+                    }
+                    else
+                    {
+                        Log.Information($"User {userKey} successfully added to group {caseGroupId} for case {caseId}");
+                    }
                 }
             }
             else
@@ -126,8 +165,8 @@ public class EdtClient : BaseClient, IEdtClient
         }
         else
         {
-            Log.Error("Failed to add user {0} to case {1} [{2}]", userId, caseId, string.Join(',', result.Errors));
-            throw new CaseAssignmentException($"Failed to add user {userId} to case {caseId} [{string.Join(',', result.Errors)}]");
+            Log.Error("Failed to add user {0} to case {1} [{2}]", userKey, caseId, string.Join(',', result.Errors));
+            throw new CaseAssignmentException($"Failed to add user {userKey} to case {caseId} [{string.Join(',', result.Errors)}]");
         }
 
         return result.IsSuccess;
@@ -332,11 +371,20 @@ public class EdtClient : BaseClient, IEdtClient
 
     }
 
+    /// <summary>
+    /// Add a user to a case group
+    /// {{host}}/api/v1/cases/{{caseId}}/groups/1/users/{{userId}}
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="caseId"></param>
+    /// <param name="caseGroupId"></param>
+    /// <returns></returns>
+
     public async Task<bool> AddUserToCaseGroup(string userId, int caseId, int caseGroupId)
     {
         Log.Debug("Adding user {0} in case {1} to group {2}", userId, caseId, caseGroupId);
 
-        var result = await this.PutAsync($"api/v1/cases/{caseId}/case-users/{userId}/groups/{caseGroupId}");
+        var result = await this.PostAsync($"api/v1/cases/{caseId}/groups/{caseGroupId}/users/{userId}");
 
         if (result.IsSuccess)
         {
