@@ -2,6 +2,7 @@ namespace edt.casemanagement.HttpClients.Services.EdtCore;
 
 using System.Collections.Generic;
 using edt.casemanagement.Features.Cases;
+using edt.casemanagement.Models;
 using edt.casemanagement.ServiceEvents.CaseManagement.Models;
 
 public interface IEdtClient
@@ -30,25 +31,34 @@ public interface IEdtClient
     /// </summary>
     /// <param name="userKey"></param>
     /// <returns></returns>
-    Task<IEnumerable<int>> GetUserCases(string userKey);
+    Task<IEnumerable<KeyIdPair>> GetUserCases(string userKey);
 
     /// <summary>
     /// Add the user to the case Id
     /// </summary>
-    /// <param name="userId"></param>
+    /// <param name="userKey"></param>
     /// <param name="caseId"></param>
     /// <returns></returns>
-    Task<bool> AddUserToCase(string userId, int caseId);
+    Task<bool> AddUserToCase(string userKey, int caseId);
+
+
+    /// <summary>
+    /// Get the case groups assigned to the user/case combination
+    /// </summary>
+    /// <param name="userKey"></param>
+    /// <param name="caseId"></param>
+    /// <returns></returns>
+    Task<IEnumerable<UserCaseGroup>> GetUserCaseGroups(string userKey, int caseId);
 
 
     /// <summary>
     /// Add the user thats in the case to the given group (e.g. Submitting Agency)
     /// </summary>
-    /// <param name="userId"></param>
+    /// <param name="userKey"></param>
     /// <param name="caseId"></param>
     /// <param name="caseGroupId"></param>
     /// <returns></returns>
-    Task<bool> AddUserToCaseGroup(string userId, int caseId, int caseGroupId);
+    Task<bool> AddUserToCaseGroup(string userKey, int caseId, int caseGroupId);
 
 
 
