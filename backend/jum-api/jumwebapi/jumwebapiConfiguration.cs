@@ -8,7 +8,10 @@ public class jumwebapiConfiguration
     public AddressAutocompleteClientConfiguration AddressAutocompleteClient { get; set; } = new();
     public ConnectionStringConfiguration ConnectionStrings { get; set; } = new();
     public ChesClientConfiguration ChesClient { get; set; } = new();
-    public JustinParticipantClientConfiguration JustinParticipantClient { get; set; } = new();
+    public JustinClientConfiguration JustinParticipantClient { get; set; } = new();
+
+    public JustinClientConfiguration JustinChangeEventClient { get; set; } = new();
+
     public KafkaClusterConfiguration KafkaCluster { get; set; } = new();
     public KeycloakConfiguration Keycloak { get; set; } = new();
     public MailServerConfiguration MailServer { get; set; } = new();
@@ -54,7 +57,7 @@ public class jumwebapiConfiguration
         public string SslKeyLocation { get; set; } = string.Empty;
         public string Scope { get; set; } = "openid";
     }
-    public class JustinParticipantClientConfiguration
+    public class JustinClientConfiguration
     {
         public string Url { get; set; } = string.Empty;
         public string ApiKey { get; set; } = string.Empty;
