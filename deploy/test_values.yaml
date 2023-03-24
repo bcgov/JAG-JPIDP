@@ -7,9 +7,6 @@ global:
   image:
     tag: develop
 
-route:
-  enabled: false
-
 pidp-sso:
   keycloak:
     realm: https://test.common-sso.justice.gov.bc.ca/auth/realms/DEMSTEST
@@ -35,30 +32,12 @@ postgresql:
 route:
   enabled: false
 
-pidp-sso:
-  keycloak:
-    realm: https://dev.common-sso.justice.gov.bc.ca/auth/realms/DEMSDEV
-  auth:
-  existingSecret: pidp-sso-postgresql
-  secretKeys:
-    postgresPassword: password
+
 
 edt-casemgmt:
   migrations:
     enabled: false
 
-
-postgresql:
-  postgresqlDatabase: jps-pidp
-  auth:
-    username: postgres
-  existingSecret: postgresql
-  secretKeys:
-    adminPasswordKey: admin-password
-    userPasswordKey: jps-password
-  primary:
-    initdb:
-      scriptsConfigMap: pipd-postgres-init
 
 
 database:
