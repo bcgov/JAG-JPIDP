@@ -93,7 +93,12 @@ spec:
               valueFrom:
                 configMapKeyRef:
                   name: edt-casemgmt-api-database
-                  key: CONNECTION_STRINGS_DB        
+                  key: CONNECTION_STRINGS_DB    
+            - name: CaseDisplayCustomFields
+              valueFrom:
+                configMapKeyRef:
+                  name: edt-casemgmt-fields
+                  key: edt-casemgmt-fields.yaml 
             - name: SchemaRegistry__Url
               valueFrom:
                 secretKeyRef:
