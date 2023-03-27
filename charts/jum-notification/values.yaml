@@ -13,7 +13,7 @@ global:
 replicaCount: 1
 
 image:
-  repository: notification-api
+  repository: jum-notification
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: "develop"
@@ -21,7 +21,7 @@ image:
 
 # Run migrations pre-install and pre-upgrade
 migrations:
-  enabled: true
+  enabled: false
   
 imagePullSecrets: []
 nameOverride: ""
