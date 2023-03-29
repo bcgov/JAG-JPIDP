@@ -1,13 +1,8 @@
-namespace jumwebapi.Models;
+namespace Pidp.Kafka.Consumer.JustinUserChanges;
 
-using System.Text.Json.Serialization;
-using jumwebapi.Features.Participants.Models;
 using NodaTime;
+using System.Text.Json.Serialization;
 
-/// <summary>
-/// Represents a user change event captured from JUSTIN
-/// Current we dont know the changes only that something has changed
-/// </summary>
 public class JustinUserChangeEvent
 {
     [JsonPropertyName("partId")]
@@ -19,7 +14,6 @@ public class JustinUserChangeEvent
     [JsonPropertyName("eventMessageId")]
     public int EventMessageId { get; set; }
     [JsonPropertyName("source")]
-    public string Source { get; set; } = "JUSTIN";
-
+    public string Source { get; set; } = string.Empty;
 }
 

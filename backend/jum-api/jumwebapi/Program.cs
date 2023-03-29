@@ -51,7 +51,7 @@ public class Program
 
         try
         {
-            if (jumwebapiConfiguration.IsDevelopment())
+            if (JumWebApiConfiguration.IsDevelopment())
             {
                 Directory.CreateDirectory(path);
             }

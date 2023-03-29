@@ -1,5 +1,4 @@
-namespace Pidp.Kafka.Consumer.Model;
-
+namespace Pidp.Kafka.Consumer.Notifications;
 public class NotificationAckModel
 {
     public string NotificationId { get; set; }

@@ -9,7 +9,7 @@ public class SmtpEmailClient : ISmtpEmailClient
     private readonly string url;
     private readonly int port;
 
-    public SmtpEmailClient(ILogger<SmtpEmailClient> logger, jumwebapiConfiguration config)
+    public SmtpEmailClient(ILogger<SmtpEmailClient> logger, JumWebApiConfiguration config)
     {
         this.logger = logger;
         this.url = config.MailServer.Url;

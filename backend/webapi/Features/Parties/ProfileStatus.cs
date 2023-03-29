@@ -272,20 +272,6 @@ public partial class ProfileStatus
             return null;
         }
 
-        private async Task<JustinUser?> RecheckJustinUser(OrganizationCode organizationCode, string personalId)
-        {
-            var newUser = new JustinUser();
-            if (organizationCode == OrganizationCode.CorrectionService)
-            {
-                newUser = await this.jumClient.GetJumUserByPartIdAsync(long.Parse(personalId));
-            }
-            else if (organizationCode == OrganizationCode.JusticeSector)
-            {
-                newUser = await this.jumClient.GetJumUserAsync(personalId);
-            }
-
-            return newUser;
-        }
     }
 
 

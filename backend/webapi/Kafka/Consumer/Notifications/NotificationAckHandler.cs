@@ -1,9 +1,8 @@
-namespace Pidp.Kafka.Consumer.Handler;
+namespace Pidp.Kafka.Consumer.Notifications;
 
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Pidp.Data;
-using Pidp.Kafka.Consumer.Model;
 using Pidp.Kafka.Interfaces;
 using Serilog;
 

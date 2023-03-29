@@ -85,6 +85,7 @@ public class PidpConfiguration
         public string ClientSecret { get; set; } = string.Empty;
         public string BootstrapServers { get; set; } = string.Empty;
         public string ConsumerTopicName { get; set; } = string.Empty;
+        public string IncomingChangeEventTopic { get; set; } = string.Empty;
         public string ProducerTopicName { get; set; } = string.Empty;
         public string CaseAccessRequestTopicName { get; set; } = string.Empty;
         public string NotificationTopicName { get; set; } = string.Empty;

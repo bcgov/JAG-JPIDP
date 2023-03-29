@@ -18,8 +18,8 @@ public class UsersController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly IKafkaProducer<string, UserModel> _kafkaProducer;
-    private readonly jumwebapiConfiguration _config;
-    public UsersController(IMediator mediator, IKafkaProducer<string, UserModel> kafkaProducer, jumwebapiConfiguration config)
+    private readonly JumWebApiConfiguration _config;
+    public UsersController(IMediator mediator, IKafkaProducer<string, UserModel> kafkaProducer, JumWebApiConfiguration config)
     {
         _mediator = mediator;
         _kafkaProducer = kafkaProducer;

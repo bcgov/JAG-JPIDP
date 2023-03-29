@@ -1,5 +1,5 @@
 namespace jumwebapi.Infrastructure.Auth;
-public class jumwebapiConfiguration
+public class JumWebApiConfiguration
 {
     public static bool IsProduction() => EnvironmentName == Environments.Production;
     public static bool IsDevelopment() => EnvironmentName == Environments.Development;
@@ -10,11 +10,12 @@ public class jumwebapiConfiguration
     public ChesClientConfiguration ChesClient { get; set; } = new();
     public JustinClientConfiguration JustinParticipantClient { get; set; } = new();
 
-    public JustinClientConfiguration JustinChangeEventClient { get; set; } = new();
+    public JustinBackgroundEventConfiguration JustinChangeEventClient { get; set; } = new();
 
     public KafkaClusterConfiguration KafkaCluster { get; set; } = new();
     public KeycloakConfiguration Keycloak { get; set; } = new();
     public MailServerConfiguration MailServer { get; set; } = new();
+    public JustinClientAuthentication JustinAuthentication { get; set ; } = new();
 
     // ------- Configuration Objects -------
 
@@ -44,7 +45,8 @@ public class jumwebapiConfiguration
         public string ClientSecret { get; set; } = string.Empty;
         public string BootstrapServers { get; set; } = string.Empty;
         public string TopicName { get; set; } = string.Empty;
-
+        public string UserChangeEventTopic { get; set; } = string.Empty;
+        public string UserChangeProcessedTopic { get; set;} = string.Empty;
         public string SecurityProtocol { get; set; } = string.Empty;
         public string SaslMechanism { get; set; } = string.Empty;
         public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;
@@ -60,6 +62,16 @@ public class jumwebapiConfiguration
     public class JustinClientConfiguration
     {
         public string Url { get; set; } = string.Empty;
+
+    }
+
+    public class JustinBackgroundEventConfiguration : JustinClientConfiguration
+    {
+        public int PollRateSeconds { get; set; } = 600; // default to every 10 minutes
+    }
+
+    public class JustinClientAuthentication
+    {
         public string ApiKey { get; set; } = string.Empty;
 
         public string BasicAuthUsername { get; set; } = string.Empty;

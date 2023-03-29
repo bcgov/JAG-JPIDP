@@ -60,7 +60,7 @@ namespace Pidp.Data.Migrations
 
                     b.HasIndex("PartyId");
 
-                    b.ToTable("AccessRequest", (string)null);
+                    b.ToTable("AccessRequest");
                 });
 
             modelBuilder.Entity("Pidp.Models.Address", b =>
@@ -107,7 +107,7 @@ namespace Pidp.Data.Migrations
 
                     b.HasIndex("ProvinceCode");
 
-                    b.ToTable("Address", (string)null);
+                    b.ToTable("Address");
 
                     b.HasDiscriminator<string>("Discriminator").HasValue("Address");
                 });
@@ -145,7 +145,33 @@ namespace Pidp.Data.Migrations
 
                     b.HasIndex("SubmittingAgencyRequestRequestId");
 
-                    b.ToTable("AgencyRequestAttachment", (string)null);
+                    b.ToTable("AgencyRequestAttachment");
+                });
+
+            modelBuilder.Entity("Pidp.Models.AlternateId", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("PartyId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PartyId");
+
+                    b.ToTable("AlternateId");
                 });
 
             modelBuilder.Entity("Pidp.Models.ClientLog", b =>
@@ -174,7 +200,7 @@ namespace Pidp.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ClientLog", (string)null);
+                    b.ToTable("ClientLog");
                 });
 
             modelBuilder.Entity("Pidp.Models.CorrectionServiceDetail", b =>
@@ -201,7 +227,7 @@ namespace Pidp.Data.Migrations
 
                     b.HasIndex("OrgainizationDetailId");
 
-                    b.ToTable("CorrectionServiceDetails", (string)null);
+                    b.ToTable("CorrectionServiceDetails");
                 });
 
             modelBuilder.Entity("Pidp.Models.EmailLog", b =>
@@ -255,7 +281,7 @@ namespace Pidp.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("EmailLog", (string)null);
+                    b.ToTable("EmailLog");
                 });
 
             modelBuilder.Entity("Pidp.Models.Endorsement", b =>
@@ -280,7 +306,7 @@ namespace Pidp.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Endorsement", (string)null);
+                    b.ToTable("Endorsement");
                 });
 
             modelBuilder.Entity("Pidp.Models.EndorsementRelationship", b =>
@@ -309,7 +335,7 @@ namespace Pidp.Data.Migrations
 
                     b.HasIndex("PartyId");
 
-                    b.ToTable("EndorsementRelationship", (string)null);
+                    b.ToTable("EndorsementRelationship");
                 });
 
             modelBuilder.Entity("Pidp.Models.EndorsementRequest", b =>
@@ -354,7 +380,7 @@ namespace Pidp.Data.Migrations
 
                     b.HasIndex("RequestingPartyId");
 
-                    b.ToTable("EndorsementRequest", (string)null);
+                    b.ToTable("EndorsementRequest");
                 });
 
             modelBuilder.Entity("Pidp.Models.Facility", b =>
@@ -383,7 +409,7 @@ namespace Pidp.Data.Migrations
                     b.HasIndex("PartyId")
                         .IsUnique();
 
-                    b.ToTable("Facility", (string)null);
+                    b.ToTable("Facility");
                 });
 
             modelBuilder.Entity("Pidp.Models.JusticeSectorDetail", b =>
@@ -414,7 +440,7 @@ namespace Pidp.Data.Migrations
 
                     b.HasIndex("OrgainizationDetailId");
 
-                    b.ToTable("JusticeSectorDetail", (string)null);
+                    b.ToTable("JusticeSectorDetail");
                 });
 
             modelBuilder.Entity("Pidp.Models.Lookups.AccessType", b =>
@@ -428,7 +454,7 @@ namespace Pidp.Data.Migrations
 
                     b.HasKey("Code");
 
-                    b.ToTable("AccessTypeLookup", (string)null);
+                    b.ToTable("AccessTypeLookup");
 
                     b.HasData(
                         new
@@ -488,7 +514,7 @@ namespace Pidp.Data.Migrations
 
                     b.HasKey("Code");
 
-                    b.ToTable("CollegeLookup", (string)null);
+                    b.ToTable("CollegeLookup");
 
                     b.HasData(
                         new
@@ -540,7 +566,7 @@ namespace Pidp.Data.Migrations
 
                     b.HasKey("Code");
 
-                    b.ToTable("CorrectionServiceLookup", (string)null);
+                    b.ToTable("CorrectionServiceLookup");
 
                     b.HasData(
                         new
@@ -571,7 +597,7 @@ namespace Pidp.Data.Migrations
 
                     b.HasKey("Code");
 
-                    b.ToTable("CountryLookup", (string)null);
+                    b.ToTable("CountryLookup");
 
                     b.HasData(
                         new
@@ -604,7 +630,7 @@ namespace Pidp.Data.Migrations
 
                     b.HasKey("AgencyCode");
 
-                    b.ToTable("CrownRegionLookup", (string)null);
+                    b.ToTable("CrownRegionLookup");
 
                     b.HasData(
                         new
@@ -1089,7 +1115,7 @@ namespace Pidp.Data.Migrations
 
                     b.HasKey("Code");
 
-                    b.ToTable("HealthAuthorityLookup", (string)null);
+                    b.ToTable("HealthAuthorityLookup");
 
                     b.HasData(
                         new
@@ -1140,7 +1166,7 @@ namespace Pidp.Data.Migrations
 
                     b.HasKey("Code");
 
-                    b.ToTable("JusticeSectorLookup", (string)null);
+                    b.ToTable("JusticeSectorLookup");
 
                     b.HasData(
                         new
@@ -1166,7 +1192,7 @@ namespace Pidp.Data.Migrations
 
                     b.HasKey("Code");
 
-                    b.ToTable("LawEnforcementLookup", (string)null);
+                    b.ToTable("LawEnforcementLookup");
 
                     b.HasData(
                         new
@@ -1202,7 +1228,7 @@ namespace Pidp.Data.Migrations
 
                     b.HasKey("Code");
 
-                    b.ToTable("LawSocietyLookup", (string)null);
+                    b.ToTable("LawSocietyLookup");
 
                     b.HasData(
                         new
@@ -1230,7 +1256,7 @@ namespace Pidp.Data.Migrations
                     b.HasIndex("IdpHint")
                         .IsUnique();
 
-                    b.ToTable("OrganizationLookup", (string)null);
+                    b.ToTable("OrganizationLookup");
                 });
 
             modelBuilder.Entity("Pidp.Models.Lookups.Province", b =>
@@ -1248,7 +1274,7 @@ namespace Pidp.Data.Migrations
 
                     b.HasKey("Code");
 
-                    b.ToTable("ProvinceLookup", (string)null);
+                    b.ToTable("ProvinceLookup");
 
                     b.HasData(
                         new
@@ -1688,7 +1714,7 @@ namespace Pidp.Data.Migrations
 
                     b.HasKey("Code");
 
-                    b.ToTable("SubmittingAgencyLookup", (string)null);
+                    b.ToTable("SubmittingAgencyLookup");
 
                     b.HasData(
                         new
@@ -3139,7 +3165,7 @@ namespace Pidp.Data.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Party", (string)null);
+                    b.ToTable("Party");
                 });
 
             modelBuilder.Entity("Pidp.Models.PartyAccessAdministrator", b =>
@@ -3168,7 +3194,7 @@ namespace Pidp.Data.Migrations
                     b.HasIndex("PartyId")
                         .IsUnique();
 
-                    b.ToTable("PartyAccessAdministrator", (string)null);
+                    b.ToTable("PartyAccessAdministrator");
                 });
 
             modelBuilder.Entity("Pidp.Models.PartyLicenceDeclaration", b =>
@@ -3201,7 +3227,7 @@ namespace Pidp.Data.Migrations
                     b.HasIndex("PartyId")
                         .IsUnique();
 
-                    b.ToTable("PartyLicenceDeclaration", (string)null);
+                    b.ToTable("PartyLicenceDeclaration");
                 });
 
             modelBuilder.Entity("Pidp.Models.PartyOrgainizationDetail", b =>
@@ -3231,7 +3257,7 @@ namespace Pidp.Data.Migrations
                     b.HasIndex("PartyId")
                         .IsUnique();
 
-                    b.ToTable("PartyOrgainizationDetail", (string)null);
+                    b.ToTable("PartyOrgainizationDetail");
                 });
 
             modelBuilder.Entity("Pidp.Models.SubmittingAgencyRequest", b =>
@@ -3273,7 +3299,7 @@ namespace Pidp.Data.Migrations
 
                     b.HasIndex("PartyId");
 
-                    b.ToTable("SubmittingAgencyRequest", (string)null);
+                    b.ToTable("SubmittingAgencyRequest");
                 });
 
             modelBuilder.Entity("Pidp.Models.DigitalEvidence", b =>
@@ -3296,7 +3322,7 @@ namespace Pidp.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.ToTable("DigitalEvidence", (string)null);
+                    b.ToTable("DigitalEvidence");
                 });
 
             modelBuilder.Entity("Pidp.Models.FacilityAddress", b =>
@@ -3309,7 +3335,7 @@ namespace Pidp.Data.Migrations
                     b.HasIndex("FacilityId")
                         .IsUnique();
 
-                    b.ToTable("Address", (string)null);
+                    b.ToTable("Address");
 
                     b.HasDiscriminator().HasValue("FacilityAddress");
                 });
@@ -3322,7 +3348,7 @@ namespace Pidp.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.ToTable("HcimAccountTransfer", (string)null);
+                    b.ToTable("HcimAccountTransfer");
                 });
 
             modelBuilder.Entity("Pidp.Models.HcimEnrolment", b =>
@@ -3341,7 +3367,7 @@ namespace Pidp.Data.Migrations
                     b.Property<bool>("SearchesIdentifiers")
                         .HasColumnType("boolean");
 
-                    b.ToTable("HcimEnrolment", (string)null);
+                    b.ToTable("HcimEnrolment");
                 });
 
             modelBuilder.Entity("Pidp.Models.AccessRequest", b =>
@@ -3383,6 +3409,13 @@ namespace Pidp.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("SubmittingAgencyRequest");
+                });
+
+            modelBuilder.Entity("Pidp.Models.AlternateId", b =>
+                {
+                    b.HasOne("Pidp.Models.Party", null)
+                        .WithMany("AlternateIds")
+                        .HasForeignKey("PartyId");
                 });
 
             modelBuilder.Entity("Pidp.Models.CorrectionServiceDetail", b =>
@@ -3578,6 +3611,8 @@ namespace Pidp.Data.Migrations
                     b.Navigation("AccessAdministrator");
 
                     b.Navigation("AccessRequests");
+
+                    b.Navigation("AlternateIds");
 
                     b.Navigation("Facility");
 

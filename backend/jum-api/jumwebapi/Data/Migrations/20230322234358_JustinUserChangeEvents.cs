@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -13,9 +13,10 @@ namespace jumwebapi.Data.Migrations
                 name: "JustinUserChange",
                 columns: table => new
                 {
-                    EventMessageId = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    PartId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    EventMessageId = table.Column<int>(type: "int", nullable: false),
+                    PartId = table.Column<string>(type: "nvarchar(50)", nullable: false),
                     EventTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EventType = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Created = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -23,8 +24,14 @@ namespace jumwebapi.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_JustinUserChange", x => x.EventMessageId);
+                    table.PrimaryKey("PK_JustinUserChange", x => x.Id);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_JustinUserChange_EventMessageId",
+                table: "JustinUserChange",
+                column: "EventMessageId",
+                unique: true);
 
             migrationBuilder.CreateTable(
                 name: "JustinUserChangeTarget",
@@ -47,7 +54,7 @@ namespace jumwebapi.Data.Migrations
                         name: "FK_JustinUserChangeTarget_JustinUserChange_JustinUserChangeId",
                         column: x => x.JustinUserChangeId,
                         principalTable: "JustinUserChange",
-                        principalColumn: "EventMessageId",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 

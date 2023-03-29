@@ -1,7 +1,6 @@
-namespace Pidp.Kafka.Consumer;
+namespace Pidp.Kafka.Consumer.Notifications;
 
 using System.Net;
-using Pidp.Kafka.Consumer.Model;
 using Pidp.Kafka.Interfaces;
 
 public class NotificationAckService : BackgroundService

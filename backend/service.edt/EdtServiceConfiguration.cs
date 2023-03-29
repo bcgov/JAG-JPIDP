@@ -91,7 +91,7 @@ public class EdtServiceConfiguration
         public string ConsumerTopicName { get; set; } = string.Empty;
         public string ProducerTopicName { get; set; } = string.Empty;
         public string AckTopicName { get; set; } = string.Empty;
-
+        public string IncomingUserChangeTopic { get; set; } = string.Empty;
         public string UserModificationTopicName { get; set; } = string.Empty;
         public string UserCreationTopicName { get; set; } = string.Empty;
         public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;

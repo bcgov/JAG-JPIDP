@@ -47,4 +47,6 @@ public class Party : BaseAuditable, IOwnedResource
     //public CorrectionServiceDetail? CorrectionServiceDetail { get; set; }
 
     public ICollection<AccessRequest> AccessRequests { get; set; } = new List<AccessRequest>();
+
+
 }

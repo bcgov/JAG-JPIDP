@@ -35,7 +35,7 @@ using jumwebapi.Infrastructure.HttpClients;
 using jumwebapi.Data.Seed;
 using jumwebapi.Helpers.Mapping;
 using Prometheus;
-
+using jumwebapi.Features.UserChangeManagement.Services;
 
 public class Startup
 {
@@ -90,9 +90,7 @@ public class Startup
 
         services.AddMediatR(typeof(Startup).Assembly);
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
-        //services.AddFluentValidation(new[] { typeof(UpdatePlayerCommandHandler).GetTypeInfo().Assembly });
-        //services.AddValidatorsFromAssembly(typeof(Startup).Assembly);
-        //services.AddTransient<ExceptionHandlingMiddleware>();
+
         services.AddSingleton<ProblemDetailsFactory, UserManagerProblemDetailsFactory>();
 
         services.AddSingleton<IAuthorizationHandler, RealmAccessRoleHandler>();
@@ -101,7 +99,6 @@ public class Startup
         services.AddTransient<ClaimsPrincipal>(s => s.GetService<IHttpContextAccessor>().HttpContext.User);
         services.AddScoped<IProxyRequestClient, ProxyRequestClient>();
         services.AddScoped<IdentityProviderDataSeeder>();
-        //services.AddScoped<IOpenIdConnectRequestClient, OpenIdConnectRequestClient>();
 
 
         services.AddHealthChecks()
@@ -163,12 +160,16 @@ public class Startup
             }
         }
 
+        // register background service for checking user changes in JUSTIN
+        services.AddHostedService<UserChangeBackgroundService>();
+        services.AddScoped<JustinUserChangeService>();
+
         Log.Logger.Information("### JUM Service Configuration complete");
 
     }
-    private jumwebapiConfiguration InitializeConfiguration(IServiceCollection services)
+    private JumWebApiConfiguration InitializeConfiguration(IServiceCollection services)
     {
-        var config = new jumwebapiConfiguration();
+        var config = new JumWebApiConfiguration();
         this.Configuration.Bind(config);
         services.AddSingleton(config);
 

@@ -1,3 +1,6 @@
+
+namespace jumwebapi.Kafka.Producer;
+
 using System.Globalization;
 using Confluent.Kafka;
 using IdentityModel.Client;
@@ -5,26 +8,32 @@ using jumwebapi.Infrastructure.Auth;
 using jumwebapi.Kafka.Producer.Interfaces;
 using Serilog;
 
-namespace jumwebapi.Kafka.Producer;
+
 public class KafkaProducer<TKey, TValue> : IDisposable, IKafkaProducer<TKey, TValue> where TValue : class
 {
-    private readonly IProducer<TKey, TValue> _producer;
+    private readonly IProducer<TKey, TValue> producer;
     private const string SUBJECT_CLAIM = "sub";
     private const string EXPIRY_CLAIM = "exp";
 
 
-    public KafkaProducer(ProducerConfig config)
+    public KafkaProducer(ProducerConfig config) => this.producer = new ProducerBuilder<TKey, TValue>(config).SetOAuthBearerTokenRefreshHandler(this.OauthTokenRefreshCallback).SetValueSerializer(new KafkaSerializer<TValue>()).Build();
+    public async Task<DeliveryResult<TKey, TValue>> ProduceAsync(string topic, TKey key, TValue value)
     {
-        _producer = new ProducerBuilder<TKey, TValue>(config).SetOAuthBearerTokenRefreshHandler(OauthTokenRefreshCallback).SetValueSerializer(new KafkaSerializer<TValue>()).Build();
+        var message = new Message<TKey, TValue> { Key = key, Value = value };
+
+        var response = await this.producer.ProduceAsync(topic, message);
+        Log.Information($"Producer response {response}");
+        return response;
+
     }
-    public async Task ProduceAsync(string topic, TKey key, TValue value)
-    {
-        await _producer.ProduceAsync(topic, new Message<TKey, TValue> { Key = key, Value = value });
-    }
+
+
     public void Dispose()
     {
-        _producer.Flush();
-        _producer.Dispose();
+        this.producer.Flush();
+        this.producer.Dispose();
+        GC.SuppressFinalize(this);
+
     }
 
     private async void OauthTokenRefreshCallback(IClient client, string config)
@@ -32,7 +41,7 @@ public class KafkaProducer<TKey, TValue> : IDisposable, IKafkaProducer<TKey, TVa
         try
         {
 
-            var settingsFile = jumwebapiConfiguration.IsDevelopment() ? "appsettings.Development.json" : "appsettings.json";
+            var settingsFile = JumWebApiConfiguration.IsDevelopment() ? "appsettings.Development.json" : "appsettings.json";
 
 
             var clusterConfig = new ConfigurationBuilder()

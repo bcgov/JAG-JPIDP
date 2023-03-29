@@ -1,4 +1,6 @@
-﻿using jumwebapi.Data.ef;
+namespace jumwebapi.Features.Agencies.Controllers;
+
+using jumwebapi.Data.ef;
 using jumwebapi.Features.Agencies.Commands;
 using jumwebapi.Features.Agencies.Models;
 using jumwebapi.Features.Agencies.Queries;
@@ -7,7 +9,6 @@ using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace jumwebapi.Features.Agencies.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
