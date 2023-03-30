@@ -56,6 +56,7 @@ public class DigitalEvidenceUpdate
         private readonly IKafkaProducer<string, EdtUserProvisioning> kafkaProducer;
         private readonly IKafkaProducer<string, Notification> kafkaNotificationProducer;
         private static readonly Counter UserUpdateCounter = Metrics.CreateCounter("dems_user_updates", "Number of user updates");
+        private static readonly Counter UserUpdateFailureCounter = Metrics.CreateCounter("dems_user_update_failure", "Number of user update failures");
 
         public CommandHandler(
             IClock clock,
@@ -85,58 +86,65 @@ public class DigitalEvidenceUpdate
             UserUpdateCounter.Inc();
             this.logger.LogDigitalEvidenceAccessUpdateUserRequest(command.UserChangeEvent!.PartId);
 
-            // get the user from the original request
-            var digitalEvidence = this.context.DigitalEvidences.Include(x => x.Party).Where(x => x.ParticipantId == "" + command.UserChangeEvent.PartId).FirstOrDefault();
-
-            if (digitalEvidence != null)
+            try
             {
-                // get the party record
-                var party = digitalEvidence.Party;
-                Serilog.Log.Information($"Update for party {party.Email}");
-
-                var justinUserInfo = await this.jumClient.GetJumUserByPartIdAsync(command.UserChangeEvent.PartId);
-
-                if (justinUserInfo == null)
+                // get the user from the original request
+                var digitalEvidence = this.context.DigitalEvidences.Include(x => x.Party).Where(x => x.ParticipantId == "" + command.UserChangeEvent.PartId).FirstOrDefault();
+        
+                if (digitalEvidence != null)
                 {
-                    this.logger.LogNoRecordFound(command.UserChangeEvent.PartId);
+                    // get the party record
+                    var party = digitalEvidence.Party;
+                    Serilog.Log.Information($"Update for party {party.Email}");
+
+                    var justinUserInfo = await this.jumClient.GetJumUserByPartIdAsync(command.UserChangeEvent.PartId);
+
+                    if (justinUserInfo == null)
+                    {
+                        this.logger.LogNoRecordFound(command.UserChangeEvent.PartId);
+                    }
+                    else
+                    {
+                        // determine what has changed
+                        var keycloakUserInfo = await this.keycloakClient.GetUser(party.UserId);
+
+                        Serilog.Log.Information($"Keycloak user {keycloakUserInfo}");
+
+                        var changes = this.DetermineUserChanges(justinUserInfo.participantDetails.FirstOrDefault(), party, keycloakUserInfo);
+
+
+                    }
                 }
                 else
                 {
-                    // get the user as we know it
-                    var userInfo = await this.GetPidpUser(command);
-                    Serilog.Log.Information($"Updating user {userInfo}");
-
-                    // determine what has changed
-                    var keycloakUserInfo = await this.keycloakClient.GetUser(party.UserId);
-
-                    Serilog.Log.Information($"Keycloak user {keycloakUserInfo}");
-
-                    var changes = this.DetermineUserChanges(justinUserInfo.participantDetails.FirstOrDefault(), party, keycloakUserInfo);
-
-
+                    this.logger.LogNoDigitalEvidenceRequestFound(command.UserChangeEvent.PartId);
                 }
             }
-            else
+            catch (Exception ex)
             {
-                this.logger.LogNoDigitalEvidenceRequestFound(command.UserChangeEvent.PartId);
+                UserUpdateFailureCounter.Inc();
+                Serilog.Log.Error($"User update failed for {command.UserChangeEvent.PartId} with [{string.Join(",", ex.Message)}");
+                return await DomainResult.FailedTask(string.Join(",", ex.Message));
             }
 
             return DomainResult.Success();
 
         }
 
-        private JsonObject DetermineUserChanges(ParticipantDetail justinUserInfo, Party party, UserRepresentation? keycloakUserInfo)
+        private UserChangeModel DetermineUserChanges(ParticipantDetail justinUserInfo, Party party, UserRepresentation? keycloakUserInfo)
         {
 
-            JsonObject response = new JsonObject();
+            UserChangeModel userChangeModel = new UserChangeModel();
+            // the user account for these users is the email address from JUSTIN
+            userChangeModel.UserID = party.Email;
+
             // see if email has changed
             if (!string.IsNullOrEmpty(justinUserInfo.emailAddress))
             {
                 if (!party.Email.Equals(justinUserInfo.emailAddress, StringComparison.Ordinal))
                 {
                     Serilog.Log.Information($"User {party.Id} email changed from {party.Email} to {justinUserInfo.emailAddress}");
-                    //changeModel.Changes.Add(ChangeType.EMAIL, justinUserInfo.surname, party.LastName);
-
+                    userChangeModel.SingleChangeTypes.Add(ChangeType.EMAIL, new SingleChangeType(party.Email, justinUserInfo.emailAddress));
                 }
             }
 
@@ -144,54 +152,42 @@ public class DigitalEvidenceUpdate
             if (!justinUserInfo.surname.Equals(party.LastName, StringComparison.Ordinal))
             {
                 Serilog.Log.Information($"User {party.Id} last name changed from {party.LastName} to {justinUserInfo.surname}");
-              //  changeModel.Changes.Add(justinUserInfo.surname, party.LastName);
-
+                userChangeModel.SingleChangeTypes.Add(ChangeType.LASTNAME, new SingleChangeType(party.LastName, justinUserInfo.surname));
+            }
+            if (!justinUserInfo.surname.Equals(party.LastName, StringComparison.Ordinal))
+            {
+                Serilog.Log.Information($"User {party.Id} first name changed from {party.FirstName} to {justinUserInfo.firstGivenNm}");
+                userChangeModel.SingleChangeTypes.Add(ChangeType.FIRSTNAME, new SingleChangeType(party.FirstName, justinUserInfo.firstGivenNm));
             }
 
             // see if roles have changed
             if (justinUserInfo.GrantedRoles.Count > 0)
             {
+                List<string> justinRoles = justinUserInfo.GrantedRoles.Select(role => role.role).ToList();
 
             }
             else
             {
                 Serilog.Log.Information($"User {party.Id} has no granted roles in JUSTIN - disabling account");
-              //  changeModel.IsDeactivated = true;
+                userChangeModel.BooleanChangeTypes.Add(ChangeType.ACTIVATION, new BooleanChangeType(true, false));
             }
 
             // see if regions has changed
             if (justinUserInfo.assignedAgencies.Count > 0)
             {
+                List<string> justinAgencies = justinUserInfo.assignedAgencies.Select( agency => agency.agencyName ).ToList();
+                
 
             }
             else
             {
                 Serilog.Log.Information($"User {party.Id} has no granted agencies in JUSTIN - disabling account");
-            //    changeModel.IsDeactivated = true;
-
+                userChangeModel.BooleanChangeTypes.Add(ChangeType.ACTIVATION, new BooleanChangeType(true, false));
             }
 
-            return response;
+            return userChangeModel;
         }
 
-
-        private async Task<PartyDto> GetPidpUser(Command command)
-        {
-            return await this.context.Parties
-                .Where(party => party.Id == command.UserChangeEvent.PartId)
-                .Select(party => new PartyDto
-                {
-                    AlreadyEnroled = party.AccessRequests.Any(request => request.AccessTypeCode == AccessTypeCode.DigitalEvidence),
-                    Cpn = party.Cpn,
-                    Jpdid = party.Jpdid,
-                    UserId = party.UserId,
-                    Email = party.Email,
-                    FirstName = party.FirstName,
-                    LastName = party.LastName,
-                    Phone = party.Phone
-                })
-                .SingleAsync();
-        }
     }
 }
 
