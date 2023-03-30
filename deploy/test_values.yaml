@@ -3,9 +3,9 @@ global:
   vanityURL: "test.jpidp.justice.gov.bc.ca"
   commit_sha: ""
   licenseplate: "e27db1"
-  environment: "dev"
+  environment: "test"
   image:
-    tag: develop
+    tag: test-test-v1.0.0
 
 pidp-sso:
   keycloak:
@@ -70,7 +70,6 @@ frontend:
   image:
     repository: pidp-frontend
     pullPolicy: Always
-  tag: "develop"
   replicaCount: 1
   settings:
     environmentName: dev
@@ -82,8 +81,6 @@ frontend:
 webapi:
   jumClientURL: https://jum-api-e27db1-test.apps.gold.devops.gov.bc.ca/api
   replicaCount: 1
-  image:
-    tag: develop
   aspnetcore:
     environment: Staging
   migrations:
