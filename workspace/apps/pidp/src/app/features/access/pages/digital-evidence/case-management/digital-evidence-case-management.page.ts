@@ -52,6 +52,7 @@ import { DigitalEvidenceCaseManagementResource } from './digital-evidence-case-m
 import {
   CaseStatus,
   DigitalEvidenceCase,
+  DigitalEvidenceCaseAccessRequest,
   DigitalEvidenceCaseRequest,
 } from './digital-evidence-case.model';
 
@@ -319,18 +320,26 @@ export class DigitalEvidenceCaseManagementPage
       const agencyFileNumber = this.requestedCase.fields.find(
         (c) => c.name === 'Agency File No.'
       )?.value;
+
+      const accessRequest: DigitalEvidenceCaseAccessRequest = {
+        partyId: this.partyService.partyId,
+        agencyFileNumber: agencyFileNumber,
+        caseId: this.requestedCase.id,
+        name: this.requestedCase.name,
+        key: this.requestedCase.key,
+      };
+
       this.resource
-        .requestAccess(
-          this.partyService.partyId,
-          this.requestedCase?.id,
-          agencyFileNumber
-        )
+        .requestAccess(accessRequest)
         .pipe(
           tap(() => this.getPartyRequests()),
           catchError((error: HttpErrorResponse) => {
             if (error.status === HttpStatusCode.NotFound) {
               this.navigateToRoot();
             }
+            this.toastService.openErrorToast(
+              'Failed to add case request :' + error.message
+            );
             this.accessRequestFailed = true;
             return of(noop());
           })
