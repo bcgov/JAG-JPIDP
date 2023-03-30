@@ -24,6 +24,14 @@ export interface DigitalEvidenceCase {
   id: number;
 }
 
+export interface DigitalEvidenceCaseAccessRequest {
+  partyId: number;
+  caseId: number;
+  key: string;
+  agencyFileNumber: string;
+  name: string;
+}
+
 export interface DigitalEvidenceCaseRequest extends DigitalEvidenceCase {
   requestedOn: Date;
   requestId: number;
