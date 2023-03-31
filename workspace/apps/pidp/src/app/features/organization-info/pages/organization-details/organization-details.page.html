@@ -18,7 +18,8 @@
 
         <mat-form-field class="w-100">
           <mat-select placeholder="Organization Type" formControlName="organizationCode"
-            (selectionChange)="onChange($event.value)">
+            (selectionChange)="onChange($event.value)"
+            [value]="organizations.length === 1 ? organizations[0].code : null">
             <mat-option *ngFor="let organization of organizations" [value]="organization.code"
               [disabled]="organization.disabled">
               {{ organization.name }}
@@ -123,11 +124,11 @@
 
         <ng-container *ngIf="formState.justiceSectorCode.value === 1">
           <section>
-            <ui-page-subheader>BCPS JUSTIN User ID</ui-page-subheader>
+            <ui-page-subheader>BCPS JUSTIN Username</ui-page-subheader>
             <p>Provide your BCPS JUSTIN Username</p>
 
             <mat-form-field class="w-100">
-              <input matInput placeholder="JUSTIN BCPS user ID" formControlName="employeeIdentifier" />
+              <input matInput placeholder="JUSTIN Username" formControlName="employeeIdentifier" />
               <mat-error>Required</mat-error>
             </mat-form-field>
           </section>

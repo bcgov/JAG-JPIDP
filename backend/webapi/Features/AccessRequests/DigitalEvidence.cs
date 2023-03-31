@@ -1,5 +1,7 @@
 namespace Pidp.Features.AccessRequests;
 
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Globalization;
 using DomainResults.Common;
 using FluentValidation;
@@ -12,6 +14,14 @@ using Pidp.Infrastructure.HttpClients.Keycloak;
 using Pidp.Kafka.Interfaces;
 using Pidp.Models;
 using Pidp.Models.Lookups;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using Azure.Core.Serialization;
+using Newtonsoft.Json;
+using System.Security.Cryptography;
+using Pidp.Features.Parties;
+using Pidp.Features.Organization.OrgUnitService;
 
 public class DigitalEvidence
 {
@@ -51,8 +61,10 @@ public class DigitalEvidence
         private readonly ILogger logger;
         private readonly PidpConfiguration config;
         private readonly PidpDbContext context;
+        private readonly IOrgUnitService orgUnitService;
         private readonly IKafkaProducer<string, EdtUserProvisioning> kafkaProducer;
         private readonly IKafkaProducer<string, Notification> kafkaNotificationProducer;
+        private readonly string SUBMITTING_AGENCY = "SubmittingAgency";
 
 
         public CommandHandler(
@@ -60,6 +72,7 @@ public class DigitalEvidence
             IKeycloakAdministrationClient keycloakClient,
             ILogger<CommandHandler> logger,
             PidpConfiguration config,
+            IOrgUnitService orgUnitService,
             PidpDbContext context,
             IKafkaProducer<string, EdtUserProvisioning> kafkaProducer,
             IKafkaProducer<string, Notification> kafkaNotificationProducer)
@@ -71,84 +84,87 @@ public class DigitalEvidence
             this.kafkaProducer = kafkaProducer;
             this.config = config;
             this.kafkaNotificationProducer = kafkaNotificationProducer;
+            this.orgUnitService = orgUnitService;
         }
 
         public async Task<IDomainResult> HandleAsync(Command command)
         {
-            var dto = await this.GetPidpUser(command);
 
-            if (dto.AlreadyEnroled
-                || dto.Email == null)
-            {
-                this.logger.LogDigitalEvidenceAccessRequestDenied();
-                return DomainResult.Failed();
-            }
-
-            if (!await this.UpdateKeycloakUser(dto.UserId, command.AssignedRegions, command.ParticipantId))
+            using (var activity = new Activity("DigitalEvidence Request").Start())
             {
 
-                return DomainResult.Failed();
-            }
+                var traceId = Tracer.CurrentSpan.Context.TraceId;
+                Serilog.Log.Logger.Information("DigitalEvidence Request {0} {1}", command.ParticipantId, traceId);
 
-            using var trx = this.context.Database.BeginTransaction();
+                Activity.Current?.AddTag("digitalevidence.party.id", command.PartyId);
 
-            try
-            {
-                var digitalEvidence = await this.SubmitDigitalEvidenceRequest(command); //save all trx at once for production(remove this and handle using idempotent)
-                var key = Guid.NewGuid().ToString();
-                Serilog.Log.Logger.Information("Sending submission message for {0} to {1}", command.ParticipantId, dto.Email);
-                if (digitalEvidence != null)
+
+                var dto = await this.GetPidpUser(command);
+
+                if (dto.AlreadyEnroled
+                    || dto.Email == null)
                 {
-
-                    // send notification to user of sumission
-                    await this.kafkaNotificationProducer.ProduceAsync(this.config.KafkaCluster.NotificationTopicName, key: key, new Notification
-                    {
-                        To = dto.Email,
-                        From = "jpsprovideridentityportal@gov.bc.ca",
-                        FirstName = dto.FirstName,
-                        Subject = "Digital Evidence Management System Enrollment Request",
-                        MsgBody = MsgBodySubmissionReceived(dto.FirstName),
-                        PartyId = command.ParticipantId!,
-                        Tag = key
-                    });
+                    Serilog.Log.Logger.Warning($"DigitalEvidence Request denied for user {command.PartyId} Enrolled {dto.AlreadyEnroled}, Email {dto.Email}");
+                    this.logger.LogDigitalEvidenceAccessRequestDenied();
+                    return DomainResult.Failed();
                 }
 
-                //publish accessRequest Event (Sending Events to the Outbox)
+                if (!await this.UpdateKeycloakUser(dto.UserId, command.AssignedRegions, command.ParticipantId))
+                {
 
-                var exportedEvent = this.AddOutbox(command, digitalEvidence, dto);
+                    return DomainResult.Failed();
+                }
 
-                await this.PublishAccessRequest(command, dto, digitalEvidence);
+                using var trx = this.context.Database.BeginTransaction();
 
-                await this.context.SaveChangesAsync();
-                await trx.CommitAsync();
+                try
+                {
+                    var digitalEvidence = await this.SubmitDigitalEvidenceRequest(command); //save all trx at once for production(remove this and handle using idempotent)
+                    string? key = Guid.NewGuid().ToString();
+                    // no email notifications for submitting agencies currently
+                    if (digitalEvidence != null && !command.OrganizationType.Equals(nameof(OrganizationCode.SubmittingAgency), StringComparison.Ordinal))
+                    {
+                        Serilog.Log.Logger.Information("Sending submission message for {0} to {1}", command.ParticipantId, dto.Email);
+
+                        var eventData = new Dictionary<string, string>
+                    {
+                        { "FirstName", dto.FirstName! },
+                        { "AccessRequestId", "" + digitalEvidence.Id },
+                        { "ParticipantId", command.ParticipantId! },
+                        { "PartyId", "" + command.PartyId! }
+                    };
+
+                        await this.kafkaNotificationProducer.ProduceAsync(this.config.KafkaCluster.NotificationTopicName, key: key, new Notification
+                        {
+                            To = dto.Email,
+                            DomainEvent = "digitalevidence-bcps-usercreation-request",
+                            EventData = eventData,
+                        });
+
+                    }
+
+                    //publish accessRequest Event (Sending Events to the Outbox)
+
+                    var exportedEvent = this.AddOutbox(command, digitalEvidence, dto);
+
+                    await this.PublishAccessRequest(command, dto, digitalEvidence);
+
+                    await this.context.SaveChangesAsync();
+                    await trx.CommitAsync();
 
 
+                }
+                catch (Exception ex)
+                {
+                    this.logger.LogDigitalEvidenceAccessTrxFailed(ex.Message.ToString());
+                    await trx.RollbackAsync();
+                    return DomainResult.Failed();
+                }
+
+
+                return DomainResult.Success();
             }
-            catch (Exception ex)
-            {
-                this.logger.LogDigitalEvidenceAccessTrxFailed(ex.Message.ToString());
-                await trx.RollbackAsync();
-                return DomainResult.Failed();
-            }
 
-            return DomainResult.Success();
-        }
-
-        private static string MsgBodySubmissionReceived(string? firstName)
-        {
-            var msgBody = string.Format(CultureInfo.CurrentCulture, @"<html>
-            <head>
-                <title>Digital Evidence Management System Enrollment Notification</title>
-            </head>
-                <body> 
-                <img src='https://drive.google.com/uc?export=view&id=16JU6XoVz5FvFUXXWCN10JvN-9EEeuEmr' width='' height='50'/><br/><br/>
-    <div style='border-top: 3px solid #22BCE5'><span style = 'font-family: Arial; font-size: 10pt' >
-<br/> Hello {0},<br/><br/>We have received your on-boarding request for DEMS.<br/>
-We will notify you when your account has been created<p/>
-<div style='border-top: 3px solid #22BCE5'>
-                </span></div></body></html> ",
-                    firstName);
-            return msgBody;
         }
 
         private async Task<PartyDto> GetPidpUser(Command command)
@@ -171,8 +187,27 @@ We will notify you when your account has been created<p/>
 
         private async Task PublishAccessRequest(Command command, PartyDto dto, Models.DigitalEvidence digitalEvidence)
         {
-            Serilog.Log.Logger.Information("Adding message to topic {0} {1}", this.config.KafkaCluster.ProducerTopicName, command.ParticipantId);
-            await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.ProducerTopicName, $"{digitalEvidence.Id}", new EdtUserProvisioning
+            var taskId = Guid.NewGuid().ToString();
+            Serilog.Log.Logger.Information("Adding message to topic {0} {1} {2}", this.config.KafkaCluster.ProducerTopicName, command.ParticipantId, taskId);
+            var regions = new List<AssignedRegion>();
+
+            if (!digitalEvidence.OrganizationType.Equals(this.SUBMITTING_AGENCY, StringComparison.Ordinal))
+            {
+                // get the assigned regions again - this prevents sending requests with an altered list of regions
+                var query = new CrownRegionQuery.Query(command.PartyId, Convert.ToDecimal(command.ParticipantId));
+
+                // create an instance of the QueryHandler class
+                var handler = new CrownRegionQuery.QueryHandler(this.orgUnitService);
+
+                IEnumerable<OrgUnitModel?>? orgUnits = await handler.HandleAsync(query);
+                regions = this.ConvertOrgUnitRegions(orgUnits);
+
+                // execute the query and get the result
+                var result = handler.HandleAsync(query);
+            }
+
+            // use UUIDs for topic keys
+            await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.ProducerTopicName, taskId, new EdtUserProvisioning
             {
                 Key = $"{command.ParticipantId}",
                 UserName = dto.Jpdid,
@@ -181,9 +216,28 @@ We will notify you when your account has been created<p/>
                 FullName = $"{dto.FirstName} {dto.LastName}",
                 AccountType = "Saml",
                 Role = "User",
-                AssignedRegions = command.AssignedRegions,
-                AccessRequestId = digitalEvidence.Id
+                AssignedRegions = regions,
+                AccessRequestId = digitalEvidence.Id,
+                OrganizationType = digitalEvidence.OrganizationType,
+                OrganizationName = digitalEvidence.OrganizationName,
             });
+        }
+
+        private List<AssignedRegion?>? ConvertOrgUnitRegions(IEnumerable<OrgUnitModel?> orgUnits)
+        {
+            var regions = new List<AssignedRegion>();
+            foreach (var orgUnit in orgUnits)
+            {
+
+                regions.Add(new AssignedRegion
+                {
+                    AssignedAgency = orgUnit.AssignedAgency,
+                    RegionId = orgUnit.RegionId,
+                    RegionName = orgUnit.RegionName
+                });
+
+            }
+            return regions;
         }
 
         private async Task<Models.DigitalEvidence> SubmitDigitalEvidenceRequest(Command command)
@@ -209,11 +263,10 @@ We will notify you when your account has been created<p/>
         {
             var exportedEvent = this.context.ExportedEvents.Add(new Models.OutBoxEvent.ExportedEvent
             {
-                EventId = digitalEvidence.Id,
                 AggregateType = AccessTypeCode.DigitalEvidence.ToString(),
                 AggregateId = $"{command.PartyId}",
                 EventType = "Access Request Created",
-                EventPayload = new EdtUserProvisioning
+                EventPayload = JsonConvert.SerializeObject(new EdtUserProvisioning
                 {
                     Key = $"{command.ParticipantId}",
                     UserName = dto.Jpdid,
@@ -223,7 +276,7 @@ We will notify you when your account has been created<p/>
                     AccountType = "Saml",
                     Role = "User",
                     AssignedRegions = command.AssignedRegions
-                }
+                })
             });
             return Task.FromResult(exportedEvent.Entity);
         }

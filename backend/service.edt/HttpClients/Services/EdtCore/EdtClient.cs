@@ -1,39 +1,56 @@
 namespace edt.service.HttpClients.Services.EdtCore;
 
+using System.Diagnostics.Metrics;
 using System.Threading.Tasks;
 using AutoMapper;
 using DomainResults.Common;
 using edt.service.Exceptions;
+using edt.service.Infrastructure.Telemetry;
 using edt.service.Kafka.Model;
 using edt.service.ServiceEvents.UserAccountCreation.Models;
+using Google.Protobuf.WellKnownTypes;
+using MediatR;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Serilog;
 
 public class EdtClient : BaseClient, IEdtClient
 {
+    private const string SUBMITTING_AGENCY_GROUP_NAME = "Submitting Agency";
     private readonly IMapper mapper;
+    private readonly OtelMetrics meters;
+    private readonly EdtServiceConfiguration configuration;
+    private readonly string SUBMITTING_AGENCY = "SubmittingAgency";
+
+
     public EdtClient(
-        HttpClient httpClient,
+        HttpClient httpClient, OtelMetrics meters, EdtServiceConfiguration edtServiceConfiguration,
         IMapper mapper,
         ILogger<EdtClient> logger)
-        : base(httpClient, logger) => this.mapper = mapper;
+        : base(httpClient, logger)
+    {
+        this.mapper = mapper;
+        this.meters = meters;
+        this.configuration = edtServiceConfiguration;
+    }
 
     public async Task<UserModificationEvent> CreateUser(EdtUserProvisioningModel accessRequest)
     {
+        this.meters.AddUser();
         var edtUserDto = this.mapper.Map<EdtUserProvisioningModel, EdtUserDto>(accessRequest);
         var result = await this.PostAsync($"api/v1/users", edtUserDto);
         var userModificationResponse = new UserModificationEvent
         {
-            PartId = edtUserDto.Key,
-            Event = UserModificationEvent.UserEvent.Create,
-            EventTime = new DateTime(),
-            AccessRequestId = accessRequest.AccessRequestId,
-            Successful = true
+            partId = edtUserDto.Key,
+            eventType = UserModificationEvent.UserEvent.Create,
+            eventTime = DateTime.Now,
+            accessRequestId = accessRequest.AccessRequestId,
+            successful = true
         };
 
         if (!result.IsSuccess)
         {
             Log.Logger.Error("Failed to create EDT user {0}", string.Join(",", result.Errors));
-            userModificationResponse.Successful = false;
+            userModificationResponse.successful = false;
         }
 
         //add user to group
@@ -41,15 +58,28 @@ public class EdtClient : BaseClient, IEdtClient
 
         if (getUser != null)
         {
-            var addGroupToUser = await this.UpdateUserAssignedGroups(getUser.Id!, accessRequest.AssignedRegions!, userModificationResponse);
-            if (!addGroupToUser)
+            if (accessRequest.OrganizationType != null && accessRequest.OrganizationType.Equals(this.SUBMITTING_AGENCY, StringComparison.Ordinal))
             {
-                Log.Logger.Error("Failed to add EDT user to group user {0}", string.Join(",", result.Errors));
+                userModificationResponse.submittingAgencyUser = true;
+                Log.Logger.Information("Adding user {0} {1} to submitting agency group", accessRequest.Id, accessRequest.Key);
+                var addGroupToUser = await this.AddUserToSubmittingAgencyGroup(accessRequest, getUser.Id);
+                if (!addGroupToUser)
+                {
+                    Log.Logger.Error("Failed to add EDT user to group user {0}", string.Join(",", result.Errors));
+                }
+            }
+            else
+            {
+                var addGroupToUser = await this.UpdateUserAssignedGroups(getUser.Id!, accessRequest.AssignedRegions!, userModificationResponse);
+                if (!addGroupToUser)
+                {
+                    Log.Logger.Error("Failed to add EDT user to group user {0}", string.Join(",", result.Errors));
+                }
             }
         }
         else
         {
-            userModificationResponse.Successful = false;
+            userModificationResponse.successful = false;
         }
 
         return userModificationResponse;
@@ -108,6 +138,39 @@ public class EdtClient : BaseClient, IEdtClient
         return true;
 
     }
+
+    private async Task<bool> AddUserToSubmittingAgencyGroup(EdtUserProvisioningModel accessRequest, string userId)
+    {
+        if (accessRequest == null)
+        {
+            return false;
+        }
+        var groupId = await this.GetOuGroupId(SUBMITTING_AGENCY_GROUP_NAME);
+
+        if (groupId > 0)
+        {
+            var result = await this.PostAsync($"api/v1/org-units/1/groups/{groupId}/users", new AddUserToOuGroup() { UserIdOrKey = userId });
+
+            if (!result.IsSuccess)
+            {
+                Log.Logger.Error("Failed to add user {0} to submitting agency group due to {1}", userId, string.Join(",", result.Errors));
+                return false;
+            }
+            else
+            {
+                Log.Information("User {0} added to submitting agency group", userId);
+                return true;
+            } 
+        }
+        else
+        {
+            Log.Error("Failed to determine group Id for Submitting Agency users");
+            return false;
+        } 
+
+
+    }
+
     public async Task<UserModificationEvent> UpdateUser(EdtUserProvisioningModel accessRequest, EdtUserDto previousRequest)
     {
 
@@ -117,32 +180,57 @@ public class EdtClient : BaseClient, IEdtClient
         var result = await this.PutAsync($"api/v1/users", edtUserDto);
         var userModificationResponse = new UserModificationEvent
         {
-            PartId = edtUserDto.Key,
-            Event = UserModificationEvent.UserEvent.Modify,
-            EventTime = new DateTime(),
-            AccessRequestId = accessRequest.AccessRequestId,
-            Successful = true
-    };
+            partId = edtUserDto.Key,
+            eventType = UserModificationEvent.UserEvent.Modify,
+            eventTime = DateTime.Now,
+            accessRequestId = accessRequest.AccessRequestId,
+            successful = true
+        };
 
         if (!result.IsSuccess)
         {
-            userModificationResponse.Successful = false;
+            userModificationResponse.successful = false;
         }
         //add user to group
         var user = await this.GetUser(accessRequest.Key!);
         if (user != null)
         {
-            var addGroupToUser = await this.UpdateUserAssignedGroups(user.Id!, accessRequest.AssignedRegions!, userModificationResponse);
-            if (!addGroupToUser)
+            if (accessRequest.OrganizationType != null && accessRequest.OrganizationType.Equals(this.SUBMITTING_AGENCY, StringComparison.Ordinal))
             {
-                userModificationResponse.Successful = false;
+                userModificationResponse.submittingAgencyUser = true;
+
+                // get user groups
+                var groups = await this.GetAssignedOUGroups(user.Id);
+                var alreadyMember = groups.Any(group => group.Name.Equals(SUBMITTING_AGENCY_GROUP_NAME, StringComparison.Ordinal));
+
+                if (alreadyMember)
+                {
+                    Log.Logger.Information($"User {accessRequest.Key} already member of { SUBMITTING_AGENCY_GROUP_NAME}");
+                }
+                else
+                {
+                    Log.Logger.Information($"Adding user {accessRequest.Key} to {SUBMITTING_AGENCY_GROUP_NAME}");
+                    var addGroupToUser = await this.AddUserToSubmittingAgencyGroup(accessRequest, user.Id);
+                    if (!addGroupToUser)
+                    {
+                        Log.Logger.Error($"Failed to add user {user.Id} to group {SUBMITTING_AGENCY_GROUP_NAME} {string.Join(",", result.Errors)}");
+                    }
+                }
+            }
+            else
+            {
+                var addGroupToUser = await this.UpdateUserAssignedGroups(user.Id!, accessRequest.AssignedRegions!, userModificationResponse);
+                if (!addGroupToUser)
+                {
+                    userModificationResponse.successful = false;
+                }
             }
         }
         else
         {
             var msg = $"Failed to add user {accessRequest.Id} to group {accessRequest.AssignedRegions}";
             Log.Logger.Error(msg);
-            userModificationResponse.Successful = false;
+            userModificationResponse.successful = false;
         }
 
 
@@ -152,6 +240,8 @@ public class EdtClient : BaseClient, IEdtClient
 
     public async Task<EdtUserDto?> GetUser(string userKey)
     {
+
+        this.meters.GetUser();
         Log.Logger.Information("Checking if user key {0} already present", userKey);
         var result = await this.GetAsync<EdtUserDto?>($"api/v1/users/key:{userKey}");
 
@@ -215,16 +305,19 @@ public class EdtClient : BaseClient, IEdtClient
 
         if (!result.IsSuccess)
         {
-            throw new EdtServiceException(string.Join(",",result.Errors));
+            throw new EdtServiceException(string.Join(",", result.Errors));
         }
 
         return result.Value.Version;
     }
 
+
+
     public class AddUserToOuGroup
     {
         public string? UserIdOrKey { get; set; }
     }
+
 
 
 

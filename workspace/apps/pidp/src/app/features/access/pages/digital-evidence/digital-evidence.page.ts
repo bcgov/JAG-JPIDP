@@ -8,6 +8,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
+import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import {
@@ -31,20 +32,20 @@ import { IdentityProvider } from '@app/features/auth/enums/identity-provider.enu
 import { AccessTokenService } from '@app/features/auth/services/access-token.service';
 import { AuthorizedUserService } from '@app/features/auth/services/authorized-user.service';
 import { StatusCode } from '@app/features/portal/enums/status-code.enum';
+import { ProfileStatus } from '@app/features/portal/models/profile-status.model';
 
 import { FormUtilsService } from '@core/services/form-utils.service';
 
 import { PartyUserTypeResource } from '../../../../features/admin/shared/usertype-resource.service';
 import { OrganizationUserType } from '../../../../features/admin/shared/usertype-service.model';
 import { BcpsAuthResourceService } from './auth/bcps-auth-resource.service';
+import { AssignedRegion } from './digital-evidence-account.model';
 import { DigitalEvidenceFormState } from './digital-evidence-form-state';
 import { DigitalEvidenceResource } from './digital-evidence-resource.service';
 import {
   digitalEvidenceSupportEmail,
   digitalEvidenceUrl,
 } from './digital-evidence.constants';
-import { AssignedRegion } from './digital-evidence-account.model';
-import { MatTableDataSource } from '@angular/material/table';
 
 @Component({
   selector: 'app-digital-evidence',
@@ -66,7 +67,6 @@ export class DigitalEvidencePage
   public identityProvider$: Observable<IdentityProvider>;
   //public userType$: Observable<OrganizationUserType[]>;
   public IdentityProvider = IdentityProvider;
-
   public collectionNotice: string;
   public completed: boolean | null;
   public pending: boolean | null;
@@ -77,10 +77,7 @@ export class DigitalEvidencePage
   //@Input() public form!: FormGroup;
   public formControlNames: string[];
   public selectedOption = 0;
-  public displayedColumns: string[] = [
-    'regionName',
-    'assignedAgency'
-  ];
+  public displayedColumns: string[] = ['regionName', 'assignedAgency'];
   public userTypes = [
     { id: 0, name: '--Select User Type--', disable: true },
     { id: 1, name: 'CorrectionService', disable: false },
@@ -93,7 +90,6 @@ export class DigitalEvidencePage
     private route: ActivatedRoute,
     protected dialog: MatDialog,
     private router: Router,
-
     protected formUtilsService: FormUtilsService,
     private partyService: PartyService,
     private resource: DigitalEvidenceResource,
@@ -121,19 +117,18 @@ export class DigitalEvidencePage
       .pipe(map((token) => token?.identity_provider ?? ''));
 
     accessTokenService.decodeToken().subscribe((n) => {
-      console.log(n.identity_provider);
       this.result = n.identity_provider;
     });
     this.usertype.getUserType(partyId).subscribe((data: any) => {
       this.organizationType.organizationType = data['organizationType'];
       this.organizationType.participantId = data['participantId'];
       this.organizationType.organizationName = data['organizationName'];
+      this.organizationType.isSubmittingAgency =
+        data['isSubmittingAgency'] || false;
 
       this.formState.OrganizationName.patchValue(
         this.organizationType.organizationName
       );
-
-
 
       this.formState.OrganizationType.patchValue(
         this.organizationType.organizationType
@@ -142,14 +137,22 @@ export class DigitalEvidencePage
         this.organizationType.participantId
       );
 
-      this.userOrgunit.getUserOrgUnit(partyId,Number(this.organizationType.participantId )).subscribe((data:any) => {
-        this.assignedRegions = data;
-        this.formState.AssignedRegions.patchValue(this.assignedRegions);
+      this.identityProvider$.subscribe((idp) => {
+        // todo - remove IDIR
+        if (idp === IdentityProvider.BCPS || idp === IdentityProvider.IDIR) {
+          // if BCPS then get the crown-regions
+          this.userOrgunit
+            .getUserOrgUnit(
+              partyId,
+              Number(this.organizationType.participantId)
+            )
+            .subscribe((data: any) => {
+              this.assignedRegions = data;
+              this.formState.AssignedRegions.patchValue(this.assignedRegions);
+            });
+        }
       });
-
     });
-
-
 
     this.formState = new DigitalEvidenceFormState(fb);
     this.collectionNotice =
@@ -172,8 +175,7 @@ export class DigitalEvidencePage
   }
   protected performSubmission(): Observable<void> {
     const partyId = this.partyService.partyId;
-    console.log('Submiting');
-    console.log(this.formState.ParticipantId.value);
+
     if (this.selectedOption == 1) {
       return partyId && this.formState.json
         ? this.resource.requestAccess(
@@ -181,7 +183,7 @@ export class DigitalEvidencePage
             this.formState.OrganizationType.value,
             this.formState.OrganizationName.value,
             this.formState.ParticipantId.value,
-            this.formState.AssignedRegions.value
+            this.formState.AssignedRegions?.value || []
           )
         : EMPTY;
     }
@@ -192,14 +194,18 @@ export class DigitalEvidencePage
           this.formState.OrganizationType.value,
           this.formState.OrganizationName.value,
           this.formState.ParticipantId.value,
-          this.formState.AssignedRegions.value
-
+          this.formState.AssignedRegions?.value || []
         )
       : EMPTY;
   }
   public showFormControl(formControlName: string): boolean {
     return this.formControlNames.includes(formControlName);
   }
+
+  public userInAgency(): boolean {
+    return this.organizationType.isSubmittingAgency;
+  }
+
   // public get userType(): FormControl {
   //   return this.form.get('userType') as FormControl;
   // }
@@ -238,8 +244,6 @@ export class DigitalEvidencePage
   //   console.log(this.form.value);
   // }
   public onRequestAccess(): void {
-    console.log('Submiting');
-    console.log(this.formState.ParticipantId.value);
     if (this.selectedOption == 1) {
       this.resource
         .requestAccess(
@@ -247,7 +251,7 @@ export class DigitalEvidencePage
           this.formState.OrganizationType.value,
           this.formState.OrganizationName.value,
           this.formState.ParticipantId.value,
-          this.formState.AssignedRegions.value
+          this.formState.AssignedRegions?.value || []
         )
         .pipe(
           tap(() => (this.completed = true)),
@@ -267,8 +271,7 @@ export class DigitalEvidencePage
           this.formState.OrganizationType.value,
           this.formState.OrganizationName.value,
           this.formState.ParticipantId.value,
-          this.formState.AssignedRegions.value
-
+          this.formState.AssignedRegions?.value || []
         )
         .pipe(
           tap(() => (this.completed = true)),
@@ -286,15 +289,7 @@ export class DigitalEvidencePage
 
   public ngOnInit(): void {
     const partyId = this.partyService.partyId;
-    this.formState.OrganizationName.patchValue(
-      this.organizationType.organizationName
-    );
-    this.formState.OrganizationType.patchValue(
-      this.organizationType.organizationType
-    );
-    this.formState.ParticipantId.patchValue(
-      this.organizationType.participantId
-    );
+
     // this.form = new FormGroup({
     //   userType: new FormControl('', [Validators.required]),
     //   ikeyCertCode: new FormControl('', [Validators.required]),

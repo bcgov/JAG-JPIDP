@@ -1,0 +1,178 @@
+{{ $release := .Release.Name }}
+{{ $ocEnv := regexFind "([^-]*$)" .Release.Namespace }}
+{{ $domain := .Values.global.vanityURL }}
+{{ $isPR := hasPrefix "pr-" .Release.Name }}
+## Derived release name
+{{ $drn := ternary $release $ocEnv $isPR }}
+{{ $isProd := contains "prod" $ocEnv }}
+#
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "backend.fullname" . }}
+  labels:
+    {{- include "backend.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{- if .Values.global.commit_sha }}
+        commit_sha: {{ .Values.global.commit_sha }}
+        {{- end}}
+      {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "backend.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ .Values.global.licenseplate }}-vault
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: {{ .Values.global.image.registry }}/{{ .Values.image.repository }}:{{ .Values.global.image.tag | default .Chart.AppVersion }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: KafkaCluster__SslCaLocation
+              value: /opt/kafka/certificates/server-ca.crt
+            - name: KafkaCluster__SslCertificateLocation
+              value: /opt/kafka/certificates/client-ca.crt
+            - name: KafkaCluster__SslKeyLocation
+              value: /opt/kafka/certificates/client.key
+            - name: DB_HOST
+              value: jum-database
+            - name: SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: jum-db-jum-database-secret
+                  key: sapassword
+            - name: SA_USER
+              value: sa
+            - name: DATABASE
+              value: JumDB
+            - name: ConnectionStrings__JumDatabase
+              valueFrom:
+                configMapKeyRef:
+                  name: jum-api-database
+                  key: CONNECTION_STRINGS_JUM
+            - name: KafkaCluster__BoostrapServers
+              valueFrom:
+                secretKeyRef:
+                  name: jum-kafka-config
+                  key: KafkaCluster__BootstrapServers
+            - name: KafkaCluster__TopicName
+              valueFrom:
+                secretKeyRef:
+                  name: jum-kafka-config
+                  key: KafkaCluster__TopicName
+
+            - name: KafkaCluster__SaslOauthbearerTokenEndpointUrl
+              valueFrom:
+                secretKeyRef:
+                  name: jum-kafka-config
+                  key: KafkaCluster__SaslOauthbearerTokenEndpointUrl
+            - name: KafkaCluster__SaslOauthbearerConsumerClientId
+              valueFrom:
+                secretKeyRef:
+                  name: jum-kafka-config
+                  key: KafkaCluster__SaslOauthbearerConsumerClientId
+            - name: KafkaCluster__SaslOauthbearerConsumerClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: jum-kafka-config
+                  key: KafkaCluster__SaslOauthbearerConsumerClientSecret
+
+            - name: KafkaCluster__AckTopicName
+              valueFrom:
+                secretKeyRef:
+                  name: jum-kafka-config
+                  key: KafkaCluster__AckTopicName
+            - name: ApplicationUrl
+              value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"
+            - name: JustinParticipantClient__Url
+              valueFrom:
+                secretKeyRef:
+                  name: jum-api-config
+                  key: url
+            - name: JustinParticipantClient__BasicAuthUsername
+              valueFrom:
+                secretKeyRef:
+                  name: jum-api-config
+                  key: JustinParticipantClient__BasicAuthUsername
+            - name: JustinParticipantClient__BasicAuthPassword
+              valueFrom:
+                secretKeyRef:
+                  name: jum-api-config
+                  key: JustinParticipantClient__BasicAuthPassword
+          volumeMounts:
+            - name: kafka-truststore
+              mountPath: "/opt/kafka/certificates"
+              readOnly: true          
+          envFrom:
+            - secretRef:
+                name: keycloak-secrets
+            - secretRef:
+                name: ches
+            - configMapRef:
+                name: mail-settings
+            - secretRef:
+                name: kafka-config
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health/liveness
+              port: http
+              scheme: HTTP
+            timeoutSeconds: 5
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 3
+         # startupProbe:
+        #    httpGet:
+         #     path: /health/liveness
+         #     port: http
+          #    scheme: HTTP
+         #   timeoutSeconds: 1
+         #   periodSeconds: 10
+          #  successThreshold: 1
+          #  failureThreshold: 30
+          # readinessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: kafka-truststore
+          secret:
+            secretName: kafka-cluster-client-truststore
+        - name: truststore-key
+          secret:
+            secretName: kafka-cluster-client-key

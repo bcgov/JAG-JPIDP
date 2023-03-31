@@ -18,6 +18,9 @@ public class AccessRequest : BaseAuditable
 
     public Instant RequestedOn { get; set; }
 
+    public string Details { get; set; } = string.Empty;
+
+
     public AccessTypeCode AccessTypeCode { get; set; }
     public string Status { get; set; } = AccessRequestStatus.Pending;
 }
@@ -35,6 +38,8 @@ public class HcimAccountTransfer : AccessRequest
 {
     public string LdapUsername { get; set; } = string.Empty;
 }
+
+
 
 [Table(nameof(HcimEnrolment))]
 public class HcimEnrolment : AccessRequest

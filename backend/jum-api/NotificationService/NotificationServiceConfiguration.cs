@@ -1,4 +1,4 @@
-﻿namespace NotificationService;
+namespace NotificationService;
 public class NotificationServiceConfiguration
 {
     public static bool IsProduction() => EnvironmentName == Environments.Production;
@@ -42,5 +42,7 @@ public class NotificationServiceConfiguration
         public string ClientId { get; set; } = string.Empty;
         public string ClientSecret { get; set; } = string.Empty;
         public string TokenUrl { get; set; } = string.Empty;
+        public string TemplateFolder { get; set; } = string.Empty;
+
     }
 }

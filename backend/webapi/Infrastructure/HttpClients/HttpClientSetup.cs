@@ -1,9 +1,12 @@
 namespace Pidp.Infrastructure.HttpClients;
 
+using System.Net;
 using Confluent.Kafka;
 using IdentityModel.Client;
 using Pidp.Extensions;
+using Pidp.Features.DigitalEvidenceCaseManagement.BackgroundServices;
 using Pidp.Infrastructure.HttpClients.AddressAutocomplete;
+using Pidp.Infrastructure.HttpClients.Edt;
 using Pidp.Infrastructure.HttpClients.Jum;
 using Pidp.Infrastructure.HttpClients.Keycloak;
 using Pidp.Infrastructure.HttpClients.Ldap;
@@ -32,8 +35,9 @@ public static class HttpClientSetup
             });
 
         services.AddHttpClientWithBaseAddress<ILdapClient, LdapClient>(config.LdapClient.Url);
-
+        services.AddHttpClientWithBaseAddress<IEdtCaseManagementClient, EdtCaseManagementClient>(config.EdtCaseManagementClient.Url);
         services.AddHttpClientWithBaseAddress<IJumClient, JumClient>(config.JumClient.Url);
+
 
         services.AddHttpClientWithBaseAddress<IKeycloakAdministrationClient, KeycloakAdministrationClient>(config.Keycloak.AdministrationUrl)
             .WithBearerToken(new KeycloakAdministrationClientCredentials
@@ -58,7 +62,8 @@ public static class HttpClientSetup
             SslEndpointIdentificationAlgorithm = SslEndpointIdentificationAlgorithm.Https,
             SslCaLocation = config.KafkaCluster.SslCaLocation,
             SslCertificateLocation = config.KafkaCluster.SslCertificateLocation,
-            SslKeyLocation = config.KafkaCluster.SslKeyLocation
+            SslKeyLocation = config.KafkaCluster.SslKeyLocation,
+            ConnectionsMaxIdleMs = 2147483647
         };
 
         var producerConfig = new ProducerConfig
@@ -70,6 +75,7 @@ public static class HttpClientSetup
             SaslOauthbearerTokenEndpointUrl = config.KafkaCluster.SaslOauthbearerTokenEndpointUrl,
             SaslOauthbearerMethod = SaslOauthbearerMethod.Oidc,
             SaslOauthbearerScope = config.KafkaCluster.Scope,
+            ClientId = Dns.GetHostName(),
             SslEndpointIdentificationAlgorithm = SslEndpointIdentificationAlgorithm.Https,
             SslCaLocation = config.KafkaCluster.SslCaLocation,
             SaslOauthbearerClientId = config.KafkaCluster.SaslOauthbearerProducerClientId,
@@ -77,7 +83,6 @@ public static class HttpClientSetup
             SslCertificateLocation = config.KafkaCluster.SslCertificateLocation,
             SslKeyLocation = config.KafkaCluster.SslKeyLocation,
             EnableIdempotence = true,
-            RetryBackoffMs = 1000,
             MessageSendMaxRetries = 3
         };
 
@@ -89,10 +94,11 @@ public static class HttpClientSetup
             SaslOauthbearerClientId = config.KafkaCluster.SaslOauthbearerConsumerClientId,
             SaslOauthbearerClientSecret = config.KafkaCluster.SaslOauthbearerConsumerClientSecret,
             EnableAutoOffsetStore = false,
-            AutoCommitIntervalMs = 4000,
+            ClientId = Dns.GetHostName(),
             BootstrapServers = config.KafkaCluster.BootstrapServers,
             SaslMechanism = SaslMechanism.OAuthBearer,
-            SecurityProtocol = SecurityProtocol.SaslSsl
+            SecurityProtocol = SecurityProtocol.SaslSsl,
+            HeartbeatIntervalMs = 60000
         };
 
         services.AddSingleton(consumerConfig);
@@ -102,6 +108,8 @@ public static class HttpClientSetup
         services.AddScoped<IKafkaHandler<string, NotificationAckModel>, NotificationAckHandler>();
         services.AddSingleton(typeof(IKafkaConsumer<,>), typeof(KafkaConsumer<,>));
         services.AddHostedService<NotificationAckService>();
+
+        services.AddHostedService<DecomissionCaseAccessService>();
 
         return services;
     }

@@ -131,7 +131,7 @@ public class BaseClient
                     ? await response.Content.ReadAsStringAsync(cancellationToken)
                     : "";
 
-                this.Logger.LogNonSuccessStatusCode(response.StatusCode, responseMessage);
+                this.Logger.LogNonSuccessStatusCode(response.StatusCode, responseMessage, url);
                 return DomainResult.Failed<T>(response.StatusCode == HttpStatusCode.NotFound
                     ? $"The URL {url} was not found"
                     : "Did not receive a successful status code");
@@ -206,7 +206,7 @@ public class BaseClient
                     ? await response.Content.ReadAsStringAsync(cancellationToken)
                     : "";
 
-                this.Logger.LogNonSuccessStatusCode(response.StatusCode, responseMessage);
+                this.Logger.LogNonSuccessStatusCode(response.StatusCode, responseMessage, url);
                 return DomainResult.Failed<T>(response.StatusCode == HttpStatusCode.NotFound
                     ? $"The URL {url} was not found"
                     : "Did not receive a successful status code");
@@ -262,8 +262,8 @@ public class BaseClient
 
 public static partial class BaseClientLoggingExtensions
 {
-    [LoggerMessage(1, LogLevel.Error, "Received non-success status code {statusCode} with message: {responseMessage}.")]
-    public static partial void LogNonSuccessStatusCode(this ILogger logger, HttpStatusCode statusCode, string responseMessage);
+    [LoggerMessage(1, LogLevel.Error, "[{url}] Received non-success status code {statusCode} with message: {responseMessage}.")]
+    public static partial void LogNonSuccessStatusCode(this ILogger logger, HttpStatusCode statusCode, string responseMessage, string url);
 
     [LoggerMessage(2, LogLevel.Error, "Response content was null.")]
     public static partial void LogNullResponseContent(this ILogger logger);

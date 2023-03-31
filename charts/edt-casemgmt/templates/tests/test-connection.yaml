@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "edt-casemgmt.fullname" . }}-test-connection"
+  labels:
+    {{- include "edt-casemgmt.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['{{ include "edt-casemgmt.fullname" . }}:{{ .Values.service.port }}']
+  restartPolicy: Never

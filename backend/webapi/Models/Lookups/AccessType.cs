@@ -10,6 +10,7 @@ public enum AccessTypeCode
     HcimEnrolment,
     DriverFitness,
     DigitalEvidence,
+    DigitalEvidenceCaseManagement,
     Uci,
     MSTeams
 }
@@ -32,6 +33,7 @@ public class AccessTypeDataGenerator : ILookupDataGenerator<AccessType>
         new AccessType { Code = AccessTypeCode.HcimEnrolment,       Name = "HCIMWeb Enrolment"       },
         new AccessType { Code = AccessTypeCode.DriverFitness,       Name = "Driver Medical Fitness"  },
         new AccessType { Code = AccessTypeCode.DigitalEvidence,     Name = "Digital Evidence Management" },
+        new AccessType { Code = AccessTypeCode.DigitalEvidenceCaseManagement,     Name = "Digital Evidence Case Management" },
         new AccessType { Code = AccessTypeCode.Uci,                 Name = "Fraser Health UCI"         },
         new AccessType { Code = AccessTypeCode.MSTeams,             Name = "MS Teams for Clinical Use" },
     };

@@ -1,6 +1,6 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -18,9 +18,10 @@ import { PartyService } from '@app/core/party/party.service';
 import { FormUtilsService } from '@app/core/services/form-utils.service';
 import { LoggerService } from '@app/core/services/logger.service';
 import { IdentityProvider } from '@app/features/auth/enums/identity-provider.enum';
+import { SubmittingAgencyResolver } from '@app/features/auth/models/submitting-agency-resolver';
 import { AuthorizedUserService } from '@app/features/auth/services/authorized-user.service';
 import { LookupService } from '@app/modules/lookup/lookup.service';
-import { Lookup } from '@app/modules/lookup/lookup.types';
+import { AgencyLookup, Lookup } from '@app/modules/lookup/lookup.types';
 
 import { OrganizationDetailsFormState } from './organization-details-form-state';
 import { OrganizationDetailsResource } from './organization-details-resource.service';
@@ -41,6 +42,8 @@ export class OrganizationDetailsPage
   public healthAuthorities: Lookup[];
   public lawEnforcements: Lookup[];
   public justiceSectors: Lookup[];
+  public submittingAgencies: AgencyLookup[];
+
   public correctionServices: Lookup[];
   public lawSocieties: Lookup[];
   public IdentityProvider = IdentityProvider;
@@ -63,20 +66,38 @@ export class OrganizationDetailsPage
     const routeData = this.route.snapshot.data;
     this.title = routeData.title;
     this.formState = new OrganizationDetailsFormState(fb);
-
+    this.submittingAgencies = this.lookupService.submittingAgencies.filter(
+      (agency) => agency.idpHint?.length > 0
+    );
+    this.healthAuthorities = this.lookupService.healthAuthorities;
+    this.justiceSectors = this.lookupService.justiceSectors;
+    this.lawEnforcements = this.lookupService.lawEnforcements;
+    this.correctionServices = this.lookupService.correctionServices;
+    this.lawSocieties = this.lookupService.lawSocieties;
     this.authorizedUserService.identityProvider$.subscribe((val) => {
       //console.log(val);
+
       if (val === IdentityProvider.BCPS) {
+        this.organizations = this.lookupService.organizations
+          .filter(
+            (org: Lookup<OrganizationCode>) =>
+              org.code === OrganizationCode.JusticeSector
+          )
+          .map((org: Lookup<OrganizationCode>) => ({
+            ...org,
+            disabled: false,
+          }));
+      } else if (val === IdentityProvider.BCSC) {
         this.organizations = this.lookupService.organizations.map(
           (organization) => ({
             ...organization,
             disabled: !(
-              (organization.code === OrganizationCode.JusticeSector)
-              //organization.code === OrganizationCode.correctionService
+              organization.code === OrganizationCode.correctionService ||
+              organization.code === OrganizationCode.LawSociety
             ),
           })
         );
-      } else if (val === IdentityProvider.BCSC) {
+      } else if (val === IdentityProvider.SUBMITTING_AGENCY) {
         this.organizations = this.lookupService.organizations.map(
           (organization) => ({
             ...organization,
@@ -88,9 +109,6 @@ export class OrganizationDetailsPage
         );
       }
     });
-    // if (idp == IdentityProvider.BCPS) {
-    //   console.log(idp);
-    // }
 
     this.organizations = this.lookupService.organizations.map(
       (organization) => ({
@@ -98,11 +116,6 @@ export class OrganizationDetailsPage
         disabled: organization.code === null,
       })
     );
-    this.healthAuthorities = this.lookupService.healthAuthorities;
-    this.justiceSectors = this.lookupService.justiceSectors;
-    this.lawEnforcements = this.lookupService.lawEnforcements;
-    this.correctionServices = this.lookupService.correctionServices;
-    this.lawSocieties = this.lookupService.lawSocieties;
   }
 
   public onBack(): void {
@@ -112,6 +125,13 @@ export class OrganizationDetailsPage
   public onChange(data: number): void {
     this.selectedOption = data;
 
+    // justice
+    if (this.selectedOption == 1) {
+      // only one option
+      if (this.justiceSectors?.length === 1) {
+        this.formState.justiceSectorCode.setValue(this.justiceSectors[0].code);
+      }
+    }
     if (this.selectedOption == 4) {
       this.formState.correctionServiceCode.setValidators([Validators.required]);
     }
@@ -136,9 +156,14 @@ export class OrganizationDetailsPage
     this.resource
       .get(partyId)
       .pipe(
-        tap((model: OrganizationDetails | null) =>
-          this.formState.patchValue(model)
-        ),
+        tap((model: OrganizationDetails | null) => {
+          if (model?.organizationCode === 0) {
+            if (this.organizations.length === 1) {
+              model.organizationCode = this.organizations[0].code;
+            }
+          }
+          this.formState.patchValue(model);
+        }),
         catchError((error: HttpErrorResponse) => {
           if (error.status === HttpStatusCode.NotFound) {
             this.navigateToRoot();

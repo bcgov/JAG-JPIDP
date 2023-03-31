@@ -23,12 +23,12 @@ export class DigitalEvidencePortalSection implements IPortalSection {
     private router: Router
   ) {
     this.key = 'digitalEvidence';
-    this.heading = 'Digital Evidence Management System';
-    this.description = `Enrol here for access to Digital Evidence Management System application.`;
+    this.heading = 'Digital Evidence and Disclosure Management System';
+    this.description = `Enrol here for access to Digital Evidence and Disclosure Management System application.`;
   }
 
   public get hint(): string {
-    return '1 min to complete';
+    return '2 min to complete';
   }
   /**
    * @description
@@ -48,8 +48,9 @@ export class DigitalEvidencePortalSection implements IPortalSection {
           : 'Request',
       route: AccessRoutes.routePath(AccessRoutes.DIGITAL_EVIDENCE),
       disabled: !(
-        demographicsStatusCode === StatusCode.COMPLETED &&
-        organizationStatusCode === StatusCode.COMPLETED
+        (demographicsStatusCode === StatusCode.COMPLETED &&
+          organizationStatusCode === StatusCode.COMPLETED) ||
+        organizationStatusCode === StatusCode.LOCKED_COMPLETE
       ),
     };
   }
@@ -65,6 +66,7 @@ export class DigitalEvidencePortalSection implements IPortalSection {
 
   public get status(): string {
     const statusCode = this.getStatusCode();
+
     return statusCode === StatusCode.AVAILABLE
       ? 'For existing users of DEMS only'
       : statusCode === StatusCode.COMPLETED

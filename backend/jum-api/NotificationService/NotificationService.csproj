@@ -12,6 +12,22 @@
      <InvariantGlobalization>false</InvariantGlobalization>
    </PropertyGroup>
 
+   <ItemGroup>
+     <None Remove="Templates\digitalevidence-bcps-usercreation-complete.yaml" />
+     <None Remove="Templates\digitalevidence-bcps-usercreation-failure.yaml" />
+     <None Remove="Templates\digitalevidence-bcps-usercreation-request.yaml" />
+     <None Remove="Templates\digitalevidence-bcps-usercreation-retry.yaml" />
+     <None Remove="Templates\digitalevidence-sa-usercreation-complete.yaml" />
+   </ItemGroup>
+
+   <ItemGroup>
+     <Content Include="Templates\digitalevidence-bcps-usercreation-retry.yaml" />
+     <Content Include="Templates\digitalevidence-bcps-usercreation-failure.yaml" />
+     <Content Include="Templates\digitalevidence-sa-usercreation-complete.yaml" />
+     <Content Include="Templates\digitalevidence-bcps-usercreation-complete.yaml" />
+     <Content Include="Templates\digitalevidence-bcps-usercreation-request.yaml" />
+   </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Asp.Versioning.Mvc" Version="6.0.0" />
     <PackageReference Include="AspNetCore.HealthChecks.SqlServer" Version="6.0.2" />
@@ -49,6 +65,11 @@
     <PackageReference Include="SimplerSoftware.EntityFrameworkCore.SqlServer.NodaTime" Version="6.0.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.4.0" />
+    <PackageReference Include="prometheus-net" Version="7.1.0-pre-000318-0479f53" />
+    <PackageReference Include="prometheus-net.AspNetCore" Version="7.1.0-pre-000318-0479f53" />
+    <PackageReference Include="prometheus-net.AspNetCore.HealthChecks" Version="7.0.0" />
+    <PackageReference Include="prometheus-net.NetFramework.AspNet" Version="7.0.0" />
+    <PackageReference Include="YamlDotNet" Version="13.0.2" />
   </ItemGroup>
 
   <ItemGroup>

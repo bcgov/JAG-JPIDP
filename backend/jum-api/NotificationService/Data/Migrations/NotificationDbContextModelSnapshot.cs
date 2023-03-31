@@ -23,6 +23,43 @@ namespace NotificationService.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder, 1L, 1);
 
+            modelBuilder.Entity("NotificationService.Features.DataGeneration.Model.TemplateGenerator", b =>
+                {
+                    b.Property<string>("TemplateName")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Type")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Extension")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Modified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ServiceType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("TemplateId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("TemplateUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("TemplateName", "Type");
+
+                    b.ToTable("TemplateGenerator", "notification");
+                });
+
             modelBuilder.Entity("NotificationService.NotificationEvents.UserProvisioning.Models.EmailLog", b =>
                 {
                     b.Property<int>("Id")
@@ -109,6 +146,10 @@ namespace NotificationService.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Details")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("PartId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -116,6 +157,9 @@ namespace NotificationService.Data.Migrations
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Subject")
+                        .HasColumnType("int");
 
                     b.HasKey("NotificationId", "EmailAddress");
 

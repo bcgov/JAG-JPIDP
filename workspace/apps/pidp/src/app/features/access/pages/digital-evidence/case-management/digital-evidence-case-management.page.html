@@ -1,0 +1,129 @@
+<ui-page [formGroup]="formState.form">
+  <ui-page-header>{{ title }}</ui-page-header>
+  <ui-page-section>
+    <ui-page-section-subheader icon="assignment" heading="Digital Evidence and Disclosure Case Management">
+      <ng-container uiPageSectionSubheaderDesc>
+        Request access to individual cases in the Digital Evidence and Disclosure Management
+        System for the purpose of uploading documents.
+      </ng-container>
+
+    </ui-page-section-subheader>
+    <section>
+      <ui-page-subheader icon="search">Case Lookup</ui-page-subheader>
+      <mat-form-field class="w-20">
+        <input matInput placeholder="Agency Code" required type="text" tabindex="1" formControlName="agencyCode" />
+        <mat-error>Required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field class="w-60">
+        <mat-label>File #</mat-label>
+        <input matInput formControlName="caseName" (input)="checkCaseInput()"
+          matTooltip="Enter the agency file number you wish to have access to and click Find" placeholder="yy-nnnnnnn"
+          tabindex="2" />
+      </mat-form-field>
+      <button mat-stroked-button type="button" tabindex="3" [disabled]="checkCaseInput()" style="margin-left: 10px;"
+        color="primary" (click)="findCase()">
+        Find
+      </button>
+
+    </section>
+    <section class="caseSelectionInvalid mat-elevation-z4" *ngIf="requestedCaseNotFound">
+      Requested case not found.<br />
+      Please check the entered Agency Code and File #<br />
+    </section>
+    <section class="caseSelection mat-elevation-z4" *ngIf="requestedCase && !requestedCaseInactive">
+
+      <b>Case Name:</b> {{ requestedCase?.name }}<br />
+      <div *ngFor="let field of requestedCase.fields">
+        <span *ngIf="field.display"><b>{{ field.name }}:</b> {{ field.value }}</span>
+      </div>
+      <p>
+
+      </p>
+      <button mat-stroked-button type="button" color="primary" (click)="addCaseRequest()"
+        matTooltip="Request access to this case (typically takes less than 1 minute)">
+        Request Access
+      </button>
+    </section>
+
+    <section class="caseSelectionInvalid mat-elevation-z4" *ngIf="requestedCase && requestedCaseInactive">
+      This case shows as inactive.<br />To upload to this case, please check:
+      <ul>
+        <li>case has been submitted or re-submitted through PRIME-JUSTIN.</li>
+        <li>confirm that the case has not been concluded.</li>
+        <li>this case is being managed in BCPS DEMS.</li>
+      </ul>
+      <p></p>
+      <b>Case Name:</b> {{ requestedCase?.name }}<br />
+      <div *ngFor="let field of requestedCase.fields">
+        <span *ngIf="field.display"><b>{{ field.name }}:</b> {{ field.value }}</span>
+      </div>
+    </section>
+  </ui-page-section>
+  <ui-page-section>
+    <ui-page-section-subheader icon="table_chart" heading="Case Listing">
+    </ui-page-section-subheader>
+    <ng-container>
+
+
+      <table mat-table [dataSource]="dataSource" class="mat-elevation-z4" matSort #caseTblSortWithObject="matSort"
+        matSortActive="agencyFileNumber" matSortDirection="desc">
+        <ng-container matColumnDef="agencyFileNumber">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>File Number</th>
+          <td *matCellDef="let case" mat-cell>{{ case.agencyFileNumber }}</td>
+        </ng-container>
+        <ng-container matColumnDef="requestStatus">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+          <td *matCellDef="let case" mat-cell>{{ case.requestStatus }}</td>
+        </ng-container>
+        <ng-container matColumnDef="requestedOn">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Requested</th>
+          <td *matCellDef="let case" mat-cell>{{ case.requestedOn | date: 'MM-dd-yy hh:mm' }}
+            <mat-icon class="warning-icon" matTooltip="Case will be removed within the next 5 days"
+              *ngIf="isWithin25Days(case.requestedOn)">warning</mat-icon>
+            <mat-icon class="warning-icon" matTooltip="{{case.details}}"
+              *ngIf="case.requestStatus === 'Failure'">error</mat-icon>
+          </td>
+        </ng-container>
+
+
+        <ng-container matColumnDef="caseAction">
+          <th *matHeaderCellDef mat-header-cell>Action </th>
+          <td *matCellDef="let case" mat-cell class="centered-column"><i matTooltip="Remove access to this case"
+              *ngIf="case.requestStatus === 'Completed'"
+              (click)="onRemoveCase(case)"><mat-icon>delete_outline</mat-icon></i></td>
+        </ng-container>
+        <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            You do not have access to any cases currently.<br />
+            Please request access.
+          </td>
+        </tr>
+        <tr *matRowDef="let row; columns: displayedColumns" mat-row></tr>
+      </table>
+      <p></p>
+      <div style="width:100%" fxLayout="row" fxLayoutAlign="start end" fxLayoutGap="0">
+        <button mat-stroked-button uiPageFooterAction type="button" color="primary" (click)="getPartyRequests()">
+          Refresh
+        </button>
+        <div fxFlex></div>
+        <mat-paginator [pageSizeOptions]="[5, 10, 20]" [pageSize]="pageSize" [pageIndex]="pageIndex"
+          [length]="dataSource.data.length" (page)="onPaginationChange($event)">
+        </mat-paginator>
+      </div>
+      <br />
+      <span *ngIf="caseListing.length !== 0">
+        <i><sub>Access to individual cases will be automatically removed 30 days after the case access is
+            granted.</sub></i></span><br />
+    </ng-container>
+
+  </ui-page-section>
+
+  <ui-page-footer [mode]="completed ? 'reverse' : 'normal'">
+    <button mat-stroked-button uiPageFooterAction type="button" color="primary" (click)="onBack()">
+      Back Home
+    </button>
+  </ui-page-footer>
+
+</ui-page>

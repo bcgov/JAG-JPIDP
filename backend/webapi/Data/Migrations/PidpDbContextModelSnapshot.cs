@@ -39,6 +39,10 @@ namespace Pidp.Data.Migrations
                     b.Property<Instant>("Created")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Details")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<Instant>("Modified")
                         .HasColumnType("timestamp with time zone");
 
@@ -106,6 +110,42 @@ namespace Pidp.Data.Migrations
                     b.ToTable("Address");
 
                     b.HasDiscriminator<string>("Discriminator").HasValue("Address");
+                });
+
+            modelBuilder.Entity("Pidp.Models.AgencyRequestAttachment", b =>
+                {
+                    b.Property<int>("AttachmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("AttachmentId"));
+
+                    b.Property<string>("AttachmentName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("AttachmentType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Instant>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Instant>("Modified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("SubmittingAgencyRequestRequestId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UploadStatus")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("AttachmentId");
+
+                    b.HasIndex("SubmittingAgencyRequestRequestId");
+
+                    b.ToTable("AgencyRequestAttachment");
                 });
 
             modelBuilder.Entity("Pidp.Models.ClientLog", b =>
@@ -419,11 +459,16 @@ namespace Pidp.Data.Migrations
                         new
                         {
                             Code = 6,
-                            Name = "Fraser Health UCI"
+                            Name = "Digital Evidence Case Management"
                         },
                         new
                         {
                             Code = 7,
+                            Name = "Fraser Health UCI"
+                        },
+                        new
+                        {
+                            Code = 8,
                             Name = "MS Teams for Clinical Use"
                         });
                 });
@@ -1172,55 +1217,20 @@ namespace Pidp.Data.Migrations
                     b.Property<int>("Code")
                         .HasColumnType("integer");
 
+                    b.Property<string>("IdpHint")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Code");
 
-                    b.ToTable("OrganizationLookup");
+                    b.HasIndex("IdpHint")
+                        .IsUnique();
 
-                    b.HasData(
-                        new
-                        {
-                            Code = 1,
-                            Name = "Justice Sector"
-                        },
-                        new
-                        {
-                            Code = 2,
-                            Name = "BC Law Enforcement"
-                        },
-                        new
-                        {
-                            Code = 3,
-                            Name = "BC Law Society"
-                        },
-                        new
-                        {
-                            Code = 4,
-                            Name = "BC Corrections Service"
-                        },
-                        new
-                        {
-                            Code = 5,
-                            Name = "Health Authority"
-                        },
-                        new
-                        {
-                            Code = 6,
-                            Name = "BC Government Ministry"
-                        },
-                        new
-                        {
-                            Code = 7,
-                            Name = "ICBC"
-                        },
-                        new
-                        {
-                            Code = 8,
-                            Name = "Other"
-                        });
+                    b.ToTable("OrganizationLookup");
                 });
 
             modelBuilder.Entity("Pidp.Models.Lookups.Province", b =>
@@ -1663,28 +1673,1392 @@ namespace Pidp.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Pidp.Models.Lookups.SubmittingAgency", b =>
+                {
+                    b.Property<string>("Code")
+                        .HasColumnType("text");
+
+                    b.Property<string>("IdpHint")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Code");
+
+                    b.ToTable("SubmittingAgencyLookup");
+
+                    b.HasData(
+                        new
+                        {
+                            Code = "216",
+                            IdpHint = "",
+                            Name = "100 Mile House RCMP"
+                        },
+                        new
+                        {
+                            Code = "408",
+                            IdpHint = "",
+                            Name = "Abbotsford Police Department"
+                        },
+                        new
+                        {
+                            Code = "703",
+                            IdpHint = "",
+                            Name = "Agassiz RCMP"
+                        },
+                        new
+                        {
+                            Code = "901",
+                            IdpHint = "",
+                            Name = "Alert Bay RCMP"
+                        },
+                        new
+                        {
+                            Code = "201",
+                            IdpHint = "",
+                            Name = "Alexis Creek RCMP"
+                        },
+                        new
+                        {
+                            Code = "202",
+                            IdpHint = "",
+                            Name = "Anahim Lake RCMP"
+                        },
+                        new
+                        {
+                            Code = "203",
+                            IdpHint = "",
+                            Name = "Ashcroft RCMP"
+                        },
+                        new
+                        {
+                            Code = "601",
+                            IdpHint = "",
+                            Name = "Atlin RCMP"
+                        },
+                        new
+                        {
+                            Code = "CITA",
+                            IdpHint = "",
+                            Name = "BCHP - Ashcroft - RCMP"
+                        },
+                        new
+                        {
+                            Code = "735",
+                            IdpHint = "",
+                            Name = "BCHP - Burnaby - RCMP"
+                        },
+                        new
+                        {
+                            Code = "IRSU",
+                            IdpHint = "",
+                            Name = "BCHP - CRD IRSU - RCMP"
+                        },
+                        new
+                        {
+                            Code = "NITS",
+                            IdpHint = "",
+                            Name = "BCHP - Campbell River - RCMP"
+                        },
+                        new
+                        {
+                            Code = "IRNA",
+                            IdpHint = "",
+                            Name = "BCHP - Central Island IRSU - RCMP"
+                        },
+                        new
+                        {
+                            Code = "SIHP",
+                            IdpHint = "",
+                            Name = "BCHP - Chemainus - RCMP"
+                        },
+                        new
+                        {
+                            Code = "SUHP",
+                            IdpHint = "",
+                            Name = "BCHP - Chilliwack - RCMP"
+                        },
+                        new
+                        {
+                            Code = "CITC",
+                            IdpHint = "",
+                            Name = "BCHP - Clearwater - RCMP"
+                        },
+                        new
+                        {
+                            Code = "RSEC",
+                            IdpHint = "",
+                            Name = "BCHP - Cranbrook - RCMP"
+                        },
+                        new
+                        {
+                            Code = "734",
+                            IdpHint = "",
+                            Name = "BCHP - Deas Island - RCMP"
+                        },
+                        new
+                        {
+                            Code = "NOTS",
+                            IdpHint = "",
+                            Name = "BCHP - Falkland - RCMP"
+                        },
+                        new
+                        {
+                            Code = "IRSL",
+                            IdpHint = "",
+                            Name = "BCHP - Fraser Coast IRSU - RCMP"
+                        },
+                        new
+                        {
+                            Code = "GOTS",
+                            IdpHint = "",
+                            Name = "BCHP - Golden - RCMP"
+                        },
+                        new
+                        {
+                            Code = "RKSO",
+                            IdpHint = "",
+                            Name = "BCHP - Kamloops - RCMP"
+                        },
+                        new
+                        {
+                            Code = "COTS",
+                            IdpHint = "",
+                            Name = "BCHP - Kelowna - RCMP"
+                        },
+                        new
+                        {
+                            Code = "SOHP",
+                            IdpHint = "",
+                            Name = "BCHP - Keremeos - RCMP"
+                        },
+                        new
+                        {
+                            Code = "CITM",
+                            IdpHint = "",
+                            Name = "BCHP - Merritt - RCMP"
+                        },
+                        new
+                        {
+                            Code = "RSEN",
+                            IdpHint = "",
+                            Name = "BCHP - Nelson - RCMP"
+                        },
+                        new
+                        {
+                            Code = "IRSW",
+                            IdpHint = "",
+                            Name = "BCHP - Nelson IRSU - RCMP"
+                        },
+                        new
+                        {
+                            Code = "IRNI",
+                            IdpHint = "",
+                            Name = "BCHP - North Island IRSU - RCMP"
+                        },
+                        new
+                        {
+                            Code = "CITS",
+                            IdpHint = "",
+                            Name = "BCHP - Parksville - RCMP"
+                        },
+                        new
+                        {
+                            Code = "RFFG",
+                            IdpHint = "",
+                            Name = "BCHP - Prince George - RCMP"
+                        },
+                        new
+                        {
+                            Code = "RTRF",
+                            IdpHint = "",
+                            Name = "BCHP - RCMP"
+                        },
+                        new
+                        {
+                            Code = "124A",
+                            IdpHint = "",
+                            Name = "BCHP - Revelstoke - RCMP"
+                        },
+                        new
+                        {
+                            Code = "BCHV",
+                            IdpHint = "",
+                            Name = "BCHP - VAN ISLAND - RCMP"
+                        },
+                        new
+                        {
+                            Code = "204",
+                            IdpHint = "",
+                            Name = "Barriere RCMP"
+                        },
+                        new
+                        {
+                            Code = "620",
+                            IdpHint = "",
+                            Name = "Bella Bella RCMP"
+                        },
+                        new
+                        {
+                            Code = "602",
+                            IdpHint = "",
+                            Name = "Bella Coola RCMP"
+                        },
+                        new
+                        {
+                            Code = "742",
+                            IdpHint = "",
+                            Name = "Bowen Island RCMP"
+                        },
+                        new
+                        {
+                            Code = "704",
+                            IdpHint = "",
+                            Name = "Burnaby RCMP"
+                        },
+                        new
+                        {
+                            Code = "704B",
+                            IdpHint = "",
+                            Name = "Burnaby RCMP - Bail Hearings"
+                        },
+                        new
+                        {
+                            Code = "7004",
+                            IdpHint = "",
+                            Name = "Burnaby RCMP- DNA"
+                        },
+                        new
+                        {
+                            Code = "501",
+                            IdpHint = "",
+                            Name = "Burns Lake RCMP"
+                        },
+                        new
+                        {
+                            Code = "CFKE",
+                            IdpHint = "",
+                            Name = "CFSEU Kelowna - RCMP"
+                        },
+                        new
+                        {
+                            Code = "IGTF",
+                            IdpHint = "",
+                            Name = "CFSEU LMD 6000 - RCMP"
+                        },
+                        new
+                        {
+                            Code = "CFPG",
+                            IdpHint = "",
+                            Name = "CFSEU Prince George - RCMP"
+                        },
+                        new
+                        {
+                            Code = "CFSE",
+                            IdpHint = "",
+                            Name = "CFSEU Vancouver - RCMP"
+                        },
+                        new
+                        {
+                            Code = "VOCA",
+                            IdpHint = "",
+                            Name = "CFSEU Victoria - RCMP"
+                        },
+                        new
+                        {
+                            Code = "903",
+                            IdpHint = "",
+                            Name = "Campbell River RCMP"
+                        },
+                        new
+                        {
+                            Code = "CBID",
+                            IdpHint = "",
+                            Name = "Canada Border Services Agency - Investigations Division"
+                        },
+                        new
+                        {
+                            Code = "CBIF",
+                            IdpHint = "",
+                            Name = "Canada Border Services Agency - Investigations Division - FingerprintingDivi"
+                        },
+                        new
+                        {
+                            Code = "CBSO",
+                            IdpHint = "",
+                            Name = "Canada Border Services Agency - Port of Osoyoos"
+                        },
+                        new
+                        {
+                            Code = "CFBE",
+                            IdpHint = "",
+                            Name = "Canadian Forces Branch - Military Police - Esquimalt"
+                        },
+                        new
+                        {
+                            Code = "CFMP",
+                            IdpHint = "",
+                            Name = "Canadian Forces Branch - Military Police Comox"
+                        },
+                        new
+                        {
+                            Code = "CFNP",
+                            IdpHint = "",
+                            Name = "Canadian Forces National Invest. Service - Pacific Region"
+                        },
+                        new
+                        {
+                            Code = "CNPC",
+                            IdpHint = "",
+                            Name = "Canadian National Police Services - Chilliwack"
+                        },
+                        new
+                        {
+                            Code = "CNKA",
+                            IdpHint = "",
+                            Name = "Canadian National Police Services - Kamloops"
+                        },
+                        new
+                        {
+                            Code = "CNNV",
+                            IdpHint = "",
+                            Name = "Canadian National Police Services - North Van"
+                        },
+                        new
+                        {
+                            Code = "CNPG",
+                            IdpHint = "",
+                            Name = "Canadian National Police Services - Prince George"
+                        },
+                        new
+                        {
+                            Code = "CNPR",
+                            IdpHint = "",
+                            Name = "Canadian National Police Services - Prince Rupert"
+                        },
+                        new
+                        {
+                            Code = "CNSQ",
+                            IdpHint = "",
+                            Name = "Canadian National Police Services - Squamish"
+                        },
+                        new
+                        {
+                            Code = "CNPS",
+                            IdpHint = "",
+                            Name = "Canadian National Police Services - Surrey"
+                        },
+                        new
+                        {
+                            Code = "CNPT",
+                            IdpHint = "",
+                            Name = "Canadian National Police Services - Terrace"
+                        },
+                        new
+                        {
+                            Code = "CPGL",
+                            IdpHint = "",
+                            Name = "Canadian Pacific Police - Golden"
+                        },
+                        new
+                        {
+                            Code = "CPKA",
+                            IdpHint = "",
+                            Name = "Canadian Pacific Police - Kamloops"
+                        },
+                        new
+                        {
+                            Code = "CPSC",
+                            IdpHint = "",
+                            Name = "Canadian Pacific Police Service - Cranbrook"
+                        },
+                        new
+                        {
+                            Code = "301",
+                            IdpHint = "",
+                            Name = "Castlegar RCMP"
+                        },
+                        new
+                        {
+                            Code = "317",
+                            IdpHint = "",
+                            Name = "Central Kootenay Regional RCMP"
+                        },
+                        new
+                        {
+                            Code = "404",
+                            IdpHint = "",
+                            Name = "Central Saanich Police Service"
+                        },
+                        new
+                        {
+                            Code = "206",
+                            IdpHint = "",
+                            Name = "Chase RCMP"
+                        },
+                        new
+                        {
+                            Code = "502",
+                            IdpHint = "",
+                            Name = "Chetwynd RCMP"
+                        },
+                        new
+                        {
+                            Code = "707",
+                            IdpHint = "",
+                            Name = "Chilliwack RCMP"
+                        },
+                        new
+                        {
+                            Code = "207",
+                            IdpHint = "",
+                            Name = "Clearwater RCMP"
+                        },
+                        new
+                        {
+                            Code = "208",
+                            IdpHint = "",
+                            Name = "Clinton RCMP"
+                        },
+                        new
+                        {
+                            Code = "311",
+                            IdpHint = "",
+                            Name = "Columbia Valley RCMP"
+                        },
+                        new
+                        {
+                            Code = "906",
+                            IdpHint = "",
+                            Name = "Comox Valley RCMP"
+                        },
+                        new
+                        {
+                            Code = "710",
+                            IdpHint = "",
+                            Name = "Coquitlam RCMP"
+                        },
+                        new
+                        {
+                            Code = "303",
+                            IdpHint = "",
+                            Name = "Cranbrook RCMP"
+                        },
+                        new
+                        {
+                            Code = "305",
+                            IdpHint = "",
+                            Name = "Creston RCMP"
+                        },
+                        new
+                        {
+                            Code = "RECI",
+                            IdpHint = "",
+                            Name = "Criminal Intelligence Section - RCMP"
+                        },
+                        new
+                        {
+                            Code = "504",
+                            IdpHint = "",
+                            Name = "Dawson Creek RCMP"
+                        },
+                        new
+                        {
+                            Code = "615",
+                            IdpHint = "",
+                            Name = "Dease Lake RCMP"
+                        },
+                        new
+                        {
+                            Code = "407",
+                            IdpHint = "deltapd",
+                            Name = "Delta Police Department"
+                        },
+                        new
+                        {
+                            Code = "ITC",
+                            IdpHint = "",
+                            Name = "Digital Forensics Services - RCMP"
+                        },
+                        new
+                        {
+                            Code = "DEO",
+                            IdpHint = "",
+                            Name = "E Division Emergency Ops RCMP"
+                        },
+                        new
+                        {
+                            Code = "EHQ",
+                            IdpHint = "",
+                            Name = "E Division Headquarters - RCMP"
+                        },
+                        new
+                        {
+                            Code = "RSE2",
+                            IdpHint = "",
+                            Name = "E Division Kelowna 2100 - RCMP"
+                        },
+                        new
+                        {
+                            Code = "RND2",
+                            IdpHint = "",
+                            Name = "E Division Prince George 2100 - RCMP"
+                        },
+                        new
+                        {
+                            Code = "RPR2",
+                            IdpHint = "",
+                            Name = "E Division Prince Rupert 2100 - RCMP"
+                        },
+                        new
+                        {
+                            Code = "RPSU",
+                            IdpHint = "",
+                            Name = "E Division Professional Responsibility Unit - RCMP"
+                        },
+                        new
+                        {
+                            Code = "EOCC",
+                            IdpHint = "",
+                            Name = "EHQ OCC RCMP - Warrant Cancellations"
+                        },
+                        new
+                        {
+                            Code = "322",
+                            IdpHint = "",
+                            Name = "Elk Valley RCMP"
+                        },
+                        new
+                        {
+                            Code = "405",
+                            IdpHint = "esquimaltpd",
+                            Name = "Esquimalt Police Department"
+                        },
+                        new
+                        {
+                            Code = "IMET",
+                            IdpHint = "",
+                            Name = "FSOC Integrated Market Enforcement Team - RCMP"
+                        },
+                        new
+                        {
+                            Code = "RFD",
+                            IdpHint = "",
+                            Name = "Federal Serious & Organized Crime EHQ - RCMP"
+                        },
+                        new
+                        {
+                            Code = "RFDI",
+                            IdpHint = "",
+                            Name = "Federal Serious & Organized Crime Island - RCMP"
+                        },
+                        new
+                        {
+                            Code = "RFDN",
+                            IdpHint = "",
+                            Name = "Federal Serious & Organized Crime North - RCMP"
+                        },
+                        new
+                        {
+                            Code = "RFDS",
+                            IdpHint = "",
+                            Name = "Federal Serious & Organized Crime South - RCMP"
+                        },
+                        new
+                        {
+                            Code = "6",
+                            IdpHint = "",
+                            Name = "Forensics Laboratory - RCMP"
+                        },
+                        new
+                        {
+                            Code = "506",
+                            IdpHint = "",
+                            Name = "Fort St James RCMP"
+                        },
+                        new
+                        {
+                            Code = "508",
+                            IdpHint = "",
+                            Name = "Fort St John RCMP"
+                        },
+                        new
+                        {
+                            Code = "509",
+                            IdpHint = "",
+                            Name = "Fraser Lake RCMP"
+                        },
+                        new
+                        {
+                            Code = "805",
+                            IdpHint = "",
+                            Name = "Gabriola Island RCMP"
+                        },
+                        new
+                        {
+                            Code = "309",
+                            IdpHint = "",
+                            Name = "Golden RCMP"
+                        },
+                        new
+                        {
+                            Code = "310",
+                            IdpHint = "",
+                            Name = "Grand Forks RCMP"
+                        },
+                        new
+                        {
+                            Code = "745",
+                            IdpHint = "",
+                            Name = "Hope RCMP"
+                        },
+                        new
+                        {
+                            Code = "605",
+                            IdpHint = "",
+                            Name = "Houston RCMP"
+                        },
+                        new
+                        {
+                            Code = "510",
+                            IdpHint = "",
+                            Name = "Hudson's Hope RCMP"
+                        },
+                        new
+                        {
+                            Code = "HRCA",
+                            IdpHint = "",
+                            Name = "Human Resources & Skills Dev. Canada - Abbotsford"
+                        },
+                        new
+                        {
+                            Code = "IHI",
+                            IdpHint = "",
+                            Name = "Integrated Homicide Investigation Team - RCMP"
+                        },
+                        new
+                        {
+                            Code = "INSE",
+                            IdpHint = "",
+                            Name = "Integrated National Security Enforcement Team - RCMP"
+                        },
+                        new
+                        {
+                            Code = "IRGV",
+                            IdpHint = "",
+                            Name = "Integrated Road Safety Unit Greater Vancouver - RCMP"
+                        },
+                        new
+                        {
+                            Code = "40",
+                            IdpHint = "",
+                            Name = "Island District Victoria - RCMP"
+                        },
+                        new
+                        {
+                            Code = "209",
+                            IdpHint = "",
+                            Name = "Kamloops - Tk'emlups RCMP"
+                        },
+                        new
+                        {
+                            Code = "210",
+                            IdpHint = "",
+                            Name = "Kamloops RCMP"
+                        },
+                        new
+                        {
+                            Code = "312",
+                            IdpHint = "",
+                            Name = "Kaslo RCMP"
+                        },
+                        new
+                        {
+                            Code = "105",
+                            IdpHint = "",
+                            Name = "Kelowna RCMP"
+                        },
+                        new
+                        {
+                            Code = "105C",
+                            IdpHint = "",
+                            Name = "Kelowna RCMP - Daytime/Records"
+                        },
+                        new
+                        {
+                            Code = "106",
+                            IdpHint = "",
+                            Name = "Keremeos RCMP"
+                        },
+                        new
+                        {
+                            Code = "314",
+                            IdpHint = "",
+                            Name = "Kimberley RCMP"
+                        },
+                        new
+                        {
+                            Code = "607",
+                            IdpHint = "",
+                            Name = "Kitimat RCMP"
+                        },
+                        new
+                        {
+                            Code = "824",
+                            IdpHint = "",
+                            Name = "Ladysmith RCMP"
+                        },
+                        new
+                        {
+                            Code = "808",
+                            IdpHint = "",
+                            Name = "Lake Cowichan RCMP"
+                        },
+                        new
+                        {
+                            Code = "716",
+                            IdpHint = "",
+                            Name = "Langley RCMP"
+                        },
+                        new
+                        {
+                            Code = "211",
+                            IdpHint = "",
+                            Name = "Lillooet RCMP"
+                        },
+                        new
+                        {
+                            Code = "621",
+                            IdpHint = "",
+                            Name = "Lisims / Nass Valley RCMP"
+                        },
+                        new
+                        {
+                            Code = "212",
+                            IdpHint = "",
+                            Name = "Logan Lake RCMP"
+                        },
+                        new
+                        {
+                            Code = "RLMD",
+                            IdpHint = "",
+                            Name = "Lower Mainland District Surrey - RCMP"
+                        },
+                        new
+                        {
+                            Code = "213",
+                            IdpHint = "",
+                            Name = "Lytton RCMP"
+                        },
+                        new
+                        {
+                            Code = "522",
+                            IdpHint = "",
+                            Name = "Mackenzie RCMP"
+                        },
+                        new
+                        {
+                            Code = "ATF",
+                            IdpHint = "",
+                            Name = "Major Crime Section - Integrated Municipal Provincial Auto Crime Team - RCMP"
+                        },
+                        new
+                        {
+                            Code = "RND5",
+                            IdpHint = "",
+                            Name = "Major Crime Section - North District - RCMP"
+                        },
+                        new
+                        {
+                            Code = "RMCS",
+                            IdpHint = "",
+                            Name = "Major Crime Section - RCMP"
+                        },
+                        new
+                        {
+                            Code = "RSE5",
+                            IdpHint = "",
+                            Name = "Major Crime Section - Southeast District - RCMP"
+                        },
+                        new
+                        {
+                            Code = "IMCJ",
+                            IdpHint = "",
+                            Name = "Major Crime Section - Vancouver Island Integrated - RCMP"
+                        },
+                        new
+                        {
+                            Code = "608",
+                            IdpHint = "",
+                            Name = "Masset RCMP"
+                        },
+                        new
+                        {
+                            Code = "512",
+                            IdpHint = "",
+                            Name = "McBride RCMP"
+                        },
+                        new
+                        {
+                            Code = "215",
+                            IdpHint = "",
+                            Name = "Merritt RCMP"
+                        },
+                        new
+                        {
+                            Code = "488",
+                            IdpHint = "",
+                            Name = "Metro Vancouver Transit Police"
+                        },
+                        new
+                        {
+                            Code = "315",
+                            IdpHint = "",
+                            Name = "Midway RCMP"
+                        },
+                        new
+                        {
+                            Code = "719",
+                            IdpHint = "",
+                            Name = "Mission RCMP"
+                        },
+                        new
+                        {
+                            Code = "316",
+                            IdpHint = "",
+                            Name = "Nakusp RCMP"
+                        },
+                        new
+                        {
+                            Code = "810",
+                            IdpHint = "",
+                            Name = "Nanaimo RCMP"
+                        },
+                        new
+                        {
+                            Code = "810A",
+                            IdpHint = "",
+                            Name = "Nanaimo RCMP - Traffic"
+                        },
+                        new
+                        {
+                            Code = "411",
+                            IdpHint = "",
+                            Name = "Nelson Police Department"
+                        },
+                        new
+                        {
+                            Code = "604",
+                            IdpHint = "",
+                            Name = "New Hazelton RCMP"
+                        },
+                        new
+                        {
+                            Code = "409",
+                            IdpHint = "",
+                            Name = "New Westminster Police Department"
+                        },
+                        new
+                        {
+                            Code = "907",
+                            IdpHint = "",
+                            Name = "Nootka Sound RCMP"
+                        },
+                        new
+                        {
+                            Code = "NCMD",
+                            IdpHint = "",
+                            Name = "North Coast Marine Services - RCMP"
+                        },
+                        new
+                        {
+                            Code = "804",
+                            IdpHint = "",
+                            Name = "North Cowichan - Duncan RCMP"
+                        },
+                        new
+                        {
+                            Code = "RNDO",
+                            IdpHint = "",
+                            Name = "North District Prince George - RCMP"
+                        },
+                        new
+                        {
+                            Code = "101",
+                            IdpHint = "",
+                            Name = "North Okanagan Rural RCMP"
+                        },
+                        new
+                        {
+                            Code = "720",
+                            IdpHint = "",
+                            Name = "North Vancouver RCMP"
+                        },
+                        new
+                        {
+                            Code = "505",
+                            IdpHint = "",
+                            Name = "Northern Rockies RCMP"
+                        },
+                        new
+                        {
+                            Code = "406",
+                            IdpHint = "",
+                            Name = "Oak Bay Police Department"
+                        },
+                        new
+                        {
+                            Code = "109",
+                            IdpHint = "",
+                            Name = "Oliver RCMP"
+                        },
+                        new
+                        {
+                            Code = "110",
+                            IdpHint = "",
+                            Name = "Osoyoos RCMP"
+                        },
+                        new
+                        {
+                            Code = "811",
+                            IdpHint = "",
+                            Name = "Outer Gulf Islands RCMP"
+                        },
+                        new
+                        {
+                            Code = "922",
+                            IdpHint = "",
+                            Name = "Parksville / Oceanside RCMP"
+                        },
+                        new
+                        {
+                            Code = "112",
+                            IdpHint = "",
+                            Name = "Penticton RCMP"
+                        },
+                        new
+                        {
+                            Code = "910",
+                            IdpHint = "",
+                            Name = "Port Alberni RCMP"
+                        },
+                        new
+                        {
+                            Code = "911",
+                            IdpHint = "",
+                            Name = "Port Alice RCMP"
+                        },
+                        new
+                        {
+                            Code = "923",
+                            IdpHint = "",
+                            Name = "Port Hardy RCMP"
+                        },
+                        new
+                        {
+                            Code = "913",
+                            IdpHint = "",
+                            Name = "Port McNeill RCMP"
+                        },
+                        new
+                        {
+                            Code = "412",
+                            IdpHint = "",
+                            Name = "Port Moody Police Department"
+                        },
+                        new
+                        {
+                            Code = "915",
+                            IdpHint = "",
+                            Name = "Powell River RCMP"
+                        },
+                        new
+                        {
+                            Code = "521",
+                            IdpHint = "",
+                            Name = "Prince George RCMP"
+                        },
+                        new
+                        {
+                            Code = "RPRO",
+                            IdpHint = "",
+                            Name = "Prince Rupert  (Do Not Use)  N.District RCMP"
+                        },
+                        new
+                        {
+                            Code = "611",
+                            IdpHint = "",
+                            Name = "Prince Rupert RCMP"
+                        },
+                        new
+                        {
+                            Code = "113",
+                            IdpHint = "",
+                            Name = "Princeton RCMP"
+                        },
+                        new
+                        {
+                            Code = "916",
+                            IdpHint = "",
+                            Name = "Quadra Island RCMP"
+                        },
+                        new
+                        {
+                            Code = "612",
+                            IdpHint = "",
+                            Name = "Queen Charlotte RCMP"
+                        },
+                        new
+                        {
+                            Code = "515",
+                            IdpHint = "",
+                            Name = "Quesnel RCMP"
+                        },
+                        new
+                        {
+                            Code = "124",
+                            IdpHint = "",
+                            Name = "Revelstoke RCMP"
+                        },
+                        new
+                        {
+                            Code = "722",
+                            IdpHint = "",
+                            Name = "Richmond RCMP"
+                        },
+                        new
+                        {
+                            Code = "713",
+                            IdpHint = "",
+                            Name = "Ridge Meadows RCMP"
+                        },
+                        new
+                        {
+                            Code = "728",
+                            IdpHint = "",
+                            Name = "SPS - LENS ONLY"
+                        },
+                        new
+                        {
+                            Code = "403",
+                            IdpHint = "saanichpd",
+                            Name = "Saanich Police Department"
+                        },
+                        new
+                        {
+                            Code = "321",
+                            IdpHint = "",
+                            Name = "Salmo RCMP"
+                        },
+                        new
+                        {
+                            Code = "116",
+                            IdpHint = "",
+                            Name = "Salmon Arm RCMP"
+                        },
+                        new
+                        {
+                            Code = "806",
+                            IdpHint = "",
+                            Name = "Saltspring RCMP"
+                        },
+                        new
+                        {
+                            Code = "917",
+                            IdpHint = "",
+                            Name = "Sayward RCMP"
+                        },
+                        new
+                        {
+                            Code = "812",
+                            IdpHint = "",
+                            Name = "Shawnigan Lake RCMP"
+                        },
+                        new
+                        {
+                            Code = "117",
+                            IdpHint = "",
+                            Name = "Sicamous RCMP"
+                        },
+                        new
+                        {
+                            Code = "814",
+                            IdpHint = "",
+                            Name = "Sidney / North Saanich RCMP"
+                        },
+                        new
+                        {
+                            Code = "318",
+                            IdpHint = "",
+                            Name = "Slocan Lake RCMP"
+                        },
+                        new
+                        {
+                            Code = "622",
+                            IdpHint = "",
+                            Name = "Smithers RCMP"
+                        },
+                        new
+                        {
+                            Code = "815",
+                            IdpHint = "",
+                            Name = "Sooke RCMP"
+                        },
+                        new
+                        {
+                            Code = "100",
+                            IdpHint = "",
+                            Name = "Southeast District Kelowna - RCMP"
+                        },
+                        new
+                        {
+                            Code = "725",
+                            IdpHint = "",
+                            Name = "Squamish RCMP"
+                        },
+                        new
+                        {
+                            Code = "614",
+                            IdpHint = "",
+                            Name = "Stewart RCMP"
+                        },
+                        new
+                        {
+                            Code = "LNTP",
+                            IdpHint = "",
+                            Name = "Stl' atl' imx Tribal Police Lillooet - RCMP"
+                        },
+                        new
+                        {
+                            Code = "SXTP",
+                            IdpHint = "",
+                            Name = "Stl' atl' imx Tribal Police Mount Currie - RCMP"
+                        },
+                        new
+                        {
+                            Code = "121",
+                            IdpHint = "",
+                            Name = "Summerland RCMP"
+                        },
+                        new
+                        {
+                            Code = "743",
+                            IdpHint = "",
+                            Name = "Sunshine Coast RCMP"
+                        },
+                        new
+                        {
+                            Code = "726",
+                            IdpHint = "",
+                            Name = "Surrey RCMP"
+                        },
+                        new
+                        {
+                            Code = "TAKL",
+                            IdpHint = "",
+                            Name = "Takla Landing RCMP"
+                        },
+                        new
+                        {
+                            Code = "617",
+                            IdpHint = "",
+                            Name = "Terrace RCMP"
+                        },
+                        new
+                        {
+                            Code = "924",
+                            IdpHint = "",
+                            Name = "Texada Island RCMP"
+                        },
+                        new
+                        {
+                            Code = "919",
+                            IdpHint = "",
+                            Name = "Tofino RCMP (Ahousaht)"
+                        },
+                        new
+                        {
+                            Code = "919A",
+                            IdpHint = "",
+                            Name = "Tofino RCMP - After Hours/Cells"
+                        },
+                        new
+                        {
+                            Code = "324",
+                            IdpHint = "",
+                            Name = "Trail and Greater District RCMP"
+                        },
+                        new
+                        {
+                            Code = "525",
+                            IdpHint = "",
+                            Name = "Tsay Keh Dene RCMP"
+                        },
+                        new
+                        {
+                            Code = "524",
+                            IdpHint = "",
+                            Name = "Tumbler Ridge RCMP"
+                        },
+                        new
+                        {
+                            Code = "920",
+                            IdpHint = "",
+                            Name = "Ucluelet RCMP"
+                        },
+                        new
+                        {
+                            Code = "727",
+                            IdpHint = "",
+                            Name = "University of British Columbia RCMP"
+                        },
+                        new
+                        {
+                            Code = "218",
+                            IdpHint = "",
+                            Name = "Valemount RCMP"
+                        },
+                        new
+                        {
+                            Code = "401",
+                            IdpHint = "",
+                            Name = "Vancouver Police Department"
+                        },
+                        new
+                        {
+                            Code = "401A",
+                            IdpHint = "",
+                            Name = "Vancouver Police Department - Fingerprinting"
+                        },
+                        new
+                        {
+                            Code = "5",
+                            IdpHint = "",
+                            Name = "Vancouver Police Department Reserves"
+                        },
+                        new
+                        {
+                            Code = "400",
+                            IdpHint = "",
+                            Name = "Vancouver Police- DNA"
+                        },
+                        new
+                        {
+                            Code = "517",
+                            IdpHint = "",
+                            Name = "Vanderhoof RCMP"
+                        },
+                        new
+                        {
+                            Code = "119",
+                            IdpHint = "",
+                            Name = "Vernon RCMP"
+                        },
+                        new
+                        {
+                            Code = "RID2",
+                            IdpHint = "",
+                            Name = "Victoria 5001 - RCMP"
+                        },
+                        new
+                        {
+                            Code = "402",
+                            IdpHint = "vicpd",
+                            Name = "Victoria Police Department"
+                        },
+                        new
+                        {
+                            Code = "VPED",
+                            IdpHint = "",
+                            Name = "Victoria, City of - Parking Enforcement Detachment"
+                        },
+                        new
+                        {
+                            Code = "WCMD",
+                            IdpHint = "",
+                            Name = "West Coast Marine Services - RCMP"
+                        },
+                        new
+                        {
+                            Code = "821",
+                            IdpHint = "",
+                            Name = "West Shore RCMP"
+                        },
+                        new
+                        {
+                            Code = "821B",
+                            IdpHint = "",
+                            Name = "West Shore RCMP - URGENT Fax"
+                        },
+                        new
+                        {
+                            Code = "410",
+                            IdpHint = "",
+                            Name = "West Vancouver Police Department"
+                        },
+                        new
+                        {
+                            Code = "738",
+                            IdpHint = "",
+                            Name = "Whistler/Pemberton RCMP"
+                        },
+                        new
+                        {
+                            Code = "729",
+                            IdpHint = "",
+                            Name = "White Rock RCMP"
+                        },
+                        new
+                        {
+                            Code = "221",
+                            IdpHint = "",
+                            Name = "Williams Lake RCMP"
+                        },
+                        new
+                        {
+                            Code = "SWHQ",
+                            IdpHint = "",
+                            Name = "ZZ RCMP (Do Not Use) SW District HQ"
+                        },
+                        new
+                        {
+                            Code = "401X",
+                            IdpHint = "",
+                            Name = "ZZzVancouver Police Department"
+                        });
+                });
+
             modelBuilder.Entity("Pidp.Models.OutBoxEvent.ExportedEvent", b =>
                 {
                     b.Property<int>("EventId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("EventId"));
+
                     b.Property<string>("AggregateId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("AggregateType")
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Instant>("DateOccurred")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EventPayload")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
                     b.Property<string>("EventType")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("JsonEventPayload")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("EventPayload");
-
-                    b.HasKey("EventId", "AggregateId");
+                    b.HasKey("EventId");
 
                     b.ToTable("OutBoxedExportedEvent", (string)null);
                 });
@@ -1860,6 +3234,55 @@ namespace Pidp.Data.Migrations
                     b.ToTable("PartyOrgainizationDetail");
                 });
 
+            modelBuilder.Entity("Pidp.Models.SubmittingAgencyRequest", b =>
+                {
+                    b.Property<int>("RequestId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("RequestId"));
+
+                    b.Property<string>("AgencyFileNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("CaseId")
+                        .HasColumnType("integer");
+
+                    b.Property<Instant>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Details")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Instant>("Modified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PartyId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RCCNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("RequestStatus")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Instant>("RequestedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("RequestId");
+
+                    b.HasIndex("PartyId");
+
+                    b.HasIndex(new[] { "RCCNumber" }, "IX_RCCNumber")
+                        .IsUnique();
+
+                    b.ToTable("SubmittingAgencyRequest");
+                });
+
             modelBuilder.Entity("Pidp.Models.DigitalEvidence", b =>
                 {
                     b.HasBaseType("Pidp.Models.AccessRequest");
@@ -1956,6 +3379,17 @@ namespace Pidp.Data.Migrations
                     b.Navigation("Country");
 
                     b.Navigation("Province");
+                });
+
+            modelBuilder.Entity("Pidp.Models.AgencyRequestAttachment", b =>
+                {
+                    b.HasOne("Pidp.Models.SubmittingAgencyRequest", "SubmittingAgencyRequest")
+                        .WithMany("AgencyRequestAttachments")
+                        .HasForeignKey("SubmittingAgencyRequestRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SubmittingAgencyRequest");
                 });
 
             modelBuilder.Entity("Pidp.Models.CorrectionServiceDetail", b =>
@@ -2087,6 +3521,17 @@ namespace Pidp.Data.Migrations
                     b.Navigation("Party");
                 });
 
+            modelBuilder.Entity("Pidp.Models.SubmittingAgencyRequest", b =>
+                {
+                    b.HasOne("Pidp.Models.Party", "Party")
+                        .WithMany()
+                        .HasForeignKey("PartyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Party");
+                });
+
             modelBuilder.Entity("Pidp.Models.DigitalEvidence", b =>
                 {
                     b.HasOne("Pidp.Models.AccessRequest", null)
@@ -2146,6 +3591,11 @@ namespace Pidp.Data.Migrations
                     b.Navigation("LicenceDeclaration");
 
                     b.Navigation("OrgainizationDetail");
+                });
+
+            modelBuilder.Entity("Pidp.Models.SubmittingAgencyRequest", b =>
+                {
+                    b.Navigation("AgencyRequestAttachments");
                 });
 #pragma warning restore 612, 618
         }

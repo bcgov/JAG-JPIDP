@@ -52,7 +52,9 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
       correctionService,
       justiceSectorService,
     } = this.getSectionStatus();
-    return [StatusCode.ERROR, StatusCode.COMPLETED].includes(statusCode)
+    const response = [StatusCode.ERROR, StatusCode.COMPLETED].includes(
+      statusCode
+    )
       ? [
           {
             key: 'orgName',
@@ -64,15 +66,7 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
             value: employeeIdentifier,
             label: 'Identity Verification:',
           },
-          {
-            key: 'status',
-            value:
-              statusCode !== StatusCode.ERROR &&
-              demographicsStatusCode === StatusCode.COMPLETED
-                ? 'Verified'
-                : 'Not Verified',
-            label: 'Justin User Status:',
-          },
+
           {
             key: 'CorrectionService',
             value: correctionService,
@@ -83,16 +77,51 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
           },
         ]
       : [];
+
+    if (!this.profileStatus.status.organizationDetails?.submittingAgency) {
+      response.push({
+        key: 'status',
+        value:
+          statusCode !== StatusCode.ERROR &&
+          this.profileStatus.status.organizationDetails?.statusCode ===
+            StatusCode.COMPLETED
+            ? 'Verified'
+            : 'Not Verified',
+        label: 'JUSTIN User Status:',
+      });
+    } else {
+      response.push({
+        key: 'organizationName',
+        value:
+          this.profileStatus.status.organizationDetails?.submittingAgency.name,
+        label: 'Organization:',
+      });
+      response.push({
+        key: 'agencyCode',
+        value:
+          this.profileStatus.status.organizationDetails?.submittingAgency.code,
+        label: 'Agency Code:',
+      });
+    }
+    return response;
   }
   public get action(): PortalSectionAction {
     const demographicsStatusCode =
       this.profileStatus.status.demographics.statusCode;
+
     return {
-      label: 'Update',
+      label:
+        this.profileStatus.status.organizationDetails?.statusCode ===
+        StatusCode.LOCKED_COMPLETE
+          ? ''
+          : 'Update',
       route: OrganizationInfoRoutes.routePath(
         OrganizationInfoRoutes.ORGANIZATION_DETAILS
       ),
-      disabled: demographicsStatusCode !== StatusCode.COMPLETED,
+      disabled:
+        this.profileStatus.status.organizationDetails?.statusCode ===
+          StatusCode.LOCKED_COMPLETE ||
+        demographicsStatusCode !== StatusCode.COMPLETED,
     };
   }
 
@@ -100,6 +129,8 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
     const statusCode = this.getStatusCode();
     return statusCode === StatusCode.ERROR
       ? 'danger'
+      : statusCode === StatusCode.LOCKED_COMPLETE
+      ? 'success'
       : statusCode === StatusCode.COMPLETED
       ? 'success'
       : 'warn';
@@ -107,7 +138,11 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
 
   public get status(): string {
     const statusCode = this.getStatusCode();
-    return statusCode === StatusCode.COMPLETED ? 'Completed' : 'Incomplete';
+    return statusCode === StatusCode.LOCKED_COMPLETE
+      ? 'Completed'
+      : StatusCode.COMPLETED
+      ? 'Completed'
+      : 'Incomplete';
   }
 
   public performAction(): void | Observable<void> {

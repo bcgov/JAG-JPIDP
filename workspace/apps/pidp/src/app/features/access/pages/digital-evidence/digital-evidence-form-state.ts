@@ -45,7 +45,8 @@ export class DigitalEvidenceFormState extends AbstractFormState<DemsAccount> {
       OrganizationType: ['', [Validators.required]],
       OrganizationName: ['', [Validators.required]],
       ParticipantId: ['', [Validators.required]],
-     AssignedRegions: ['', [Validators.required]],
+      // Conditionally include AssignedRegions if OrganizationType is set to a specific value
+      // AssignedRegions: [{ value: '', disabled: true }, [Validators.required]],
     });
   }
 }

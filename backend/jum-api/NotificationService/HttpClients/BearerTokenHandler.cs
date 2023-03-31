@@ -21,5 +21,8 @@ public class BearerTokenHandler<T> : DelegatingHandler where T : ClientCredentia
         request.SetBearerToken(accessToken);
 
         return await base.SendAsync(request, cancellationToken);
+
+
+
     }
 }

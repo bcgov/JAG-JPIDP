@@ -82,20 +82,31 @@ tolerations: []
 affinity: {}
 
 keycloak:
-  realm: https://sso-dev-5b7aa5-dev.apps.silver.devops.gov.bc.ca/auth/realms/DEMSPOC
+  realm: https://someurl/auth/somerealm
 
+kafka:
+  pvcSize: 1Gi
+  createtopics: true
+  topics:
+    replicas: 3
+  kafkaui:
+    enabled: false
+  authorization:
+    enabled: false
+    clientId: kafka
+
+zookeeper:
+  pvcSize: 1Gi
 
 postgresql:
   enabled: true
   createSecret: true
   auth:
-    postgresPassword: ""
     username: "kafka"
-    password: ""
     database: "kafka"
     existingSecret: ""
     secretKeys:
-      adminPasswordKey: "admin-password"
+      adminPasswordKey: "postgres-password"
       userPasswordKey: "kafka-password"
   primary:
     podSecurityContext:
@@ -107,3 +118,12 @@ postgresql:
 
 apicurio:
   enabled: true
+
+akhq:
+  enabled: true
+
+alertmanager:
+  enabled: false
+
+podmonitor:
+  enabled: false

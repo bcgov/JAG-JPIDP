@@ -111,6 +111,7 @@ describe('PortalPage', () => {
         userAccessAgreement: { statusCode: StatusCode.AVAILABLE },
         saEforms: { statusCode: StatusCode.AVAILABLE },
         digitalEvidence: { statusCode: StatusCode.AVAILABLE },
+        digitalEvidenceCaseManagement: { statusCode: StatusCode.AVAILABLE },
         driverFitness: { statusCode: StatusCode.AVAILABLE },
         hcimAccountTransfer: { statusCode: StatusCode.AVAILABLE },
         hcimEnrolment: { statusCode: StatusCode.AVAILABLE },

@@ -61,8 +61,19 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
 
                     if (consumerResult.Status == TaskStatus.RanToCompletion && consumerResult.Exception == null)
                     {
+                        Log.Logger.Information($"Marking complete {result.Message.Key}");
+
                         this.consumer.Commit(result);
                     }
+                    else
+                    {
+                        Log.Logger.Information($"Error processing message {result.Message.Key} {consumerResult.Exception}");
+                    }
+                }
+                else
+                {
+                    Log.Logger.Information("No messages received");
+                    continue;
                 }
             }
             catch (OperationCanceledException)

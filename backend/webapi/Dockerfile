@@ -12,7 +12,7 @@ RUN dotnet restore -r linux-musl-x64 /p:PublishReadyToRun=true
 COPY . .
 RUN dotnet publish -c Release -o /app -r linux-musl-x64 --self-contained false --no-restore
 
-RUN dotnet ef migrations bundle
+# RUN dotnet ef migrations bundle
 
 #----------------------------------------------------------------#
 FROM mcr.microsoft.com/dotnet/aspnet:6.0-alpine
@@ -28,7 +28,7 @@ ENV ASPNETCORE_URLS="http://+:8080"
 # RUN apk add --no-cache icu-libs
 
 COPY --from=build-env /app .
-COPY --from=build-env /source/efbundle .
+# COPY --from=build-env /source/efbundle .
 
 EXPOSE 8080
 

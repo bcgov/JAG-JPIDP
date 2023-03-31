@@ -1,6 +1,7 @@
 namespace edt.service;
 
 using System.Text.Json;
+using System.Transactions;
 
 public class EdtServiceConfiguration
 {
@@ -19,9 +20,18 @@ public class EdtServiceConfiguration
     public EdtClientConfiguration EdtClient { get; set; } = new();
 
     public SchemaRegistryConfiguration SchemaRegistry { get; set; } = new();
+    public TelemeteryConfiguration Telemetry { get; set; } = new TelemeteryConfiguration();
 
 
     // ------- Configuration Objects -------
+
+    public class TelemeteryConfiguration
+    {
+        public string CollectorUrl { get; set; } = string.Empty;
+        public string AzureConnectionString { get; set; } = string.Empty;
+        public bool LogToConsole { get; set; }
+
+    }
 
     public class AddressAutocompleteClientConfiguration
     {
@@ -32,6 +42,8 @@ public class EdtServiceConfiguration
     {
         public string ApiKey { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
+
+        public int SearchFieldId { get; set; }
     }
     public class ConnectionStringConfiguration
     {
@@ -78,6 +90,8 @@ public class EdtServiceConfiguration
         public string BootstrapServers { get; set; } = string.Empty;
         public string ConsumerTopicName { get; set; } = string.Empty;
         public string ProducerTopicName { get; set; } = string.Empty;
+        public string AckTopicName { get; set; } = string.Empty;
+
         public string UserModificationTopicName { get; set; } = string.Empty;
         public string UserCreationTopicName { get; set; } = string.Empty;
         public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;
@@ -99,6 +113,10 @@ public class EdtServiceConfiguration
     {
         public string Url { get; set; } = string.Empty;
     }
+
+
+
+
     public class KeycloakConfiguration
     {
         //public string RealmUrl { get; set; } = string.Empty;
@@ -113,5 +131,6 @@ public class EdtServiceConfiguration
     {
         public string Url { get; set; } = string.Empty;
         public int Port { get; set; }
+
     }
 }

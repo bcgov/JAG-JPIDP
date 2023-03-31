@@ -1,6 +1,6 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormControl } from '@angular/forms';
+import { FormBuilder, FormControl, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -36,6 +36,7 @@ export class PersonalInformationPage
   public user$: Observable<User>;
   public identityProvider$: Observable<IdentityProvider>;
   public hasPreferredName: boolean;
+  private userStateLocked: boolean;
 
   public IdentityProvider = IdentityProvider;
 
@@ -57,6 +58,7 @@ export class PersonalInformationPage
     this.user$ = this.authorizedUserService.user$;
     this.identityProvider$ = this.authorizedUserService.identityProvider$;
     this.hasPreferredName = false;
+    this.userStateLocked = false;
   }
 
   public onPreferredNameToggle({ checked }: ToggleContentChange): void {
@@ -75,8 +77,13 @@ export class PersonalInformationPage
     }
 
     this.identityProvider$.subscribe((idp) => {
-      if (idp === IdentityProvider.BCPS || idp === IdentityProvider.IDIR) {
+      if (
+        idp === IdentityProvider.BCPS ||
+        idp === IdentityProvider.IDIR ||
+        idp === IdentityProvider.SUBMITTING_AGENCY
+      ) {
         this.formState.email.disable(); //disable this for bcps users as this must match justin email
+        this.userStateLocked = true;
       }
     });
 
@@ -108,6 +115,10 @@ export class PersonalInformationPage
 
   protected afterSubmitIsSuccessful(): void {
     this.navigateToRoot();
+  }
+
+  public userDetailsLocked(): boolean {
+    return this.userStateLocked;
   }
 
   private handlePreferredNameChange(checked: boolean): void {

@@ -1,9 +1,10 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
+import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { EMPTY, Observable, exhaustMap } from 'rxjs';
+import { EMPTY, Observable, exhaustMap, map, startWith } from 'rxjs';
 
 import {
   DashboardHeaderConfig,
@@ -15,7 +16,7 @@ import { ConfirmDialogComponent } from '@bcgov/shared/ui';
 import { APP_CONFIG, AppConfig } from '@app/app.config';
 import { DocumentService } from '@app/core/services/document.service';
 import { LookupService } from '@app/modules/lookup/lookup.service';
-import { Lookup } from '@app/modules/lookup/lookup.types';
+import { AgencyLookup, Lookup } from '@app/modules/lookup/lookup.types';
 
 import { IdentityProvider } from '../../enums/identity-provider.enum';
 import { AuthService } from '../../services/auth.service';
@@ -25,20 +26,28 @@ import { AuthService } from '../../services/auth.service';
   templateUrl: './login.page.html',
   styleUrls: ['./login.page.scss'],
 })
-export class LoginPage {
+export class LoginPage implements OnInit {
   public title: string;
   public headerConfig: DashboardHeaderConfig;
   public loginCancelled: boolean;
   public organizations: Lookup[];
+  public filteredAgencies!: Observable<AgencyLookup[]>;
+  public submittingAgencies: AgencyLookup[];
+  public agency: AgencyLookup | undefined;
+
   public bcscSupportUrl: string;
   public bcscMobileSetupUrl: string;
   public specialAuthorityUrl: string;
   public providerIdentitySupportEmail: string;
   public idpHint: IdentityProvider;
-
+  public governmentAgency: AgencyLookup = {
+    code: 0,
+    idpHint: IdentityProvider.AZUREIDIR,
+    name: 'Government User',
+  };
   public IdentityProvider = IdentityProvider;
   // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
-  myControl: FormControl = new FormControl();
+  selectedAgency: FormControl = new FormControl();
 
   public constructor(
     @Inject(APP_CONFIG) private config: AppConfig,
@@ -61,6 +70,10 @@ export class LoginPage {
     this.providerIdentitySupportEmail =
       this.config.emails.providerIdentitySupport;
     this.idpHint = routeSnapshot.data.idpHint;
+    this.submittingAgencies = this.lookupService.submittingAgencies.filter(
+      (agency) => agency.idpHint?.length > 0
+    );
+    this.submittingAgencies.push(this.governmentAgency);
   }
 
   public onScrollToAnchor(): void {
@@ -70,7 +83,18 @@ export class LoginPage {
     });
   }
 
-  public onLogin(idpHint?: IdentityProvider): void {
+  public onAgencyLogin(): void {
+    this.onLogin(IdentityProvider.SUBMITTING_AGENCY, this.agency?.idpHint);
+  }
+
+  public ngOnInit(): void {
+    this.filteredAgencies = this.selectedAgency.valueChanges.pipe(
+      startWith(''),
+      map((value) => this.filterAgencies(value || ''))
+    );
+  }
+
+  public onLogin(idpHint?: IdentityProvider, idpStringVal?: string): void {
     if (this.idpHint === IdentityProvider.AZUREIDIR) {
       this.login(this.idpHint);
       return;
@@ -88,10 +112,53 @@ export class LoginPage {
       .afterClosed()
       .pipe(
         exhaustMap((result) =>
-          result ? this.login(idpHint ?? this.idpHint) : EMPTY
+          result
+            ? idpStringVal != null
+              ? this.loginDyanmicIdp(idpStringVal)
+              : this.login(idpHint ?? this.idpHint)
+            : EMPTY
         )
       )
       .subscribe();
+  }
+
+  private loginDyanmicIdp(idpHint: string): Observable<void> {
+    const endorsementToken =
+      this.route.snapshot.queryParamMap.get('endorsement-token');
+    return this.authService.login({
+      idpHint: idpHint,
+      redirectUri:
+        this.config.applicationUrl +
+        (endorsementToken ? `?endorsement-token=${endorsementToken}` : ''),
+    });
+  }
+
+  private filterAgencies(value: string): AgencyLookup[] {
+    if (this.agency && value !== this.agency.name) {
+      this.agency = undefined;
+    }
+
+    const filterValue = value.toLowerCase();
+
+    const response = this.submittingAgencies.filter((option) =>
+      option.name.toLowerCase().includes(filterValue)
+    );
+    return response.length === 1 ? response : [];
+  }
+
+  public agencySelected(): boolean {
+    return this.agency !== undefined;
+  }
+
+  public onSelectionChanged(event: MatAutocompleteSelectedEvent): void {
+    if (event.option.value === this.governmentAgency.name) {
+      // add government agency
+      this.agency = this.governmentAgency;
+    } else {
+      this.agency = this.lookupService.submittingAgencies.filter(
+        (agency) => agency.name === event.option.value
+      )[0];
+    }
   }
 
   private login(idpHint: IdentityProvider): Observable<void> {

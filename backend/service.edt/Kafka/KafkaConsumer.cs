@@ -125,7 +125,7 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
             clientSecret ??= clusterConfig.GetValue<string>("KafkaCluster:SaslOauthbearerConsumerClientSecret");
             clientId ??= clusterConfig.GetValue<string>("KafkaCluster:SaslOauthbearerConsumerClientId");
             tokenEndpoint ??= clusterConfig.GetValue<string>("KafkaCluster:SaslOauthbearerTokenEndpointUrl");
-            Log.Logger.Debug("EDT Kafka Consumer getting token {0} {1}", tokenEndpoint, clientId);
+            Log.Logger.Debug("EDT Kafka Consumer getting token {0} {1} ", tokenEndpoint, clientId);
 
             var accessTokenClient = new HttpClient();
 
@@ -151,6 +151,7 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
             client.OAuthBearerSetTokenFailure(ex.ToString());
         }
     }
+
     private static long GetTokenExpirationTime(string token)
     {
         var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
@@ -243,7 +244,7 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
                     Log.Logger.Warning("Message was not processed successfully");
                 }
                 //    var consumerResult = await this.retryPolicy.ImmediateConsumerRetry.ExecuteAsync(
-                //        async context => await this.handler.HandleRetryAsync(this.retryConsumer.MemberId, result.Message.Key, result.Message.Value, (int)context["retrycount"], result.Topic), retryContext);
+                //        async context => await this.handler.HandleRetryAsync(this.retryConsumer.MemberId, result.Message.Key, result.Message.SUBMITTING_AGENCY_GROUP_NAME, (int)context["retrycount"], result.Topic), retryContext);
                 //
             }
 
@@ -251,7 +252,7 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
             //{
             //    var retryContext = new Polly.Context { { "retrycount", 0 } };
             //    var consumerResult = await this.retryPolicy.ImmediateConsumerRetry.ExecuteAsync(
-            //        async context => await this.handler.HandleRetryAsync(this.retryConsumer.MemberId, result.Message.Key, result.Message.Value, (int)context["retrycount"], result.Topic), retryContext);
+            //        async context => await this.handler.HandleRetryAsync(this.retryConsumer.MemberId, result.Message.Key, result.Message.SUBMITTING_AGENCY_GROUP_NAME, (int)context["retrycount"], result.Topic), retryContext);
 
             //    if (consumerResult.Status == TaskStatus.RanToCompletion && consumerResult.Exception == null)
             //    {
@@ -263,7 +264,7 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
             //{
             //    var retryContext = new Polly.Context { { "retrycount", 0 } };
             //    var consumerResult = await this.retryPolicy.WaitForConsumerRetry.ExecuteAsync(
-            //        async context => await this.handler.HandleRetryAsync(this.retryConsumer.MemberId, result.Message.Key, result.Message.Value, (int)context["retrycount"], result.Topic), retryContext);
+            //        async context => await this.handler.HandleRetryAsync(this.retryConsumer.MemberId, result.Message.Key, result.Message.SUBMITTING_AGENCY_GROUP_NAME, (int)context["retrycount"], result.Topic), retryContext);
 
             //    if (consumerResult.Status == TaskStatus.RanToCompletion && consumerResult.Exception == null)
             //    {
@@ -275,7 +276,7 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
             //{
             //    var retryContext = new Polly.Context { { "retrycount", 0 } };
             //    var consumerResult = await this.retryPolicy.FinalWaitForConsumerRetry.ExecuteAsync(
-            //        async context => await this.handler.HandleRetryAsync(this.retryConsumer.MemberId, result.Message.Key, result.Message.Value, (int)context["retrycount"], result.Topic), retryContext);
+            //        async context => await this.handler.HandleRetryAsync(this.retryConsumer.MemberId, result.Message.Key, result.Message.SUBMITTING_AGENCY_GROUP_NAME, (int)context["retrycount"], result.Topic), retryContext);
 
             //    if (consumerResult.Status == TaskStatus.RanToCompletion && consumerResult.Exception == null)
             //    {

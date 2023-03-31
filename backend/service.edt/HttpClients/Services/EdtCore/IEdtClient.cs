@@ -1,7 +1,6 @@
 namespace edt.service.HttpClients.Services.EdtCore;
 
 using edt.service.Kafka.Model;
-using edt.service.ServiceEvents.UserAccountCreation.Models;
 
 public interface IEdtClient
 {
@@ -43,7 +42,5 @@ public interface IEdtClient
     /// <returns></returns>
     Task<bool> RemoveUserFromGroup(string userIdOrKey, EdtUserGroup group);
 
-
-    ///
 
 }

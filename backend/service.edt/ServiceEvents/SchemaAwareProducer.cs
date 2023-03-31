@@ -1,11 +1,18 @@
 namespace edt.service.ServiceEvents.UserAccountCreation.Handler;
 
+using System.Diagnostics;
+using System.Threading.Tasks;
+using Avro;
 using Chr.Avro.Confluent;
 using Confluent.Kafka;
 using Confluent.SchemaRegistry;
 using Confluent.SchemaRegistry.Serdes;
+using edt.service.Infrastructure.Telemetry;
 using edt.service.Kafka.Interfaces;
 using edt.service.Kafka.Model;
+using Google.Protobuf.WellKnownTypes;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Schema;
 using Serilog;
 
 /// <summary>
@@ -34,6 +41,9 @@ public class SchemaAwareProducer
     public async Task<bool> ProduceAsync(string userModificationTopicName, string key, UserModificationEvent result)
     {
 
+        var message = new Message<string, UserModificationEvent> { Key = key, Value = result };
+
+
         var success = false;
         var avroSerializerConfig = new AvroSerializerConfig
         {
@@ -48,24 +58,40 @@ public class SchemaAwareProducer
 
         using var schemaRegistry = new CachedSchemaRegistryClient(schemaRegistryConfig);
 
+        var subjectName = $"{nameof(UserModificationEvent)}-value";
+
         await Task.WhenAll(this.builder.SetAvroKeySerializer(schemaRegistry, $"{nameof(UserModificationEvent)}-key", registerAutomatically: AutomaticRegistrationBehavior.Always),
-        this.builder.SetAvroValueSerializer(schemaRegistry, $"{nameof(UserModificationEvent)}-value", AutomaticRegistrationBehavior.Always));
+        this.builder.SetAvroValueSerializer(schemaRegistry, subjectName, AutomaticRegistrationBehavior.Always));
+
+
 
         var registryAwareProducer = this.builder.Build();
 
+        var activity = Diagnostics.Producer.Start(userModificationTopicName, message);
 
-        await registryAwareProducer.ProduceAsync(userModificationTopicName, new Message<string, UserModificationEvent> { Key = key, Value = result }).ContinueWith(task =>
+        try
         {
-            if (!task.IsFaulted)
+            await registryAwareProducer.ProduceAsync(userModificationTopicName, new Message<string, UserModificationEvent> { Key = key, Value = result }).ContinueWith(task =>
             {
-                Log.Logger.Information("Published to {0}", userModificationTopicName);
-                success = true;
-            }
-            else
-            {
-                Log.Logger.Error("Failed to produce message {0}", task.Exception);
-            }
-        });
+                if (!task.IsFaulted)
+                {
+                    Log.Logger.Information("Published to {0}", userModificationTopicName);
+                    success = true;
+                }
+                else
+                {
+                    Log.Logger.Error("Failed to produce message {0}", task.Exception);
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            Log.Logger.Error("Failed to produce message {0}", ex.Message);
+        }
+        finally
+        {
+            activity?.Stop();
+        }
 
 
         return success;

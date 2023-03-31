@@ -1,20 +1,22 @@
 namespace edt.service.ServiceEvents.UserAccountCreation.Handler;
 
-using System.Globalization;
+using System.Diagnostics;
 using edt.service.Data;
 using edt.service.Exceptions;
-using edt.service.HttpClients;
 using edt.service.HttpClients.Services.EdtCore;
 using edt.service.Kafka;
 using edt.service.Kafka.Interfaces;
 using edt.service.Kafka.Model;
 using edt.service.ServiceEvents.UserAccountCreation.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using static edt.service.EdtServiceConfiguration;
 
 public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioningModel>
 {
     private readonly IKafkaProducer<string, Notification> producer;
+    private readonly IKafkaProducer<string, NotificationAckModel> ackProducer;
+
     private readonly IKafkaProducer<string, EdtUserProvisioningModel> retryProducer;
     private readonly IKafkaProducer<string, UserModificationEvent> userModificationProducer;
 
@@ -23,15 +25,20 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
     private readonly ILogger logger;
     private readonly EdtDataStoreDbContext context;
 
+
+
     public UserProvisioningHandler(
         IKafkaProducer<string, Notification> producer,
-        IKafkaProducer<string, UserModificationEvent> userModificationProducer,
+          IKafkaProducer<string, NotificationAckModel> ackProducer,
+
+    IKafkaProducer<string, UserModificationEvent> userModificationProducer,
         EdtServiceConfiguration configuration,
         IEdtClient edtClient,
         EdtDataStoreDbContext context,
         IKafkaProducer<string, EdtUserProvisioningModel> retryProducer, ILogger logger)
     {
         this.producer = producer;
+        this.ackProducer = ackProducer;
         this.userModificationProducer = userModificationProducer;
         this.configuration = configuration;
         this.context = context;
@@ -43,7 +50,14 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
     public async Task<Task> HandleAsync(string consumerName, string key, EdtUserProvisioningModel accessRequestModel)
     {
 
+        var plainTextTopic = Environment.GetEnvironmentVariable("USER_CREATION_PLAINTEXT_TOPIC");
+
+
         Serilog.Log.Logger.Information("Db {0} {1}", this.context.Database.CanConnect(), this.context.Database.GetConnectionString());
+
+        // set acitivty info
+        Activity.Current?.AddTag("digitalevidence.party.id", accessRequestModel.AccessRequestId);
+
 
         using var trx = this.context.Database.BeginTransaction();
         try
@@ -57,66 +71,126 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
             ///check weather edt service api is available before making any http request
             ///
             /// call version endpoint via get
+            ///
+            var edtVersion = await this.CheckEdtServiceVersion();
+
 
 
             //check wheather edt user already exist
-            var result = await this.CheckUser(accessRequestModel);
+            var result = await this.AddOrUpdateUser(accessRequestModel);
 
 
-            if (result.Successful)
+            if (result.successful)
             {
                 //add to tell message has been proccessed by consumer
                 await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
 
                 await this.context.SaveChangesAsync();
 
-                var msgKey = Guid.NewGuid().ToString();
-
-
-                // TODO - fix typo (is partyId used for anything?)
-                await this.producer.ProduceAsync(this.configuration.KafkaCluster.ProducerTopicName, key: key, new Notification
+                if (result.submittingAgencyUser)
                 {
-                    To = accessRequestModel.Email,
-                    From = "jpsprovideridentityportal@gov.bc.ca",
-                    FirstName = accessRequestModel.FullName!.Split(' ').FirstOrDefault(),
-                    Subject = "Digital Evidence Management System Enrollment Confirmation",
-                    MsgBody = MsgBody(accessRequestModel.FullName?.Split(' ').FirstOrDefault()),
-                    PartyId = accessRequestModel.Key!,
-                    Tag = msgKey
-                });
+                    Serilog.Log.Information($"User {result.partId} was for submitting agency - publishing event change only");
 
-                if ( string.IsNullOrEmpty(this.configuration.SchemaRegistry.Url))
-                {
-                    throw new EdtServiceException("Schema registry is not configured");
-                }
+                    try
+                    {
 
-                var producer = new SchemaAwareProducer(ConsumerSetup.GetProducerConfig(), this.userModificationProducer, this.configuration);
-                // publish to the user creation topic for others to consume
-                bool publishResultOk;
-                if (result.Event == UserModificationEvent.UserEvent.Create)
-                {
-                    Serilog.Log.Information("Publishing EDT user creation event {0}", msgKey);
-                    publishResultOk = await producer.ProduceAsync(this.configuration.KafkaCluster.UserCreationTopicName, key: msgKey, result);
+                        // create event data
+                        var eventData = new Dictionary<string, string>
+                        {
+                        { "FirstName", accessRequestModel.FullName!.Split(' ').FirstOrDefault("NAME_NOT_SET") },
+                        { "Organization", accessRequestModel.OrganizationName! },
+                        { "PartId", "" + result.partId },
+                        { "AccessRequestId", "" + accessRequestModel.AccessRequestId },
+                        { "MessageId", key! }
+                         };
+
+
+                        await this.producer.ProduceAsync(this.configuration.KafkaCluster.ProducerTopicName, key: key, new Notification
+                        {
+                            To = accessRequestModel.Email,
+                            DomainEvent = "digitalevidence-sa-usercreation-complete",
+                            EventData = eventData,
+                        });
+
+
+                        await this.ackProducer.ProduceAsync(this.configuration.KafkaCluster.AckTopicName, key: key, new NotificationAckModel
+                        {
+                            Subject = NotificationSubject.AccessRequest,
+                            AccessRequestId = accessRequestModel.AccessRequestId,
+                            Status = "Completed"
+                        });
+
+                        await trx.CommitAsync();
+                        Serilog.Log.Information($"User {result.partId} provision event published to {this.configuration.KafkaCluster.AckTopicName}");
+
+                    }
+                    catch (Exception ex)
+                    {
+                        Serilog.Log.Logger.Error($"Failed to publish to user notification topic - rolling back transaction [{string.Join(",", ex.Message)}");
+                        await trx.RollbackAsync();
+                    }
                 }
                 else
                 {
-                    Serilog.Log.Information("Publishing EDT user modification event {0}", msgKey);
-                    publishResultOk = await producer.ProduceAsync(this.configuration.KafkaCluster.UserModificationTopicName, key: msgKey, result);
+
+                    var msgKey = Guid.NewGuid().ToString();
+
+                    // create event data
+                    var eventData = new Dictionary<string, string>
+                    {
+                        { "FirstName", accessRequestModel.FullName!.Split(' ').FirstOrDefault("NAME_NOT_SET") },
+                        { "PartyId", accessRequestModel.Key! },
+                        { "Tag", msgKey! }
+                    };
+
+
+
+                    await this.producer.ProduceAsync(this.configuration.KafkaCluster.ProducerTopicName, key: key, new Notification
+                    {
+                        To = accessRequestModel.Email,
+                        DomainEvent = "digitalevidence-bcps-usercreation-complete",
+                        EventData = eventData,
+                    });
+
+                    if (string.IsNullOrEmpty(this.configuration.SchemaRegistry.Url))
+                    {
+                        throw new EdtServiceException("Schema registry is not configured");
+                    }
+
+                    var producer = new SchemaAwareProducer(ConsumerSetup.GetProducerConfig(), this.userModificationProducer, this.configuration);
+
+                    // publish to the user creation topic for others to consume
+                    bool publishResultOk;
+                    if (result.eventType == UserModificationEvent.UserEvent.Create)
+                    {
+                        Serilog.Log.Information("Publishing EDT user creation event {0} {1}", msgKey, accessRequestModel.Key);
+                        if (!string.IsNullOrEmpty(plainTextTopic))
+                        {
+                            Serilog.Log.Information("Publishing EDT user creation event to secondary topic", msgKey, accessRequestModel.Key);
+                            await this.userModificationProducer.ProduceAsync(plainTextTopic, key: msgKey, result);
+                        }
+                        publishResultOk = await producer.ProduceAsync(this.configuration.KafkaCluster.UserCreationTopicName, key: msgKey, result);
+                    }
+                    else
+                    {
+                        Serilog.Log.Information("Publishing EDT user modification event {0} {1}", msgKey, accessRequestModel.Key);
+                        publishResultOk = await producer.ProduceAsync(this.configuration.KafkaCluster.UserModificationTopicName, key: msgKey, result);
+                    }
+
+
+                    if (publishResultOk)
+                    {
+                        await trx.CommitAsync();
+                    }
+                    else
+                    {
+                        Serilog.Log.Logger.Error("Failed to publish to user notification topic - rolling back transaction");
+                        await trx.RollbackAsync();
+                    }
+
+                    return Task.FromResult(publishResultOk);
+
                 }
-
-
-                if (publishResultOk)
-                {
-                    await trx.CommitAsync();
-                }
-                else
-                {
-                    Serilog.Log.Logger.Error("Failed to publish to user notification topic - rolling back transaction");
-                    await trx.RollbackAsync();
-                }
-
-                return Task.FromResult(publishResultOk);
-
             }
         }
         catch (Exception ex)
@@ -141,78 +215,20 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
         return Task.CompletedTask; //create specific exception handler later
     }
 
-    private async Task<UserModificationEvent> CheckUser(EdtUserProvisioningModel value)
+
+    private async Task<string> CheckEdtServiceVersion() => await this.edtClient.GetVersion();
+
+    private async Task<UserModificationEvent> AddOrUpdateUser(EdtUserProvisioningModel value)
     {
         var user = await this.edtClient.GetUser(value.Key!);
-        //create user account in EDT
 
+        //create user account in EDT
         var result = user == null
-            ? await this.edtClient.CreateUser(value) //&& await this.edtClient.AddUserGroup($"Key:{value.Key!}", value.AssignedRegion) //create user
-            : await this.edtClient.UpdateUser(value, user);//update user
+            ? await this.edtClient.CreateUser(value)
+            : await this.edtClient.UpdateUser(value, user);
+
         return result;
     }
-
-    /// <summary>
-    ///
-    /// TODO This should come from a template
-    /// </summary>
-    /// <param name="firstName"></param>
-    /// <returns></returns>
-    private static string MsgBody(string? firstName)
-    {
-
-        var msgBody = string.Format(CultureInfo.CurrentCulture, @"<html>
-            <head>
-                <title>Digital Evidence Management System Enrollment Confirmation</title>
-            </head>
-                <body> 
-                <img src='https://drive.google.com/uc?export=view&id=16JU6XoVz5FvFUXXWCN10JvN-9EEeuEmr' width='' height='50'/><br/><br/><div style='border-top: 3px solid #22BCE5'><span style = 'font-family: Arial; font-size: 10pt' ><br/> Hello {0},<br/>
-<br/> Your Digital Evidence Management System Access Request has been processed and account successfully created.<p/><p/>
-                You may now Login to the EDT Portal with your digital identity via Single Sign-On (SSO)<p/><p/>{1}<p/>
-<p/>Thanks <br/>The DEMS User Management Team.
-                </span></div></body></html> ",
-                firstName, GetSupportMessage());
-        return msgBody;
-    }
-
-    private static string MsgBodyFailed(string? firstName)
-    {
-
-        var msgBody = string.Format(CultureInfo.CurrentCulture, @"<html>
-            <head>
-                <title>Digital Evidence Management System Enrollment Confirmation</title>
-            </head>
-                <body> 
-                <img src='https://drive.google.com/uc?export=view&id=16JU6XoVz5FvFUXXWCN10JvN-9EEeuEmr' width='' height='50'/><br/><br/><div style='border-top: 3px solid red'><span style = 'font-family: Arial; font-size: 10pt' ><br/> Hello {0},<br/>
-<br/>We were unable to complete your request to access the Digital Evidence Management System.<p/><p/>
-                {1}<br/> <p/><p/>The DEMS User Management Team.
-                </span><p/><div style='border-top: 3px solid red'></div></body></html> ",
-                firstName, GetSupportMessage());
-        return msgBody;
-    }
-
-    private static string MsgBodyRetry(string? firstName, RetryTopicModel retryTopicModel)
-    {
-        var retryText = $"We will retry again in {retryTopicModel.DelayMinutes} minutes [{retryTopicModel.TopicName}]";
-
-        var msgBody = string.Format(CultureInfo.CurrentCulture, @"<html>
-            <head>
-                <title>Digital Evidence Management System Enrollment Notification</title>
-            </head>
-                <body> 
-                <img src='https://drive.google.com/uc?export=view&id=16JU6XoVz5FvFUXXWCN10JvN-9EEeuEmr' width='' height='50'/><br/><br/>
-    <div style='border-top: 3px solid #22BCE5'><span style = 'font-family: Arial; font-size: 10pt' >
-<br/> Hello {0},<br/><br/>We are currently experiencing problems completing your on-boarding request.<br/>
-  <br/>{1}<br/>
-We will inform you if we are unable to complete your request.<p/><p/>{2}<p/>
-<div style='border-top: 3px solid #22BCE5'>
-                </span></div></body></html> ",
-                firstName, retryText, GetSupportMessage());
-        return msgBody;
-    }
-
-    private static string GetSupportMessage() => "<p/><b>For assistance contact <a href = \"mailto:support@dems.gov.bc.ca\">support@dems.gov.bc.ca</a> or call (888)-888-8888</b><p/><i>Please do not reply to this message as this message box is not monitored. Contact support at the address above for assistance</i>";
-
 
     /// <summary>
     /// Publish to the retry topic
@@ -241,16 +257,23 @@ We will inform you if we are unable to complete your request.<p/><p/>{2}<p/>
             if (retryTopicModel.NotifyUser && (value.RetryNumber == 1 || retryTopicModel.NotifyOnEachRetry))
             {
                 Serilog.Log.Information("Sending email to user to notify of retry");
-                await this.producer.ProduceAsync(this.configuration.KafkaCluster.ProducerTopicName, key: msgId, new Notification
+
+
+                var eventData = new Dictionary<string, string>
+                    {
+                        { "FirstName", value.FullName!.Split(' ').FirstOrDefault("NAME_NOT_SET") },
+                        { "PartyId", value.Key! },
+                        { "Tag", msgId! }
+                    };
+
+                await this.producer.ProduceAsync(this.configuration.KafkaCluster.ProducerTopicName, key: key, new Notification
                 {
                     To = value.Email,
-                    From = "jpsprovideridentityportal@gov.bc.ca",
-                    FirstName = value.FullName!.Split(' ').FirstOrDefault(),
+                    DomainEvent = "digitalevidence-bcps-usercreation-retry",
+                    EventData = eventData,
                     Subject = "Digital Evidence Management System Notification",
-                    MsgBody = MsgBodyRetry(value.FullName?.Split(' ').FirstOrDefault(), retryTopicModel),
-                    PartyId = value.Key!,
-                    Tag = msgId
                 });
+
 
             }
         }
@@ -266,20 +289,24 @@ We will inform you if we are unable to complete your request.<p/><p/>{2}<p/>
     {
         var msgId = Guid.NewGuid().ToString();
 
-        await this.producer.ProduceAsync(topic, key: msgId, new Notification
+        var eventData = new Dictionary<string, string>
+                    {
+                        { "FirstName", value.FullName!.Split(' ').FirstOrDefault("NAME_NOT_SET") },
+                        { "PartyId", value.Key! },
+                        { "Tag", msgId! }
+                    };
+
+        await this.producer.ProduceAsync(this.configuration.KafkaCluster.ProducerTopicName, key: key, new Notification
         {
             To = value.Email,
-            From = "jpsprovideridentityportal@gov.bc.ca",
-            FirstName = value.FullName!.Split(' ').FirstOrDefault(),
+            DomainEvent = "digitalevidence-bcps-usercreation-failure",
+            EventData = eventData,
             Subject = "Digital Evidence Management System Notification",
-            MsgBody = MsgBodyFailed(value.FullName?.Split(' ').FirstOrDefault()),
-            PartyId = value.Key!,
-            Tag = msgId
         });
     }
 
 
-        public async Task<Task> HandleRetryAsync(string consumerName, string key, EdtUserProvisioningModel value, int retryCount, string topicName)
+    public async Task<Task> HandleRetryAsync(string consumerName, string key, EdtUserProvisioningModel value, int retryCount, string topicName)
     {
         using var trx = this.context.Database.BeginTransaction();
 
@@ -289,16 +316,24 @@ We will inform you if we are unable to complete your request.<p/><p/>{2}<p/>
             //check wheather this message has been processed before   
             if (await this.context.HasBeenProcessed(key, consumerName))
             {
-                //await trx.RollbackAsync();
+                await trx.RollbackAsync();
                 return Task.CompletedTask;
             }
             ///check weather edt service api is available before making any http request
             ///
             /// call version endpoint via get
             ///
+            var edtVersion = await this.CheckEdtServiceVersion();
 
-            //check wheather edt user already exist
-            var result = await this.CheckUser(value);
+            if (edtVersion == null)
+            {
+                await trx.RollbackAsync();
+                Serilog.Log.Logger.Error("Failed to ping EDT service");
+                return Task.FromException(new EdtServiceException("Unable to access EDT endpoint"));
+            }
+
+            //check whether edt user already exist
+            var result = await this.AddOrUpdateUser(value);
 
             //// TODO REMOVE THIS BLOCK ONCE TESTED
             //Serilog.Log.Error("THROWING FAKE EXCEPTION!!!!!!!");
@@ -306,24 +341,28 @@ We will inform you if we are unable to complete your request.<p/><p/>{2}<p/>
             //// TODO REMOVE THIS BLOCK ONCE TESTED
 
 
-            if (result.Successful)
+            if (result.successful)
             {
                 //add to tell message has been proccessed by consumer
                 await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
 
                 await this.context.SaveChangesAsync();
                 //After successful operation, we can produce message for other service's consumption e.g. Notification service
+                var msgId = Guid.NewGuid().ToString();
 
-                // TODO - fix typo (is partyId used for anything?)
+                // create event data
+                var eventData = new Dictionary<string, string>
+                    {
+                        { "FirstName", value.FullName!.Split(' ').FirstOrDefault("NAME_NOT_SET") },
+                        { "PartyId", value.Key! },
+                        { "AccessRequestId", "" + value.AccessRequestId }
+                    };
+
                 await this.producer.ProduceAsync(this.configuration.KafkaCluster.ProducerTopicName, key: key, new Notification
                 {
                     To = value.Email,
-                    From = "jpsprovideridentityportal@gov.bc.ca",
-                    FirstName = value.FullName!.Split(' ').FirstOrDefault(),
-                    Subject = "Digital Evidence Management System Enrollment Confirmation",
-                    MsgBody = MsgBody(value.FullName?.Split(' ').FirstOrDefault()),
-                    PartyId = value.Key!,
-                    Tag = Guid.NewGuid().ToString()
+                    DomainEvent = "digitalevidence-bcps-usercreation-complete",
+                    EventData = eventData,
                 });
 
 
@@ -337,9 +376,10 @@ We will inform you if we are unable to complete your request.<p/><p/>{2}<p/>
         catch (Exception e)
         {
 
-            //await trx.RollbackAsync();
+            await trx.RollbackAsync();
             // get the last retry number
             var currentTopic = this.configuration.RetryPolicy.RetryTopics.Find(retryTopic => retryTopic.Order == value.TopicOrder);
+
             if (currentTopic == null)
             {
                 throw new EdtServiceException($"Did not find a topic with order number {value.TopicOrder}");
@@ -406,5 +446,4 @@ public static partial class UserProvisioningHandlerLoggingExtensions
     public static partial void LogUserAccessRetryError(this ILogger logger, string partId, string accessRequestId);
 
 }
-
 

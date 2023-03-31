@@ -17,8 +17,13 @@ public class PidpConfiguration
     public KeycloakConfiguration Keycloak { get; set; } = new();
     public LdapClientConfiguration LdapClient { get; set; } = new();
     public MailServerConfiguration MailServer { get; set; } = new();
+    public BackGroundServicesConfiguration BackGroundServices { get; set; } = new();
     public PlrClientConfiguration PlrClient { get; set; } = new();
     public JumClientConfiguration JumClient { get; set; } = new();
+    public EdtClientConfiguration EdtClient { get; set; } = new EdtClientConfiguration();
+    public EdtCaseManagementClientConfiguration EdtCaseManagementClient { get; set; } = new EdtCaseManagementClientConfiguration();
+
+    public TelemeteryConfiguration Telemetry { get; set; } = new TelemeteryConfiguration();
 
     // ------- Configuration Objects -------
 
@@ -27,10 +32,26 @@ public class PidpConfiguration
         public string ApiKey { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
     }
-
+    public class BackGroundServicesConfiguration
+    {
+        public DecomissionCaseAccessService DecomissionCaseAccessService { get; set; } = new DecomissionCaseAccessService();
+    }
+    public class DecomissionCaseAccessService
+    {
+        public int PeriodicTimer { get; set; }
+        public int GracePeriod { get; set; }
+    }
     public class ConnectionStringConfiguration
     {
         public string PidpDatabase { get; set; } = string.Empty;
+    }
+
+    public class TelemeteryConfiguration
+    {
+        public string CollectorUrl { get; set; } = string.Empty;
+        public string AzureConnectionString { get; set; } = string.Empty;
+        public bool LogToConsole { get; set; }
+
     }
 
     public class ChesClientConfiguration
@@ -65,6 +86,7 @@ public class PidpConfiguration
         public string BootstrapServers { get; set; } = string.Empty;
         public string ConsumerTopicName { get; set; } = string.Empty;
         public string ProducerTopicName { get; set; } = string.Empty;
+        public string CaseAccessRequestTopicName { get; set; } = string.Empty;
         public string NotificationTopicName { get; set; } = string.Empty;
         public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientId { get; set; } = string.Empty;
@@ -91,6 +113,16 @@ public class PidpConfiguration
     {
         public string Url { get; set; } = string.Empty;
         public int Port { get; set; }
+    }
+
+    public class EdtClientConfiguration
+    {
+        public string Url { get; set; } = string.Empty;
+    }
+
+    public class EdtCaseManagementClientConfiguration
+    {
+        public string Url { get; set; } = string.Empty;
     }
 
     public class PlrClientConfiguration

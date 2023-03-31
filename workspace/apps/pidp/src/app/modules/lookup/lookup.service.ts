@@ -6,6 +6,7 @@ import { SortUtils } from '@bcgov/shared/utils';
 
 import { LookupResource } from './lookup-resource.service';
 import {
+  AgencyLookup,
   CollegeLookup,
   Lookup,
   LookupConfig,
@@ -44,6 +45,13 @@ export class LookupService implements ILookupService {
   public get provinces(): ProvinceLookup[] {
     return this.copyAndSortByKey<ProvinceLookup>(
       this.lookupConfig?.provinces,
+      'name'
+    );
+  }
+
+  public get submittingAgencies(): AgencyLookup[] {
+    return this.copyAndSortByKey<AgencyLookup>(
+      this.lookupConfig?.submittingAgencies,
       'name'
     );
   }

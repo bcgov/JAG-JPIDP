@@ -22,6 +22,8 @@ spec:
   template:
     metadata:
       annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: "8080"
         {{- if .Values.global.commit_sha }}
         commit_sha: {{ .Values.global.commit_sha }}
         {{- end}}
@@ -62,9 +64,15 @@ spec:
             - name: KafkaCluster__SslKeyLocation
               value: /opt/kafka/certificates/client.key
             - name: KafkaCluster__SaslOauthbearerProducerClientId
-              value: "kafka-producer"
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-edt
+                  key: KafkaCluster__ProducerClientId
             - name: KafkaCluster__SaslOauthbearerConsumerClientId
-              value: "kafka-consumer"
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-edt
+                  key: KafkaCluster__ConsumerClientId
             - name: KafkaCluster__ConsumerGroupId
               value: {{ include "edt-service.fullname" . }}-consumer-group
             - name: DB_PASSWORD
@@ -77,6 +85,8 @@ spec:
                 secretKeyRef:
                   name: {{ include "edt-service.fullname" . }}-jum-database
                   key: DB_USER
+            - name: USER_CREATION_PLAINTEXT_TOPIC
+              value: digitalevidence-usercreation-plain-topic
             - name: DATABASE_NAME
               value: jum
             - name: DOTNET_BUNDLE_EXTRACT_BASE_DIR
@@ -101,11 +111,26 @@ spec:
                 secretKeyRef:
                   name: apicurio-registry
                   key: SchemaRegistry__ClientSecret
+            - name: KafkaCluster__AckTopicName
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-edt
+                  key: KafkaCluster__AckTopicName
             - name: KafkaCluster__BootstrapServers
               valueFrom:
                 secretKeyRef:
                   name: kafkaconfig-edt
                   key: KafkaCluster__BootstrapServers
+            - name: KafkaCluster__SaslOauthbearerProducerClientId
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-edt
+                  key: KafkaCluster__ProducerClientId
+            - name: KafkaCluster__SaslOauthbearerConsumerClientId
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-edt
+                  key: KafkaCluster__ConsumerClientId
             - name: KafkaCluster__ConsumerTopicName
               valueFrom:
                 secretKeyRef:
@@ -126,6 +151,16 @@ spec:
                 secretKeyRef:
                   name: kafkaconfig-edt
                   key: KafkaCluster__UserCreationTopicName
+            - name: KafkaCluster__SaslOauthbearerProducerClientId
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-edt
+                  key: KafkaCluster__SaslOauthbearerProducerClientId
+            - name: KafkaCluster__SaslOauthbearerConsumerClientId
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-edt
+                  key: KafkaCluster__SaslOauthbearerConsumerClientId
             - name: KafkaCluster__UserModificationTopicName
               valueFrom:
                 secretKeyRef:
@@ -153,12 +188,32 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: edt-client
-                  key: Url           
+                  key: EdtClient__Url           
             - name: EdtClient__Apikey
               valueFrom:
                 secretKeyRef:
                   name: edt-client
-                  key: Apikey 
+                  key: EdtClient__Apikey
+            - name: EdtClient__SearchFieldId
+              valueFrom:
+                secretKeyRef:
+                  name: edt-client
+                  key: EdtClient__SearchFieldId
+            - name: EdtClient__SubmittingAgencyGroup
+              valueFrom:
+                secretKeyRef:
+                  name: edt-client
+                  key: EdtClient__SubmittingAgencyGroup
+            - name: Telemetry__CollectorUrl
+              valueFrom: 
+                secretKeyRef:
+                  name: telemetry-pidp
+                  key: Telemetry__CollectorUrl
+            - name: Telemetry__AzureConnectionString
+              valueFrom: 
+                secretKeyRef:
+                  name: telemetry-pidp
+                  key: Telemetry__AzureConnectionString
           volumeMounts:
           - name: truststore
             mountPath: "/opt/kafka/certificates"
