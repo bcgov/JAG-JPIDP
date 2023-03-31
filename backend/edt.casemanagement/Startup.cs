@@ -30,6 +30,7 @@ using NodaTime.Serialization.SystemTextJson;
 using edt.casemanagement.ServiceEvents.CaseManagement.Handler;
 using edt.casemanagement.HttpClients.Services;
 using edt.casemanagement.Data;
+using static edt.casemanagement.EdtServiceConfiguration;
 
 public class Startup
 {
@@ -203,6 +204,17 @@ public class Startup
                 throw;
             }
         }
+
+
+        var caseDisplayCustomFieldsValue = Environment.GetEnvironmentVariable("CaseDisplayCustomFields");
+
+        if (caseDisplayCustomFieldsValue != null)
+        {
+            var caseDisplayCustomFields = System.Text.Json.JsonSerializer.Deserialize<List<CustomDisplayField>>(caseDisplayCustomFieldsValue);
+            config.CaseDisplayCustomFields = caseDisplayCustomFields;
+        }
+
+        Log.Information("Custom case management fields {0}", JsonConvert.SerializeObject(config.CaseDisplayCustomFields));
 
         Log.Logger.Information("### EDT Case Management Configuration complete");
 

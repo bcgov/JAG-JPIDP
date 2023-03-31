@@ -32,7 +32,7 @@ mutualAuth:
 
 # Run migrations pre-install and pre-upgrade
 migrations:
-  enabled: true
+  enabled: false
 
 serviceAccount:
   # Specifies whether a service account should be created
