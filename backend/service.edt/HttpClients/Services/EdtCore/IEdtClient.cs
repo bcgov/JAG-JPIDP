@@ -43,4 +43,27 @@ public interface IEdtClient
     Task<bool> RemoveUserFromGroup(string userIdOrKey, EdtUserGroup group);
 
 
+    /// <summary>
+    /// Flag account as inactive
+    /// </summary>
+    /// <param name="userIdOrKey"></param>
+    /// <returns></returns>
+    Task<bool> DisableAccount(string userIdOrKey);
+
+
+    /// <summary>
+    /// Flag account as active
+    /// </summary>
+    /// <param name="userIdOrKey"></param>
+    /// <returns></returns>
+    Task<bool> EnableAccount(string userIdOrKey);
+
+    /// <summary>
+    /// Alternate way to update EDT groups
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="newRegions"></param>
+    /// <param name="removedRegions"></param>
+    /// <returns></returns>
+    Task UpdateUserAssignedGroups(string key, List<string> newRegions, List<string> removedRegions);
 }

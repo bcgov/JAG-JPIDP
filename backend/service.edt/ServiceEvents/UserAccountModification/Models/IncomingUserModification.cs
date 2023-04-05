@@ -1,9 +1,7 @@
-namespace Pidp.Models;
+namespace edt.service.ServiceEvents.UserAccountModification.Models;
 
-using System;
-using System.Threading.Channels;
 
-public class UserChangeModel
+public class IncomingUserModification
 {
     public string UserID { get; set; } = string.Empty;
 
@@ -13,7 +11,7 @@ public class UserChangeModel
     public Dictionary<ChangeType, ListChangeType> ListChangeTypes { get; set; } = new Dictionary<ChangeType, ListChangeType>();
     public Dictionary<ChangeType, BooleanChangeType> BooleanChangeTypes { get; set; } = new Dictionary<ChangeType, BooleanChangeType>();
 
-    public bool IsAccountDeactivated() => this.BooleanChangeTypes.ContainsKey(ChangeType.ACTIVATION) && this.BooleanChangeTypes[ChangeType.ACTIVATION].Equals(false) || this.SingleChangeTypes.ContainsKey(ChangeType.EMAIL);
+    public bool IsAccountDeactivated() => (this.BooleanChangeTypes.ContainsKey(ChangeType.ACTIVATION) && this.BooleanChangeTypes[ChangeType.ACTIVATION].Equals(false)) || this.SingleChangeTypes.ContainsKey(ChangeType.EMAIL);
 }
 
 public enum ChangeType

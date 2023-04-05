@@ -139,6 +139,33 @@ public class EdtClient : BaseClient, IEdtClient
 
     }
 
+    private async Task<bool> AddUserToOUGroup(string userId, string groupName)
+    {
+        if (userId == null)
+        {
+            return false;
+        }
+        else
+        {
+            var groupId = await this.GetOuGroupId(groupName!);
+
+            var result = await this.PostAsync($"api/v1/org-units/1/groups/{groupId}/users", new AddUserToOuGroup() { UserIdOrKey = userId });
+
+            if (!result.IsSuccess)
+            {
+                Log.Logger.Error("Failed to add user {0} to region {1} due to {2}", userId, groupName, string.Join(",", result.Errors));
+                return false;
+            }
+            else
+            {
+                Log.Logger.Information("Successfully added user {0} to region {1}", userId, groupName);
+                return true;
+            }
+        }
+
+
+    }
+
     private async Task<bool> AddUserToSubmittingAgencyGroup(EdtUserProvisioningModel accessRequest, string userId)
     {
         if (accessRequest == null)
@@ -278,8 +305,59 @@ public class EdtClient : BaseClient, IEdtClient
 
         return result.Value;
 
+    }
+
+
+    public async Task<bool> EnableAccount(string userIdOrKey) => await this.EnableOrDisableAccount(userIdOrKey, true);
+
+    public async Task<bool> DisableAccount(string userIdOrKey) => await this.EnableOrDisableAccount(userIdOrKey, false);
+
+
+    /// <summary>
+    /// Enable or disable an account
+    /// With SSO we already will disable the keycloak login but this offers another level of assurance
+    /// and is an indicator in EDT that the account is inative.
+    /// </summary>
+    /// <param name="userIdOrKey"></param>
+    /// <param name="activateAccount"></param>
+    /// <returns></returns>
+    /// <exception cref="EdtServiceException"></exception>
+    public async Task<bool> EnableOrDisableAccount(string userIdOrKey, bool activateAccount)
+    {
+        Log.Logger.Information($"Account change active to {activateAccount} for user {userIdOrKey}");
+
+        var user = await this.GetUser(userIdOrKey);
+
+        if (user == null)
+        {
+            throw new EdtServiceException($"User {userIdOrKey} does not exist for update");
+        }
+        else
+        {
+            var updateData = new AccountChange
+            {
+                Id = user.Id!,
+                IsActive = activateAccount
+            };
+
+            var result = await this.PutAsync($"api/v1/users", updateData);
+
+            if (result.IsSuccess)
+            {
+                Log.Information($"Successfully update account for {userIdOrKey}");
+                return true;
+            }
+            else
+            {
+                Log.Error($"Error occurred updating account for {userIdOrKey} [{string.Join(",", result.Errors)}]");
+                return false;
+            }
+
+        }
+
 
     }
+
 
     public async Task<bool> RemoveUserFromGroup(string userIdOrKey, EdtUserGroup group)
     {
@@ -311,13 +389,48 @@ public class EdtClient : BaseClient, IEdtClient
         return result.Value.Version;
     }
 
+    public async Task UpdateUserAssignedGroups(string key, List<string> newRegions, List<string> removedRegions)
+    {
 
+        var user = await this.GetUser(key);
+
+        if ( user != null )
+        {
+            var currentGroups = await this.GetAssignedOUGroups(user.Id);
+
+            foreach ( var region in newRegions)
+            {
+                var alreadyPresent = currentGroups.Select(g => g.Name.Equals(region, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
+
+                if (!alreadyPresent)
+                {
+                    await this.AddUserToOUGroup(user.Id, region);
+                }
+            }
+
+            foreach ( var region in removedRegions)
+            {
+                var existingGroup = currentGroups.Where(g => g.Name.Equals(region, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
+                if (existingGroup != null)
+                {
+                    await this.RemoveUserFromGroup(user.Id, existingGroup);
+                }
+            }
+        }
+
+    }
 
     public class AddUserToOuGroup
     {
         public string? UserIdOrKey { get; set; }
     }
 
+
+    public class AccountChange
+    {
+        public string Id { get; set; } = string.Empty;
+        public bool IsActive { get; set; } = true;
+    }
 
 
 

@@ -30,6 +30,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using FluentValidation.AspNetCore;
 using NodaTime.Serialization.SystemTextJson;
+using edt.service.ServiceEvents.UserAccountModification.Handler;
 
 public class Startup
 {
@@ -116,6 +117,7 @@ public class Startup
           .AddSingleton(new RetryPolicy(config))
           .AddHttpClients(config)
           .AddSingleton<IClock>(SystemClock.Instance)
+          .AddSingleton<Microsoft.Extensions.Logging.ILogger>(svc => svc.GetRequiredService<ILogger<IncomingUserChangeModificationHandler>>())
           .AddSingleton<Microsoft.Extensions.Logging.ILogger>(svc => svc.GetRequiredService<ILogger<UserProvisioningHandler>>());
 
         services.AddAuthorization(options =>

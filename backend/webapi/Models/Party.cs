@@ -48,5 +48,7 @@ public class Party : BaseAuditable, IOwnedResource
 
     public ICollection<AccessRequest> AccessRequests { get; set; } = new List<AccessRequest>();
 
+    public ICollection<UserAccountChange> AccountChanges { get; set; } = new List<UserAccountChange>();
+
 
 }
