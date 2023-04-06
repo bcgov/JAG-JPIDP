@@ -645,7 +645,13 @@
                 <default-provider>basic</default-provider>
             </spi>
             <spi name="connectionsHttpClient">
-                <provider name="default" enabled="true"/>
+							<provider name="default" enabled="true">
+								<properties>
+									<property name="connection-pool-size" value="256"/>
+									<property name="socket-timeout-millis" value="120000"/>
+									<property name="establish-connection-timeout-millis" value="30000"/>
+								</properties>
+							</provider>
             </spi>
             <spi name="connectionsJpa">
                 <provider name="default" enabled="true">
