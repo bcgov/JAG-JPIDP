@@ -1,6 +1,5 @@
 namespace edt.service.HttpClients.Services.EdtCore;
 
-using System.Diagnostics.Metrics;
 using System.Threading.Tasks;
 using AutoMapper;
 using DomainResults.Common;
@@ -8,9 +7,6 @@ using edt.service.Exceptions;
 using edt.service.Infrastructure.Telemetry;
 using edt.service.Kafka.Model;
 using edt.service.ServiceEvents.UserAccountCreation.Models;
-using Google.Protobuf.WellKnownTypes;
-using MediatR;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Serilog;
 
 public class EdtClient : BaseClient, IEdtClient
@@ -187,15 +183,34 @@ public class EdtClient : BaseClient, IEdtClient
             {
                 Log.Information("User {0} added to submitting agency group", userId);
                 return true;
-            } 
+            }
         }
         else
         {
             Log.Error("Failed to determine group Id for Submitting Agency users");
             return false;
-        } 
+        }
 
 
+    }
+
+    public async Task<UserModificationEvent> UpdateUserDetails(EdtUserDto userDetails)
+    {
+        if (userDetails == null)
+        {
+            throw new EdtServiceException("Null user info passed to UpdateUserDetails");
+        }
+
+        Log.Logger.Information($"Updating EDT User {userDetails}");
+        var result = await this.PutAsync($"api/v1/users", userDetails);
+
+        return new UserModificationEvent
+        {
+            partId = userDetails.Key,
+            eventType = UserModificationEvent.UserEvent.Modify,
+            eventTime = DateTime.Now,
+            successful = result.IsSuccess
+        };
     }
 
     public async Task<UserModificationEvent> UpdateUser(EdtUserProvisioningModel accessRequest, EdtUserDto previousRequest)
@@ -211,7 +226,7 @@ public class EdtClient : BaseClient, IEdtClient
             eventType = UserModificationEvent.UserEvent.Modify,
             eventTime = DateTime.Now,
             accessRequestId = accessRequest.AccessRequestId,
-            successful = true
+            successful = result.IsSuccess
         };
 
         if (!result.IsSuccess)
@@ -232,7 +247,7 @@ public class EdtClient : BaseClient, IEdtClient
 
                 if (alreadyMember)
                 {
-                    Log.Logger.Information($"User {accessRequest.Key} already member of { SUBMITTING_AGENCY_GROUP_NAME}");
+                    Log.Logger.Information($"User {accessRequest.Key} already member of {SUBMITTING_AGENCY_GROUP_NAME}");
                 }
                 else
                 {
@@ -326,7 +341,7 @@ public class EdtClient : BaseClient, IEdtClient
     {
         Log.Logger.Information($"Account change active to {activateAccount} for user {userIdOrKey}");
 
-        var user = await this.GetUser(userIdOrKey);
+        EdtUserDto? user = await this.GetUser(userIdOrKey);
 
         if (user == null)
         {
@@ -334,13 +349,9 @@ public class EdtClient : BaseClient, IEdtClient
         }
         else
         {
-            var updateData = new AccountChange
-            {
-                Id = user.Id!,
-                IsActive = activateAccount
-            };
 
-            var result = await this.PutAsync($"api/v1/users", updateData);
+            user.IsActive = activateAccount;
+            var result = await this.PutAsync($"api/v1/users", user);
 
             if (result.IsSuccess)
             {
@@ -389,34 +400,60 @@ public class EdtClient : BaseClient, IEdtClient
         return result.Value.Version;
     }
 
-    public async Task UpdateUserAssignedGroups(string key, List<string> newRegions, List<string> removedRegions)
+    public async Task<bool> UpdateUserAssignedGroups(string key, List<string> newRegions, List<string> removedRegions)
     {
 
+        Log.Information($"Updating regions for user {key}");
         var user = await this.GetUser(key);
+        var changesMade = false;
 
-        if ( user != null )
+        if (user == null)
+        {
+            Log.Error($"Failed to find EDT user with key for region update {key}");
+            throw new EdtServiceException($"Failed to find EDT user with key for region update {key}");
+        }
+        else
         {
             var currentGroups = await this.GetAssignedOUGroups(user.Id);
 
-            foreach ( var region in newRegions)
+            foreach (var region in newRegions)
             {
                 var alreadyPresent = currentGroups.Select(g => g.Name.Equals(region, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
 
                 if (!alreadyPresent)
                 {
-                    await this.AddUserToOUGroup(user.Id, region);
+                    changesMade = true;
+                    var response = await this.AddUserToOUGroup(user.Id, region);
+                    if (!response)
+                    {
+                        throw new EdtServiceException($"Failed to add user {key} to {region}");
+                    }
                 }
             }
 
-            foreach ( var region in removedRegions)
+            foreach (var region in removedRegions)
             {
                 var existingGroup = currentGroups.Where(g => g.Name.Equals(region, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
                 if (existingGroup != null)
                 {
-                    await this.RemoveUserFromGroup(user.Id, existingGroup);
+                    changesMade = true;
+                    var response = await this.RemoveUserFromGroup(user.Id, existingGroup);
+                    if (!response)
+                    {
+                        throw new EdtServiceException($"Failed to remove user {key} from {existingGroup.Name}");
+                    }
+
                 }
             }
+
+            if (!changesMade)
+            {
+                Log.Information($"No changes to existing regions were detected for {key}");
+            }
         }
+
+        return changesMade;
+
 
     }
 

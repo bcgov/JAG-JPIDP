@@ -56,7 +56,7 @@ public class KafkaProducer<TKey, TValue> : IDisposable, IKafkaProducer<TKey, TVa
             clientId ??= clusterConfig.GetValue<string>("KafkaCluster:SaslOauthbearerProducerClientId");
             tokenEndpoint ??= clusterConfig.GetValue<string>("KafkaCluster:SaslOauthbearerTokenEndpointUrl");
 
-            Log.Logger.Information("JUM Kafka Producer getting token {0} {1} {2}", tokenEndpoint, clientId, clientSecret);
+            Log.Logger.Debug("JUM Kafka Producer getting token {0} {1} {2}", tokenEndpoint, clientId, clientSecret);
             var accessTokenClient = new HttpClient();
             var accessToken = await accessTokenClient.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
             {
@@ -69,7 +69,7 @@ public class KafkaProducer<TKey, TValue> : IDisposable, IKafkaProducer<TKey, TVa
             var tokenDate = DateTimeOffset.FromUnixTimeSeconds(tokenTicks);
             var subject = GetTokenSubject(accessToken.AccessToken);
             var ms = tokenDate.ToUnixTimeMilliseconds();
-            Log.Logger.Information("Producer got token {0}", ms);
+            Log.Logger.Debug("Producer got token {0}", ms);
 
             client.OAuthBearerSetToken(accessToken.AccessToken, ms, subject);
         }

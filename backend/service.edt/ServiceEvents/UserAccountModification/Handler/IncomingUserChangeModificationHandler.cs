@@ -1,6 +1,7 @@
 namespace edt.service.ServiceEvents.UserAccountModification.Handler;
 
 using System.Diagnostics.Eventing.Reader;
+using System.Text;
 using System.Threading.Channels;
 using edt.service.Data;
 using edt.service.Exceptions;
@@ -51,6 +52,14 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
 
         Serilog.Log.Information($"Message {key} received on topic {consumerName} for {incomingUserModification.UserID} {incomingUserModification.Key}");
 
+        var userInfo = await this.edtClient.GetUser(incomingUserModification.Key);
+
+        if (userInfo == null)
+        {
+            Serilog.Log.Error($"Failed to find EDT user with key {incomingUserModification.Key} for update");
+            return Task.FromException(new EdtServiceException("$Failed to find EDT user with key {incomingUserModification.Key} for update"));
+        }
+
         var userModificationEvent = new UserModificationEvent
         {
             eventTime = DateTime.Now,
@@ -59,15 +68,23 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
         };
 
         var domainEvent = "digitalevidence-bcps-userupdate-complete";
+        var eventData = new Dictionary<string, string>
+        {
+            { "firstName", userInfo.FullName.Split(" ").FirstOrDefault() }
+        };
+
+
 
         // if account disabled then ignore everything else
         if (incomingUserModification.IsAccountDeactivated())
         {
+
+            domainEvent = "digitalevidence-bcps-userupdate-deactivated";
             Serilog.Log.Information($"Deactiviating account for {incomingUserModification.Key}");
 
-            var responseOk = await this.edtClient.DisableAccount(incomingUserModification.Key);
+            var disabledOk = await this.edtClient.DisableAccount(incomingUserModification.Key);
 
-            if (responseOk)
+            if (disabledOk)
             {
                 Serilog.Log.Information($"Account deactivated for user {incomingUserModification.Key}");
                 userModificationEvent.eventType = UserModificationEvent.UserEvent.Disable;
@@ -91,6 +108,29 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
                 userModificationEvent.eventType = UserModificationEvent.UserEvent.Enable;
             }
 
+            var fullName = userInfo.FullName.Split(" ");
+            var nameChange = false;
+
+            if (incomingUserModification.SingleChangeTypes.ContainsKey(ChangeType.FIRSTNAME))
+            {
+                Serilog.Log.Information($"First name change detected for {incomingUserModification.Key} - From [{incomingUserModification.SingleChangeTypes[ChangeType.FIRSTNAME].From}] to [{incomingUserModification.SingleChangeTypes[ChangeType.FIRSTNAME].To}]");
+                fullName[0] = incomingUserModification.SingleChangeTypes[ChangeType.FIRSTNAME].To;
+                nameChange = true;
+
+            }
+            if (incomingUserModification.SingleChangeTypes.ContainsKey(ChangeType.LASTNAME))
+            {
+                Serilog.Log.Information($"Last name change detected for {incomingUserModification.Key} - From [{incomingUserModification.SingleChangeTypes[ChangeType.LASTNAME].From}] to [{incomingUserModification.SingleChangeTypes[ChangeType.LASTNAME].To}]");
+                fullName[fullName.Length - 1] = incomingUserModification.SingleChangeTypes[ChangeType.LASTNAME].To;
+                nameChange = true;
+            }
+
+            if (nameChange)
+            {
+                userInfo.FullName = string.Join(" ", fullName);
+                var result = await this.edtClient.UpdateUserDetails(userInfo);
+            }
+
             // handle regional assignment changes
             if (incomingUserModification.ListChangeTypes.ContainsKey(ChangeType.REGIONS))
             {
@@ -100,11 +140,21 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
                 var newRegions = regionChanges.To.Except(regionChanges.From).ToList();
                 var removedRegions = regionChanges.From.Except(regionChanges.To).ToList();
 
-                await this.edtClient.UpdateUserAssignedGroups(incomingUserModification.Key, newRegions, removedRegions);
+                var changesMade = await this.edtClient.UpdateUserAssignedGroups(incomingUserModification.Key, newRegions, removedRegions);
+
+                // if user we deactivated then re-activate
+                if (userInfo.IsActive == false)
+                {
+                    // TODO - do we re-activate in this case?
+                }
             }
         }
 
-        var eventData = new Dictionary<string, string>();
+        if (domainEvent == "digitalevidence-bcps-userupdate-complete")
+        {
+            eventData.Add("changeList", incomingUserModification.ToChangeHtml());
+        }
+
 
         // publish a notification event and a user modification event
         await this.producer.ProduceAsync(this.configuration.KafkaCluster.ProducerTopicName, Guid.NewGuid().ToString(), new Notification
@@ -119,6 +169,7 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
 
 
     }
+
 
     public Task<Task> HandleRetryAsync(string consumerName, string key, IncomingUserModification value, int retryCount, string topicName)
     {

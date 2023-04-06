@@ -1,6 +1,7 @@
 namespace Pidp.Features.AccessRequests;
 
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Text.Json.Nodes;
@@ -146,6 +147,7 @@ public class DigitalEvidenceUpdate
                             {
 
                                 // deactivate the account
+                                keycloakUserInfo!.Enabled = false;
                                 var deactivated = await this.UpdateKeycloakUser(party.UserId, keycloakUserInfo);
 
                                 if (deactivated)
@@ -197,10 +199,15 @@ public class DigitalEvidenceUpdate
                                     List<string> newRegions = regionChanges.To.Except(regionChanges.From).ToList();
                                     List<string> removedRegions = regionChanges.From.Except(regionChanges.To).ToList();
 
-                                    if ( newRegions.Count > 0)
+                                    if (newRegions.Count > 0)
                                     {
                                         Serilog.Log.Information($"Adding [{string.Join(",", newRegions)}] regions for user {party.Id}");
                                         var removedGroupsOk = await this.AddKeycloakUserRegions(party.UserId, newRegions);
+                                        if (regionChanges.From.Count() == 0)
+                                        {
+                                            // went from no groups to having groups - user is now active
+                                            keycloakUserInfo.Enabled = true;
+                                        }
                                     }
 
                                     if (removedRegions.Count > 0)
@@ -278,8 +285,7 @@ public class DigitalEvidenceUpdate
 
         private async Task<bool> UpdateKeycloakUser(Guid userId, UserRepresentation user)
         {
-            Serilog.Log.Information($"Keycloak account deactivation for {user.Email}");
-            user.Enabled = false;
+            Serilog.Log.Information($"Keycloak account update for {user.Email}");
 
             return await this.keycloakClient.UpdateUser(userId, user);
         }
@@ -305,7 +311,7 @@ public class DigitalEvidenceUpdate
                 if (!party.Email.Equals(justinUserInfo.emailAddress, StringComparison.OrdinalIgnoreCase))
                 {
                     Serilog.Log.Information($"User {party.Id} email changed from {party.Email} to {justinUserInfo.emailAddress}");
-                  //  userChangeModel.SingleChangeTypes.Add(ChangeType.EMAIL, new SingleChangeType(party.Email, justinUserInfo.emailAddress));
+                    //   userChangeModel.SingleChangeTypes.Add(ChangeType.EMAIL, new SingleChangeType(party.Email, justinUserInfo.emailAddress));
                 }
             }
 
@@ -315,17 +321,17 @@ public class DigitalEvidenceUpdate
                 Serilog.Log.Information($"User {party.Id} last name changed from {party.LastName} to {justinUserInfo.surname}");
                 userChangeModel.SingleChangeTypes.Add(ChangeType.LASTNAME, new SingleChangeType(party.LastName, justinUserInfo.surname));
             }
-            if (!justinUserInfo.surname.Equals(party.LastName, StringComparison.Ordinal))
+            if (!justinUserInfo.firstGivenNm.Equals(party.FirstName, StringComparison.Ordinal))
             {
                 Serilog.Log.Information($"User {party.Id} first name changed from {party.FirstName} to {justinUserInfo.firstGivenNm}");
                 userChangeModel.SingleChangeTypes.Add(ChangeType.FIRSTNAME, new SingleChangeType(party.FirstName, justinUserInfo.firstGivenNm));
             }
 
 
-            // see if roles have changed
+            // see if roles have changed TODO - do we care about these??
             if (justinUserInfo.GrantedRoles.Count > 0)
             {
-                List<string> justinRoles = justinUserInfo.GrantedRoles.Select(role => role.role).ToList();
+                var justinRoles = justinUserInfo.GrantedRoles.Select(role => role.role).ToList();
             }
             else
             {
@@ -336,32 +342,38 @@ public class DigitalEvidenceUpdate
             // see if regions has changed
             if (justinUserInfo.assignedAgencies.Count > 0)
             {
-                List<string> justinAgencies = justinUserInfo.assignedAgencies.Select(agency => agency.agencyName).ToList();
+                var justinAgencies = justinUserInfo.assignedAgencies.Select(agency => agency.agencyName).ToList();
 
                 var groups = await this.keycloakClient.GetUserGroups(party.UserId);
 
                 // check which groups the user is in now
-                List<string> keycloakGroups = groups.Select(group => group.Name).ToList();
+                var keycloakGroups = groups.Select(group => group.Name).ToList();
 
                 // user should be in BCPS group
                 if (!keycloakGroups.Contains("BCPS"))
                 {
                     Serilog.Log.Warning($"User {party.Id} is not currently in the BCPS group");
                 }
-                else
+
+                // get all regions (e.g. Van Isl, Interior) from the list of assigned regions in JUSTIN
+                var assignedJUSTINRegions = await this.GetCrownRegions(justinAgencies);
+                // get all known regions
+                var allRegions = await this.GetAllCrownRegions();
+
+                // get the regions assigned in keycloak that are valid regions (could be additional groups added that are unrelated)
+                var keycloakRegions = allRegions.Intersect(keycloakGroups).ToList();
+
+                // find the differences
+                var unwantedRegions = keycloakRegions.Except(assignedJUSTINRegions).ToList();
+                var newRegions = assignedJUSTINRegions.Except(keycloakRegions).ToList();
+
+                if (unwantedRegions.Count > 0 || newRegions.Count > 0)
                 {
-                    // remove the BCPS group for the check
-                    keycloakGroups.Remove("BCPS");
+                    Serilog.Log.Information($"{party.Id} has group assignment (region) changes from [{string.Join(",", keycloakRegions)}] to [{string.Join(",", assignedJUSTINRegions)}]");
+                    userChangeModel.ListChangeTypes.Add(ChangeType.REGIONS, new ListChangeType(keycloakRegions, assignedJUSTINRegions));
 
-                    var regions = await this.GetCrownRegions(justinAgencies);
-
-                    if (regions.Count != keycloakGroups.Count)
-                    {
-                        Serilog.Log.Information($"{party.Id} has group assignment (region) changes from [{string.Join(",",keycloakGroups)} to [{string.Join(",",regions)}]");
-                        userChangeModel.ListChangeTypes.Add(ChangeType.REGIONS, new ListChangeType( keycloakGroups, regions));
-
-                    }
                 }
+
 
             }
             else
@@ -381,15 +393,26 @@ public class DigitalEvidenceUpdate
 
             List<CrownRegion>? regions = handler.HandleAsync(query).Result.CrownRegions;
 
-            var assignedCrownRegions = regions.Where(region => AssignedAgencies.Any(x => region.CrownLocation.Equals(x,StringComparison.OrdinalIgnoreCase)));
+            var assignedCrownRegions = regions.Where(region => AssignedAgencies.Any(x => region.CrownLocation.Equals(x, StringComparison.OrdinalIgnoreCase)));
 
             // get the unique list of regions
             var assignedRegions = assignedCrownRegions.Select(region => region.RegionName).Distinct().ToList();
 
             return assignedRegions;
-         
+
         }
 
+        private async Task<List<string>> GetAllCrownRegions()
+        {
+            var query = new Lookups.Index.Query();
+            var handler = new Lookups.Index.QueryHandler(this.context);
+
+            List<CrownRegion>? regions = handler.HandleAsync(query).Result.CrownRegions;
+            var distinctRegions = regions.Select(region => region.RegionName).Distinct().ToList();
+
+            return distinctRegions;
+
+        }
     }
 
 

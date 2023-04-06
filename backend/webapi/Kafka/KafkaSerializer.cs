@@ -18,7 +18,12 @@ internal sealed class KafkaSerializer<T> : ISerializer<T>
             throw new NotSupportedException("Not Supported.");
         }
 
-        var json = JsonConvert.SerializeObject(data);
+        var options = new JsonSerializerSettings
+        {
+            NullValueHandling = NullValueHandling.Ignore
+        };
+
+        var json = JsonConvert.SerializeObject(data, options);
 
         return Encoding.UTF8.GetBytes(json);
     }

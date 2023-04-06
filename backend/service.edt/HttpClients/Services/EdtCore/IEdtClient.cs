@@ -7,6 +7,9 @@ public interface IEdtClient
     Task<UserModificationEvent> CreateUser(EdtUserProvisioningModel accessRequest);
     Task<UserModificationEvent> UpdateUser(EdtUserProvisioningModel accessRequest, EdtUserDto previousRequest);
 
+    Task<UserModificationEvent> UpdateUserDetails(EdtUserDto userDetails);
+
+
     Task<int> GetOuGroupId(string regionName);
 
     Task<EdtUserDto?> GetUser(string userKey);
@@ -59,11 +62,11 @@ public interface IEdtClient
     Task<bool> EnableAccount(string userIdOrKey);
 
     /// <summary>
-    /// Alternate way to update EDT groups
+    /// 
     /// </summary>
     /// <param name="key"></param>
     /// <param name="newRegions"></param>
     /// <param name="removedRegions"></param>
     /// <returns></returns>
-    Task UpdateUserAssignedGroups(string key, List<string> newRegions, List<string> removedRegions);
+    Task<bool> UpdateUserAssignedGroups(string key, List<string> newRegions, List<string> removedRegions);
 }

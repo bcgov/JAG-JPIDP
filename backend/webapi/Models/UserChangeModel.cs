@@ -1,7 +1,7 @@
 namespace Pidp.Models;
 
-using System;
-using System.Threading.Channels;
+using System.Collections.Generic;
+using Newtonsoft.Json;
 
 public class UserChangeModel
 {
@@ -9,10 +9,12 @@ public class UserChangeModel
 
     public string Key { get; set; } = string.Empty;
     public DateTime ChangeDateTime { get; set; } = DateTime.Now;
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
     public Dictionary<ChangeType, SingleChangeType> SingleChangeTypes { get; set; } = new Dictionary<ChangeType, SingleChangeType>();
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
     public Dictionary<ChangeType, ListChangeType> ListChangeTypes { get; set; } = new Dictionary<ChangeType, ListChangeType>();
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
     public Dictionary<ChangeType, BooleanChangeType> BooleanChangeTypes { get; set; } = new Dictionary<ChangeType, BooleanChangeType>();
-
     public bool IsAccountDeactivated() => this.BooleanChangeTypes.ContainsKey(ChangeType.ACTIVATION) && this.BooleanChangeTypes[ChangeType.ACTIVATION].Equals(false) || this.SingleChangeTypes.ContainsKey(ChangeType.EMAIL);
 }
 
