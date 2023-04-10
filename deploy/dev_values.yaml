@@ -50,6 +50,19 @@ edt-service:
   migrations:
     enabled: false
 
+jum-notification:
+  migrations:
+    enabled: false
+
+edt-casemgmt:
+  migrations:
+    enabled: false
+
+jum-backend:
+  migrations:
+    enabled: false
+
+
 redis:
   enabled: false
   auth:

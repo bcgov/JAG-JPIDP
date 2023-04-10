@@ -23,12 +23,31 @@ public class EvidenceCaseManagementController : PidpControllerBase
                                                                                        [FromRoute] Query.DigitalEvidenceByRequestIdQuery.Query query)
         => await handler.HandleAsync(new DigitalEvidenceByRequestIdQuery.Query(query.RequestId));
 
-    [HttpGet]
-    [Authorize(Policy = Policies.SubAgencyIdentityProvider)]
+    [HttpGet("getCaseUserKeys")]
+    [Authorize(Roles = Roles.SubmittingAgencyClient)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<List<DigitalEvidenceCaseModel>>> GetSubAgencyRequestsByPartyId([FromServices] IQueryHandler<Query.DigitalEvidenceByPartyQuery.Query, List<DigitalEvidenceCaseModel>> handler,
-                                                              [FromQuery] Query.DigitalEvidenceByPartyQuery.Query query)
+    public async Task<ActionResult<List<string>>> GetSubAgencyRequestsByCaseId([FromServices] IQueryHandler<SubmittingAgencyByCaseId.Query, List<string>> handler,
+                                                                                   [FromQuery] SubmittingAgencyByCaseId.Query query)
+    {
+        var result = await handler.HandleAsync(new SubmittingAgencyByCaseId.Query(query.RCCNumber));
+        return Ok(result);
+    }
+     
+
+
+    /// <summary>
+    /// User needs to be in the sub agency IDP list (currently including IDIR for testing) and have the SUBMITTING_AGENCY role.
+    /// </summary>
+    /// <param name="handler"></param>
+    /// <param name="query"></param>
+    /// <returns></returns>
+    [HttpGet]
+    [Authorize(Policy = Policies.SubAgencyIdentityProvider, Roles = Roles.SubmittingAgency)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<List<DigitalEvidenceCaseModel>>> GetSubAgencyRequestsByPartyId([FromServices] IQueryHandler<DigitalEvidenceByPartyQuery.Query, List<DigitalEvidenceCaseModel>> handler,
+                                                              [FromQuery] DigitalEvidenceByPartyQuery.Query query)
     => await handler.HandleAsync(new DigitalEvidenceByPartyQuery.Query(query.PartyId));
 
     [HttpPost]

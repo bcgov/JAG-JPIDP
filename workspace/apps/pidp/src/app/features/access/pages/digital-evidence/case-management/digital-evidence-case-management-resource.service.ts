@@ -10,10 +10,9 @@ import { ApiHttpClient } from '@app/core/resources/api-http-client.service';
 import { ProfileStatus } from '@app/features/portal/models/profile-status.model';
 import { PortalResource } from '@app/features/portal/portal-resource.service';
 
-import { DemsAccount } from '../digital-evidence-account.model';
-import { DigitalEvidenceCaseFindResponse } from './digital-evidence-case-find-response.model';
 import {
   DigitalEvidenceCase,
+  DigitalEvidenceCaseAccessRequest,
   DigitalEvidenceCaseRequest,
 } from './digital-evidence-case.model';
 
@@ -64,17 +63,9 @@ export class DigitalEvidenceCaseManagementResource {
     });
   }
 
-  public requestAccess(
-    partyId: number,
-    caseId: number,
-    agencyFileNumber: string
-  ): NoContent {
+  public requestAccess(request: DigitalEvidenceCaseAccessRequest): NoContent {
     return this.apiResource
-      .post<NoContent>('evidence-case-management', {
-        partyId,
-        caseId,
-        agencyFileNumber,
-      })
+      .post<NoContent>('evidence-case-management', request)
       .pipe(
         NoContentResponse,
         catchError((error: HttpErrorResponse) => {

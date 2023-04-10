@@ -1,5 +1,6 @@
 namespace Pidp.Features.DigitalEvidenceCaseManagement.Commands;
 
+using System.Text.Json.Serialization;
 using DomainResults.Common;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -19,12 +20,10 @@ public class CaseAccessRequest
         public int PartyId { get; set; }
         public string SubmittingAgencyCode { get; set; } = string.Empty;
         public string AgencyFileNumber { get; set; } = string.Empty;
-
         public int RequestId { get; set; }
-
         public int CaseId { get; set; }
-        public string CaseNumber { get; set; } = string.Empty;
-        public string CaseName { get; set; } = string.Empty;
+        public string Key { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
         public string CaseGroup { get; set; } = string.Empty;
         public string RequestStatus { get; set; } = string.Empty;
     }
@@ -35,6 +34,7 @@ public class CaseAccessRequest
             this.RuleFor(x => x.AgencyFileNumber).NotEmpty();
             this.RuleFor(x => x.PartyId).GreaterThan(0);
             this.RuleFor(x => x.CaseId).GreaterThan(0);
+            this.RuleFor(command => command.Key).NotEmpty();
 
         }
     }
@@ -48,7 +48,7 @@ public class CaseAccessRequest
         private static readonly Histogram CaseQueueRequestDuration = Metrics
             .CreateHistogram("pipd_case_request_duration", "Histogram of case request call durations.");
 
-        public CommandHandler(IClock clock, ILogger<CommandHandler> logger, PidpConfiguration config, PidpDbContext context,  IKafkaProducer<string, SubAgencyDomainEvent> kafkaProducer)
+        public CommandHandler(IClock clock, ILogger<CommandHandler> logger, PidpConfiguration config, PidpDbContext context, IKafkaProducer<string, SubAgencyDomainEvent> kafkaProducer)
         {
             this.clock = clock;
             this.logger = logger;
@@ -78,7 +78,7 @@ public class CaseAccessRequest
 
                     var subAgencyRequest = await this.SubmitAgencyCaseRequest(command); //save all trx at once for production(remove this and handle using idempotent)
 
-                    var exportedEvent = this.AddOutbox(command, subAgencyRequest, dto);
+                   // var exportedEvent = this.AddOutbox(command, subAgencyRequest, dto);
 
                     await this.PublishSubAgencyAccessRequest(dto, subAgencyRequest);
 
@@ -111,9 +111,7 @@ public class CaseAccessRequest
                     RequestId = subAgencyRequest.RequestId,
                     CaseId = subAgencyRequest.CaseId,
                     PartyId = subAgencyRequest.PartyId,
-                    AgencyFileNumber = command.AgencyFileNumber,
-                    Username = dto.Jpdid,
-                    UserId = dto.UserId,
+                    Username = subAgencyRequest.Party!.Jpdid,
                     RequestedOn = subAgencyRequest.RequestedOn
                 })
             });
@@ -144,6 +142,7 @@ public class CaseAccessRequest
                 CaseId = command.CaseId,
                 RequestStatus = AgencyRequestStatus.Queued,
                 AgencyFileNumber = command.AgencyFileNumber,
+                RCCNumber = command.Key,
                 PartyId = command.PartyId,
                 RequestedOn = this.clock.GetCurrentInstant()
             };
@@ -177,7 +176,7 @@ public class CaseAccessRequest
 public static partial class SubmittingAgencyLoggingExtensions
 {
     [LoggerMessage(1, LogLevel.Error, "Request for case access denied for party {partyId} and case {caseId}")]
-    public static partial void LogSubmittingAgencyAccessRequestDenied(this ILogger logger,int partyId, int caseId);
+    public static partial void LogSubmittingAgencyAccessRequestDenied(this ILogger logger, int partyId, int caseId);
     [LoggerMessage(2, LogLevel.Information, "Submitting Agency Case Access Request denied due to user {username} is not enroled to DEMS.")]
     public static partial void LogUserNotEnroled(this ILogger logger, string? username);
 }
