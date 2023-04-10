@@ -20,4 +20,12 @@ public interface IJustinUserChangeManagementClient
     /// <param name="eventId"></param>
     /// <returns></returns>
     Task<bool> RequeueChangeEvent(int eventId);
+
+    /// <summary>
+    /// Mark this request as complete and no-longer in-process
+    /// </summary>
+    /// <param name="eventId"></param>
+    /// <param name="successful"></param>
+    /// <returns></returns>
+    Task<bool> FlagRequestComplete(int eventId, bool successful);
 }

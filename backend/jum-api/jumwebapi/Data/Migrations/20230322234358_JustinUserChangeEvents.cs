@@ -20,6 +20,7 @@ namespace jumwebapi.Data.Migrations
                     EventTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EventType = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Created = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Completed = table.Column<DateTime>(type: "datetime2", nullable: true),
                     Modified = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>

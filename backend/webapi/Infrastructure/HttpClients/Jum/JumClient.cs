@@ -3,6 +3,8 @@ namespace Pidp.Infrastructure.HttpClients.Jum;
 using System.Globalization;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Web.Http.Controllers;
+using Azure.Core;
 using NodaTime;
 using Pidp.Models;
 
@@ -95,6 +97,9 @@ public class JumClient : BaseClient, IJumClient
         }
         return participant;
     }
+
+
+
     public Task<bool> IsJumUser(Participant? justinUser, Party party)
     {
         if (justinUser == null || justinUser?.participantDetails.Count == 0
@@ -146,6 +151,14 @@ public class JumClient : BaseClient, IJumClient
 
         this.Logger.LogJustinUserNotMatching(JsonSerializer.Serialize(justinUser), JsonSerializer.Serialize(party));
         return Task.FromResult(false);
+    }
+
+    public async Task<bool> FlagUserUpdateAsComplete(int eventMessageId, bool isSuccessful)
+    {
+        var result = await this.PostAsync<bool>($"user-change-management", null);
+
+
+        return result.Value;
     }
 }
 public static partial class JumClientLoggingExtensions

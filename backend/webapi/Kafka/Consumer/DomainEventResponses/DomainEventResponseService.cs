@@ -1,14 +1,15 @@
-namespace Pidp.Kafka.Consumer.JustinUserChanges;
+namespace Pidp.Kafka.Consumer.DomainEventResponses;
 
 using System.Net;
 using Pidp.Kafka.Interfaces;
+using Pidp.Models;
 
-public class JustinUserChangeService : BackgroundService
+public class DomainEventResponseService : BackgroundService
 {
-    private readonly IKafkaConsumer<string, JustinUserChangeEvent> consumer;
+    private readonly IKafkaConsumer<string, GenericProcessStatusResponse> consumer;
 
     private readonly PidpConfiguration config;
-    public JustinUserChangeService(IKafkaConsumer<string, JustinUserChangeEvent> kafkaConsumer, PidpConfiguration config)
+    public DomainEventResponseService(IKafkaConsumer<string, GenericProcessStatusResponse> kafkaConsumer, PidpConfiguration config)
     {
         this.consumer = kafkaConsumer;
         this.config = config;
@@ -17,7 +18,7 @@ public class JustinUserChangeService : BackgroundService
     {
         try
         {
-            Serilog.Log.Information("Starting consumer {0}", this.config.KafkaCluster.IncomingChangeEventTopic);
+            Serilog.Log.Information("Starting consumer {0}", this.config.KafkaCluster.ProcessResponseTopic);
 
             await this.consumer.Consume(this.config.KafkaCluster.IncomingChangeEventTopic, stoppingToken);
         }

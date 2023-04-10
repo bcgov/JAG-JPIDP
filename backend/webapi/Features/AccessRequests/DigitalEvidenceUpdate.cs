@@ -135,11 +135,15 @@ public class DigitalEvidenceUpdate
                             settings.DefaultValueHandling = DefaultValueHandling.Ignore;
 
                             // store the user change record
-                            this.context.UserAccountChanges.Add(new UserAccountChange
+                            var changeEntry = this.context.UserAccountChanges.Add(new UserAccountChange
                             {
                                 Party = party,
+                                EventMessageId = command.UserChangeEvent.EventMessageId,
                                 ChangeData = JsonConvert.SerializeObject(changes, settings),
-                                Reason = "JUSTIN Change"
+                                Reason = "JUSTIN Change",
+                                TraceId = activity.TraceId.ToString(),
+                                Status = "Pending"
+
                             });
 
                             // if the change is for the email then we need to de-active the account and notify the user they need to on-board again
@@ -222,10 +226,17 @@ public class DigitalEvidenceUpdate
 
                             var updated = await this.UpdateKeycloakUser(party.UserId, keycloakUserInfo);
 
+                            await this.context.SaveChangesAsync();
+                            await trx.CommitAsync();
+
+                            var changeId = changeEntry.Entity.Id;
+                            changes.ChangeId = changeId;
+
 
                             // flag the changes for other systems to process
                             var produceResponse = await this.kafkaAccountChangeProducer.ProduceAsync(this.config.KafkaCluster.UserAccountChangeTopicName, Guid.NewGuid().ToString(), changes);
 
+                 
                         }
 
 
@@ -243,8 +254,6 @@ public class DigitalEvidenceUpdate
                     return await DomainResult.FailedTask(string.Join(",", ex.Message));
                 }
 
-                await this.context.SaveChangesAsync();
-                await trx.CommitAsync();
                 return DomainResult.Success();
             }
 

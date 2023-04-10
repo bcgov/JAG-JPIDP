@@ -88,8 +88,10 @@ public class PidpConfiguration
         public string IncomingChangeEventTopic { get; set; } = string.Empty;
         public string ProducerTopicName { get; set; } = string.Empty;
         public string CaseAccessRequestTopicName { get; set; } = string.Empty;
+        public string ProcessResponseTopic { get; set;} = string.Empty;
         public string UserAccountChangeTopicName { get; set; } = string.Empty;
         public string NotificationTopicName { get; set; } = string.Empty;
+        public string UserAccountChangeNotificationTopicName { get; set; } = string.Empty;
         public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientId { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientSecret { get; set; } = string.Empty;

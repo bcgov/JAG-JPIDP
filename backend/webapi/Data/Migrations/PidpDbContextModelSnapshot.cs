@@ -3318,6 +3318,9 @@ namespace Pidp.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Instant>("Completed")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<Instant>("Created")
                         .HasColumnType("timestamp with time zone");
 
@@ -3331,6 +3334,14 @@ namespace Pidp.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TraceId")
                         .IsRequired()
                         .HasColumnType("text");
 

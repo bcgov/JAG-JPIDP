@@ -13,10 +13,13 @@ using Pidp.Infrastructure.HttpClients.Ldap;
 using Pidp.Infrastructure.HttpClients.Mail;
 using Pidp.Infrastructure.HttpClients.Plr;
 using Pidp.Kafka.Consumer;
+using Pidp.Kafka.Consumer.DomainEventResponses;
 using Pidp.Kafka.Consumer.JustinUserChanges;
 using Pidp.Kafka.Consumer.Notifications;
+using Pidp.Kafka.Consumer.Responses;
 using Pidp.Kafka.Interfaces;
 using Pidp.Kafka.Producer;
+using Pidp.Models;
 
 public static class HttpClientSetup
 {
@@ -114,8 +117,10 @@ public static class HttpClientSetup
         services.AddSingleton(typeof(IKafkaConsumer<,>), typeof(KafkaConsumer<,>));
         services.AddHostedService<NotificationAckService>();
         services.AddScoped<IKafkaHandler<string, JustinUserChangeEvent>, JustinUserChangeHandler>();
+        services.AddScoped<IKafkaHandler<string, GenericProcessStatusResponse>, DomainEventResponseHandler>();
 
         services.AddHostedService<JustinUserChangeService>();
+        services.AddHostedService<DomainEventResponseService>();
 
         services.AddHostedService<DecomissionCaseAccessService>();
 

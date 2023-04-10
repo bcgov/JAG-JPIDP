@@ -11,6 +11,7 @@ using edt.service.Kafka.Model;
 using edt.service.ServiceEvents.UserAccountCreation.Models;
 using edt.service.ServiceEvents.UserAccountModification.Models;
 using Microsoft.EntityFrameworkCore;
+using NodaTime;
 
 public class IncomingUserChangeModificationHandler : IKafkaHandler<string, IncomingUserModification>
 {
@@ -19,6 +20,7 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
 
     private readonly IKafkaProducer<string, EdtUserProvisioningModel> retryProducer;
     private readonly IKafkaProducer<string, UserModificationEvent> userModificationProducer;
+    private readonly IKafkaProducer<string, GenericProcessStatusResponse> responseProducer;
 
     private readonly EdtServiceConfiguration configuration;
     private readonly IEdtClient edtClient;
@@ -30,6 +32,7 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
     public IncomingUserChangeModificationHandler(
         IKafkaProducer<string, Notification> producer,
           IKafkaProducer<string, NotificationAckModel> ackProducer,
+                    IKafkaProducer<string, GenericProcessStatusResponse> responseProducer,
 
     IKafkaProducer<string, UserModificationEvent> userModificationProducer,
         EdtServiceConfiguration configuration,
@@ -39,6 +42,7 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
     {
         this.producer = producer;
         this.ackProducer = ackProducer;
+        this.responseProducer = responseProducer;
         this.userModificationProducer = userModificationProducer;
         this.configuration = configuration;
         this.context = context;
@@ -162,6 +166,16 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
             DomainEvent = domainEvent,
             To = incomingUserModification.UserID,
             EventData = eventData
+        });
+
+        // send a response that the process is complete
+        var sentStatus = this.responseProducer.ProduceAsync(this.configuration.KafkaCluster.ProcessResponseTopic, Guid.NewGuid().ToString(), new GenericProcessStatusResponse
+        {
+            DomainEvent = "digitalevidence-bcps-edt-userupdate-complete",
+            Id = incomingUserModification.ChangeId,
+            EventTime = SystemClock.Instance.GetCurrentInstant(),
+            Status = "Complete",
+            TraceId = incomingUserModification.Key
         });
 
 

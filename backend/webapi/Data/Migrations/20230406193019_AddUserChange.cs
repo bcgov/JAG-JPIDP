@@ -17,9 +17,13 @@ namespace Pidp.Data.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     PartyId = table.Column<int>(type: "integer", nullable: false),
+                    EventMessageId = table.Column<int>(type: "integer", nullable: false),
                     Deactivated = table.Column<bool>(type: "boolean", nullable: false),
                     Reason = table.Column<string>(type: "text", nullable: false),
                     ChangeData = table.Column<string>(type: "text", nullable: false),
+                    Completed = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
+                    TraceId = table.Column<string>(type: "text", nullable: false),
+                    Status = table.Column<string>(type: "text", nullable: false),
                     Created = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
                     Modified = table.Column<Instant>(type: "timestamp with time zone", nullable: false)
                 },

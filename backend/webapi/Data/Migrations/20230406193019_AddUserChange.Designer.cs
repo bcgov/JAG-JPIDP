@@ -15,7 +15,7 @@ using Pidp.Models;
 namespace Pidp.Data.Migrations
 {
     [DbContext(typeof(PidpDbContext))]
-    [Migration("20230403205252_AddUserChange")]
+    [Migration("20230406193019_AddUserChange")]
     partial class AddUserChange
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -3320,6 +3320,9 @@ namespace Pidp.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Instant>("Completed")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<Instant>("Created")
                         .HasColumnType("timestamp with time zone");
 
@@ -3333,6 +3336,14 @@ namespace Pidp.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TraceId")
                         .IsRequired()
                         .HasColumnType("text");
 

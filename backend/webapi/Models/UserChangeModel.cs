@@ -7,6 +7,8 @@ public class UserChangeModel
 {
     public string UserID { get; set; } = string.Empty;
 
+    public int ChangeId { get; set; }   
+
     public string Key { get; set; } = string.Empty;
     public DateTime ChangeDateTime { get; set; } = DateTime.Now;
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]

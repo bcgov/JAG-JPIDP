@@ -1,15 +1,16 @@
-﻿using jumwebapi.Features.Users.Commands;
+namespace jumwebapi.Features.Users.Controllers;
+
+
+using jumwebapi.Features.Users.Commands;
 using jumwebapi.Features.Users.Models;
 using jumwebapi.Features.Users.Queries;
 using jumwebapi.Infrastructure.Auth;
-using jumwebapi.Kafka.Constants;
 using jumwebapi.Kafka.Producer.Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace jumwebapi.Features.Users.Controllers;
 
 [Authorize]
 [Route("api/[controller]")]

@@ -1,6 +1,7 @@
 namespace jumwebapi.Infrastructure.HttpClients.JustinUserChangeManagement;
 
 using System;
+using System.Web.Http.Controllers;
 using jumwebapi.Features.UserChangeManagement.Data;
 using jumwebapi.Infrastructure.HttpClients.JustinUserChangeManagement;
 using jumwebapi.Models;
@@ -95,6 +96,26 @@ public class JustinUserChangeManagementClient : BaseClient, IJustinUserChangeMan
             this.Logger.RequeueEventFailed(eventId);
             return false;
         }
+    }
+
+    public async Task<bool> FlagRequestComplete(int eventId, bool successful)
+    {
+        Log.Information($"Flagging event complete {eventId}");
+
+        var successFlag = successful ? "T" : "F";
+        var result = await this.PutAsyncForJUSTINNonesense<VoidResultConverter>($"eventStatus?event_message_id={eventId}&is_success={successFlag}");
+
+        if ( result.IsSuccess)
+        {
+            Log.Information($"Event message id {eventId} marked success {successful}");
+            return true;
+        }
+        else
+        {
+            Log.Error($"Failed to mark event message id {eventId} success {successful} [{string.Join(",",result.Errors)}]");
+            return false;
+        }
+
     }
 }
 

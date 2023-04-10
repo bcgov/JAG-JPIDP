@@ -17,6 +17,8 @@ public class NotificationAckService : BackgroundService
     {
         try
         {
+            Serilog.Log.Information("Starting consumer {0}", this.config.KafkaCluster.ConsumerTopicName);
+
             await this.consumer.Consume(this.config.KafkaCluster.ConsumerTopicName, stoppingToken);
         }
         catch (Exception ex)
