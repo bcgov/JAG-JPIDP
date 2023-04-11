@@ -20,7 +20,7 @@ public class DomainEventResponseService : BackgroundService
         {
             Serilog.Log.Information("Starting consumer {0}", this.config.KafkaCluster.ProcessResponseTopic);
 
-            await this.consumer.Consume(this.config.KafkaCluster.IncomingChangeEventTopic, stoppingToken);
+            await this.consumer.Consume(this.config.KafkaCluster.ProcessResponseTopic, stoppingToken);
         }
         catch (Exception ex)
         {

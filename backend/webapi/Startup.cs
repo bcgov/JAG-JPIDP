@@ -37,6 +37,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Prometheus;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Serilog.Core;
 
 public class Startup
 {
@@ -112,7 +113,8 @@ public class Startup
         .AddKeycloakAuth(config)
         .AddScoped<IEmailService, EmailService>()
         .AddScoped<IPidpAuthorizationService, PidpAuthorizationService>()
-        .AddSingleton<IClock>(SystemClock.Instance);
+        .AddSingleton<IClock>(SystemClock.Instance)
+        .AddScoped<Infrastructure.HttpClients.Jum.JumClient>();
 
         services.AddSingleton<ProblemDetailsFactory, JpidpProblemDetailsFactory>();
 
@@ -145,6 +147,7 @@ public class Startup
 
         services.AddScoped<IUserTypeService, UserTypeService>();
         services.AddScoped<IOrgUnitService, OrgUnitService>();
+
 
 
         services.AddHealthChecks()

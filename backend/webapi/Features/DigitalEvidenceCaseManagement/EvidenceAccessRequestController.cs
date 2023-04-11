@@ -33,7 +33,6 @@ public class EvidenceCaseManagementController : PidpControllerBase
         var result = await handler.HandleAsync(new SubmittingAgencyByCaseId.Query(query.RCCNumber));
         return Ok(result);
     }
-     
 
 
     /// <summary>
