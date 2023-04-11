@@ -1,6 +1,7 @@
 namespace Pidp;
 
 using Pidp.Infrastructure.Auth;
+using Serilog;
 
 public class PidpConfiguration
 {
@@ -22,8 +23,10 @@ public class PidpConfiguration
     public JumClientConfiguration JumClient { get; set; } = new();
     public EdtClientConfiguration EdtClient { get; set; } = new EdtClientConfiguration();
     public EdtCaseManagementClientConfiguration EdtCaseManagementClient { get; set; } = new EdtCaseManagementClientConfiguration();
+    public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
 
     public TelemeteryConfiguration Telemetry { get; set; } = new TelemeteryConfiguration();
+
 
     // ------- Configuration Objects -------
 
@@ -36,6 +39,13 @@ public class PidpConfiguration
     {
         public DecomissionCaseAccessService DecomissionCaseAccessService { get; set; } = new DecomissionCaseAccessService();
     }
+
+    public class SplunkConfiguration
+    {
+        public string Host { get; set; } = string.Empty;
+        public string CollectorToken { get; set; } = string.Empty;
+    }
+
     public class DecomissionCaseAccessService
     {
         public int PeriodicTimer { get; set; }

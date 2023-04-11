@@ -44,9 +44,17 @@ public class Program
     {
         var path = Environment.GetEnvironmentVariable("LogFilePath") ?? "logs";
 
+        var environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+
         var config = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.json", optional: true)
-            .Build();
+         .AddJsonFile("appsettings.json", optional: true)
+            .AddJsonFile($"appsettings.{environmentName}.json", optional: true)
+             .Build();
+
+        var splunkHost = Environment.GetEnvironmentVariable("SplunkConfig__Host");
+        splunkHost ??= config.GetValue<string>("SplunkConfig:Host");
+        var splunkToken = Environment.GetEnvironmentVariable("SplunkConfig__CollectorToken");
+        splunkToken ??= config.GetValue<string>("SplunkConfig:CollectorToken");
 
         var seqEndpoint = Environment.GetEnvironmentVariable("Seq__Url");
         seqEndpoint ??= config.GetValue<string>("Seq:Url");
@@ -73,7 +81,7 @@ public class Program
         var name = Assembly.GetExecutingAssembly().GetName();
         var outputTemplate = "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}";
 
-        Log.Logger = new LoggerConfiguration()
+        var loggerConfiguration = new LoggerConfiguration()
             .MinimumLevel.Information()
             .Filter.ByExcluding("RequestPath like '/health%'")
             .Filter.ByExcluding("RequestPath like '/metrics%'")
@@ -96,7 +104,23 @@ public class Program
             .WriteTo.Async(a => a.File(
                 new JsonFormatter(),
                 $@"{path}/edtservice.json",
-                rollingInterval: RollingInterval.Day))
-            .CreateLogger();
+                rollingInterval: RollingInterval.Day));
+
+
+        if (!string.IsNullOrEmpty(splunkHost))
+        {
+            loggerConfiguration.WriteTo.EventCollector(splunkHost, splunkToken);
+        }
+
+        Log.Logger = loggerConfiguration.CreateLogger();
+
+        if (string.IsNullOrEmpty(splunkHost))
+        {
+            Log.Warning("*** Splunk Host is not configured - check Splunk environment *** ");
+        }
+        else
+        {
+            Log.Information($"*** Splunk logging to {splunkHost} ***");
+        }
     }
 }

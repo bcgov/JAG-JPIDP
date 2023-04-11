@@ -18,6 +18,7 @@ public class EdtServiceConfiguration
     public MailServerConfiguration MailServer { get; set; } = new();
     public RetryPolicyConfiguration RetryPolicy { get; set; } = new();
     public EdtClientConfiguration EdtClient { get; set; } = new();
+    public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
 
     public SchemaRegistryConfiguration SchemaRegistry { get; set; } = new();
     public TelemeteryConfiguration Telemetry { get; set; } = new TelemeteryConfiguration();
@@ -117,7 +118,11 @@ public class EdtServiceConfiguration
     }
 
 
-
+    public class SplunkConfiguration
+    {
+        public string Host { get; set; } = string.Empty;
+        public string CollectorToken { get; set; } = string.Empty;
+    }
 
     public class KeycloakConfiguration
     {

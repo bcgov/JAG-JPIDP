@@ -11,6 +11,7 @@ public class JumWebApiConfiguration
     public JustinClientConfiguration JustinParticipantClient { get; set; } = new();
 
     public JustinBackgroundEventConfiguration JustinChangeEventClient { get; set; } = new();
+    public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
 
     public KafkaClusterConfiguration KafkaCluster { get; set; } = new();
     public KeycloakConfiguration Keycloak { get; set; } = new();
@@ -23,6 +24,12 @@ public class JumWebApiConfiguration
     {
         public string ApiKey { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
+    }
+
+    public class SplunkConfiguration
+    {
+        public string Host { get; set; } = string.Empty;
+        public string CollectorToken { get; set; } = string.Empty;
     }
 
     public class ConnectionStringConfiguration
