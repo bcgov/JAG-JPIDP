@@ -45,6 +45,7 @@ public class EdtServiceConfiguration
         public string Url { get; set; } = string.Empty;
 
         public int SearchFieldId { get; set; }
+        public string TombStoneEmailDomain { get; set; } = string.Empty;
     }
     public class ConnectionStringConfiguration
     {

@@ -5,7 +5,7 @@ using edt.service.Kafka.Model;
 public interface IEdtClient
 {
     Task<UserModificationEvent> CreateUser(EdtUserProvisioningModel accessRequest);
-    Task<UserModificationEvent> UpdateUser(EdtUserProvisioningModel accessRequest, EdtUserDto previousRequest);
+    Task<UserModificationEvent> UpdateUser(EdtUserProvisioningModel accessRequest, EdtUserDto previousRequest, bool fromTombstone);
 
     Task<UserModificationEvent> UpdateUserDetails(EdtUserDto userDetails);
 
@@ -69,4 +69,13 @@ public interface IEdtClient
     /// <param name="removedRegions"></param>
     /// <returns></returns>
     Task<bool> UpdateUserAssignedGroups(string key, List<string> newRegions, List<string> removedRegions);
+
+    /// <summary>
+    /// Converts a disabled tombstone account to an active account
+    /// Will update the email address, regions and enabled flag
+    /// </summary>
+    /// <param name="value"></param>
+    /// <param name="user"></param>
+    /// <returns></returns>
+    Task<UserModificationEvent> EnableTombstoneAccount(EdtUserProvisioningModel value, EdtUserDto user);
 }

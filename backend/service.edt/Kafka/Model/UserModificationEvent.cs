@@ -23,7 +23,8 @@ public class UserModificationEvent : AuditEvent
         Modify,
         Delete,
         Disable,
-        Enable
+        Enable,
+        EnableTombstone
     }
 
     public string partId { get; set; } = string.Empty;
