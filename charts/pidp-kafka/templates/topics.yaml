@@ -171,11 +171,11 @@ spec:
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
-  name: digitalevidence-jess
+  name: digitalevidence-jess-test1
   namespace: {{ .Values.global.licenseplate }}-{{ .Values.global.environment }}
   labels:
     strimzi.io/cluster: {{ include "pidp-kafka.fullname" . }}-cluster
 spec:
   partitions: {{ default 3 .Values.kafka.topics.replicas }}
   replicas: {{ default 3 .Values.kafka.topics.replicas }}
-  topicName: digitalevidence-jess
+  topicName: digitalevidence-jess-test1
