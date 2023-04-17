@@ -78,12 +78,12 @@ spec:
                   name: jum-kafka-config
                   key: KafkaCluster__TopicName
             - name: KafkaCluster__UserChangeEventTopic
-               valueFrom:
+              valueFrom:
                 secretKeyRef:
                   name: jum-kafka-config
                   key: KafkaCluster__UserChangeEventTopic
             - name: KafkaCluster__UserChangeProcessedTopic
-               valueFrom:
+              valueFrom:
                 secretKeyRef:
                   name: jum-kafka-config
                   key: KafkaCluster__UserChangeProcessedTopic
@@ -102,7 +102,6 @@ spec:
                 secretKeyRef:
                   name: jum-kafka-config
                   key: KafkaCluster__SaslOauthbearerConsumerClientSecret
-
             - name: KafkaCluster__AckTopicName
               valueFrom:
                 secretKeyRef:
@@ -110,7 +109,6 @@ spec:
                   key: KafkaCluster__AckTopicName
             - name: ApplicationUrl
               value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"
-
             - name: JustinAuthentication__BasicAuthUsername
               valueFrom:
                 secretKeyRef:
