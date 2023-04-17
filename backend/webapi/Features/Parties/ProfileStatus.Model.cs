@@ -243,9 +243,8 @@ public partial class ProfileStatus
 
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
-                // todo - this should be for SubmittingAgencies only
 
-                if (!( profile.UserIsInSubmittingAgency || profile.UserIsIdir))
+                if (!(profile.UserIsInSubmittingAgency))
                 {
                     this.StatusCode = StatusCode.Hidden;
                     return;

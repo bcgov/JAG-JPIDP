@@ -21,7 +21,12 @@ public class EdtServiceConfiguration
     public SchemaRegistryConfiguration SchemaRegistry { get; set; } = new();
     public TelemeteryConfiguration Telemetry { get; set; } = new TelemeteryConfiguration();
     public List<CustomDisplayField> CaseDisplayCustomFields { get; set; } = new();
-
+    public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
+    public class SplunkConfiguration
+    {
+        public string Host { get; set; } = string.Empty;
+        public string CollectorToken { get; set; } = string.Empty;
+    }
 
     // ------- Configuration Objects -------
 

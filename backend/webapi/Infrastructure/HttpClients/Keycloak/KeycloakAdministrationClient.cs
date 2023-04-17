@@ -1,6 +1,7 @@
 namespace Pidp.Infrastructure.HttpClients.Keycloak;
 
 using System.Net;
+using Microsoft.Extensions.Configuration.UserSecrets;
 
 // TODO Use DomainResult for success/fail?
 public class KeycloakAdministrationClient : BaseClient, IKeycloakAdministrationClient
@@ -37,6 +38,23 @@ public class KeycloakAdministrationClient : BaseClient, IKeycloakAdministrationC
         if (!response.IsSuccess)
         {
             this.Logger.LogRealmGroupAssigned(userId, groupName);
+        }
+        return response.IsSuccess;
+
+    }
+
+    public async Task<bool> RemoveUserFromGroup(Guid userId, string groupName)
+    {
+        var group = await this.GetRealmGroup(groupName);
+        if (group == null)
+        {
+            return false;
+        }
+        //assign user to group
+        var response = await this.DeleteAsync($"users/{userId}/groups/{group.Id}");
+        if (!response.IsSuccess)
+        {
+            this.Logger.LogRealmGroupRemoved(userId, groupName);
         }
         return response.IsSuccess;
 
@@ -129,6 +147,20 @@ public class KeycloakAdministrationClient : BaseClient, IKeycloakAdministrationC
         return result.Value.SingleOrDefault();
     }
 
+    public async Task<List<Group>?> GetUserGroups(Guid userId)
+    {
+        var result = await this.GetAsync<List<Group>>($"users/{userId}/groups");
+
+        if (!result.IsSuccess)
+        {
+            return null;
+        }
+
+        return result.Value;
+    }
+
+
+
     public async Task<UserRepresentation?> GetUser(Guid userId)
     {
         var result = await this.GetAsync<UserRepresentation>($"users/{userId}");
@@ -137,7 +169,9 @@ public class KeycloakAdministrationClient : BaseClient, IKeycloakAdministrationC
             return null;
         }
 
-        return result.Value;
+        var userInfo = result.Value;
+
+        return userInfo;
     }
 
     public async Task<bool> RemoveClientRole(Guid userId, Role role)
@@ -188,4 +222,8 @@ public static partial class KeycloakAdministrationClientLoggingExtensions
     public static partial void LogRealmRoleAssigned(this ILogger logger, Guid userId, string roleName);
     [LoggerMessage(5, LogLevel.Information, "User {userId} was assigned Realm Group {groupName}.")]
     public static partial void LogRealmGroupAssigned(this ILogger logger, Guid userId, string groupName);
+    [LoggerMessage(6, LogLevel.Information, "User {userId} was removed from Realm Group {groupName}.")]
+    public static partial void LogRealmGroupRemoved(this ILogger logger, Guid userId, string groupName);
+
+    
 }

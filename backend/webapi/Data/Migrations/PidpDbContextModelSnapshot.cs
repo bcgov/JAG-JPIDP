@@ -386,6 +386,36 @@ namespace Pidp.Data.Migrations
                     b.ToTable("Facility");
                 });
 
+            modelBuilder.Entity("Pidp.Models.FutureUserChangeEvent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<Instant>("Completed")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Instant>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Instant>("EventDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Instant>("Modified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PartyId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PartyId");
+
+                    b.ToTable("FutureUserChangeEvent");
+                });
+
             modelBuilder.Entity("Pidp.Models.JusticeSectorDetail", b =>
                 {
                     b.Property<int>("Id")
@@ -3277,10 +3307,53 @@ namespace Pidp.Data.Migrations
 
                     b.HasIndex("PartyId");
 
-                    b.HasIndex(new[] { "RCCNumber" }, "IX_RCCNumber")
-                        .IsUnique();
-
                     b.ToTable("SubmittingAgencyRequest");
+                });
+
+            modelBuilder.Entity("Pidp.Models.UserAccountChange", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ChangeData")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Instant>("Completed")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Instant>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Deactivated")
+                        .HasColumnType("boolean");
+
+                    b.Property<Instant>("Modified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PartyId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TraceId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PartyId");
+
+                    b.ToTable("UserAccountChange");
                 });
 
             modelBuilder.Entity("Pidp.Models.DigitalEvidence", b =>
@@ -3457,6 +3530,17 @@ namespace Pidp.Data.Migrations
                     b.Navigation("Party");
                 });
 
+            modelBuilder.Entity("Pidp.Models.FutureUserChangeEvent", b =>
+                {
+                    b.HasOne("Pidp.Models.Party", "Party")
+                        .WithMany()
+                        .HasForeignKey("PartyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Party");
+                });
+
             modelBuilder.Entity("Pidp.Models.JusticeSectorDetail", b =>
                 {
                     b.HasOne("Pidp.Models.Lookups.JusticeSector", "JusticeSector")
@@ -3532,6 +3616,17 @@ namespace Pidp.Data.Migrations
                     b.Navigation("Party");
                 });
 
+            modelBuilder.Entity("Pidp.Models.UserAccountChange", b =>
+                {
+                    b.HasOne("Pidp.Models.Party", "Party")
+                        .WithMany("AccountChanges")
+                        .HasForeignKey("PartyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Party");
+                });
+
             modelBuilder.Entity("Pidp.Models.DigitalEvidence", b =>
                 {
                     b.HasOne("Pidp.Models.AccessRequest", null)
@@ -3585,6 +3680,8 @@ namespace Pidp.Data.Migrations
                     b.Navigation("AccessAdministrator");
 
                     b.Navigation("AccessRequests");
+
+                    b.Navigation("AccountChanges");
 
                     b.Navigation("Facility");
 

@@ -3,6 +3,8 @@ namespace Pidp.Infrastructure.HttpClients.Jum;
 using System.Globalization;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Web.Http.Controllers;
+using Azure.Core;
 using NodaTime;
 using Pidp.Models;
 
@@ -32,11 +34,11 @@ public class JumClient : BaseClient, IJumClient
         return user;
     }
 
-    public async Task<JustinUser?> GetJumUserAsync(string username)
+    public async Task<Participant?> GetJumUserAsync(string username)
     {
 
 
-        var result = await this.GetAsync<JustinUser>($"users/{username}");
+        var result = await this.GetAsync<Participant>($"users/{username}");
 
         if (!result.IsSuccess)
         {
@@ -48,17 +50,13 @@ public class JumClient : BaseClient, IJumClient
             this.Logger.LogNoUserFound(username);
             return null;
         }
-        if (user.IsDisable)
-        {
-            this.Logger.LogDisabledUserFound(username);
-            return null;
-        }
+     
         return user;
     }
 
-    public async Task<JustinUser?> GetJumUserByPartIdAsync(long partId)
+    public async Task<Participant?> GetJumUserByPartIdAsync(decimal partId)
     {
-        var result = await this.GetAsync<JustinUser>($"users/{partId}");
+        var result = await this.GetAsync<Participant>($"participant/{partId}");
 
         if (!result.IsSuccess)
         {
@@ -70,11 +68,7 @@ public class JumClient : BaseClient, IJumClient
             this.Logger.LogNoUserWithPartIdFound(partId);
             return null;
         }
-        if (user.IsDisable)
-        {
-            this.Logger.LogDisabledPartIdFound(partId);
-            return null;
-        }
+ 
         return user;
     }
     public async Task<Participant?> GetJumUserByPartIdAsync(decimal partId, string accessToken)
@@ -103,6 +97,9 @@ public class JumClient : BaseClient, IJumClient
         }
         return participant;
     }
+
+
+
     public Task<bool> IsJumUser(Participant? justinUser, Party party)
     {
         if (justinUser == null || justinUser?.participantDetails.Count == 0
@@ -155,6 +152,14 @@ public class JumClient : BaseClient, IJumClient
         this.Logger.LogJustinUserNotMatching(JsonSerializer.Serialize(justinUser), JsonSerializer.Serialize(party));
         return Task.FromResult(false);
     }
+
+    public async Task<bool> FlagUserUpdateAsComplete(int eventMessageId, bool isSuccessful)
+    {
+        var result = await this.PostAsync<bool>($"user-change-management", null);
+
+
+        return result.Value;
+    }
 }
 public static partial class JumClientLoggingExtensions
 {
@@ -163,11 +168,11 @@ public static partial class JumClientLoggingExtensions
     [LoggerMessage(1, LogLevel.Warning, "No User found in JUM with Username = {username}.")]
     public static partial void LogNoUserFound(this ILogger logger, string username);
     [LoggerMessage(2, LogLevel.Warning, "No User found in JUM with PartId = {partId}.")]
-    public static partial void LogNoUserWithPartIdFound(this ILogger logger, long partId);
+    public static partial void LogNoUserWithPartIdFound(this ILogger logger, decimal partId);
     [LoggerMessage(3, LogLevel.Warning, "User found but disabled in JUM with Username = {username}.")]
     public static partial void LogDisabledUserFound(this ILogger logger, string username);
     [LoggerMessage(4, LogLevel.Warning, "User found but disabled in JUM with PartId = {partId}.")]
-    public static partial void LogDisabledPartIdFound(this ILogger logger, long partId);
+    public static partial void LogDisabledPartIdFound(this ILogger logger, decimal partId);
     [LoggerMessage(5, LogLevel.Error, "Justin user not found.")]
     public static partial void LogJustinUserNotFound(this ILogger logger);
     [LoggerMessage(7, LogLevel.Warning, "User found but disabled in JUM with PartId = {partId}.")]
