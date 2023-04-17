@@ -29,7 +29,6 @@ public static class ClaimValues
     public const string Phsa = "phsa";
     public const string Bcps = "adfscert";
     public const string Adfs = "adfs"; // test
-    public const string VicPd = "vicpd";
     public const string AzureIdir = "oidcazure";
 
     public const string SubmittingAgency = "subgenc";
@@ -46,7 +45,6 @@ public static class Policies
     public const string AllDemsIdentityProvider = "dems-idp-policy";
     public const string BcpsAuthentication = "bcps-authentication-policy";
     public const string AdminAuthentication = "admin-authentication-policy";
-    public const string VicPdAuthentication = "vicpd-authentication-policy";
 }
 
 public static class Clients
@@ -59,4 +57,5 @@ public static class Roles
     // PIdP Role Placeholders
     public const string Admin = "ADMIN";
     public const string User = "USER";
+    public const string SubmittingAgency = "SUBMITTING_AGENCY";
 }

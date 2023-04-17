@@ -21,12 +21,12 @@ export class BcpsUser implements User {
     } = accessTokenParsed;
 
     this.identityProvider = identity_provider;
-    this.jpdid = jpdid;
+    this.jpdid = jpdid || '';
     this.userId = userId;
-    this.firstName = firstName;
-    this.lastName = lastName;
+    this.firstName = firstName || '';
+    this.lastName = lastName || '';
     this.idir = idir;
-    this.email = email;
+    this.email = email || '';
     //this.roles = roles;
   }
 }

@@ -64,6 +64,8 @@ public class DigitalEvidence : AccessRequest
 
 public class AssignedRegion
 {
+    [Key]
+    public int Id { get; set; }
     public int RegionId { get; set; }
     public string RegionName { get; set; } = string.Empty;
     public string AssignedAgency { get; set; } = string.Empty;

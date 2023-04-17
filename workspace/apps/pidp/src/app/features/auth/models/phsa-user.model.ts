@@ -15,9 +15,9 @@ export class PhsaUser implements User {
 
     this.identityProvider = identity_provider;
     this.userId = userId;
-    this.firstName = firstName;
-    this.lastName = lastName;
-    this.email = email;
+    this.firstName = firstName || '';
+    this.lastName = lastName || '';
+    this.email = email || '';
   }
 }
 
