@@ -113,12 +113,12 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: jum-api-config
-                  key: JustinParticipantClient__BasicAuthUsername
+                  key: JustinAuthentication__BasicAuthUsername
             - name: JustinAuthentication__BasicAuthPassword
               valueFrom:
                 secretKeyRef:
                   name: jum-api-config
-                  key: JustinParticipantClient__BasicAuthPassword
+                  key: JustinAuthentication__BasicAuthPassword
             - name: JustinChangeEventClient__Url
               valueFrom:
                 secretKeyRef:
