@@ -128,9 +128,7 @@ public partial class ProfileStatus
 
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
-                // LJW - remove access to Idir for BCPS - re-enable for testing if necessary
-                Log.Logger.Information("*** IDIR Currently permits BCPS access for testing ***");
-                if (!(profile.UserIsPhsa || profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsIdir || profile.UserIsVicPd))
+                if (!(profile.UserIsPhsa || profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsInSubmittingAgency))
                 {
                     this.StatusCode = StatusCode.Hidden;
                     return;
@@ -173,7 +171,7 @@ public partial class ProfileStatus
 
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
-                if (!(profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsIdir || profile.UserIsInSubmittingAgency))
+                if (!(profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsInSubmittingAgency))
                 {
                     this.StatusCode = StatusCode.Hidden;
                     return;
@@ -211,7 +209,7 @@ public partial class ProfileStatus
 
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
-                if (!profile.UserIsVicPd)
+                if (!profile.UserIsInSubmittingAgency)
                 {
                     this.StatusCode = StatusCode.Hidden;
                     return;
@@ -411,7 +409,7 @@ public partial class ProfileStatus
 
             public SAEforms(ProfileStatusDto profile) : base(profile)
             {
-                this.IncorrectLicenceType = profile.PlrStanding.HasGoodStanding
+                this.IncorrectLicenceType = profile.PlrStanding == null || profile.PlrStanding.HasGoodStanding
                     && !profile.PlrStanding
                         .Excluding(AccessRequests.SAEforms.ExcludedIdentifierTypes)
                         .HasGoodStanding;

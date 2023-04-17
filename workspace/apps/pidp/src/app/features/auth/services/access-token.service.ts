@@ -5,6 +5,7 @@ import { Observable, from, map } from 'rxjs';
 
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { KeycloakService } from 'keycloak-angular';
+import { KeycloakProfile } from 'keycloak-js';
 
 import { AccessTokenParsed } from '../models/access-token-parsed.model';
 import { BrokerProfile } from '../models/broker-profile.model';
@@ -43,7 +44,24 @@ export class AccessTokenService implements IAccessTokenService {
   }
 
   public loadBrokerProfile(forceReload?: boolean): Observable<BrokerProfile> {
-    return from(this.keycloakService.loadUserProfile(forceReload));
+    const keycloakUserFromPromise =
+      this.keycloakService.loadUserProfile(forceReload);
+
+    return from(keycloakUserFromPromise).pipe(
+      map((keycloakProfile: KeycloakProfile) => {
+        const brokerProfile: BrokerProfile = {
+          ...keycloakProfile,
+          attributes: {
+            birthdate: '',
+            gender: '',
+          },
+        };
+
+        // Make any necessary modifications to brokerProfile here
+
+        return brokerProfile;
+      })
+    );
   }
 
   public roles(): string[] {
@@ -51,12 +69,13 @@ export class AccessTokenService implements IAccessTokenService {
   }
 
   public groups(): string[] {
-    let groups: string[] = [];
-    this.keycloakService.loadUserProfile().then((profile) => {
-      groups = profile['attributes'].roles ?? [];
-      return groups; //gives you array of all attributes of user, extract what you need
+    debugger;
+    let roles: string[] = [];
+    this.keycloakService.loadUserProfile().then(() => {
+      roles = this.keycloakService.getUserRoles();
+      return roles; //gives you array of all attributes of user, extract what you need
     });
-    return groups;
+    return roles;
   }
 
   public clearToken(): void {

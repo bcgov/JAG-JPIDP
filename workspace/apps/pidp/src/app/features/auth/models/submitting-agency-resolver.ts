@@ -16,12 +16,12 @@ export class SubmittingAgencyUser implements User {
 
     this.idpHint = identity_provider;
     this.identityProvider = IdentityProvider.SUBMITTING_AGENCY;
-    this.jpdid = jpdid;
+    this.jpdid = jpdid || '';
     this.userId = userId;
-    this.firstName = firstName;
-    this.lastName = lastName;
+    this.firstName = firstName || '';
+    this.lastName = lastName || '';
 
-    this.email = email;
+    this.email = email || '';
   }
 }
 

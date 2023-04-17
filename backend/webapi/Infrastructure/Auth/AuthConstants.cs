@@ -30,7 +30,7 @@ public static class ClaimValues
     public const string Bcps = "adfscert";
     public const string Adfs = "adfs"; // test
     public const string VicPd = "vicpd";
-    public const string SubmittingAgency = "subgenc";
+    public const string SubmittingAgency = "SUBMITTING_AGENCY";
 
 }
 
