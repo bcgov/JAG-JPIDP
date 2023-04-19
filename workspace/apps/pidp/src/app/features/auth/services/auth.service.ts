@@ -8,7 +8,7 @@ import { KeycloakLoginOptions } from 'keycloak-js';
 export interface IAuthService {
   login(options?: KeycloakLoginOptions): Observable<void>;
   isLoggedIn(): Observable<boolean>;
-  logout(redirectUri: string): Observable<void>;
+  logout(logout_uri: string): Observable<void>;
 }
 
 @Injectable({
@@ -25,7 +25,7 @@ export class AuthService implements IAuthService {
     return from(this.keycloakService.isLoggedIn());
   }
 
-  public logout(redirectUri: string): Observable<void> {
-    return from(this.keycloakService.logout(redirectUri));
+  public logout(logout_redirect: string): Observable<void> {
+    return from(this.keycloakService.logout(logout_redirect));
   }
 }

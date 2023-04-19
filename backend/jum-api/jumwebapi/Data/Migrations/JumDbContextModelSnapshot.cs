@@ -17,7 +17,7 @@ namespace jumwebapi.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "6.0.6")
+                .HasAnnotation("ProductVersion", "6.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder, 1L, 1);
@@ -508,6 +508,75 @@ namespace jumwebapi.Data.Migrations
                     b.ToTable("JustinUserRole");
                 });
 
+            modelBuilder.Entity("jumwebapi.Features.UserChangeManagement.Data.JustinUserChange", b =>
+                {
+                    b.Property<int>("EventMessageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EventMessageId"), 1L, 1);
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("EventTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Modified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PartId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("EventMessageId");
+
+                    b.ToTable("JustinUserChange");
+                });
+
+            modelBuilder.Entity("jumwebapi.Features.UserChangeManagement.Data.JustinUserChangeTarget", b =>
+                {
+                    b.Property<int>("ChangeTargetId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ChangeTargetId"), 1L, 1);
+
+                    b.Property<string>("ChangeStatus")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CompletedTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ErrorDetails")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("JustinUserChangeId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Modified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ServiceName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("ChangeTargetId");
+
+                    b.HasIndex("JustinUserChangeId");
+
+                    b.ToTable("JustinUserChangeTarget");
+                });
+
             modelBuilder.Entity("jumwebapi.Models.Lookups.Country", b =>
                 {
                     b.Property<string>("Code")
@@ -974,38 +1043,6 @@ namespace jumwebapi.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("jumwebapi.Models.Player", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
-                    b.Property<int>("Apperance")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("Goals")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("Modified")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ShirtNo")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Players");
-                });
-
             modelBuilder.Entity("jumwebapi.Data.ef.JustinAddress", b =>
                 {
                     b.HasOne("jumwebapi.Models.Lookups.Country", "Country")
@@ -1092,6 +1129,17 @@ namespace jumwebapi.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("jumwebapi.Features.UserChangeManagement.Data.JustinUserChangeTarget", b =>
+                {
+                    b.HasOne("jumwebapi.Features.UserChangeManagement.Data.JustinUserChange", "JustinUserChange")
+                        .WithMany("TargetChanges")
+                        .HasForeignKey("JustinUserChangeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("JustinUserChange");
+                });
+
             modelBuilder.Entity("jumwebapi.Data.ef.JustinAgency", b =>
                 {
                     b.Navigation("AgencyAssignments");
@@ -1112,6 +1160,11 @@ namespace jumwebapi.Data.Migrations
             modelBuilder.Entity("jumwebapi.Data.ef.JustinUser", b =>
                 {
                     b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("jumwebapi.Features.UserChangeManagement.Data.JustinUserChange", b =>
+                {
+                    b.Navigation("TargetChanges");
                 });
 #pragma warning restore 612, 618
         }

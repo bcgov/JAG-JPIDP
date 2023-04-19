@@ -47,22 +47,38 @@ public static class AuthenticationSetup
                   .RequireClaim(Claims.IdentityProvider, ClaimValues.Bcps));
 
             options.AddPolicy(Policies.AnyPartyIdentityProvider, policy => policy
-                .RequireAuthenticatedUser()
-                .RequireClaim(Claims.IdentityProvider, ClaimValues.BCServicesCard, ClaimValues.Idir, ClaimValues.Phsa, ClaimValues.Bcps, ClaimValues.VicPd));
+                  .RequireAuthenticatedUser().RequireAssertion(context =>
+                  {
+                      var hasRole = context.User.IsInRole(Roles.SubmittingAgency);
+                      var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider &&
+                                                                 (c.Value == ClaimValues.BCServicesCard ||
+                                                                  c.Value == ClaimValues.Idir ||
+                                                                  c.Value == ClaimValues.Phsa ||
+                                                                  c.Value == ClaimValues.Bcps));
+                      return hasRole || hasClaim;
+                  }));
+            ;
 
             options.AddPolicy(Policies.AllDemsIdentityProvider, policy => policy
-                  .RequireAuthenticatedUser()
-                  .RequireClaim(Claims.IdentityProvider, ClaimValues.BCServicesCard, ClaimValues.Bcps, ClaimValues.Idir, ClaimValues.VicPd));
+                  .RequireAuthenticatedUser().RequireAssertion(context =>
+                  {
+                      var hasRole = context.User.IsInRole(Roles.SubmittingAgency);
+                      var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider &&
+                                                                 (c.Value == ClaimValues.BCServicesCard ||
+                                                                  c.Value == ClaimValues.Idir ||
+                                                                  c.Value == ClaimValues.Phsa ||
+                                                                  c.Value == ClaimValues.Bcps));
+                      return hasRole || hasClaim;
+                  }));
 
             options.AddPolicy(Policies.AdminAuthentication, policy => policy
                     .RequireAuthenticatedUser()
                     .RequireClaim(Claims.IdentityProvider, ClaimValues.Idir, ClaimValues.Bcps));
 
 
-            // REMOVE IDIR FROM HERE LATER!
             options.AddPolicy(Policies.SubAgencyIdentityProvider, policy => policy
                     .RequireAuthenticatedUser()
-                    .RequireClaim(Claims.IdentityProvider, ClaimValues.SubmittingAgency, ClaimValues.Idir));
+                    .RequireRole(Roles.SubmittingAgency));
 
             options.AddPolicy(Policies.UserOwnsResource, policy => policy.Requirements.Add(new UserOwnsResourceRequirement()));
 

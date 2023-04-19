@@ -9,9 +9,9 @@ public class EdtUserDto
     public string? FullName { get; set; }
     public string? Email { get; set; }
     public string Phone { get; set; } = string.Empty;
-    public string? Role { get; set; }
-    public bool? IsActive => true;
-    public string? AccountType { get; set; }
+    public string? Role { get; set; } = "User";
+    public bool? IsActive { get; set; } = true;
+    public string? AccountType { get; set; } = "Saml";
 
     // tostring that provides details of the object
     public override string ToString() => JsonSerializer.Serialize(this);

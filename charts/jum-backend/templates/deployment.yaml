@@ -77,7 +77,16 @@ spec:
                 secretKeyRef:
                   name: jum-kafka-config
                   key: KafkaCluster__TopicName
-
+            - name: KafkaCluster__UserChangeEventTopic
+              valueFrom:
+                secretKeyRef:
+                  name: jum-kafka-config
+                  key: KafkaCluster__UserChangeEventTopic
+            - name: KafkaCluster__UserChangeProcessedTopic
+              valueFrom:
+                secretKeyRef:
+                  name: jum-kafka-config
+                  key: KafkaCluster__UserChangeProcessedTopic
             - name: KafkaCluster__SaslOauthbearerTokenEndpointUrl
               valueFrom:
                 secretKeyRef:
@@ -93,7 +102,6 @@ spec:
                 secretKeyRef:
                   name: jum-kafka-config
                   key: KafkaCluster__SaslOauthbearerConsumerClientSecret
-
             - name: KafkaCluster__AckTopicName
               valueFrom:
                 secretKeyRef:
@@ -101,21 +109,31 @@ spec:
                   key: KafkaCluster__AckTopicName
             - name: ApplicationUrl
               value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"
+            - name: JustinAuthentication__BasicAuthUsername
+              valueFrom:
+                secretKeyRef:
+                  name: jum-api-config
+                  key: JustinAuthentication__BasicAuthUsername
+            - name: JustinAuthentication__BasicAuthPassword
+              valueFrom:
+                secretKeyRef:
+                  name: jum-api-config
+                  key: JustinAuthentication__BasicAuthPassword
+            - name: JustinChangeEventClient__Url
+              valueFrom:
+                secretKeyRef:
+                  name: jum-api-config
+                  key: JustinChangeEventClient__Url
+            - name: JustinChangeEventClient__PollRateSeconds
+              valueFrom:
+                secretKeyRef:
+                  name: jum-api-config
+                  key: JustinChangeEventClient__PollRateSeconds
             - name: JustinParticipantClient__Url
               valueFrom:
                 secretKeyRef:
                   name: jum-api-config
-                  key: url
-            - name: JustinParticipantClient__BasicAuthUsername
-              valueFrom:
-                secretKeyRef:
-                  name: jum-api-config
-                  key: JustinParticipantClient__BasicAuthUsername
-            - name: JustinParticipantClient__BasicAuthPassword
-              valueFrom:
-                secretKeyRef:
-                  name: jum-api-config
-                  key: JustinParticipantClient__BasicAuthPassword
+                  key: JustinParticipantClient__Url
           volumeMounts:
             - name: kafka-truststore
               mountPath: "/opt/kafka/certificates"

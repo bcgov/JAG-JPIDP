@@ -1,6 +1,7 @@
-﻿namespace jumwebapi.Data;
+namespace jumwebapi.Data;
 
 using jumwebapi.Data.ef;
+using jumwebapi.Features.UserChangeManagement.Data;
 using jumwebapi.Models;
 using jumwebapi.Models.Lookups;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +13,6 @@ public class JumDbContext : DbContext
 
     public JumDbContext(DbContextOptions<JumDbContext> options, IClock clock) : base(options) => this.clock = clock;
 
-    public DbSet<Player> Players { get; set; } = default!;
     public DbSet<JustinUser> Users { get; set; } = default!; 
 
     //public DbSet<ParticipantModel> Participants { get; set; } = default!;
@@ -22,6 +22,10 @@ public class JumDbContext : DbContext
     public DbSet<JustinAgency> Agencies { get; set; } = default!;
     public DbSet<JustinAgencyAssignment> AgencyAssignments { get; set; } = default!;
     public DbSet<JustinPartyType> PartyTypes { get; set; } = default!;
+
+    public DbSet<JustinUserChange> JustinUserChange { get; set; } = default!;
+
+
     //public DbSet<DigitalParticipantModel> DigitalParticipants { get; set; } = default!;
     public override int SaveChanges()
     {

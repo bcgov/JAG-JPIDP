@@ -8,6 +8,9 @@ using edt.service.ServiceEvents;
 using edt.service.ServiceEvents.UserAccountCreation;
 using edt.service.ServiceEvents.UserAccountCreation.ConsumerRetry;
 using edt.service.ServiceEvents.UserAccountCreation.Handler;
+using edt.service.ServiceEvents.UserAccountModification;
+using edt.service.ServiceEvents.UserAccountModification.Handler;
+using edt.service.ServiceEvents.UserAccountModification.Models;
 using EdtService.Extensions;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
@@ -88,12 +91,15 @@ public static class ConsumerSetup
         services.AddSingleton(producerConfig);
 
         services.AddSingleton(typeof(IKafkaProducer<,>), typeof(KafkaProducer<,>));
-
+        services.AddScoped<IKafkaHandler<string, IncomingUserModification>, IncomingUserChangeModificationHandler>();
 
         services.AddScoped<IKafkaHandler<string, EdtUserProvisioningModel>, UserProvisioningHandler>();
+
         services.AddSingleton(typeof(IKafkaConsumer<,>), typeof(KafkaConsumer<,>));
 
         services.AddHostedService<EdtServiceConsumer>();
+        services.AddHostedService<EdtUserModificationServiceConsumer>();
+
         services.AddHostedService<ConsumerRetryService>();
         return services;
     }

@@ -63,6 +63,21 @@ public static class AParty
         return party;
     }
 
+    public static Party WithExistingAccessRequest(string? identityProvider = null)
+    {
+        var party = WithDemographics(identityProvider);
+        var accessRequest = new AccessRequest
+        {
+            Id = 1,
+            Status = "pending",
+            AccessTypeCode = AccessTypeCode.DigitalEvidence,
+            Party = party
+        };
+        party.AccessRequests = new List<AccessRequest> { accessRequest };
+
+        return party;
+    }
+
     public static Party WithLicenceDeclared(string? cpn = "Cpn", CollegeCode collegeCode = CollegeCode.PhysiciansAndSurgeons, string licenceNumber = "12345")
     {
         var party = WithDemographics(ClaimValues.BCServicesCard);

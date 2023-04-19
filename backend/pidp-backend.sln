@@ -17,7 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "jumwebapi", "jum-api\jumweb
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NotificationService", "jum-api\NotificationService\NotificationService.csproj", "{B796D8FB-A2BC-45C9-9C3E-39D4DC2DF7EA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "edt.casemanagement", "edt.casemanagement\edt.casemanagement.csproj", "{161D063A-B8B9-4972-BD9F-AFDB8B1BC55E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "edt.casemanagement", "edt.casemanagement\edt.casemanagement.csproj", "{161D063A-B8B9-4972-BD9F-AFDB8B1BC55E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

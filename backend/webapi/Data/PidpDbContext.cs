@@ -15,10 +15,13 @@ public class PidpDbContext : DbContext
     public DbSet<AccessRequest> AccessRequests { get; set; } = default!;
     public DbSet<ClientLog> ClientLogs { get; set; } = default!;
     public DbSet<EmailLog> EmailLogs { get; set; } = default!;
+
     public DbSet<EndorsementRelationship> EndorsementRelationships { get; set; } = default!;
     public DbSet<EndorsementRequest> EndorsementRequests { get; set; } = default!;
     public DbSet<Endorsement> Endorsements { get; set; } = default!;
     public DbSet<Facility> Facilities { get; set; } = default!;
+    public DbSet<FutureUserChangeEvent> FutureUserChangeEvents { get; set; } = default!;
+
     public DbSet<HcimAccountTransfer> HcimAccountTransfers { get; set; } = default!;
     public DbSet<HcimEnrolment> HcimEnrolments { get; set; } = default!;
     public DbSet<DigitalEvidence> DigitalEvidences { get; set; } = default!;
@@ -33,6 +36,9 @@ public class PidpDbContext : DbContext
     public DbSet<CorrectionServiceDetail> CorrectionServiceDetails { get; set; } = default!;
     public DbSet<SubmittingAgencyRequest> SubmittingAgencyRequests { get; set; } = default!;
     public DbSet<AgencyRequestAttachment> AgencyRequestAttachments { get; set; } = default!;
+
+    public DbSet<UserAccountChange> UserAccountChanges { get; set; } = default!;
+
     public override int SaveChanges()
     {
         this.ApplyAudits();
