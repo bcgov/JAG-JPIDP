@@ -190,6 +190,12 @@ public class Startup
             }
         }
 
+        var permitIDIRDemsAccess = Environment.GetEnvironmentVariable("PERMIT_IDIR_DEMS_ACCESS");
+        if (permitIDIRDemsAccess != null && permitIDIRDemsAccess.Equals("true", StringComparison.OrdinalIgnoreCase))
+        {
+            Log.Logger.Warning("*** PERMIT_IDIR_DEMS_ACCESS=true - access to DEMS services for IDIR users is enabled - this is not intended for NON production use only ***");
+        }
+
         Log.Logger.Information("Startup configuration complete");
 
 
