@@ -34,18 +34,32 @@ public static class AuthenticationSetup
 
         services.AddAuthorization(options =>
         {
+
+            /////////////////////////////////
+            // BC SERVICES CARD HOLDERS
+            /////////////////////////////////
             options.AddPolicy(Policies.BcscAuthentication, policy => policy
                 .RequireAuthenticatedUser()
                 .RequireClaim(Claims.IdentityProvider, ClaimValues.BCServicesCard));
 
+            /////////////////////////////////
+            // BC IDIR USERS
+            /////////////////////////////////
             options.AddPolicy(Policies.IdirAuthentication, policy => policy
                 .RequireAuthenticatedUser()
                 .RequireClaim(Claims.IdentityProvider, ClaimValues.Idir));
 
+
+            /////////////////////////////////
+            // BC PROSECUTION SERVICE
+            /////////////////////////////////
             options.AddPolicy(Policies.BcpsAuthentication, policy => policy
                   .RequireAuthenticatedUser()
                   .RequireClaim(Claims.IdentityProvider, ClaimValues.Bcps));
 
+            /////////////////////////////////
+            // USERS WITH A PART ID
+            /////////////////////////////////
             options.AddPolicy(Policies.AnyPartyIdentityProvider, policy => policy
                   .RequireAuthenticatedUser().RequireAssertion(context =>
                   {
@@ -59,6 +73,47 @@ public static class AuthenticationSetup
                   }));
             ;
 
+            /////////////////////////////////
+            // DEFENSE COUNSEL
+            /////////////////////////////////
+            options.AddPolicy(Policies.DefenceConselIdentityProvider, policy => policy
+                .RequireAuthenticatedUser().RequireAssertion(context =>
+                {
+                    var hasRole = context.User.IsInRole(Roles.DefenceCounsel);
+                    var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider &&
+                                                       (c.Value == ClaimValues.VerifiedCredentials));
+                    return hasRole || hasClaim;
+                }));
+
+
+            /////////////////////////////////
+            // DUTY COUNSEL
+            /////////////////////////////////
+            options.AddPolicy(Policies.DutyConselIdentityProvider, policy => policy
+                .RequireAuthenticatedUser().RequireAssertion(context =>
+                {
+                    var hasRole = context.User.IsInRole(Roles.DutyCounsel);
+                    var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider &&
+                                                       (c.Value == ClaimValues.VerifiedCredentials));
+                    return hasRole || hasClaim;
+                }));
+
+            /////////////////////////////////
+            // DUTY AND DEFENSE COUNSEL
+            /////////////////////////////////
+            options.AddPolicy(Policies.DutyConselIdentityProvider, policy => policy
+                .RequireAuthenticatedUser().RequireAssertion(context =>
+                {
+                    var hasRole = context.User.IsInRole(Roles.DutyCounsel) || context.User.IsInRole(Roles.DefenceCounsel);
+                    var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider &&
+                                                       (c.Value == ClaimValues.VerifiedCredentials));
+                    return hasRole || hasClaim;
+                }));
+
+
+            /////////////////////////////////
+            // ANYONE WITH DEMS ACCESS
+            /////////////////////////////////
             options.AddPolicy(Policies.AllDemsIdentityProvider, policy => policy
                   .RequireAuthenticatedUser().RequireAssertion(context =>
                   {
@@ -67,19 +122,29 @@ public static class AuthenticationSetup
                                                                  (c.Value == ClaimValues.BCServicesCard ||
                                                                   c.Value == ClaimValues.Idir ||
                                                                   c.Value == ClaimValues.Phsa ||
-                                                                  c.Value == ClaimValues.Bcps));
+                                                                  c.Value == ClaimValues.Bcps ||
+                                                                  c.Value == ClaimValues.VerifiedCredentials));
                       return hasRole || hasClaim;
                   }));
 
+            /////////////////////////////////
+            // ADMIN USERS - GIVE WITH CAUTION!
+            /////////////////////////////////
             options.AddPolicy(Policies.AdminAuthentication, policy => policy
                     .RequireAuthenticatedUser()
                     .RequireClaim(Claims.IdentityProvider, ClaimValues.Idir, ClaimValues.Bcps));
 
 
+            /////////////////////////////////
+            // SUBMITTING AGENCIES (POLICE)
+            /////////////////////////////////
             options.AddPolicy(Policies.SubAgencyIdentityProvider, policy => policy
                     .RequireAuthenticatedUser()
                     .RequireRole(Roles.SubmittingAgency));
 
+            /////////////////////////////////
+            // USER OWNS RESOURCE
+            /////////////////////////////////
             options.AddPolicy(Policies.UserOwnsResource, policy => policy.Requirements.Add(new UserOwnsResourceRequirement()));
 
             options.FallbackPolicy = new AuthorizationPolicyBuilder()
