@@ -7,8 +7,25 @@ using Serilog;
 
 public partial class ProfileStatus
 {
+
+    public static bool PermitIDIRCaseManagement()
+    {
+        var permitIDIRCaseMgmt = Environment.GetEnvironmentVariable("PERMIT_IDIR_CASE_MANAGEMENT");
+        if (permitIDIRCaseMgmt != null && permitIDIRCaseMgmt.Equals("true", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     public partial class Model
     {
+
+   
+
         public class AccessAdministrator : ProfileSection
         {
             internal override string SectionName => "administratorInfo";
@@ -241,8 +258,22 @@ public partial class ProfileStatus
 
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
+                // special testing case where IDIR users could view case management and request access as an SA
+                if (profile.UserIsBcps && PermitIDIRCaseManagement() )
+                {
+                    if (profile.CompletedEnrolments.Contains(AccessTypeCode.DigitalEvidence))
+                    {
+                        this.StatusCode = StatusCode.Complete;
+                        return;
+                    }
+                    else
+                    {
+                        this.StatusCode = StatusCode.Locked;
+                        return;
+                    }
+                }
 
-                if (!(profile.UserIsInSubmittingAgency))
+                if (!profile.UserIsInSubmittingAgency)
                 {
                     this.StatusCode = StatusCode.Hidden;
                     return;
@@ -473,4 +504,6 @@ public partial class ProfileStatus
             }
         }
     }
+
+ 
 }

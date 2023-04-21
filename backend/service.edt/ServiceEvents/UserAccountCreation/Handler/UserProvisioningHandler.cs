@@ -57,8 +57,8 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
 
         Serilog.Log.Logger.Information("Db {0} {1}", this.context.Database.CanConnect(), this.context.Database.GetConnectionString());
 
-        // set acitivty info
-        Activity.Current?.AddTag("digitalevidence.party.id", accessRequestModel.AccessRequestId);
+        // set activity info
+        Activity.Current?.AddTag("digitalevidence.access.id", accessRequestModel.AccessRequestId);
 
 
         using var trx = this.context.Database.BeginTransaction();
@@ -142,6 +142,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
                     {
                         { "FirstName", accessRequestModel.FullName!.Split(' ').FirstOrDefault("NAME_NOT_SET") },
                         { "PartyId", accessRequestModel.Key! },
+                        { "AccessRequestId", "" + accessRequestModel.AccessRequestId },
                         { "Tag", msgKey! }
                     };
 
@@ -151,6 +152,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
                     {
                         To = accessRequestModel.Email,
                         DomainEvent = domainEvent,
+
                         EventData = eventData,
                     });
 
