@@ -29,6 +29,8 @@ public class NotificationAckHandler : IKafkaHandler<string, NotificationAckModel
                 .Where(request => request.Id == value.AccessRequestId).SingleOrDefaultAsync();
             if (accessRequest != null)
             {
+                Log.Information($"Marking access request {value.AccessRequestId} as {value.Status}");
+
                 using var trx = this.context.Database.BeginTransaction();
 
                 try
