@@ -196,6 +196,13 @@ public class Startup
             Log.Logger.Warning("*** PERMIT_IDIR_DEMS_ACCESS=true - access to DEMS services for IDIR users is enabled - this is not intended for NON production use only ***");
         }
 
+        var permitIDIRCaseMgmtAccess = Environment.GetEnvironmentVariable("PERMIT_IDIR_CASE_MANAGEMENT");
+        if (permitIDIRCaseMgmtAccess != null && permitIDIRCaseMgmtAccess.Equals("true", StringComparison.OrdinalIgnoreCase))
+        {
+            Log.Logger.Warning("*** PERMIT_IDIR_CASE_MANAGEMENT=true - access to case managment for IDIR users is enabled - this is not intended for NON production use only ***");
+        }
+
+
         Log.Logger.Information("Startup configuration complete");
 
 
