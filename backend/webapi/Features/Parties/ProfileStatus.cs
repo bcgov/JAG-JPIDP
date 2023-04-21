@@ -346,6 +346,7 @@ public partial class ProfileStatus
                 return false;
             }
         }
+
         [MemberNotNullWhen(true, nameof(LicenceDeclaration))]
         public bool HasDeclaredLicence => this.LicenceDeclaration?.HasNoLicence == false;
 
