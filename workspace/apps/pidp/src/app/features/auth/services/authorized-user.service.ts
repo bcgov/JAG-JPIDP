@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 
-import { Observable, combineLatest, map } from 'rxjs';
+import { Observable, combineLatest, filter, map } from 'rxjs';
 
 import { LookupService } from '@app/modules/lookup/lookup.service';
 
@@ -71,14 +71,14 @@ export class AuthorizedUserService {
     // see if came from submitting agency
     const submittingAgency = this.lookupService.submittingAgencies.find(
       (agency) =>
-        agency.idpHint === userIdentity.accessTokenParsed.identity_provider
+        agency.idpHint === userIdentity.accessTokenParsed?.identity_provider
     );
 
     if (submittingAgency != null) {
       return new SubmittingAgencyResolver(userIdentity);
     }
 
-    switch (userIdentity.accessTokenParsed.identity_provider) {
+    switch (userIdentity.accessTokenParsed?.identity_provider) {
       case IdentityProvider.IDIR:
         return new IdirResolver(userIdentity);
       case IdentityProvider.BCSC:

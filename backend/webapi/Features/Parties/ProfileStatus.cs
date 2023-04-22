@@ -221,6 +221,7 @@ public partial class ProfileStatus
                     new Model.HcimEnrolment(profile),
                     new Model.DigitalEvidence(profile),
                     new Model.DigitalEvidenceCaseManagement(profile),
+                    new Model.DefenseAndDutyCounsel(profile),
                     new Model.MSTeams(profile),
                     new Model.SAEforms(profile),
                     new Model.Uci(profile),

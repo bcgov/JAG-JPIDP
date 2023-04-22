@@ -6,6 +6,7 @@ import { Role } from '@app/shared/enums/roles.enum';
 
 import { AccessRoutes } from './access.routes';
 import { DigitalEvidenceCaseManagementModule } from './pages/digital-evidence/case-management/digital-evidence-case-management.module';
+import { DigitalEvidenceCounselModule } from './pages/digital-evidence/digital-evidence-counsel/digital-evidence-counsel.module';
 import { DigitalEvidenceModule } from './pages/digital-evidence/digital-evidence.module';
 import { DriverFitnessModule } from './pages/driver-fitness/driver-fitness.module';
 import { HcimAccountTransferModule } from './pages/hcim-account-transfer/hcim-account-transfer.module';
@@ -97,7 +98,17 @@ const routes: Routes = [
         './pages/digital-evidence/case-management/digital-evidence-case-management.module'
       ).then((m) => m.DigitalEvidenceCaseManagementModule),
   },
-
+  {
+    path: AccessRoutes.DIGITAL_EVIDENCE_COUNSEL,
+    //canActivate: [PermissionsGuard],
+    // data: {
+    //   roles: [Role.FEATURE_PIDP_DEMO],
+    // },
+    loadChildren: (): Promise<DigitalEvidenceCounselModule> =>
+      import(
+        './pages/digital-evidence/digital-evidence-counsel/digital-evidence-counsel.module'
+      ).then((m) => m.DigitalEvidenceCounselModule),
+  },
   {
     path: AccessRoutes.UCI,
     canActivate: [PermissionsGuard],

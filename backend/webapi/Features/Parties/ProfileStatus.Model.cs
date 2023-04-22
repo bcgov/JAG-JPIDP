@@ -100,7 +100,7 @@ public partial class ProfileStatus
             }
 
             // submitting ageny user details are locked
-            protected override void SetAlertsAndStatus(ProfileStatusDto profile) => this.StatusCode = profile.DemographicsEntered || profile.SubmittingAgency != null ? ( profile.SubmittingAgency != null ) ? StatusCode.Locked_Complete : StatusCode.Complete : StatusCode.Incomplete;
+            protected override void SetAlertsAndStatus(ProfileStatusDto profile) => this.StatusCode = profile.DemographicsEntered || profile.SubmittingAgency != null ? (profile.SubmittingAgency != null) ? StatusCode.Locked_Complete : StatusCode.Complete : StatusCode.Incomplete;
         }
 
         public class OrganizationDetails : ProfileSection
@@ -233,6 +233,28 @@ public partial class ProfileStatus
             }
         }
 
+        public class DefenseAndDutyCounsel : ProfileSection
+        {
+            internal override string SectionName => "digitalEvidenceCounsel";
+
+            public DefenseAndDutyCounsel(ProfileStatusDto profile) : base(profile) { }
+
+            protected override void SetAlertsAndStatus(ProfileStatusDto profile)
+            {
+
+                if (profile.CompletedEnrolments.Contains(AccessTypeCode.DigitalEvidence))
+                {
+                    this.StatusCode = StatusCode.Available;
+                    return;
+                }
+                else
+                {
+                    this.StatusCode = StatusCode.Locked;
+                    return;
+                } 
+            }
+        }
+
         public class DigitalEvidenceCaseManagement : ProfileSection
         {
             internal override string SectionName => "digitalEvidenceCaseManagement";
@@ -242,7 +264,7 @@ public partial class ProfileStatus
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
 
-                if (!(profile.UserIsInSubmittingAgency))
+                if (!profile.UserIsInSubmittingAgency)
                 {
                     this.StatusCode = StatusCode.Hidden;
                     return;

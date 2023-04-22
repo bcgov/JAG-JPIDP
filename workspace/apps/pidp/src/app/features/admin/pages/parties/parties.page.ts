@@ -1,7 +1,7 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatTableDataSource } from '@angular/material/table';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { EMPTY, exhaustMap } from 'rxjs';
 
@@ -41,8 +41,11 @@ export class PartiesPage implements OnInit {
     @Inject(APP_CONFIG) private config: AppConfig,
     private adminResource: AdminResource,
     private dialog: MatDialog,
-    route: ActivatedRoute
+    private router: Router,
+    private route: ActivatedRoute
   ) {
+    const routeData = this.route.snapshot.data;
+    this.title = routeData.title;
     this.title = route.snapshot.data.title;
     this.dataSource = new MatTableDataSource();
     this.environment = this.config.environmentName;
@@ -70,6 +73,14 @@ export class PartiesPage implements OnInit {
 
   public ngOnInit(): void {
     this.getParties();
+  }
+
+  public onBack(): void {
+    this.navigateToRoot();
+  }
+
+  private navigateToRoot(): void {
+    this.router.navigate([]);
   }
 
   private getParties(): void {

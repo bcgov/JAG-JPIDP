@@ -9,6 +9,7 @@ import { Role } from '@app/shared/enums/roles.enum';
 import { StatusCode } from '../enums/status-code.enum';
 import { ProfileStatus } from '../models/profile-status.model';
 import { DigitalEvidenceCaseManagementPortalSection } from './access/digital-evidence-case-management-section.class';
+import { DigitalEvidenceCounselPortalSection } from './access/digital-evidence-consel-portal-section.class';
 import { DigitalEvidencePortalSection } from './access/digital-evidence-portal-section.class';
 import { DriverFitnessPortalSection } from './access/driver-fitness-portal-section.class';
 import { HcimAccountTransferPortalSection } from './access/hcim-account-transfer-portal-section.class';
@@ -49,7 +50,7 @@ export const portalStateGroupKeys = [
  * @description
  * Union of keys generated from the tuple.
  */
-export type PortalStateGroupKey = typeof portalStateGroupKeys[number];
+export type PortalStateGroupKey = (typeof portalStateGroupKeys)[number];
 
 export type PortalState = Record<PortalStateGroupKey, IPortalSection[]> | null;
 
@@ -189,6 +190,13 @@ export class PortalStateBuilder {
             profileStatus,
             this.router
           ),
+        ]
+      ),
+      ...ArrayUtils.insertResultIf<IPortalSection>(
+        this.permissionsService.hasGroup([Group.BSPS]) ||
+          this.insertSection('digitalEvidenceCounsel', profileStatus),
+        () => [
+          new DigitalEvidenceCounselPortalSection(profileStatus, this.router),
         ]
       ),
       ...ArrayUtils.insertResultIf<IPortalSection>(
