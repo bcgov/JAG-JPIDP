@@ -103,10 +103,11 @@ public static class HttpClientSetup
             SaslOauthbearerClientSecret = config.KafkaCluster.SaslOauthbearerConsumerClientSecret,
             EnableAutoOffsetStore = false,
             ClientId = Dns.GetHostName(),
+            SessionTimeoutMs = 60000,
             BootstrapServers = config.KafkaCluster.BootstrapServers,
             SaslMechanism = SaslMechanism.OAuthBearer,
             SecurityProtocol = SecurityProtocol.SaslSsl,
-            HeartbeatIntervalMs = 60000
+            HeartbeatIntervalMs = 20000
         };
 
         services.AddSingleton(consumerConfig);

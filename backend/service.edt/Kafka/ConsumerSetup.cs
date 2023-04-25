@@ -81,6 +81,8 @@ public static class ConsumerSetup
             ClientId = Dns.GetHostName(),
             EnableAutoOffsetStore = false,
             AutoCommitIntervalMs = 4000,
+            SessionTimeoutMs = 200000,
+            HeartbeatIntervalMs = 200000,
             BootstrapServers = config.KafkaCluster.BootstrapServers,
             SaslOauthbearerClientId = config.KafkaCluster.SaslOauthbearerConsumerClientId,
             SaslOauthbearerClientSecret = config.KafkaCluster.SaslOauthbearerConsumerClientSecret,
