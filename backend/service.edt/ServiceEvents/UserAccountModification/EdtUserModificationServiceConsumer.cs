@@ -19,6 +19,7 @@ public class EdtUserModificationServiceConsumer : BackgroundService
     {
         try
         {
+            Serilog.Log.Information($"Consume from IncomingUserChangeTopic {this.config.KafkaCluster.IncomingUserChangeTopic}");
             await this.consumer.Consume(this.config.KafkaCluster.IncomingUserChangeTopic, stoppingToken);
         }
         catch (Exception ex)

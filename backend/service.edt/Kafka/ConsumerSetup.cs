@@ -36,7 +36,6 @@ public static class ConsumerSetup
             SaslOauthbearerScope = config.KafkaCluster.Scope,
             SslEndpointIdentificationAlgorithm = SslEndpointIdentificationAlgorithm.Https,
             SslCaLocation = config.KafkaCluster.SslCaLocation,
-            ConnectionsMaxIdleMs = 600000,
             SslCertificateLocation = config.KafkaCluster.SslCertificateLocation,
             SslKeyLocation = config.KafkaCluster.SslKeyLocation
         };
