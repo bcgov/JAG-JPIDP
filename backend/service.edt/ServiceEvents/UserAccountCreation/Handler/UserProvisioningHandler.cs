@@ -78,7 +78,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
 
 
 
-            //check wheather edt user already exist
+            //check whether edt user already exist
             var result = await this.AddOrUpdateUser(accessRequestModel);
 
 
@@ -229,7 +229,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
         // determine if this user is a tombstone account (see BCPSDEMS-1033)
         // tombstone accounts are created in advance of the user on-boarding such that as cases are added to EDT they are
         // already available to the user. This alleviates the lengthy case assignment process that is required for new JUSTIN users accessing EDT
-        if (!string.IsNullOrEmpty(this.configuration.EdtClient.TombStoneEmailDomain) && (user.Email.EndsWith(this.configuration.EdtClient.TombStoneEmailDomain, StringComparison.OrdinalIgnoreCase) && user.IsActive == false))
+        if (user != null && !string.IsNullOrEmpty(this.configuration.EdtClient.TombStoneEmailDomain) && (user.Email.EndsWith(this.configuration.EdtClient.TombStoneEmailDomain, StringComparison.OrdinalIgnoreCase) && user.IsActive == false))
         {
             this.logger.LogUserTombstoneActivation(value.Key, value.AccessRequestId);
             var response = await this.edtClient.EnableTombstoneAccount(value, user);

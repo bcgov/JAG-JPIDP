@@ -13,7 +13,7 @@ import { BrokerProfile } from '../models/broker-profile.model';
 export interface IAccessTokenService {
   token(): Observable<string>;
   isTokenExpired(): boolean;
-  decodeToken(): Observable<AccessTokenParsed | null>;
+  decodeToken(): Observable<AccessTokenParsed>;
   roles(): string[];
   groups(): string[];
   clearToken(): void;
@@ -39,7 +39,12 @@ export class AccessTokenService implements IAccessTokenService {
 
   public decodeToken(): Observable<AccessTokenParsed> {
     return this.token().pipe(
-      map((token: string) => this.jwtHelper.decodeToken(token))
+      map((token: string | null) => {
+        if (token) {
+          return this.jwtHelper.decodeToken(token) as AccessTokenParsed;
+        }
+        return {} as AccessTokenParsed;
+      })
     );
   }
 
@@ -69,7 +74,6 @@ export class AccessTokenService implements IAccessTokenService {
   }
 
   public groups(): string[] {
-    debugger;
     let roles: string[] = [];
     this.keycloakService.loadUserProfile().then(() => {
       roles = this.keycloakService.getUserRoles();
