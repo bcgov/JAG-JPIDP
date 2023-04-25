@@ -2,11 +2,6 @@
   <ui-page-header>{{ title }}</ui-page-header>
 </ui-page>
 
-<ng-container *ngIf="environment !== production">
-  <button mat-stroked-button type="button" color="warn" (click)="onDelete()">
-    Delete all
-  </button>
-</ng-container>
 
 <table mat-table [dataSource]="dataSource">
   <ng-container matColumnDef="id">
@@ -44,8 +39,7 @@
   <ng-container matColumnDef="digitalEvidenceAccessRequest">
     <th *matHeaderCellDef mat-header-cell>Digital Evidence</th>
     <td *matCellDef="let element" mat-cell>
-      <mat-icon
-        [class]="
+      <mat-icon [class]="
           element.digitalEvidenceAccessRequest ? 'has-requested' : 'not-requested'
         ">
         {{ element.digitalEvidenceAccessRequest ? 'check_circle' : 'block' }}
@@ -56,3 +50,10 @@
   <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
   <tr *matRowDef="let row; columns: displayedColumns" mat-row></tr>
 </table>
+
+<ui-page-footer>
+  <button mat-stroked-button uiPageFooterAction type="button" color="primary" (click)="onBack()">
+    Back Home
+  </button>
+
+</ui-page-footer>

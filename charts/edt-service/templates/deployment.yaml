@@ -161,6 +161,11 @@ spec:
                 secretKeyRef:
                   name: kafkaconfig-edt
                   key: KafkaCluster__SaslOauthbearerConsumerClientId
+            - name: KafkaCluster__IncomingUserChangeTopic
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-edt
+                  key: KafkaCluster__IncomingUserChangeTopic
             - name: KafkaCluster__UserModificationTopicName
               valueFrom:
                 secretKeyRef:

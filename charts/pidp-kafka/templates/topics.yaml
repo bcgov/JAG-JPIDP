@@ -118,7 +118,6 @@ spec:
   partitions: {{ default 3 .Values.kafka.topics.replicas }}
   replicas: {{ default 3 .Values.kafka.topics.replicas }}
   topicName: digitalevidence-justinuserprovision-topic
-{{- end}}
 ---
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
@@ -171,11 +170,36 @@ spec:
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
-  name: digitalevidence-jess-test1
+  name: digitalevidence-justin-user-change-topic
   namespace: {{ .Values.global.licenseplate }}-{{ .Values.global.environment }}
   labels:
     strimzi.io/cluster: {{ include "pidp-kafka.fullname" . }}-cluster
 spec:
   partitions: {{ default 3 .Values.kafka.topics.replicas }}
   replicas: {{ default 3 .Values.kafka.topics.replicas }}
-  topicName: digitalevidence-jess-test1
+  topicName: digitalevidence-justin-user-change-topic
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: digitalevidence-justin-user-process-topic
+  namespace: {{ .Values.global.licenseplate }}-{{ .Values.global.environment }}
+  labels:
+    strimzi.io/cluster: {{ include "pidp-kafka.fullname" . }}-cluster
+spec:
+  partitions: {{ default 3 .Values.kafka.topics.replicas }}
+  replicas: {{ default 3 .Values.kafka.topics.replicas }}
+  topicName: digitalevidence-justin-user-process-topic
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: digitalevidence-processresponse-topic
+  namespace: {{ .Values.global.licenseplate }}-{{ .Values.global.environment }}
+  labels:
+    strimzi.io/cluster: {{ include "pidp-kafka.fullname" . }}-cluster
+spec:
+  partitions: {{ default 3 .Values.kafka.topics.replicas }}
+  replicas: {{ default 3 .Values.kafka.topics.replicas }}
+  topicName: digitalevidence-processresponse-topic
+{{- end}}

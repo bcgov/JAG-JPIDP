@@ -1,0 +1,57 @@
+<ui-page [formGroup]="formState.form">
+  <ui-page-header>{{ title }}</ui-page-header>
+  <ui-page-section>
+    <ui-page-section-subheader icon="assignment" heading="Digital Evidence and Disclosure Duty Case Management">
+      <ng-container uiPageSectionSubheaderDesc>
+        Request access to courts and cases for duration of duty.
+      </ng-container>
+
+    </ui-page-section-subheader>
+    <section>
+      <mat-form-field class="w-20">
+        <input matInput placeholder="Court Location" required type="text" tabindex="1" formControlName="agencyCode" />
+        <mat-error>Required</mat-error>
+      </mat-form-field>
+      <div style="width:100%" fxLayout="row" fxLayoutAlign="start">
+
+        <mat-form-field style="width: 75%">
+          <mat-label>Request access for the following time period</mat-label>
+          <mat-date-range-input [rangePicker]="picker">
+            <input matStartDate placeholder="From">
+            <input matEndDate placeholder="Until">
+          </mat-date-range-input>
+          <mat-hint>MM/DD/YYYY – MM/DD/YYYY</mat-hint>
+          <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-date-range-picker #picker></mat-date-range-picker>
+        </mat-form-field>
+      </div>
+      <button mat-stroked-button type="button" tabindex="3" style="margin-left: 10px;" color="primary">
+        Request
+      </button>
+
+    </section>
+
+  </ui-page-section>
+  <ui-page-section>
+    <ui-page-section-subheader icon="table_chart" heading="Current Court Access">
+    </ui-page-section-subheader>
+    <ng-container>
+
+      <div style="width:100%" fxLayout="row" fxLayoutAlign="start end" fxLayoutGap="0">
+
+        <div fxFlex></div>
+
+      </div>
+      <br />
+      <br />
+    </ng-container>
+
+  </ui-page-section>
+
+  <ui-page-footer>
+    <button mat-stroked-button uiPageFooterAction type="button" color="primary" (click)="onBack()">
+      Back Home
+    </button>
+  </ui-page-footer>
+
+</ui-page>
