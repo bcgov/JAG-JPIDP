@@ -259,14 +259,22 @@ public partial class ProfileStatus
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
 
-                if (profile.CompletedEnrolments.Contains(AccessTypeCode.DigitalEvidence))
+                if (profile.UserIsDutyCounsel)
                 {
-                    this.StatusCode = StatusCode.Available;
-                    return;
+                    if (profile.CompletedEnrolments.Contains(AccessTypeCode.DigitalEvidence))
+                    {
+                        this.StatusCode = StatusCode.Available;
+                        return;
+                    }
+                    else
+                    {
+                        this.StatusCode = StatusCode.Locked;
+                        return;
+                    }
                 }
                 else
                 {
-                    this.StatusCode = StatusCode.Locked;
+                    this.StatusCode = StatusCode.Hidden;
                     return;
                 } 
             }
