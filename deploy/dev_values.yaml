@@ -59,6 +59,8 @@ edt-casemgmt:
     enabled: false
 
 jum-backend:
+  route:
+    enabled: true
   migrations:
     enabled: false
 
