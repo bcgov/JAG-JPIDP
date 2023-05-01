@@ -70,11 +70,7 @@ export class DigitalEvidenceCaseManagementPortalSection
   }
 
   public get statusType(): AlertType {
-    return this.getStatusCode() === StatusCode.AVAILABLE
-      ? 'success'
-      : this.getStatusCode() === StatusCode.PENDING
-      ? 'info'
-      : 'warn';
+    return this.getStatusCode() === StatusCode.COMPLETED ? 'info' : 'warn';
   }
 
   public performAction(): void | Observable<void> {

@@ -116,8 +116,12 @@ public partial class ProfileStatus
                 this.Phone = profile.Phone;
             }
 
-            // submitting ageny user details are locked
-            protected override void SetAlertsAndStatus(ProfileStatusDto profile) => this.StatusCode = profile.DemographicsEntered || profile.SubmittingAgency != null ? (profile.SubmittingAgency != null) ? StatusCode.Locked_Complete : StatusCode.Complete : StatusCode.Incomplete;
+            // submitting agency user details are locked
+            protected override void SetAlertsAndStatus(ProfileStatusDto profile)
+            {
+                this.StatusCode = profile.DemographicsEntered || profile.SubmittingAgency != null ?
+                    (profile.SubmittingAgency != null || profile.UserIsBcps) ? StatusCode.Locked_Complete : StatusCode.Complete : StatusCode.Incomplete;
+            }
         }
 
         public class OrganizationDetails : ProfileSection
@@ -169,12 +173,16 @@ public partial class ProfileStatus
                     return;
                 }
 
-                if (!profile.IsJumUser && !profile.UserIsInSubmittingAgency)
+
+                if (!profile.IsJumUser && !profile.UserIsInSubmittingAgency && profile.OrganizationDetailEntered)
                 {
                     this.Alerts.Add(Alert.JumValidationError);
                     this.StatusCode = StatusCode.Error;
                     return;
                 }
+
+
+
 
                 this.StatusCode = StatusCode.Complete;
             }
@@ -232,12 +240,6 @@ public partial class ProfileStatus
                     return;
                 }
 
-                //if (profile.AccessRequestStatus.Contains(AccessRequestStatus.Pending))
-                //{
-                //    this.StatusCode = StatusCode.Pending;
-                //    return;
-                //}
-
                 if (!profile.DemographicsEntered
                     || !profile.CollegeCertificationEntered
                     || !profile.CompletedEnrolments.Contains(AccessTypeCode.DigitalEvidence)
@@ -289,7 +291,7 @@ public partial class ProfileStatus
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
                 // special testing case where IDIR users could view case management and request access as an SA
-                if (profile.UserIsBcps && PermitIDIRCaseManagement() )
+                if (profile.UserIsIdirCaseManagement)
                 {
                     if (profile.CompletedEnrolments.Contains(AccessTypeCode.DigitalEvidence))
                     {

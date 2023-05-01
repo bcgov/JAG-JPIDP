@@ -137,7 +137,9 @@ export class DigitalEvidenceCaseManagementPage
       .pipe(map((token) => token?.identity_provider ?? ''));
 
     accessTokenService.decodeToken().subscribe((n) => {
-      this.result = n.identity_provider;
+      if (n !== null) {
+        this.result = n.identity_provider;
+      }
     });
 
     this.formState = new DigitalEvidenceCaseManagementFormState(fb);
