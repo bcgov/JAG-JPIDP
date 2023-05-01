@@ -79,7 +79,7 @@ export class AuthorizedUserService {
     }
 
     switch (userIdentity.accessTokenParsed?.identity_provider) {
-      case IdentityProvider.IDIR:
+      case IdentityProvider.IDIR || IdentityProvider.AZUREIDIR:
         return new IdirResolver(userIdentity);
       case IdentityProvider.BCSC:
         return new BcscResolver(userIdentity);
