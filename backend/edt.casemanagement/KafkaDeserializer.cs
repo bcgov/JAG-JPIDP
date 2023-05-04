@@ -23,6 +23,17 @@ internal sealed class KafkaDeserializer<T> : IDeserializer<T>
 
         var dataJson = Encoding.UTF8.GetString(data);
 
+
+        if (typeof(T) == typeof(Guid))
+        {
+            if (!Guid.TryParse(dataJson, out var guid))
+            {
+                throw new ArgumentException("The data is not a valid Guid.");
+            }
+            return (T)(object)guid;
+        }
+
+
         Serilog.Log.Information("Case {0}", dataJson);
 
         var settings = new JsonSerializerSettings
