@@ -9,7 +9,7 @@ public class CourtLocationDomainEvent
     public int PartyId { get; set; }
     public string? Username { get; set; }
     public string CourtLocation { get; set; }
-    public Guid? UserId { get; set; }
+    public Guid UserId { get; set; }
     // todo - set court case name from EDT
     public string EventType { get; set; } = CourtLocationEventType.None;
     public DateTimeOffset? RequestedOn { get; set; }
