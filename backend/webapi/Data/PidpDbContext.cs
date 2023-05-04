@@ -38,6 +38,7 @@ public class PidpDbContext : DbContext
     public DbSet<SubmittingAgencyRequest> SubmittingAgencyRequests { get; set; } = default!;
     public DbSet<AgencyRequestAttachment> AgencyRequestAttachments { get; set; } = default!;
     public DbSet<CourtLocationAccessRequest> CourtLocationAccessRequests { get; set; } = default!;
+    public DbSet<CourtLocation> CourtLocations { get; set; } = default!;
 
     public DbSet<UserAccountChange> UserAccountChanges { get; set; } = default!;
 
@@ -119,6 +120,12 @@ public class PidpDbContext : DbContext
     }
 
     // Uncomment for SQL logging
-    // protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    //     => optionsBuilder.LogTo(Console.WriteLine);
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        if (Environment.GetEnvironmentVariable("LOG_SQL") != null && "true".Equals(Environment.GetEnvironmentVariable("LOG_SQL")))
+        {
+            optionsBuilder.LogTo(Console.WriteLine);
+        }
+
+    }
 }

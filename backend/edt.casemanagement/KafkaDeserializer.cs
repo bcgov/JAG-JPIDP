@@ -27,7 +27,7 @@ internal sealed class KafkaDeserializer<T> : IDeserializer<T>
 
         var settings = new JsonSerializerSettings
         {
-            Converters = { new IsoDateTimeConverter { DateTimeStyles = DateTimeStyles.AssumeUniversal, DateTimeFormat = "yyyy'-'MM'-'dd'T'HH':'mm':'ssK" } }
+            Converters = { new IsoDateTimeConverter { DateTimeStyles = DateTimeStyles.AssumeUniversal, DateTimeFormat = "yyyy'-'MM'-'dd'T'HH':'mm':'ss.fffffffK" } }
         };
 
 

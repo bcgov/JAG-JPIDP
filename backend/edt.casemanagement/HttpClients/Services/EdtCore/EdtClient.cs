@@ -10,6 +10,7 @@ using edt.casemanagement.Features.Cases;
 using edt.casemanagement.Infrastructure.Telemetry;
 using edt.casemanagement.Models;
 using edt.casemanagement.ServiceEvents.CaseManagement.Models;
+using edt.casemanagement.ServiceEvents.CourtLocation.Models;
 using edt.casemanagement.ServiceEvents.UserAccountCreation.Models;
 using Microsoft.AspNetCore.Mvc;
 using Prometheus;
@@ -322,14 +323,14 @@ public class EdtClient : BaseClient, IEdtClient
         try
         {
 
-            if (accessRequest.EventType.Equals("Provisioning", StringComparison.Ordinal))
+            if (accessRequest.EventType.Equals(CaseEventType.Provisioning, StringComparison.Ordinal))
             {
                 Log.Information("Case provision request {0} {1}", userKey, accessRequest.CaseId);
                 await this.AddUserToCase(edtUser.Id, accessRequest.CaseId);
             }
-            else if (accessRequest.EventType.Equals("Decommission", StringComparison.Ordinal))
+            else if (accessRequest.EventType.Equals(CaseEventType.Decommission, StringComparison.Ordinal))
             {
-                Log.Information("Case decomission request {0} {1}", userKey, accessRequest.CaseId);
+                Log.Information("Case decommission request {0} {1}", userKey, accessRequest.CaseId);
                 await this.RemoveUserFromCase(edtUser.Id, accessRequest.CaseId);
             }
             else
@@ -399,11 +400,17 @@ public class EdtClient : BaseClient, IEdtClient
 
     }
 
+  public async Task<Task> HandleCourtLocationRequest(string key, CourtLocationDomainEvent accessRequest)
+  {
+        Log.Debug($"handling court access request {accessRequest.RequestId}");
 
-    public static class CaseEventType
+        return Task.CompletedTask;
+    }
+
+  public static class CaseEventType
     {
-        public const string Provisioning = "Provisioning";
-        public const string Decommission = "Decommission";
+        public const string Provisioning = "case-provision-event";
+        public const string Decommission = "case-decommission-event";
         public const string None = "None";
     }
 

@@ -19,7 +19,7 @@ public class SubAgencyDomainEvent
 
 public static class CaseEventType
 {
-    public const string Provisioning = "Provisioning";
-    public const string Decommission = "Decommission";
+    public const string Provisioning = "case-provision-event";
+    public const string Decommission = "case-decommission-event";
     public const string None = "None";
 }

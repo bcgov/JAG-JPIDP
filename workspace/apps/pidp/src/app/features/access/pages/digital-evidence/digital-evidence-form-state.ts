@@ -1,6 +1,6 @@
 import { FormBuilder, FormControl, Validators } from '@angular/forms';
 
-import { AbstractFormState, FormControlValidators } from '@bcgov/shared/ui';
+import { AbstractFormState } from '@bcgov/shared/ui';
 
 import { DemsAccount } from './digital-evidence-account.model';
 

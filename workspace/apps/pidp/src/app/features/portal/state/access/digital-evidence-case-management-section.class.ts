@@ -58,7 +58,7 @@ export class DigitalEvidenceCaseManagementPortalSection
   }
 
   public get hint(): string {
-    return '5 min to complete';
+    return '';
   }
 
   public get status(): string {

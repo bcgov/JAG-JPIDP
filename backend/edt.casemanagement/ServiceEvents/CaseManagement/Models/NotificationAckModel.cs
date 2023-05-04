@@ -1,7 +1,8 @@
+namespace edt.casemanagement.ServiceEvents.UserAccountCreation.Models;
+
 using System.ComponentModel.DataAnnotations;
 using NodaTime;
 
-namespace edt.casemanagement.ServiceEvents.UserAccountCreation.Models;
 public class NotificationAckModel
 {
     public string Status { get; set; } = string.Empty;
@@ -21,5 +22,6 @@ public enum NotificationSubject
 {
     AccessRequest,
     CaseAccessRequest,
+    CourtLocationAccessRequest,
     None
 }

@@ -112,6 +112,10 @@
           BCPS User
         </button>
 
+        <button mat-stroked-button (click)="onLogin(IdentityProvider.VERIFIED_CREDENTIALS)">
+          Verified Credentials
+        </button>
+
         <br /><br />
         <mat-form-field class="agency-field">
           <input type="text" placeholder="Agency" matInput aria-label="Agency name" [formControl]="selectedAgency"

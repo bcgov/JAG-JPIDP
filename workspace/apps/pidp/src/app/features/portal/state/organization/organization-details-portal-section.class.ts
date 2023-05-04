@@ -35,7 +35,7 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
       this.getStatusCode()
     )
       ? ''
-      : '2 min to complete';
+      : '';
   }
 
   /**
@@ -137,9 +137,10 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
 
   public get status(): string {
     const statusCode = this.getStatusCode();
-    return statusCode === StatusCode.COMPLETED
+    return statusCode === StatusCode.COMPLETED ||
+      statusCode === StatusCode.LOCKED_COMPLETE
       ? 'Completed'
-      : StatusCode.ERROR
+      : statusCode === StatusCode.ERROR
       ? 'Invalid JUSTIN Details Entered'
       : 'Incomplete';
   }
