@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NodaTime;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -14,9 +15,10 @@ using Pidp.Models;
 namespace Pidp.Data.Migrations
 {
     [DbContext(typeof(PidpDbContext))]
-    partial class PidpDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230426181804_AddCourtLocationAlias")]
+    partial class AddCourtLocationAlias
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -224,9 +226,6 @@ namespace Pidp.Data.Migrations
                     b.Property<Instant?>("DeletedOn")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("MessageId")
-                        .HasColumnType("uuid");
-
                     b.Property<Instant>("Modified")
                         .HasColumnType("timestamp with time zone");
 
@@ -240,10 +239,10 @@ namespace Pidp.Data.Migrations
                     b.Property<Instant>("RequestedOn")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime>("ValidFrom")
+                    b.Property<Instant>("ValidFrom")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime>("ValidUntil")
+                    b.Property<Instant>("ValidUntil")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("RequestId");
@@ -678,6 +677,7 @@ namespace Pidp.Data.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<string>("Alias")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("City")

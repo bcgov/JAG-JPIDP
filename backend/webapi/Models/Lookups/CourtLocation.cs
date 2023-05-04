@@ -10,9 +10,9 @@ public class CourtLocation
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string City { get; set; } = string.Empty;
-
     public bool Active { get; set; } = true;
     public bool Staffed { get; set; } = true;
+    public string? Alias { get; set; } = string.Empty;
 
     public ICollection<CourtSubLocation> CourtSubLocations { get; set; } = new List<CourtSubLocation>();
 

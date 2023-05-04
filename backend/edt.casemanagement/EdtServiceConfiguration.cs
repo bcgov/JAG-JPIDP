@@ -95,7 +95,7 @@ public class EdtServiceConfiguration
         public string BootstrapServers { get; set; } = string.Empty;
         public string CaseAccessRequestTopicName { get; set; } = string.Empty;
         public string CaseAccessResponseTopicName { get; set; } = string.Empty;
-
+        public string CourtLocationAccessRequestTopic { get; set; } = string.Empty;
         public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;
 
         public string AckTopicName { get; set; } = string.Empty;

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Pidp.Data;
 using Pidp.Kafka.Interfaces;
+using Pidp.Models;
 using Serilog;
 
 public class NotificationAckHandler : IKafkaHandler<string, NotificationAckModel>
@@ -73,7 +74,7 @@ public class NotificationAckHandler : IKafkaHandler<string, NotificationAckModel
                         return Task.FromException(new InvalidOperationException());
                     }
 
-                    if (value.EventType.Equals("Decommission", StringComparison.Ordinal))
+                    if (value.EventType.Equals(CaseEventType.Decommission, StringComparison.Ordinal))
                     {
                         Log.Information("Removing case access request {0}", accessRequest.RequestId);
                         this.context.Entry(accessRequest).State = EntityState.Deleted;

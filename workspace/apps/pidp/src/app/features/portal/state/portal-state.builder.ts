@@ -9,7 +9,7 @@ import { Role } from '@app/shared/enums/roles.enum';
 import { StatusCode } from '../enums/status-code.enum';
 import { ProfileStatus } from '../models/profile-status.model';
 import { DigitalEvidenceCaseManagementPortalSection } from './access/digital-evidence-case-management-section.class';
-import { DigitalEvidenceCounselPortalSection } from './access/digital-evidence-consel-portal-section.class';
+import { DigitalEvidenceCounselPortalSection } from './access/digital-evidence-counsel-portal-section.class';
 import { DigitalEvidencePortalSection } from './access/digital-evidence-portal-section.class';
 import { DriverFitnessPortalSection } from './access/driver-fitness-portal-section.class';
 import { HcimAccountTransferPortalSection } from './access/hcim-account-transfer-portal-section.class';
@@ -22,7 +22,6 @@ import { AdministratorPortalSection } from './admin/admin-panel-portal-section.c
 import { SignedAcceptedDocumentsPortalSection } from './history/signed-accepted-documents-portal-section.class';
 import { TransactionsPortalSection } from './history/transactions-portal-section.class';
 import { AdministratorInfoPortalSection } from './organization/administrator-information-portal-section';
-import { EndorsementsPortalSection } from './organization/endorsements-portal-section.class';
 import { FacilityDetailsPortalSection } from './organization/facility-details-portal-section.class';
 import { OrganizationDetailsPortalSection } from './organization/organization-details-portal-section.class';
 import { PortalSectionStatusKey } from './portal-section-status-key.type';

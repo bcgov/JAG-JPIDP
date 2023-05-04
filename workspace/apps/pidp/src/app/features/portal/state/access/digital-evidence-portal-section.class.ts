@@ -28,7 +28,7 @@ export class DigitalEvidencePortalSection implements IPortalSection {
   }
 
   public get hint(): string {
-    return '2 min to complete';
+    return '';
   }
   /**
    * @description

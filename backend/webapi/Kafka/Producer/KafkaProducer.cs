@@ -25,6 +25,11 @@ public class KafkaProducer<TKey, TValue> : IDisposable, IKafkaProducer<TKey, TVa
         {
             return await this.producer.ProduceAsync(topic, message);
         }
+        catch (Exception ex)
+        {
+            Log.Error($"Failed to sent to topic {topic} [{ex.Message}]");
+            throw ex;
+        }
         finally
         {
             activity?.Stop();

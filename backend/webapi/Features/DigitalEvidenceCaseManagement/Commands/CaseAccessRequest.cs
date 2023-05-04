@@ -65,9 +65,9 @@ public class CaseAccessRequest
                 var dto = await this.GetPidpUser(command);
 
                 if (!dto.AlreadyEnroled
-                    || dto.Email == null) //user must be already enroled i.e access to DEMS
+                    || dto.Email == null) //user must be already enrolled i.e access to DEMS
                 {
-                    this.logger.LogUserNotEnroled(dto.Jpdid); //throw dems user not enroled error
+                    this.logger.LogUserNotEnroled(dto.Jpdid); //throw dems user not enrolled error
                     return DomainResult.Failed();
                 }
 

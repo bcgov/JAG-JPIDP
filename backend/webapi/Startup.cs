@@ -38,6 +38,11 @@ using Newtonsoft.Json.Serialization;
 using Prometheus;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Serilog.Core;
+using Pidp.Features.CourtLocations;
+using Quartz;
+using Quartz.Impl;
+using static Quartz.Logging.OperationName;
+using Pidp.Features.CourtLocations.Jobs;
 
 public class Startup
 {
@@ -113,6 +118,7 @@ public class Startup
         .AddKeycloakAuth(config)
         .AddScoped<IEmailService, EmailService>()
         .AddScoped<IPidpAuthorizationService, PidpAuthorizationService>()
+
         .AddSingleton<IClock>(SystemClock.Instance)
         .AddScoped<Infrastructure.HttpClients.Jum.JumClient>();
 
@@ -147,6 +153,7 @@ public class Startup
 
         services.AddScoped<IUserTypeService, UserTypeService>();
         services.AddScoped<IOrgUnitService, OrgUnitService>();
+        services.AddScoped<ICourtAccessService, CourtAccessService>();
 
 
 
@@ -199,9 +206,36 @@ public class Startup
         var permitIDIRCaseMgmtAccess = Environment.GetEnvironmentVariable("PERMIT_IDIR_CASE_MANAGEMENT");
         if (permitIDIRCaseMgmtAccess != null && permitIDIRCaseMgmtAccess.Equals("true", StringComparison.OrdinalIgnoreCase))
         {
-            Log.Logger.Warning("*** PERMIT_IDIR_CASE_MANAGEMENT=true - access to case managment for IDIR users is enabled - this is intended for NON production use only ***");
+            Log.Logger.Warning("*** PERMIT_IDIR_CASE_MANAGEMENT=true - access to case management for IDIR users is enabled - this is intended for NON production use only ***");
         }
 
+
+        services.AddQuartz(q =>
+        {
+            Log.Information("Starting scheduler..");
+            q.SchedulerId = "Court-Access-Core";
+            q.SchedulerName = "DIAM Scheduler";
+            q.UseMicrosoftDependencyInjectionJobFactory();
+            q.UseSimpleTypeLoader();
+            q.UseInMemoryStore();
+            q.UseDefaultThreadPool(tp =>
+            {
+                tp.MaxConcurrency = 5;
+            });
+
+            q.ScheduleJob<CourtAccessScheduledJob>(trigger => trigger
+              .WithIdentity("Court access trigger")
+              .StartNow()
+              .WithDailyTimeIntervalSchedule(x => x.WithInterval(30, IntervalUnit.Second))
+              .WithDescription("Court access scheduled event")
+          );
+        });
+
+
+        services.AddQuartzServer(options =>
+        {
+            options.WaitForJobsToComplete = true;
+        });
 
         Log.Logger.Information("Startup configuration complete");
 
