@@ -215,11 +215,7 @@ spec:
                 secretKeyRef:
                   name: telemetry-pidp
                   key: Telemetry__AzureConnectionString
-            - name: KafkaCluster__IncomingUserChangeTopic
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-edt
-                  key: KafkaCluster__IncomingUserChangeTopic
+
           volumeMounts:
           - name: truststore
             mountPath: "/opt/kafka/certificates"

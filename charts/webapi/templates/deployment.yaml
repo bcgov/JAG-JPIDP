@@ -157,6 +157,11 @@ spec:
                 secretKeyRef:
                   name: kafkaconfig-jpidp
                   key: KafkaCluster__NotificationTopicName
+            - name: KafkaCluster__CourtLocationAccessRequestTopic
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-jpidp
+                  key: KafkaCluster__CourtLocationAccessRequestTopic
             - name: Telemetry__CollectorUrl
               valueFrom: 
                 secretKeyRef:
