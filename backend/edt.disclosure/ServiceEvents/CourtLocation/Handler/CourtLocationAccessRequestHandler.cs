@@ -1,13 +1,12 @@
-namespace edt.casemanagement.ServiceEvents.CourtLocation.Handler;
+namespace edt.disclosure.ServiceEvents.CourtLocation.Handler;
 
-using edt.casemanagement.Data;
-using edt.casemanagement.Exceptions;
-using edt.casemanagement.HttpClients.Services.EdtCore;
-using edt.casemanagement.Kafka.Interfaces;
-using edt.casemanagement.ServiceEvents.CourtLocation.Models;
-using edt.casemanagement.ServiceEvents.UserAccountCreation.Models;
-using EdtService.HttpClients.Keycloak;
-using Microsoft.Identity.Client;
+using edt.disclosure.Data;
+using edt.disclosure.Exceptions;
+using edt.disclosure.HttpClients.Keycloak;
+using edt.disclosure.HttpClients.Services.EdtDisclosure;
+using edt.disclosure.Kafka.Interfaces;
+using edt.disclosure.ServiceEvents.CourtLocation.Models;
+using edt.disclosure.ServiceEvents.Models;
 using Prometheus;
 
 
@@ -17,21 +16,21 @@ using Prometheus;
 /// </summary>
 public class CourtLocationAccessRequestHandler : IKafkaHandler<string, CourtLocationDomainEvent>
 {
-    private readonly EdtServiceConfiguration configuration;
-    private readonly IEdtClient edtClient;
+    private readonly EdtDisclosureServiceConfiguration configuration;
+    private readonly IEdtDisclosureClient edtClient;
     private readonly ILogger logger;
     private readonly IKeycloakAdministrationClient keycloakAdministrationClient;
     private readonly IKafkaProducer<string, NotificationAckModel> producer;
-    private readonly CaseManagementDataStoreDbContext context;
-    private static readonly Histogram CourtCaseRequestDuration = Metrics.CreateHistogram("court_location_request_duration", "Histogram of court location request call durations.");
+    private readonly DisclosureDataStoreDbContext context;
+    private static readonly Histogram CourtLocationRequestDuration = Metrics.CreateHistogram("court_location_request_duration", "Histogram of court location request call durations.");
 
     public CourtLocationAccessRequestHandler(
-    EdtServiceConfiguration configuration,
+    EdtDisclosureServiceConfiguration configuration,
     IKeycloakAdministrationClient keycloakAdministrationClient,
     IKafkaProducer<string, NotificationAckModel> producer,
-    CaseManagementDataStoreDbContext context,
+    DisclosureDataStoreDbContext context,
 
-    IEdtClient edtClient,
+    IEdtDisclosureClient edtClient,
      ILogger logger)
     {
         this.configuration = configuration;
@@ -45,9 +44,9 @@ public class CourtLocationAccessRequestHandler : IKafkaHandler<string, CourtLoca
     public async Task<Task> HandleAsync(string consumerName, string key, CourtLocationDomainEvent courtLocationEvent)
     {
 
-        using (CourtCaseRequestDuration.NewTimer())
+        using (CourtLocationRequestDuration.NewTimer())
         {
-            var userInfo = await this.keycloakAdministrationClient.GetUser(courtLocationEvent.UserId) ?? throw new EdtServiceException($"Userinfo not found for {courtLocationEvent.UserId}");
+            var userInfo = await this.keycloakAdministrationClient.GetUser(courtLocationEvent.UserId) ?? throw new EdtDisclosureServiceException($"Userinfo not found for {courtLocationEvent.UserId}");
             Serilog.Log.Information("Received request for court location {0} case {1} party {2}", courtLocationEvent.EventType, courtLocationEvent.CourtLocation, courtLocationEvent.PartyId);
 
             // we'll flag it as completed and send a message back

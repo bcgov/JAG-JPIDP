@@ -1,4 +1,4 @@
-namespace edt.casemanagement.ServiceEvents.CourtLocation.Models;
+namespace edt.disclosure.ServiceEvents.CourtLocation.Models;
 
 using NodaTime;
 

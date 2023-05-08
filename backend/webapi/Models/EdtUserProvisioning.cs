@@ -13,6 +13,7 @@ public class EdtUserProvisioning
     public string? AccountType { get; set; }
     public string? OrganizationType { get; set; }
     public string? OrganizationName { get; set; }
+    public string? SystemName { get; set; } = "DEMS";
 
     public int AccessRequestId { get; set; }
 }
