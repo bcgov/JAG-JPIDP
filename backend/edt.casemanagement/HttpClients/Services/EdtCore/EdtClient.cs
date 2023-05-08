@@ -10,7 +10,6 @@ using edt.casemanagement.Features.Cases;
 using edt.casemanagement.Infrastructure.Telemetry;
 using edt.casemanagement.Models;
 using edt.casemanagement.ServiceEvents.CaseManagement.Models;
-using edt.casemanagement.ServiceEvents.CourtLocation.Models;
 using edt.casemanagement.ServiceEvents.UserAccountCreation.Models;
 using Microsoft.AspNetCore.Mvc;
 using Prometheus;
@@ -400,12 +399,6 @@ public class EdtClient : BaseClient, IEdtClient
 
     }
 
-  public async Task<Task> HandleCourtLocationRequest(string key, CourtLocationDomainEvent accessRequest)
-  {
-        Log.Debug($"handling court access request {accessRequest.RequestId}");
-
-        return Task.CompletedTask;
-    }
 
   public static class CaseEventType
     {

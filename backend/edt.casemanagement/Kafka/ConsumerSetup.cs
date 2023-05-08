@@ -7,9 +7,6 @@ using edt.casemanagement.ServiceEvents;
 using edt.casemanagement.ServiceEvents.CaseManagement;
 using edt.casemanagement.ServiceEvents.CaseManagement.Handler;
 using edt.casemanagement.ServiceEvents.CaseManagement.Models;
-using edt.casemanagement.ServiceEvents.CourtLocation;
-using edt.casemanagement.ServiceEvents.CourtLocation.Handler;
-using edt.casemanagement.ServiceEvents.CourtLocation.Models;
 using EdtService.Extensions;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
@@ -85,12 +82,10 @@ public static class ConsumerSetup
 
 
         services.AddScoped<IKafkaHandler<string, SubAgencyDomainEvent>, CaseAccessRequestHandler>();
-        services.AddScoped<IKafkaHandler<string, CourtLocationDomainEvent>, CourtLocationAccessRequestHandler>();
 
         services.AddSingleton(typeof(IKafkaConsumer<,>), typeof(KafkaConsumer<,>));
 
         services.AddHostedService<EdtServiceConsumer>();
-        services.AddHostedService<CourtLocationConsumer>();
 
         return services;
     }

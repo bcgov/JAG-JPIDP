@@ -33,13 +33,11 @@ public class CourtAccessScheduledJob : IJob
                 {
                     Serilog.Log.Information($"Decommission request for {request.RequestId}");
                     this.courtAccessService.CreateRemoveCourtAccessDomainEvent(request);
-
                 }
                 else if (request.ValidFrom >= DateTime.UtcNow)
                 {
                     Serilog.Log.Information($"Provision request for {request.RequestId}");
                     this.courtAccessService.CreateAddCourtAccessDomainEvent(request);
-
                 }
             }
 

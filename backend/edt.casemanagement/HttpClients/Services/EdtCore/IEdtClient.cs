@@ -4,12 +4,11 @@ using System.Collections.Generic;
 using edt.casemanagement.Features.Cases;
 using edt.casemanagement.Models;
 using edt.casemanagement.ServiceEvents.CaseManagement.Models;
-using edt.casemanagement.ServiceEvents.CourtLocation.Models;
 
 public interface IEdtClient
 {
     Task<Task> HandleCaseRequest(string key, SubAgencyDomainEvent accessRequest);
-    Task<Task> HandleCourtLocationRequest(string key, CourtLocationDomainEvent accessRequest);
+
 
 
     Task<EdtUserDto?> GetUser(string userKey);

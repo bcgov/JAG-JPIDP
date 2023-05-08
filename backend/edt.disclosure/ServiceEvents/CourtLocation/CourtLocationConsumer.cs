@@ -1,15 +1,15 @@
-namespace edt.casemanagement.ServiceEvents.CourtLocation;
+namespace edt.disclosure.ServiceEvents.CourtLocation;
 
 using System.Net;
-using edt.casemanagement.Kafka.Interfaces;
-using edt.casemanagement.ServiceEvents.CourtLocation.Models;
+using edt.disclosure.Kafka.Interfaces;
+using edt.disclosure.ServiceEvents.CourtLocation.Models;
 
 public class CourtLocationConsumer : BackgroundService
 {
     private readonly IKafkaConsumer<string, CourtLocationDomainEvent> consumer;
 
-    private readonly EdtServiceConfiguration config;
-    public CourtLocationConsumer(IKafkaConsumer<string, CourtLocationDomainEvent> kafkaConsumer, EdtServiceConfiguration config)
+    private readonly EdtDisclosureServiceConfiguration config;
+    public CourtLocationConsumer(IKafkaConsumer<string, CourtLocationDomainEvent> kafkaConsumer, EdtDisclosureServiceConfiguration config)
     {
         this.consumer = kafkaConsumer;
         this.config = config;

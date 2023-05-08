@@ -28,7 +28,6 @@ using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using FluentValidation.AspNetCore;
 using NodaTime.Serialization.SystemTextJson;
 using edt.casemanagement.ServiceEvents.CaseManagement.Handler;
-using edt.casemanagement.HttpClients.Services;
 using edt.casemanagement.Data;
 using Microsoft.Extensions.Hosting;
 using static edt.casemanagement.EdtServiceConfiguration;
