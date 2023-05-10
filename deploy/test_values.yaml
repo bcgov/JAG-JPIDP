@@ -38,7 +38,9 @@ edt-casemgmt:
   migrations:
     enabled: false
 
-
+edt-disclosure:
+  migrations:
+    enabled: false
 
 database:
   autoCreate: false

@@ -31,6 +31,7 @@ using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using FluentValidation.AspNetCore;
 using NodaTime.Serialization.SystemTextJson;
 using edt.service.ServiceEvents.UserAccountModification.Handler;
+using edt.service.Infrastructure.Auth;
 
 public class Startup
 {
@@ -116,6 +117,7 @@ public class Startup
           .AddKafkaConsumer(config)
           .AddSingleton(new RetryPolicy(config))
           .AddHttpClients(config)
+          .AddKeycloakAuth(config)
           .AddSingleton<IClock>(SystemClock.Instance)
           .AddSingleton<Microsoft.Extensions.Logging.ILogger>(svc => svc.GetRequiredService<ILogger<IncomingUserChangeModificationHandler>>())
           .AddSingleton<Microsoft.Extensions.Logging.ILogger>(svc => svc.GetRequiredService<ILogger<UserProvisioningHandler>>());

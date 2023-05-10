@@ -546,13 +546,18 @@ namespace Pidp.Data.Migrations
                         },
                         new
                         {
-                            Code = 7,
+                            Code = 8,
                             Name = "Fraser Health UCI"
                         },
                         new
                         {
-                            Code = 8,
+                            Code = 9,
                             Name = "MS Teams for Clinical Use"
+                        },
+                        new
+                        {
+                            Code = 7,
+                            Name = "Digital Evidence Disclosure"
                         });
                 });
 
