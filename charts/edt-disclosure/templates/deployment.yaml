@@ -172,11 +172,16 @@ spec:
                   key: KafkaCluster__CourtLocationAccessRequestTopic
             - name: ApplicationUrl
               value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"     
-            - name: EdtDisclosureClient__Apikey
+            - name: EdtClient__Apikey
               valueFrom:
                 secretKeyRef:
-                  name: edt-client
-                  key: EdtDisclosureClient__Apikey
+                  name: edt-disclosure-client
+                  key: EdtClient__Apikey
+            - name: EdtClient__Url
+              valueFrom:
+                secretKeyRef:
+                  name: edt-disclosure-client
+                  key: EdtClient__Url
             - name: Telemetry__CollectorUrl
               valueFrom: 
                 secretKeyRef:
