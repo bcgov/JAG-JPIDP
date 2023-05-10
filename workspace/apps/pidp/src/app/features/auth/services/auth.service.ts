@@ -26,7 +26,6 @@ export class AuthService implements IAuthService {
   }
 
   public logout(logout_redirect: string): Observable<void> {
-    debugger;
     return from(this.keycloakService.logout(logout_redirect));
   }
 }
