@@ -120,14 +120,14 @@ public class Startup
         });
 
         services.AddDbContext<DisclosureDataStoreDbContext>(options => options
-            .UseNpgsql(config.ConnectionStrings.CaseManagementDataStore, sql => sql.UseNodaTime())
+            .UseNpgsql(config.ConnectionStrings.DisclosureDataStore, sql => sql.UseNodaTime())
             .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
 
         services.AddMediatR(typeof(Startup).Assembly);
 
         services.AddHealthChecks()
                 .AddCheck("liveliness", () => HealthCheckResult.Healthy())
-                .AddNpgSql(config.ConnectionStrings.CaseManagementDataStore, tags: new[] { "services" }).ForwardToPrometheus();
+                .AddNpgSql(config.ConnectionStrings.DisclosureDataStore, tags: new[] { "services" }).ForwardToPrometheus();
 
         services.AddControllers(options => options.Conventions.Add(new RouteTokenTransformerConvention(new KabobCaseParameterTransformer())))
              .AddFluentValidation(options => options.RegisterValidatorsFromAssemblyContaining<Startup>())

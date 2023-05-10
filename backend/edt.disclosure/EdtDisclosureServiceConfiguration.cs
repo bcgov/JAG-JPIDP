@@ -46,7 +46,7 @@ public class EdtDisclosureServiceConfiguration
 
     public class ConnectionStringConfiguration
     {
-        public string CaseManagementDataStore { get; set; } = string.Empty;
+        public string DisclosureDataStore { get; set; } = string.Empty;
     }
 
     public class KeycloakConfiguration

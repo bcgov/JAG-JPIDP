@@ -100,13 +100,13 @@ public class Program
                 outputTemplate: outputTemplate,
                 theme: AnsiConsoleTheme.Code)
             .WriteTo.Async(a => a.File(
-                $@"{path}/edtservice.log",
+                $@"{path}/edtdisclosure.log",
                 outputTemplate: outputTemplate,
                 rollingInterval: RollingInterval.Day,
                 shared: true))
             .WriteTo.Async(a => a.File(
                 new JsonFormatter(),
-                $@"{path}/edtcasemanagement.json",
+                $@"{path}/disclosure.json",
                 rollingInterval: RollingInterval.Day));
 
         if (!string.IsNullOrEmpty(splunkHost))
