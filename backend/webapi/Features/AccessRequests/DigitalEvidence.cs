@@ -216,6 +216,7 @@ public class DigitalEvidence
                 FullName = $"{dto.FirstName} {dto.LastName}",
                 AccountType = "Saml",
                 Role = "User",
+                SystemName = AccessTypeCode.DigitalEvidence.ToString(),
                 AssignedRegions = regions,
                 AccessRequestId = digitalEvidence.Id,
                 OrganizationType = digitalEvidence.OrganizationType,

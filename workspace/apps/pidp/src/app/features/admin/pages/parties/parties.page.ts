@@ -52,25 +52,6 @@ export class PartiesPage implements OnInit {
     this.production = EnvironmentName.PRODUCTION;
   }
 
-  public onDelete(): void {
-    const data: DialogOptions = {
-      title: 'Delete all parties',
-      component: HtmlComponent,
-      data: {
-        content: 'You are about to delete all parties. Continue?',
-      },
-    };
-    this.dialog
-      .open(ConfirmDialogComponent, { data })
-      .afterClosed()
-      .pipe(
-        exhaustMap((result) =>
-          result ? this.adminResource.deleteParties() : EMPTY
-        )
-      )
-      .subscribe();
-  }
-
   public ngOnInit(): void {
     this.getParties();
   }
@@ -79,8 +60,12 @@ export class PartiesPage implements OnInit {
     this.navigateToRoot();
   }
 
+  public showUser(user: PartyList): void {
+    this.router.navigateByUrl('/admin/party/' + user.id);
+  }
+
   private navigateToRoot(): void {
-    this.router.navigate([]);
+    this.router.navigate([this.route.snapshot.data.routes.root]);
   }
 
   private getParties(): void {

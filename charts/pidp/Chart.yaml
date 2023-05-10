@@ -45,6 +45,9 @@ dependencies:
   - name: edt-casemgmt
     repository: "file://../edt-casemgmt"
     version: "0.1.0"
+  - name: edt-disclosure
+    repository: "file://../edt-disclosure"
+    version: "0.1.0"
   - name: plr-intake
     repository: "file://../plr-intake"
     version: "0.1.2"

@@ -1,0 +1,42 @@
+<div>Displaying details for party {{ partyID }}</div>
+
+<div *ngIf="partyDetail">
+
+  <b>First Name:</b> {{ partyDetail.firstName }}<br />
+  <b>Last Name:</b> {{ partyDetail.lastName }}<br />
+  <b>EMail:</b> {{ partyDetail.email }}<br />
+  <b>Keycloak ID:</b> {{ partyDetail.keycloakUserId }}<br />
+  <b>Enabled:</b> {{ partyDetail.enabled }}<br />
+  <b>IDP:</b> {{ partyDetail.identityProvider }}<br />
+  <b>Roles:</b>
+  <mat-chip-list aria-label="Client Roles">
+    <div *ngFor="let role of partyDetail.roles">
+      <mat-chip>{{role}}</mat-chip>
+
+    </div>
+
+  </mat-chip-list>
+  <br />
+  <h3>Systems:</h3>
+  <div *ngFor="let system of partyDetail.systemsAccess | keyvalue">
+    <b> {{ system.key }}</b>
+    <div *ngFor="let key of system.value | keyvalue">
+      <b>{{key.key}}</b> = {{ system.value[key.key] }}
+    </div>
+    <hr>
+  </div>
+
+
+  <button mat-stroked-button type="button" color="primary" (click)="resetAccessRequest()">Reset Access Request</button>
+
+  <button mat-stroked-button type="button" color="primary">Disable User</button>
+</div>
+
+
+
+<ui-page-footer>
+  <button mat-stroked-button uiPageFooterAction type="button" color="primary" (click)="onBack()">
+    Back To Users
+  </button>
+
+</ui-page-footer>

@@ -226,7 +226,7 @@ public class Startup
             q.ScheduleJob<CourtAccessScheduledJob>(trigger => trigger
               .WithIdentity("Court access trigger")
               .StartNow()
-              .WithDailyTimeIntervalSchedule(x => x.WithInterval(30, IntervalUnit.Second))
+              .WithDailyTimeIntervalSchedule(x => x.WithInterval(config.CourtAccess.PollSeconds, IntervalUnit.Second))
               .WithDescription("Court access scheduled event")
           );
         });

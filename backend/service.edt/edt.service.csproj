@@ -22,6 +22,8 @@
     <PackageReference Include="Flurl" Version="3.0.6" />
     <PackageReference Include="IdentityModel" Version="6.0.0" />
     <PackageReference Include="MicroElements.Swashbuckle.FluentValidation" Version="5.7.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="5.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.8">
@@ -65,10 +67,6 @@
     <PackageReference Include="prometheus-net.AspNetCore" Version="7.1.0-pre-000318-0479f53" />
     <PackageReference Include="prometheus-net.AspNetCore.HealthChecks" Version="7.0.0" />
     <PackageReference Include="prometheus-net.NetFramework.AspNet" Version="7.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Features\" />
   </ItemGroup>
 
 </Project>

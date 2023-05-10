@@ -7,6 +7,8 @@ import { NoContent, NoContentResponse } from '@bcgov/shared/data-access';
 
 import { ApiHttpClient } from '@app/core/resources/api-http-client.service';
 
+import { PartyModel } from '../../party/party.model';
+
 export interface PartyList {
   id: number;
   providerName?: string;
@@ -28,6 +30,14 @@ export class AdminResource {
         return of([]);
       })
     );
+  }
+
+  public getUserDetails(partyId: string): Observable<PartyModel> {
+    return this.apiResource.get(`admin/party/${partyId}`, {});
+  }
+
+  public resetAccessRequest(partyId: string): Observable<PartyModel> {
+    return this.apiResource.put(`admin/party/${partyId}/reset`, {});
   }
 
   public deleteParties(): NoContent {
