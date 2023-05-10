@@ -134,6 +134,16 @@ spec:
                 secretKeyRef:
                   name: jum-api-config
                   key: JustinParticipantClient__Url
+            - name: KafkaCluster__SaslOauthbearerProducerClientId
+              valueFrom:
+                secretKeyRef:
+                  name: jum-kafka-config
+                  key: KafkaCluster__SaslOauthbearerProducerClientId
+            - name: KafkaCluster__SaslOauthbearerProducerClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: jum-kafka-config
+                  key: KafkaCluster__SaslOauthbearerProducerClientSecret
           volumeMounts:
             - name: kafka-truststore
               mountPath: "/opt/kafka/certificates"

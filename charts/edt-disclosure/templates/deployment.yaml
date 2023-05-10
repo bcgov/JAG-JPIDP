@@ -89,7 +89,7 @@ spec:
               value: disclosure
             - name: DOTNET_BUNDLE_EXTRACT_BASE_DIR
               value: /tmp
-            - name: ConnectionStrings__CaseManagementDataStore
+            - name: ConnectionStrings__DisclosureDataStore
               valueFrom:
                 configMapKeyRef:
                   name: edt-disclosure-api-database
