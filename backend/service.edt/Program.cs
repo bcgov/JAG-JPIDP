@@ -85,6 +85,7 @@ public class Program
             .MinimumLevel.Information()
             .Filter.ByExcluding("RequestPath like '/health%'")
             .Filter.ByExcluding("RequestPath like '/metrics%'")
+            .Filter.ByExcluding(FilterLogEvents)
             .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
             .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
             .MinimumLevel.Override("System", LogEventLevel.Warning)
@@ -122,5 +123,14 @@ public class Program
         {
             Log.Information($"*** Splunk logging to {splunkHost} ***");
         }
+    }
+
+    private static bool FilterLogEvents(LogEvent logEvent)
+    {
+        // Define the criteria to filter log events
+        // Filter pointless kafka messages
+        string message = logEvent.RenderMessage();
+        bool excludeEvent = message.Contains("identical error") || message.Contains("in state UP");
+        return excludeEvent;
     }
 }
