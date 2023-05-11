@@ -68,6 +68,8 @@ export class AuthorizedUserService {
    * on identity provider.
    */
   private getUserResolver(userIdentity: UserIdentity): IUserResolver<User> {
+    debugger;
+
     // see if came from submitting agency
     const submittingAgency = this.lookupService.submittingAgencies.find(
       (agency) =>
