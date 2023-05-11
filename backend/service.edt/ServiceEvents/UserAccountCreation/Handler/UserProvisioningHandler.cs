@@ -53,7 +53,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
     {
 
         // check this message is for us
-        if (!(accessRequestModel.SystemName.Equals("DEMS", StringComparison.Ordinal) || accessRequestModel.SystemName.Equals(AccessTypeCode.DigitalEvidence) || accessRequestModel.SystemName.Equals(AccessTypeCode.DigitalEvidenceCaseManagement)))
+        if (!(accessRequestModel.SystemName.Equals("DEMS", StringComparison.Ordinal) || accessRequestModel.SystemName.Equals("DigitalEvidence", StringComparison.Ordinal) || accessRequestModel.SystemName.Equals("DigitalEvidenceCaseManagement", StringComparison.Ordinal)))
         {
             Serilog.Log.Logger.Information($"Ignoring message {key} for system {accessRequestModel.SystemName} as we only handle DEMS requests");
             return Task.CompletedTask;

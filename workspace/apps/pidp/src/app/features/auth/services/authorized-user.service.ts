@@ -74,6 +74,7 @@ export class AuthorizedUserService {
         agency.idpHint === userIdentity.accessTokenParsed?.identity_provider
     );
 
+    // user is in a submitting agency IDP
     if (submittingAgency != null) {
       return new SubmittingAgencyResolver(userIdentity);
     }
@@ -90,7 +91,11 @@ export class AuthorizedUserService {
       case IdentityProvider.SUBMITTING_AGENCY:
         return new SubmittingAgencyResolver(userIdentity);
       default:
-        throw new Error('Identity provider not recognized');
+        throw new Error(
+          'Identity provider not [' +
+            userIdentity.accessTokenParsed?.identity_provider +
+            '] recognized'
+        );
     }
   }
 }
