@@ -224,6 +224,9 @@ namespace Pidp.Data.Migrations
                     b.Property<Instant?>("DeletedOn")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("MessageId")
+                        .HasColumnType("uuid");
+
                     b.Property<Instant>("Modified")
                         .HasColumnType("timestamp with time zone");
 
@@ -237,10 +240,10 @@ namespace Pidp.Data.Migrations
                     b.Property<Instant>("RequestedOn")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Instant>("ValidFrom")
+                    b.Property<DateTime>("ValidFrom")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Instant>("ValidUntil")
+                    b.Property<DateTime>("ValidUntil")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("RequestId");
@@ -543,13 +546,18 @@ namespace Pidp.Data.Migrations
                         },
                         new
                         {
-                            Code = 7,
+                            Code = 8,
                             Name = "Fraser Health UCI"
                         },
                         new
                         {
-                            Code = 8,
+                            Code = 9,
                             Name = "MS Teams for Clinical Use"
+                        },
+                        new
+                        {
+                            Code = 7,
+                            Name = "Digital Evidence Disclosure"
                         });
                 });
 
@@ -673,6 +681,9 @@ namespace Pidp.Data.Migrations
 
                     b.Property<bool>("Active")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("Alias")
+                        .HasColumnType("text");
 
                     b.Property<string>("City")
                         .IsRequired()

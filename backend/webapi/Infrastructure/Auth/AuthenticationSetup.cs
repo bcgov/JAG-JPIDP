@@ -42,6 +42,20 @@ public static class AuthenticationSetup
                 .RequireAuthenticatedUser()
                 .RequireClaim(Claims.IdentityProvider, ClaimValues.Idir));
 
+            //options.AddPolicy(Policies.VerifiedCredentialsProvider, policy => policy
+            //    .RequireAuthenticatedUser()
+            //    .RequireClaim(Claims.IdentityProvider, ClaimValues.VerifiedCredentials));
+
+            options.AddPolicy(Policies.VerifiedCredentialsProvider, policy => policy
+           .RequireAuthenticatedUser().RequireAssertion(context =>
+           {
+               var hasDutyRole = context.User.IsInRole(Roles.DutyCounsel);
+               var hasDefenceRole = context.User.IsInRole(Roles.DefenceCounsel);
+               var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider && (c.Value == ClaimValues.VerifiedCredentials || c.Value == ClaimValues.Idir));
+               return (hasDutyRole || hasDefenceRole) && hasClaim;
+           }));
+
+
             options.AddPolicy(Policies.BcpsAuthentication, policy => policy
                   .RequireAuthenticatedUser()
                   .RequireClaim(Claims.IdentityProvider, ClaimValues.Bcps));

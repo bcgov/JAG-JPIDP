@@ -53,8 +53,21 @@ public class JumClient : BaseClient, IJumClient
      
         return user;
     }
+    public async Task<Participant?> GetJumUserByPartIdAsync(string partId)
+    {
+        try
+        {
+            return await this.GetJumUserByPartIdAsync(decimal.Parse(partId));
+        }
+        catch (FormatException fe)
+        {
+            Serilog.Log.Error($"Invalid part Id provided to GetJumUserByPartIdAsync({partId})");
+            throw fe;
+        }
 
-    public async Task<Participant?> GetJumUserByPartIdAsync(decimal partId)
+    }
+
+        public async Task<Participant?> GetJumUserByPartIdAsync(decimal partId)
     {
         var result = await this.GetAsync<Participant>($"participant/{partId}");
 

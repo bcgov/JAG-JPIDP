@@ -183,6 +183,16 @@ spec:
                 secretKeyRef:
                   name: kafkaconfig-edt
                   key: KafkaCluster__SaslOauthbearerTokenEndpointUrl
+            - name: KafkaCluster__IncomingUserChangeTopic
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-edt
+                  key: KafkaCluster__IncomingUserChangeTopic
+            - name: KafkaCluster__ProcessResponseTopic
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-edt
+                  key: KafkaCluster__ProcessResponseTopic
             - name: ApplicationUrl
               value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"
             - name: EdtClient__Url
@@ -215,11 +225,7 @@ spec:
                 secretKeyRef:
                   name: telemetry-pidp
                   key: Telemetry__AzureConnectionString
-            - name: KafkaCluster__IncomingUserChangeTopic
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-edt
-                  key: KafkaCluster__IncomingUserChangeTopic
+
           volumeMounts:
           - name: truststore
             mountPath: "/opt/kafka/certificates"

@@ -1,5 +1,6 @@
 namespace edt.service;
 
+using edt.service.Infrastructure.Auth;
 using System.Text.Json;
 using System.Transactions;
 
@@ -127,8 +128,8 @@ public class EdtServiceConfiguration
 
     public class KeycloakConfiguration
     {
-        //public string RealmUrl { get; set; } = string.Empty;
-        //public string WellKnownConfig => KeycloakUrls.WellKnownConfig(this.RealmUrl);
+        public string RealmUrl { get; set; } = string.Empty;
+        public string WellKnownConfig => KeycloakUrls.WellKnownConfig(this.RealmUrl);
         //public string TokenUrl => KeycloakUrls.Token(this.RealmUrl);
         //public string AdministrationUrl { get; set; } = string.Empty;
         //public string AdministrationClientId { get; set; } = string.Empty;

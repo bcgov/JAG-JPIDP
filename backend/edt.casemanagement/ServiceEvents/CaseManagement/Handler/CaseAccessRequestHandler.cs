@@ -57,7 +57,7 @@ public class CaseAccessRequestHandler : IKafkaHandler<string, SubAgencyDomainEve
 
             if (userInfo == null)
             {
-                throw new EdtServiceException($"serinfo not found for {caseEvent.UserId}");
+                throw new EdtServiceException($"userinfo not found for {caseEvent.UserId}");
             }
             else
             {
@@ -97,7 +97,7 @@ public class CaseAccessRequestHandler : IKafkaHandler<string, SubAgencyDomainEve
                             {
                                 var uniqueKey = Guid.NewGuid().ToString();
 
-                                var producerRespose = await this.producer.ProduceAsync(this.configuration.KafkaCluster.AckTopicName, key: uniqueKey, new NotificationAckModel
+                                var producerResponse = await this.producer.ProduceAsync(this.configuration.KafkaCluster.AckTopicName, key: uniqueKey, new NotificationAckModel
                                 {
                                     Status = "Completed",
                                     AccessRequestId = caseEvent.RequestId,
@@ -107,7 +107,7 @@ public class CaseAccessRequestHandler : IKafkaHandler<string, SubAgencyDomainEve
                                     EventType = caseEvent.EventType
                                 });
 
-                                Serilog.Log.Information($"Response {producerRespose}");
+                                Serilog.Log.Information($"Response {producerResponse}");
 
                             }
                         }

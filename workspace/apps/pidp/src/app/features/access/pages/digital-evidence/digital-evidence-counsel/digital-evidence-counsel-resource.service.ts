@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
-import { Observable, catchError, throwError } from 'rxjs';
+import { Observable, catchError, map, of, throwError } from 'rxjs';
 
 import { NoContent, NoContentResponse } from '@bcgov/shared/data-access';
 import { ResourceUtilsService } from '@bcgov/shared/data-access';
@@ -9,6 +9,11 @@ import { ResourceUtilsService } from '@bcgov/shared/data-access';
 import { ApiHttpClient } from '@app/core/resources/api-http-client.service';
 import { ProfileStatus } from '@app/features/portal/models/profile-status.model';
 import { PortalResource } from '@app/features/portal/portal-resource.service';
+
+import {
+  CourtLocation,
+  CourtLocationRequest,
+} from './digital-evidence-counsel-model';
 
 @Injectable({
   providedIn: 'root',
@@ -24,9 +29,44 @@ export class DigitalEvidenceCounselResource {
     return this.portalResource.getProfileStatus(partyId);
   }
 
-  public removeCaseAccessRequest(requestId: number): NoContent {
+  public getLocations(): Observable<CourtLocation[]> {
+    return this.apiResource.get(`court-location`, {});
+  }
+
+  public requestLocationAccess(
+    request: CourtLocationRequest
+  ): Observable<CourtLocationRequest | null> {
     return this.apiResource
-      .put<NoContent>(`evidence-case-management/${requestId}`, {})
+      .post<CourtLocationRequest>(`court-location`, request)
+      .pipe(
+        map((response: CourtLocationRequest) => response),
+        catchError((error: HttpErrorResponse) => {
+          console.error('Error %o', error);
+          throw error;
+        })
+      );
+  }
+
+  public getLocationAccessRequests(
+    partyId: number,
+    includeDeleted: boolean
+  ): Observable<CourtLocationRequest[]> {
+    return this.apiResource.get(`court-location/party/${partyId}/requests`, {
+      params: {
+        includeDeleted: includeDeleted,
+      },
+    });
+  }
+
+  public removeCaseAccessRequest(
+    partyId: number,
+    requestId: number | undefined
+  ): NoContent {
+    return this.apiResource
+      .delete<NoContent>(
+        `court-location/party/${partyId}/request/${requestId}`,
+        {}
+      )
       .pipe(
         NoContentResponse,
         catchError((error: HttpErrorResponse) => {

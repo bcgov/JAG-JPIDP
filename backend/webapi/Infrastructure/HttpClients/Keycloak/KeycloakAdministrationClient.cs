@@ -124,6 +124,20 @@ public class KeycloakAdministrationClient : BaseClient, IKeycloakAdministrationC
         return role;
     }
 
+    /// <summary>
+    /// Get roles assigned to the user for the client Id
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="clientId"></param>
+    /// <returns></returns>
+    public async Task<List<Role>?> GetUserClientRoles(Guid userId, Guid clientId)
+    {
+
+ 
+        var response = await this.GetAsync<List<Role>?>($"users/{userId}/role-mappings/clients/{clientId}");
+        return response.Value;
+    }
+
     public async Task<Role?> GetRealmRole(string roleName)
     {
         var result = await this.GetAsync<Role>($"roles/{WebUtility.UrlEncode(roleName)}");

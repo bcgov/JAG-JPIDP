@@ -2,6 +2,8 @@ import { Router } from '@angular/router';
 
 import { Observable } from 'rxjs';
 
+import { AlertType } from '@bcgov/shared/ui';
+
 import { AccessRoutes } from '@app/features/access/access.routes';
 import { ShellRoutes } from '@app/features/shell/shell.routes';
 
@@ -23,11 +25,11 @@ export class DigitalEvidenceCounselPortalSection implements IPortalSection {
     this.key = 'digitalEvidenceCounsel';
     this.heading =
       'Digital Evidence and Disclosure Management System Duty Counsel Access';
-    this.description = `Manage Access to your Duty Counsel cases here.`;
+    this.description = `Manage access to your Duty Counsel cases here.`;
   }
 
   public get hint(): string {
-    return '2 min to complete';
+    return '';
   }
 
   public get action(): PortalSectionAction {
@@ -37,18 +39,23 @@ export class DigitalEvidenceCounselPortalSection implements IPortalSection {
       this.profileStatus.status.organizationDetails.statusCode;
     return {
       label:
-        this.getStatusCode() === StatusCode.COMPLETED
-          ? 'View'
-          : this.getStatusCode() === StatusCode.PENDING
+        this.getStatusCode() === StatusCode.READY ||
+        this.getStatusCode() === StatusCode.AVAILABLE ||
+        this.getStatusCode() === StatusCode.PENDING
           ? 'View'
           : 'Request',
       route: AccessRoutes.routePath(AccessRoutes.DIGITAL_EVIDENCE_COUNSEL),
       disabled: !(
-        (demographicsStatusCode === StatusCode.COMPLETED &&
+        ((demographicsStatusCode === StatusCode.COMPLETED ||
+          demographicsStatusCode === StatusCode.LOCKED_COMPLETE) &&
           organizationStatusCode === StatusCode.COMPLETED) ||
         organizationStatusCode === StatusCode.LOCKED_COMPLETE
       ),
     };
+  }
+
+  public get statusType(): AlertType {
+    return this.getStatusCode() === StatusCode.READY ? 'info' : 'warn';
   }
 
   public get status(): string {
@@ -56,7 +63,7 @@ export class DigitalEvidenceCounselPortalSection implements IPortalSection {
 
     return statusCode === StatusCode.AVAILABLE
       ? 'For existing users of DEMS only'
-      : statusCode === StatusCode.COMPLETED
+      : statusCode === StatusCode.COMPLETED || statusCode === StatusCode.READY
       ? 'Available'
       : statusCode === StatusCode.PENDING
       ? 'Pending'

@@ -24,6 +24,7 @@ public class PidpConfiguration
     public EdtClientConfiguration EdtClient { get; set; } = new EdtClientConfiguration();
     public EdtCaseManagementClientConfiguration EdtCaseManagementClient { get; set; } = new EdtCaseManagementClientConfiguration();
     public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
+    public CourtAccessConfiguration CourtAccess { get; set; } = new();  
 
     public TelemeteryConfiguration Telemetry { get; set; } = new TelemeteryConfiguration();
 
@@ -62,6 +63,11 @@ public class PidpConfiguration
         public string AzureConnectionString { get; set; } = string.Empty;
         public bool LogToConsole { get; set; }
 
+    }
+
+    public class CourtAccessConfiguration
+    {
+        public int PollSeconds { get; set; } = 600;
     }
 
     public class ChesClientConfiguration
@@ -110,6 +116,7 @@ public class PidpConfiguration
         public string SslCaLocation { get; set; } = string.Empty;
         public string SslCertificateLocation { get; set; } = string.Empty;
         public string SslKeyLocation { get; set; } = string.Empty;
+        public string CourtLocationAccessRequestTopic { get; set;  } = string.Empty;
         public string Scope { get; set; } = "openid";
         public string ConsumerGroupId { get; set; } = "dems-notification-ack";
 

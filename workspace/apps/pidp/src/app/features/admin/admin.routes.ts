@@ -2,6 +2,8 @@ export class AdminRoutes {
   public static MODULE_PATH = 'admin';
 
   public static PARTIES = 'parties';
+  public static PARTY = 'party';
+  public static IDP = "IDP";
 
   /**
    * @description

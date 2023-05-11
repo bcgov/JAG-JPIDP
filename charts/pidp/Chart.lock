@@ -11,6 +11,9 @@ dependencies:
 - name: edt-casemgmt
   repository: file://../edt-casemgmt
   version: 0.1.0
+- name: edt-disclosure
+  repository: file://../edt-disclosure
+  version: 0.1.0
 - name: plr-intake
   repository: file://../plr-intake
   version: 0.1.2
@@ -23,5 +26,5 @@ dependencies:
 - name: nginx
   repository: file://../nginx
   version: 9.7.3
-digest: sha256:fc71aa42a58fec594f69bf9259614deb8d049ba263fa696ed3631e355bb10c11
-generated: "2023-03-08T17:34:00.5141865-08:00"
+digest: sha256:c4336b7ea4e1d343ff9c2a8b316b5b717b0da490ad8b5134a940dc55d0e40de0
+generated: "2023-05-05T14:33:43.4708016-07:00"

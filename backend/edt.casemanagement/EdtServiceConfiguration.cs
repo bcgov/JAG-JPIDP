@@ -16,6 +16,7 @@ public class EdtServiceConfiguration
     public KafkaClusterConfiguration KafkaCluster { get; set; } = new();
     public MailServerConfiguration MailServer { get; set; } = new();
     public EdtClientConfiguration EdtClient { get; set; } = new();
+
     public KeycloakConfiguration Keycloak { get; set; } = new();
 
     public SchemaRegistryConfiguration SchemaRegistry { get; set; } = new();
@@ -46,6 +47,13 @@ public class EdtServiceConfiguration
         public string SubmittingAgencyGroup { get; set; } = string.Empty;
         public int SearchFieldId { get; set; }
     }
+
+    public class EdtDisclosureClientConfiguration
+    {
+        public string ApiKey { get; set; } = string.Empty;
+        public string Url { get; set; } = string.Empty;
+    }
+
     public class ConnectionStringConfiguration
     {
         public string CaseManagementDataStore { get; set; } = string.Empty;
@@ -95,7 +103,7 @@ public class EdtServiceConfiguration
         public string BootstrapServers { get; set; } = string.Empty;
         public string CaseAccessRequestTopicName { get; set; } = string.Empty;
         public string CaseAccessResponseTopicName { get; set; } = string.Empty;
-
+        public string CourtLocationAccessRequestTopic { get; set; } = string.Empty;
         public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;
 
         public string AckTopicName { get; set; } = string.Empty;

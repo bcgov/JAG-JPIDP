@@ -67,5 +67,7 @@ public static class Roles
     // legal aid appointed counsel
     public const string DutyCounsel = "DUTY_COUNSEL";
 
+    public const string DisclosureAdmin = "DISCLOSURE_ADMIN";
+
 
 }

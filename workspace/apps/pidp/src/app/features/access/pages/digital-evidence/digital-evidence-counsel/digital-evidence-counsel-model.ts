@@ -1,6 +1,8 @@
 export enum CourtRequestStatus {
   NewRequest = 'In Progress',
   RemoveRequested = 'Remove Requested',
+  Submitted = 'Submitted',
+  SubmittedFuture = 'Future',
   Active = 'Active',
   Pending = 'Pending',
   Completed = 'Completed',
@@ -9,22 +11,17 @@ export enum CourtRequestStatus {
 export interface CourtLocation {
   city: string;
   name: string;
-  locationId: number;
+  code: string;
 }
 
-export interface CourtLocationAccessRequest {
+export interface CourtLocationRequest {
   partyId: number;
-  locationId: number;
-  activeFrom: Date;
-  activeUntil: Date;
-}
-
-export interface CourtLocationRequest extends CourtLocation {
-  requestedOn: Date;
-  requestId: number;
-  assignedOn: Date | null;
-  activeFrom: Date;
-  activeUntil: Date;
-  removalRequest: boolean;
+  requestedOn?: Date;
+  requestId?: number;
+  assignedOn?: Date;
+  validFrom: Date;
+  courtLocation: CourtLocation;
+  validUntil: Date;
+  removalRequest?: boolean;
   requestStatus: CourtRequestStatus;
 }

@@ -1,4 +1,5 @@
 import { FormBuilder, FormControl, Validators } from '@angular/forms';
+import { throwToolbarMixedModesError } from '@angular/material/toolbar';
 
 import { AbstractFormState } from '@bcgov/shared/ui';
 
@@ -7,18 +8,23 @@ import { DemsAccount } from '../digital-evidence-account.model';
 export class DigitalEvidenceCounselFormState extends AbstractFormState<DemsAccount> {
   public constructor(private fb: FormBuilder) {
     super();
-
     this.buildForm();
   }
 
-  public get OrganizationType(): FormControl {
-    return this.formInstance.get('OrganizationType') as FormControl;
+  public get courtLocation(): FormControl {
+    return this.formInstance.get('courtLocation') as FormControl;
   }
-  public get OrganizationName(): FormControl {
-    return this.formInstance.get('OrganizationName') as FormControl;
+
+  public get dateFrom(): FormControl {
+    return this.formInstance.get('dateFrom') as FormControl;
   }
-  public get ParticipantId(): FormControl {
-    return this.formInstance.get('ParticipantId') as FormControl;
+
+  public get dateTo(): FormControl {
+    return this.formInstance.get('dateTo') as FormControl;
+  }
+
+  public get showDeleted(): FormControl {
+    return this.formInstance.get('showDeleted') as FormControl;
   }
 
   public get json(): DemsAccount | undefined {
@@ -37,11 +43,16 @@ export class DigitalEvidenceCounselFormState extends AbstractFormState<DemsAccou
     this.formInstance.patchValue(model);
   }
 
+  public reset(): void {
+    this.formInstance.reset();
+  }
+
   public buildForm(): void {
     this.formInstance = this.fb.group({
-      OrganizationType: ['', [Validators.required]],
-      OrganizationName: ['', [Validators.required]],
-      ParticipantId: ['', [Validators.required]],
+      courtLocation: ['', [Validators.required]],
+      dateFrom: ['', [Validators.required]],
+      dateTo: ['', [Validators.required]],
+      showDeleted: [''],
     });
   }
 }

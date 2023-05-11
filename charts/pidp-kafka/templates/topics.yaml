@@ -202,4 +202,16 @@ spec:
   partitions: {{ default 3 .Values.kafka.topics.replicas }}
   replicas: {{ default 3 .Values.kafka.topics.replicas }}
   topicName: digitalevidence-processresponse-topic
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: digitalevidence-courtlocationaccessrequest-topic
+  namespace: {{ .Values.global.licenseplate }}-{{ .Values.global.environment }}
+  labels:
+    strimzi.io/cluster: {{ include "pidp-kafka.fullname" . }}-cluster
+spec:
+  partitions: {{ default 3 .Values.kafka.topics.replicas }}
+  replicas: {{ default 3 .Values.kafka.topics.replicas }}
+  topicName: digitalevidence-courtlocationaccessrequest-topic
 {{- end}}

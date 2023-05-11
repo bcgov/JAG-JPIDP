@@ -35,7 +35,7 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
       this.getStatusCode()
     )
       ? ''
-      : '2 min to complete';
+      : '';
   }
 
   /**
@@ -120,8 +120,7 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
       ),
       disabled:
         this.profileStatus.status.organizationDetails?.statusCode ===
-          StatusCode.LOCKED_COMPLETE ||
-        demographicsStatusCode !== StatusCode.COMPLETED,
+        StatusCode.LOCKED_COMPLETE,
     };
   }
 
@@ -138,10 +137,11 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
 
   public get status(): string {
     const statusCode = this.getStatusCode();
-    return statusCode === StatusCode.LOCKED_COMPLETE
+    return statusCode === StatusCode.COMPLETED ||
+      statusCode === StatusCode.LOCKED_COMPLETE
       ? 'Completed'
-      : StatusCode.COMPLETED
-      ? 'Completed'
+      : statusCode === StatusCode.ERROR
+      ? 'Invalid JUSTIN Details Entered'
       : 'Incomplete';
   }
 

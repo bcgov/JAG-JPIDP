@@ -28,7 +28,7 @@ export class DigitalEvidencePortalSection implements IPortalSection {
   }
 
   public get hint(): string {
-    return '2 min to complete';
+    return '';
   }
   /**
    * @description
@@ -48,7 +48,8 @@ export class DigitalEvidencePortalSection implements IPortalSection {
           : 'Request',
       route: AccessRoutes.routePath(AccessRoutes.DIGITAL_EVIDENCE),
       disabled: !(
-        (demographicsStatusCode === StatusCode.COMPLETED &&
+        ((demographicsStatusCode === StatusCode.COMPLETED ||
+          demographicsStatusCode === StatusCode.LOCKED_COMPLETE) &&
           organizationStatusCode === StatusCode.COMPLETED) ||
         organizationStatusCode === StatusCode.LOCKED_COMPLETE
       ),
