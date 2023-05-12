@@ -33,6 +33,8 @@ public static class ConsumerSetup
             SaslOauthbearerTokenEndpointUrl = config.KafkaCluster.SaslOauthbearerTokenEndpointUrl,
             SaslOauthbearerMethod = SaslOauthbearerMethod.Oidc,
             SocketKeepaliveEnable = true,
+            ConnectionsMaxIdleMs = 300000,
+            TopicMetadataRefreshIntervalMs = 10000,
             SaslOauthbearerScope = config.KafkaCluster.Scope,
             SslEndpointIdentificationAlgorithm = SslEndpointIdentificationAlgorithm.Https,
             SslCaLocation = config.KafkaCluster.SslCaLocation,
