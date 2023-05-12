@@ -254,6 +254,13 @@ public class Startup
         });
         app.UseRouting();
         app.UseCors("CorsPolicy");
+        app.UseMetricServer();
+        app.UseHttpMetrics(options =>
+        {
+            // This will preserve only the first digit of the status code.
+            // For example: 200, 201, 203 -> 2xx
+            options.ReduceStatusCodeCardinality();
+        });
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseEndpoints(endpoints =>
@@ -262,9 +269,6 @@ public class Startup
             endpoints.MapMetrics();
             endpoints.MapHealthChecks("/health/liveness").AllowAnonymous();
         });
-
-        app.UseMetricServer();
-        app.UseHttpMetrics();
 
     }
 }
