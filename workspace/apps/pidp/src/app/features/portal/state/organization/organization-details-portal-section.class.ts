@@ -44,8 +44,6 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
    */
   public get properties(): PortalSectionProperty[] {
     const statusCode = this.getStatusCode();
-    const demographicsStatusCode =
-      this.profileStatus.status.demographics.statusCode;
     const {
       employeeIdentifier,
       orgName,
@@ -78,7 +76,10 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
         ]
       : [];
 
-    if (!this.profileStatus.status.organizationDetails?.submittingAgency) {
+    if (
+      !this.profileStatus.status.organizationDetails?.submittingAgency &&
+      !this.profileStatus.status.organizationDetails.lawSociety
+    ) {
       response.push({
         key: 'status',
         value:
@@ -88,6 +89,12 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
             ? 'Verified'
             : 'Not Verified',
         label: 'JUSTIN User Status:',
+      });
+    } else if (this.profileStatus.status.organizationDetails.lawSociety) {
+      response.push({
+        key: 'organizationName',
+        value: this.profileStatus.status.organizationDetails?.orgName,
+        label: 'Organization:',
       });
     } else {
       response.push({
@@ -106,9 +113,6 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
     return response;
   }
   public get action(): PortalSectionAction {
-    const demographicsStatusCode =
-      this.profileStatus.status.demographics.statusCode;
-
     return {
       label:
         this.profileStatus.status.organizationDetails?.statusCode ===

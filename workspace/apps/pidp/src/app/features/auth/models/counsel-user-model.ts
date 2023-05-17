@@ -4,7 +4,7 @@ import { IUserResolver, User } from './user.model';
 
 export class CounselUser implements User {
   public readonly identityProvider: IdentityProvider;
-  public ppid: string;
+  public jpdid: string;
   public userId: string;
   public firstName: string;
   public lastName: string;
@@ -13,6 +13,7 @@ export class CounselUser implements User {
   //public roles: string[];
 
   public constructor({ accessTokenParsed, brokerProfile }: UserIdentity) {
+    debugger;
     const { firstName, lastName, email, username: jpdid } = brokerProfile;
     const {
       identity_provider,
@@ -21,7 +22,7 @@ export class CounselUser implements User {
     } = accessTokenParsed;
 
     this.identityProvider = identity_provider;
-    this.ppid = jpdid || '';
+    this.jpdid = jpdid || '';
     this.userId = userId;
     this.firstName = firstName || '';
     this.lastName = lastName || '';

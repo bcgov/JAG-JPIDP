@@ -7,6 +7,7 @@ import { LookupService } from '@app/modules/lookup/lookup.service';
 import { IdentityProvider } from '../enums/identity-provider.enum';
 import { BcpsResolver } from '../models/bcps-user.model';
 import { BcscResolver } from '../models/bcsc-user.model';
+import { CounselResolver } from '../models/counsel-user-model';
 import { IdirResolver } from '../models/idir-user.model';
 import { PhsaResolver } from '../models/phsa-user.model';
 import { SubmittingAgencyResolver } from '../models/submitting-agency-resolver';
@@ -68,8 +69,6 @@ export class AuthorizedUserService {
    * on identity provider.
    */
   private getUserResolver(userIdentity: UserIdentity): IUserResolver<User> {
-    debugger;
-
     // see if came from submitting agency
     const submittingAgency = this.lookupService.submittingAgencies.find(
       (agency) =>
@@ -88,10 +87,10 @@ export class AuthorizedUserService {
         return new BcscResolver(userIdentity);
       case IdentityProvider.PHSA:
         return new PhsaResolver(userIdentity);
+      case IdentityProvider.VERIFIED_CREDENTIALS:
+        return new CounselResolver(userIdentity);
       case IdentityProvider.BCPS:
         return new BcpsResolver(userIdentity);
-      case IdentityProvider.SUBMITTING_AGENCY:
-        return new SubmittingAgencyResolver(userIdentity);
       default:
         throw new Error(
           'Identity provider not [' +

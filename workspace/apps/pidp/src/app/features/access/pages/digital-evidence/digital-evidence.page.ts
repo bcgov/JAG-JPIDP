@@ -1,21 +1,11 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { Component, Inject, OnInit } from '@angular/core';
-import {
-  FormBuilder,
-} from '@angular/forms';
+import { FormBuilder } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import {
-  EMPTY,
-  Observable,
-  catchError,
-  map,
-  noop,
-  of,
-  tap,
-} from 'rxjs';
+import { EMPTY, Observable, catchError, map, noop, of, tap } from 'rxjs';
 
 import { APP_CONFIG, AppConfig } from '@app/app.config';
 import { AbstractFormPage } from '@app/core/classes/abstract-form-page.class';
@@ -199,11 +189,18 @@ export class DigitalEvidencePage
     return this.organizationType.isSubmittingAgency;
   }
 
+  public userIsBCPS(): boolean {
+    let isBCPS = false;
+
+    this.identityProvider$.subscribe((idp) => {
+      isBCPS = idp === IdentityProvider.BCPS || idp === IdentityProvider.IDIR;
+    });
+
+    return isBCPS;
+  }
 
   public onChange(data: number): void {
-
     this.selectedOption = data;
-
   }
 
   public onRequestAccess(): void {

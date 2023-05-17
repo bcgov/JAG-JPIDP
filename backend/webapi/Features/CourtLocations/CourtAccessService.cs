@@ -28,9 +28,9 @@ public class CourtAccessService : ICourtAccessService
         this.kafkaProducer = kafkaProducer;
     }
 
-    public Task<bool> CreateAddCourtAccessDomainEvent(CourtLocationAccessRequest request) => this.CreateCourtAccessDomainEvent(request, CourtLocationEventType.Provisioning);
+    public async Task<bool> CreateAddCourtAccessDomainEvent(CourtLocationAccessRequest request) => await this.CreateCourtAccessDomainEvent(request, CourtLocationEventType.Provisioning);
 
-    public Task<bool> CreateRemoveCourtAccessDomainEvent(CourtLocationAccessRequest request) => this.CreateCourtAccessDomainEvent(request, CourtLocationEventType.Decommission);
+    public async Task<bool> CreateRemoveCourtAccessDomainEvent(CourtLocationAccessRequest request) => await this.CreateCourtAccessDomainEvent(request, CourtLocationEventType.Decommission);
 
     public async Task<bool> CreateCourtAccessDomainEvent(CourtLocationAccessRequest request, string eventType)
     {
@@ -144,4 +144,13 @@ public class CourtAccessService : ICourtAccessService
         return true;
     }
 
+    public async Task<bool> SetAccessRequestStatus(CourtLocationAccessRequest request, string status)
+    {
+        Serilog.Log.Information($"Setting court access request {request.RequestId} to {status}");
+        request.RequestStatus = status;
+        request.Modified = this.clock.GetCurrentInstant();
+        var responseCode = await this.context.SaveChangesAsync();
+        return responseCode > 0;
+
+    }
 }
