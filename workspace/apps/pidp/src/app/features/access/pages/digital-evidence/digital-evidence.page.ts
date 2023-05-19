@@ -1,11 +1,7 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
-import { Component, Inject, Input, OnInit } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import {
-  FormArray,
   FormBuilder,
-  FormControl,
-  FormGroup,
-  Validators,
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatTableDataSource } from '@angular/material/table';
@@ -15,11 +11,9 @@ import {
   EMPTY,
   Observable,
   catchError,
-  first,
   map,
   noop,
   of,
-  take,
   tap,
 } from 'rxjs';
 
@@ -32,7 +26,6 @@ import { IdentityProvider } from '@app/features/auth/enums/identity-provider.enu
 import { AccessTokenService } from '@app/features/auth/services/access-token.service';
 import { AuthorizedUserService } from '@app/features/auth/services/authorized-user.service';
 import { StatusCode } from '@app/features/portal/enums/status-code.enum';
-import { ProfileStatus } from '@app/features/portal/models/profile-status.model';
 
 import { FormUtilsService } from '@core/services/form-utils.service';
 
@@ -74,7 +67,6 @@ export class DigitalEvidencePage
   public result: string;
   public accessRequestFailed: boolean;
   public digitalEvidenceSupportEmail: string;
-  //@Input() public form!: FormGroup;
   public formControlNames: string[];
   public selectedOption = 0;
   public displayedColumns: string[] = ['regionName', 'assignedAgency'];
@@ -109,7 +101,6 @@ export class DigitalEvidencePage
     const partyId = this.partyService.partyId;
     this.dataSource = new MatTableDataSource();
 
-    //this.userType$ = this.usertype.getUserType(partyId);
     this.identityProvider$ = this.authorizedUserService.identityProvider$;
     this.result = '';
     this.policeAgency = accessTokenService
@@ -117,7 +108,9 @@ export class DigitalEvidencePage
       .pipe(map((token) => token?.identity_provider ?? ''));
 
     accessTokenService.decodeToken().subscribe((n) => {
-      this.result = n.identity_provider;
+      if (n !== null) {
+        this.result = n.identity_provider;
+      }
     });
     this.usertype.getUserType(partyId).subscribe((data: any) => {
       this.organizationType.organizationType = data['organizationType'];
@@ -206,43 +199,13 @@ export class DigitalEvidencePage
     return this.organizationType.isSubmittingAgency;
   }
 
-  // public get userType(): FormControl {
-  //   return this.form.get('userType') as FormControl;
-  // }
+
   public onChange(data: number): void {
-    //const element = event.currentTarget as HTMLInputElement;
-    //const value = element.value;
 
     this.selectedOption = data;
-    // this.formState.pidNumber.clearValidators();
-    // this.formState.pidNumber.reset();
-    // this.formState.agency.clearValidators();
-    // this.formState.agency.reset();
-    // //this.formState.userType.clearValidators();
-    // this.formState.ikeyCertCode.clearValidators();
-    // this.formState.ikeyCertCode.reset();
-    // if (this.selectedOption == 1) {
-    //   this.formState.ikeyCertCode.setValidators([Validators.required]);
-    //   console.log(this.formState.ikeyCertCode.value);
-    //   //this.formState.pidNumber = this.formState.ikeyCertCode;
-    //   console.log(this.formState.pidNumber.value);
-    // }
-    // if (this.selectedOption == 2) {
-    //   this.formState.pidNumber.setValidators([Validators.required]);
-    // }
-    // if (this.selectedOption == 3) {
-    //   //let result: string;
-    //   //this.policeAgency.subscribe((val) => (result = val));
-    //   //this.policeAgency.pipe(first()).subscribe((n) => (this.result = n));
-    //   const index = this.agencies.findIndex((p) => p.name == this.result);
-    //   this.formState.agency.patchValue(index);
-    //   this.formState.agency.setValidators([Validators.required]);
-    // }
+
   }
-  // public OnSubmit(): void {
-  //   console.log('Form Submitted');
-  //   console.log(this.form.value);
-  // }
+
   public onRequestAccess(): void {
     if (this.selectedOption == 1) {
       this.resource

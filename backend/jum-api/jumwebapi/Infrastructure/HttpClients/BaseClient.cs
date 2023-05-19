@@ -11,7 +11,8 @@ using System.Net.Http.Headers;
 
 public enum PropertySerialization
 {
-    CamelCase
+    CamelCase,
+    SnakeCase
 }
 
 public class BaseClient
@@ -37,9 +38,12 @@ public class BaseClient
         this.serializationOptions = option switch
         {
             PropertySerialization.CamelCase => new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase },
+            PropertySerialization.SnakeCase => new JsonSerializerOptions { PropertyNamingPolicy = new SnakeCaseNamingPolicy() },
             _ => throw new NotImplementedException($"{option}")
         };
     }
+
+
 
     /// <summary>
     /// Creates JSON StringContent based on the serialization settings set in the constructor
@@ -78,6 +82,11 @@ public class BaseClient
     /// <param name="url"></param>
     /// <param name="data"></param>
     protected async Task<IDomainResult> PutAsync(string url, object? data = null) => await this.SendCoreAsync(HttpMethod.Put, url, data == null ? null : this.CreateStringContent(data), default);
+
+
+
+    protected async Task<IDomainResult<T>> PutAsyncForJUSTINNonesense<T>(string url, object? data = null) => await this.SendCoreAsync<T>(HttpMethod.Put, url, data == null ? null : this.CreateStringContent(data), default);
+
 
     /// <summary>
     /// Sends an HTTP message to the API; returning:
@@ -134,7 +143,7 @@ public class BaseClient
                 this.Logger.LogNonSuccessStatusCode(response.StatusCode, responseMessage, url);
                 return DomainResult.Failed<T>(response.StatusCode == HttpStatusCode.NotFound
                     ? $"The URL {url} was not found"
-                    : "Did not receive a successful status code");
+                    : $"Did not receive a successful status code for {url} [{response.StatusCode}]");
             }
 
             if (ignoreResponseContent)
@@ -187,6 +196,9 @@ public class BaseClient
     {
         try
         {
+
+            this.Logger.LogDebug($"Requesting from {url}");
+
             using var request = new HttpRequestMessage(method, url)
             {
                 Content = content

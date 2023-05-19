@@ -30,6 +30,8 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using FluentValidation.AspNetCore;
 using NodaTime.Serialization.SystemTextJson;
+using edt.service.ServiceEvents.UserAccountModification.Handler;
+using edt.service.Infrastructure.Auth;
 
 public class Startup
 {
@@ -115,7 +117,9 @@ public class Startup
           .AddKafkaConsumer(config)
           .AddSingleton(new RetryPolicy(config))
           .AddHttpClients(config)
+          .AddKeycloakAuth(config)
           .AddSingleton<IClock>(SystemClock.Instance)
+          .AddSingleton<Microsoft.Extensions.Logging.ILogger>(svc => svc.GetRequiredService<ILogger<IncomingUserChangeModificationHandler>>())
           .AddSingleton<Microsoft.Extensions.Logging.ILogger>(svc => svc.GetRequiredService<ILogger<UserProvisioningHandler>>());
 
         services.AddAuthorization(options =>
@@ -250,6 +254,13 @@ public class Startup
         });
         app.UseRouting();
         app.UseCors("CorsPolicy");
+        app.UseMetricServer();
+        app.UseHttpMetrics(options =>
+        {
+            // This will preserve only the first digit of the status code.
+            // For example: 200, 201, 203 -> 2xx
+            options.ReduceStatusCodeCardinality();
+        });
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseEndpoints(endpoints =>
@@ -258,9 +269,6 @@ public class Startup
             endpoints.MapMetrics();
             endpoints.MapHealthChecks("/health/liveness").AllowAnonymous();
         });
-
-        app.UseMetricServer();
-        app.UseHttpMetrics();
 
     }
 }

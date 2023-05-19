@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using NodaTime;
 
 using Pidp.Models;
+using Pidp.Models.Lookups;
 using Pidp.Models.OutBoxEvent;
 
 public class PidpDbContext : DbContext
@@ -15,10 +16,13 @@ public class PidpDbContext : DbContext
     public DbSet<AccessRequest> AccessRequests { get; set; } = default!;
     public DbSet<ClientLog> ClientLogs { get; set; } = default!;
     public DbSet<EmailLog> EmailLogs { get; set; } = default!;
+
     public DbSet<EndorsementRelationship> EndorsementRelationships { get; set; } = default!;
     public DbSet<EndorsementRequest> EndorsementRequests { get; set; } = default!;
     public DbSet<Endorsement> Endorsements { get; set; } = default!;
     public DbSet<Facility> Facilities { get; set; } = default!;
+    public DbSet<FutureUserChangeEvent> FutureUserChangeEvents { get; set; } = default!;
+
     public DbSet<HcimAccountTransfer> HcimAccountTransfers { get; set; } = default!;
     public DbSet<HcimEnrolment> HcimEnrolments { get; set; } = default!;
     public DbSet<DigitalEvidence> DigitalEvidences { get; set; } = default!;
@@ -33,6 +37,11 @@ public class PidpDbContext : DbContext
     public DbSet<CorrectionServiceDetail> CorrectionServiceDetails { get; set; } = default!;
     public DbSet<SubmittingAgencyRequest> SubmittingAgencyRequests { get; set; } = default!;
     public DbSet<AgencyRequestAttachment> AgencyRequestAttachments { get; set; } = default!;
+    public DbSet<CourtLocationAccessRequest> CourtLocationAccessRequests { get; set; } = default!;
+    public DbSet<CourtLocation> CourtLocations { get; set; } = default!;
+
+    public DbSet<UserAccountChange> UserAccountChanges { get; set; } = default!;
+
     public override int SaveChanges()
     {
         this.ApplyAudits();
@@ -62,6 +71,15 @@ public class PidpDbContext : DbContext
         modelBuilder.Entity<ExportedEvent>()
             .ToTable("OutBoxedExportedEvent");
         //.HasKey(x => new { x.EventId, x.AggregateId });
+
+        //#region Seed Court Locations
+        //var locations = new CourtLocation.CourtLocationDataGenerator().Generate();
+        //foreach (var location in locations)
+        //{
+        //    Serilog.Log.Information($"Adding {location.Name} [{location.Code}]");
+        //    modelBuilder.Entity<CourtLocation>().HasData(location);
+        //}
+        //#endregion
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(PidpDbContext).Assembly);
     }
@@ -102,6 +120,12 @@ public class PidpDbContext : DbContext
     }
 
     // Uncomment for SQL logging
-    // protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    //     => optionsBuilder.LogTo(Console.WriteLine);
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        if (Environment.GetEnvironmentVariable("LOG_SQL") != null && "true".Equals(Environment.GetEnvironmentVariable("LOG_SQL")))
+        {
+            optionsBuilder.LogTo(Console.WriteLine);
+        }
+
+    }
 }

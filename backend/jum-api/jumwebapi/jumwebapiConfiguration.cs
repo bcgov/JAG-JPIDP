@@ -1,5 +1,5 @@
 namespace jumwebapi.Infrastructure.Auth;
-public class jumwebapiConfiguration
+public class JumWebApiConfiguration
 {
     public static bool IsProduction() => EnvironmentName == Environments.Production;
     public static bool IsDevelopment() => EnvironmentName == Environments.Development;
@@ -8,10 +8,15 @@ public class jumwebapiConfiguration
     public AddressAutocompleteClientConfiguration AddressAutocompleteClient { get; set; } = new();
     public ConnectionStringConfiguration ConnectionStrings { get; set; } = new();
     public ChesClientConfiguration ChesClient { get; set; } = new();
-    public JustinParticipantClientConfiguration JustinParticipantClient { get; set; } = new();
+    public JustinClientConfiguration JustinParticipantClient { get; set; } = new();
+
+    public JustinBackgroundEventConfiguration JustinChangeEventClient { get; set; } = new();
+    public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
+
     public KafkaClusterConfiguration KafkaCluster { get; set; } = new();
     public KeycloakConfiguration Keycloak { get; set; } = new();
     public MailServerConfiguration MailServer { get; set; } = new();
+    public JustinClientAuthentication JustinAuthentication { get; set ; } = new();
 
     // ------- Configuration Objects -------
 
@@ -19,6 +24,12 @@ public class jumwebapiConfiguration
     {
         public string ApiKey { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
+    }
+
+    public class SplunkConfiguration
+    {
+        public string Host { get; set; } = string.Empty;
+        public string CollectorToken { get; set; } = string.Empty;
     }
 
     public class ConnectionStringConfiguration
@@ -41,7 +52,8 @@ public class jumwebapiConfiguration
         public string ClientSecret { get; set; } = string.Empty;
         public string BootstrapServers { get; set; } = string.Empty;
         public string TopicName { get; set; } = string.Empty;
-
+        public string UserChangeEventTopic { get; set; } = string.Empty;
+        public string UserChangeProcessedTopic { get; set;} = string.Empty;
         public string SecurityProtocol { get; set; } = string.Empty;
         public string SaslMechanism { get; set; } = string.Empty;
         public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;
@@ -54,9 +66,19 @@ public class jumwebapiConfiguration
         public string SslKeyLocation { get; set; } = string.Empty;
         public string Scope { get; set; } = "openid";
     }
-    public class JustinParticipantClientConfiguration
+    public class JustinClientConfiguration
     {
         public string Url { get; set; } = string.Empty;
+
+    }
+
+    public class JustinBackgroundEventConfiguration : JustinClientConfiguration
+    {
+        public int PollRateSeconds { get; set; } = 600; // default to every 10 minutes
+    }
+
+    public class JustinClientAuthentication
+    {
         public string ApiKey { get; set; } = string.Empty;
 
         public string BasicAuthUsername { get; set; } = string.Empty;

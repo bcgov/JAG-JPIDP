@@ -22,10 +22,10 @@ export class IdirUser implements User {
     this.identityProvider = identity_provider;
     this.idir = idir;
     this.userId = userId;
-    this.jpdid = jpdid;
-    this.firstName = firstName;
-    this.lastName = lastName;
-    this.email = email;
+    this.jpdid = jpdid || '';
+    this.firstName = firstName || '';
+    this.lastName = lastName || '';
+    this.email = email || '';
   }
 }
 

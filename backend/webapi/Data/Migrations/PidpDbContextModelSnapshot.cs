@@ -204,6 +204,59 @@ namespace Pidp.Data.Migrations
                     b.ToTable("CorrectionServiceDetails");
                 });
 
+            modelBuilder.Entity("Pidp.Models.CourtLocationAccessRequest", b =>
+                {
+                    b.Property<int>("RequestId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("RequestId"));
+
+                    b.Property<string>("CourtLocationCode")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("CourtSubLocationId")
+                        .HasColumnType("integer");
+
+                    b.Property<Instant>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Instant?>("DeletedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("MessageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Instant>("Modified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PartyId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RequestStatus")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Instant>("RequestedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ValidFrom")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ValidUntil")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("RequestId");
+
+                    b.HasIndex("CourtLocationCode");
+
+                    b.HasIndex("CourtSubLocationId");
+
+                    b.HasIndex("PartyId");
+
+                    b.ToTable("CourtLocationAccessRequest");
+                });
+
             modelBuilder.Entity("Pidp.Models.EmailLog", b =>
                 {
                     b.Property<int>("Id")
@@ -386,6 +439,36 @@ namespace Pidp.Data.Migrations
                     b.ToTable("Facility");
                 });
 
+            modelBuilder.Entity("Pidp.Models.FutureUserChangeEvent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<Instant>("Completed")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Instant>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Instant>("EventDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Instant>("Modified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PartyId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PartyId");
+
+                    b.ToTable("FutureUserChangeEvent");
+                });
+
             modelBuilder.Entity("Pidp.Models.JusticeSectorDetail", b =>
                 {
                     b.Property<int>("Id")
@@ -463,13 +546,18 @@ namespace Pidp.Data.Migrations
                         },
                         new
                         {
-                            Code = 7,
+                            Code = 8,
                             Name = "Fraser Health UCI"
                         },
                         new
                         {
-                            Code = 8,
+                            Code = 9,
                             Name = "MS Teams for Clinical Use"
+                        },
+                        new
+                        {
+                            Code = 7,
+                            Name = "Digital Evidence Disclosure"
                         });
                 });
 
@@ -584,6 +672,55 @@ namespace Pidp.Data.Migrations
                             Code = "US",
                             Name = "United States"
                         });
+                });
+
+            modelBuilder.Entity("Pidp.Models.Lookups.CourtLocation", b =>
+                {
+                    b.Property<string>("Code")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Alias")
+                        .HasColumnType("text");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("Staffed")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Code");
+
+                    b.ToTable("CourtLocation");
+                });
+
+            modelBuilder.Entity("Pidp.Models.Lookups.CourtSubLocation", b =>
+                {
+                    b.Property<int>("CourtSubLocationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CourtSubLocationId"));
+
+                    b.Property<string>("CourtLocationCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("CourtSubLocationId");
+
+                    b.HasIndex("CourtLocationCode");
+
+                    b.ToTable("CourtSubLocation");
                 });
 
             modelBuilder.Entity("Pidp.Models.Lookups.CrownRegion", b =>
@@ -3277,10 +3414,58 @@ namespace Pidp.Data.Migrations
 
                     b.HasIndex("PartyId");
 
-                    b.HasIndex(new[] { "RCCNumber" }, "IX_RCCNumber")
-                        .IsUnique();
+                    b.HasIndex(new[] { "RCCNumber" }, "IX_RCCNumber");
 
                     b.ToTable("SubmittingAgencyRequest");
+                });
+
+            modelBuilder.Entity("Pidp.Models.UserAccountChange", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ChangeData")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Instant>("Completed")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Instant>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Deactivated")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("EventMessageId")
+                        .HasColumnType("integer");
+
+                    b.Property<Instant>("Modified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PartyId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TraceId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PartyId");
+
+                    b.ToTable("UserAccountChange");
                 });
 
             modelBuilder.Entity("Pidp.Models.DigitalEvidence", b =>
@@ -3409,6 +3594,29 @@ namespace Pidp.Data.Migrations
                     b.Navigation("OrgainizationDetail");
                 });
 
+            modelBuilder.Entity("Pidp.Models.CourtLocationAccessRequest", b =>
+                {
+                    b.HasOne("Pidp.Models.Lookups.CourtLocation", "CourtLocation")
+                        .WithMany()
+                        .HasForeignKey("CourtLocationCode");
+
+                    b.HasOne("Pidp.Models.Lookups.CourtSubLocation", "CourtSubLocation")
+                        .WithMany()
+                        .HasForeignKey("CourtSubLocationId");
+
+                    b.HasOne("Pidp.Models.Party", "Party")
+                        .WithMany()
+                        .HasForeignKey("PartyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CourtLocation");
+
+                    b.Navigation("CourtSubLocation");
+
+                    b.Navigation("Party");
+                });
+
             modelBuilder.Entity("Pidp.Models.EndorsementRelationship", b =>
                 {
                     b.HasOne("Pidp.Models.Endorsement", "Endorsement")
@@ -3457,6 +3665,17 @@ namespace Pidp.Data.Migrations
                     b.Navigation("Party");
                 });
 
+            modelBuilder.Entity("Pidp.Models.FutureUserChangeEvent", b =>
+                {
+                    b.HasOne("Pidp.Models.Party", "Party")
+                        .WithMany()
+                        .HasForeignKey("PartyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Party");
+                });
+
             modelBuilder.Entity("Pidp.Models.JusticeSectorDetail", b =>
                 {
                     b.HasOne("Pidp.Models.Lookups.JusticeSector", "JusticeSector")
@@ -3472,6 +3691,15 @@ namespace Pidp.Data.Migrations
                     b.Navigation("JusticeSector");
 
                     b.Navigation("OrgainizationDetail");
+                });
+
+            modelBuilder.Entity("Pidp.Models.Lookups.CourtSubLocation", b =>
+                {
+                    b.HasOne("Pidp.Models.Lookups.CourtLocation", "CourtLocation")
+                        .WithMany("CourtSubLocations")
+                        .HasForeignKey("CourtLocationCode");
+
+                    b.Navigation("CourtLocation");
                 });
 
             modelBuilder.Entity("Pidp.Models.PartyAccessAdministrator", b =>
@@ -3532,6 +3760,17 @@ namespace Pidp.Data.Migrations
                     b.Navigation("Party");
                 });
 
+            modelBuilder.Entity("Pidp.Models.UserAccountChange", b =>
+                {
+                    b.HasOne("Pidp.Models.Party", "Party")
+                        .WithMany("AccountChanges")
+                        .HasForeignKey("PartyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Party");
+                });
+
             modelBuilder.Entity("Pidp.Models.DigitalEvidence", b =>
                 {
                     b.HasOne("Pidp.Models.AccessRequest", null)
@@ -3580,11 +3819,18 @@ namespace Pidp.Data.Migrations
                     b.Navigation("PhysicalAddress");
                 });
 
+            modelBuilder.Entity("Pidp.Models.Lookups.CourtLocation", b =>
+                {
+                    b.Navigation("CourtSubLocations");
+                });
+
             modelBuilder.Entity("Pidp.Models.Party", b =>
                 {
                     b.Navigation("AccessAdministrator");
 
                     b.Navigation("AccessRequests");
+
+                    b.Navigation("AccountChanges");
 
                     b.Navigation("Facility");
 

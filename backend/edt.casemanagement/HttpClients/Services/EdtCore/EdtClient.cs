@@ -322,14 +322,14 @@ public class EdtClient : BaseClient, IEdtClient
         try
         {
 
-            if (accessRequest.EventType.Equals("Provisioning", StringComparison.Ordinal))
+            if (accessRequest.EventType.Equals(CaseEventType.Provisioning, StringComparison.Ordinal))
             {
                 Log.Information("Case provision request {0} {1}", userKey, accessRequest.CaseId);
                 await this.AddUserToCase(edtUser.Id, accessRequest.CaseId);
             }
-            else if (accessRequest.EventType.Equals("Decommission", StringComparison.Ordinal))
+            else if (accessRequest.EventType.Equals(CaseEventType.Decommission, StringComparison.Ordinal))
             {
-                Log.Information("Case decomission request {0} {1}", userKey, accessRequest.CaseId);
+                Log.Information("Case decommission request {0} {1}", userKey, accessRequest.CaseId);
                 await this.RemoveUserFromCase(edtUser.Id, accessRequest.CaseId);
             }
             else
@@ -400,10 +400,10 @@ public class EdtClient : BaseClient, IEdtClient
     }
 
 
-    public static class CaseEventType
+  public static class CaseEventType
     {
-        public const string Provisioning = "Provisioning";
-        public const string Decommission = "Decommission";
+        public const string Provisioning = "case-provision-event";
+        public const string Decommission = "case-decommission-event";
         public const string None = "None";
     }
 

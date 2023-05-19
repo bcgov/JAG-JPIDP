@@ -111,19 +111,19 @@ public class DigitalEvidence
 
                 if (!await this.UpdateKeycloakUser(dto.UserId, command.AssignedRegions, command.ParticipantId))
                 {
-
                     return DomainResult.Failed();
                 }
 
                 using var trx = this.context.Database.BeginTransaction();
-
                 try
                 {
+
                     var digitalEvidence = await this.SubmitDigitalEvidenceRequest(command); //save all trx at once for production(remove this and handle using idempotent)
-                    string? key = Guid.NewGuid().ToString();
+                    var key = Guid.NewGuid().ToString();
                     // no email notifications for submitting agencies currently
                     if (digitalEvidence != null && !command.OrganizationType.Equals(nameof(OrganizationCode.SubmittingAgency), StringComparison.Ordinal))
                     {
+
                         Serilog.Log.Logger.Information("Sending submission message for {0} to {1}", command.ParticipantId, dto.Email);
 
                         var eventData = new Dictionary<string, string>
@@ -216,6 +216,7 @@ public class DigitalEvidence
                 FullName = $"{dto.FirstName} {dto.LastName}",
                 AccountType = "Saml",
                 Role = "User",
+                SystemName = AccessTypeCode.DigitalEvidence.ToString(),
                 AssignedRegions = regions,
                 AccessRequestId = digitalEvidence.Id,
                 OrganizationType = digitalEvidence.OrganizationType,

@@ -16,7 +16,7 @@ replicaCount: 1
 
 # create a route?
 route:
-  enabled: true
+  enabled: false
 
 image:
   repository: jum-api

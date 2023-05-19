@@ -9,6 +9,7 @@ using Pidp.Extensions;
 using Pidp.Infrastructure.Auth;
 using Pidp.Models;
 using Pidp.Models.Lookups;
+using Microsoft.AspNetCore.Server.IIS.Core;
 
 public class Create
 {
@@ -57,7 +58,6 @@ public class Create
                     ClaimValues.Phsa => new PhsaValidator(),
                     ClaimValues.Bcps => new BcpsValidator(user),
                     ClaimValues.Idir => new IdirValidator(user),
-                    ClaimValues.VicPd => new VicPdValidator(user),
                     _ => throw new NotImplementedException("Given Identity Provider is not supported")
                 });
             }
@@ -140,21 +140,32 @@ public class Create
         public async Task<int> HandleAsync(Command command)
         {
             var user = httpContextAccessor.HttpContext.User;
-            Serilog.Log.Information("Adding new party {0}", command.UserId);
 
-            var party = new Party
+            // check party isnt already present - should not happen though
+            var party = this.context.Parties.Where(party => party.Jpdid == command.Jpdid).FirstOrDefault();
+
+            if (party != null)
             {
-                UserId = command.UserId,
-                Jpdid = command.Jpdid,
-                Gender = command.Gender,
-                Birthdate = command.Birthdate,
-                FirstName = command.FirstName,
-                LastName = command.LastName,
-                Email = command.Email
-            };
+                Serilog.Log.Warning($"Party is already present {command.Jpdid} - skipping add");
+            }
+            else
+            {
 
-            this.context.Parties.Add(party);
+                Serilog.Log.Information("Adding new party {0}", command.UserId);
 
+                party = new Party
+                {
+                    UserId = command.UserId,
+                    Jpdid = command.Jpdid,
+                    Gender = command.Gender,
+                    Birthdate = command.Birthdate,
+                    FirstName = command.FirstName,
+                    LastName = command.LastName,
+                    Email = command.Email
+                };
+
+                this.context.Parties.Add(party);
+            }
 
 
             // if this user is a verified user we'll also create the organization entry

@@ -26,13 +26,13 @@ export class BcscUser implements User {
     const { identity_provider, sub: userId } = accessTokenParsed;
 
     this.identityProvider = identity_provider;
-    this.jpdid = jpdid;
+    this.jpdid = jpdid || '';
     this.userId = userId;
-    this.firstName = firstName;
-    this.lastName = lastName;
+    this.firstName = firstName || '';
+    this.lastName = lastName || '';
     this.birthdate = birthdate;
     this.gender = gender;
-    this.email = email;
+    this.email = email || '';
   }
 }
 

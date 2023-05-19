@@ -1,7 +1,7 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatTableDataSource } from '@angular/material/table';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { EMPTY, exhaustMap } from 'rxjs';
 
@@ -41,35 +41,31 @@ export class PartiesPage implements OnInit {
     @Inject(APP_CONFIG) private config: AppConfig,
     private adminResource: AdminResource,
     private dialog: MatDialog,
-    route: ActivatedRoute
+    private router: Router,
+    private route: ActivatedRoute
   ) {
+    const routeData = this.route.snapshot.data;
+    this.title = routeData.title;
     this.title = route.snapshot.data.title;
     this.dataSource = new MatTableDataSource();
     this.environment = this.config.environmentName;
     this.production = EnvironmentName.PRODUCTION;
   }
 
-  public onDelete(): void {
-    const data: DialogOptions = {
-      title: 'Delete all parties',
-      component: HtmlComponent,
-      data: {
-        content: 'You are about to delete all parties. Continue?',
-      },
-    };
-    this.dialog
-      .open(ConfirmDialogComponent, { data })
-      .afterClosed()
-      .pipe(
-        exhaustMap((result) =>
-          result ? this.adminResource.deleteParties() : EMPTY
-        )
-      )
-      .subscribe();
-  }
-
   public ngOnInit(): void {
     this.getParties();
+  }
+
+  public onBack(): void {
+    this.navigateToRoot();
+  }
+
+  public showUser(user: PartyList): void {
+    this.router.navigateByUrl('/admin/party/' + user.id);
+  }
+
+  private navigateToRoot(): void {
+    this.router.navigate([this.route.snapshot.data.routes.root]);
   }
 
   private getParties(): void {

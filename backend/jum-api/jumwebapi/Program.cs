@@ -48,10 +48,33 @@ public class Program
     private static void CreateLogger()
     {
         var path = Environment.GetEnvironmentVariable("LogFilePath") ?? "logs";
+        var environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+
+        var config = new ConfigurationBuilder()
+         .AddJsonFile("appsettings.json", optional: true)
+            .AddJsonFile($"appsettings.{environmentName}.json", optional: true)
+             .Build();
+
+        var splunkHost = Environment.GetEnvironmentVariable("SplunkConfig__Host");
+        splunkHost ??= config.GetValue<string>("SplunkConfig:Host");
+        var splunkToken = Environment.GetEnvironmentVariable("SplunkConfig__CollectorToken");
+        splunkToken ??= config.GetValue<string>("SplunkConfig:CollectorToken");
+
+        var seqEndpoint = Environment.GetEnvironmentVariable("Seq__Url");
+        seqEndpoint ??= config.GetValue<string>("Seq:Url");
+
+        if (string.IsNullOrEmpty(seqEndpoint))
+        {
+            Console.WriteLine("SEQ Log Host is not configured - check Seq environment");
+            Environment.Exit(100);
+        }
+
+
+
 
         try
         {
-            if (jumwebapiConfiguration.IsDevelopment())
+            if (JumWebApiConfiguration.IsDevelopment())
             {
                 Directory.CreateDirectory(path);
             }
@@ -64,7 +87,10 @@ public class Program
         var name = Assembly.GetExecutingAssembly().GetName();
         var outputTemplate = "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}";
 
-        Log.Logger = new LoggerConfiguration()
+
+        LoggerConfiguration loggerConfiguration = new LoggerConfiguration()
+            .Filter.ByExcluding("RequestPath like '/health%'")
+            .Filter.ByExcluding("RequestPath like '/metrics%'")
             .MinimumLevel.Information()
             .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
             .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
@@ -73,18 +99,35 @@ public class Program
             .Enrich.WithMachineName()
             .Enrich.WithProperty("Assembly", $"{name.Name}")
             .Enrich.WithProperty("Version", $"{name.Version}")
+            .WriteTo.Seq(seqEndpoint)
             .WriteTo.Console(
                 outputTemplate: outputTemplate,
                 theme: AnsiConsoleTheme.Code)
             .WriteTo.Async(a => a.File(
-                $@"{path}/jum.log",
+                $@"{path}/jumapi.log",
                 outputTemplate: outputTemplate,
                 rollingInterval: RollingInterval.Day,
                 shared: true))
             .WriteTo.Async(a => a.File(
                 new JsonFormatter(),
-                $@"{path}/jum.json",
-                rollingInterval: RollingInterval.Day))
-            .CreateLogger();
+                $@"{path}/jumapi.json",
+                rollingInterval: RollingInterval.Day));
+
+        if (!string.IsNullOrEmpty(splunkHost))
+        {
+            loggerConfiguration.WriteTo.EventCollector(splunkHost, splunkToken);
+        }
+
+        Log.Logger = loggerConfiguration.CreateLogger();
+
+        if (string.IsNullOrEmpty(splunkHost))
+        {
+            Log.Warning("*** Splunk Host is not configured - check Splunk environment *** ");
+        }
+        else
+        {
+            Log.Information($"*** Splunk logging to {splunkHost} ***");
+        }
+
     }
 }

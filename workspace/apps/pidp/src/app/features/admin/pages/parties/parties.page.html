@@ -2,57 +2,64 @@
   <ui-page-header>{{ title }}</ui-page-header>
 </ui-page>
 
-<ng-container *ngIf="environment !== production">
-  <button mat-stroked-button type="button" color="warn" (click)="onDelete()">
-    Delete all
+<mat-tab-group>
+  <mat-tab label="Users">
+
+    <table mat-table [dataSource]="dataSource">
+      <ng-container matColumnDef="id">
+        <th *matHeaderCellDef mat-header-cell>Party ID</th>
+        <td *matCellDef="let element" mat-cell>{{ element.id }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="providerName">
+        <th *matHeaderCellDef mat-header-cell>Provider Name</th>
+        <td *matCellDef="let element" mat-cell>{{ element.providerName }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="providerOrganizationCode">
+        <th *matHeaderCellDef mat-header-cell>Provider Organization</th>
+        <td *matCellDef="let element" mat-cell>
+          {{ element.providerOrganizationCode | lookupCode: 'organizations':'name'
+          }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="organizationName">
+        <th *matHeaderCellDef mat-header-cell>Organization Name</th>
+        <td *matCellDef="let element" mat-cell>
+          <ng-container *ngIf="element.providerOrganizationCode === 1">
+            {{ element.providerOrganizationCode | lookupCode: 'justiceSectors':
+            'name' }}
+          </ng-container>
+          <ng-container *ngIf="element.providerOrganizationCode === 4">
+            {{ element.providerOrganizationCode | lookupCode: 'correctionServices':
+            'name' }}
+          </ng-container>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="digitalEvidenceAccessRequest">
+        <th *matHeaderCellDef mat-header-cell>Digital Evidence</th>
+        <td *matCellDef="let element" mat-cell>
+          <mat-icon [class]="
+            element.digitalEvidenceAccessRequest ? 'has-requested' : 'not-requested'
+          ">
+            {{ element.digitalEvidenceAccessRequest ? 'check_circle' : 'block' }}
+          </mat-icon>
+        </td>
+      </ng-container>
+
+      <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
+      <tr *matRowDef="let row; columns: displayedColumns" mat-row (click)="showUser(row)"></tr>
+    </table>
+  </mat-tab>
+  <mat-tab label="Identity Providers"><app-admin-idp></app-admin-idp></mat-tab>
+
+</mat-tab-group>
+
+<ui-page-footer>
+  <button mat-stroked-button uiPageFooterAction type="button" color="primary" (click)="onBack()">
+    Back Home
   </button>
-</ng-container>
 
-<table mat-table [dataSource]="dataSource">
-  <ng-container matColumnDef="id">
-    <th *matHeaderCellDef mat-header-cell>Party ID</th>
-    <td *matCellDef="let element" mat-cell>{{ element.id }}</td>
-  </ng-container>
-
-  <ng-container matColumnDef="providerName">
-    <th *matHeaderCellDef mat-header-cell>Provider Name</th>
-    <td *matCellDef="let element" mat-cell>{{ element.providerName }}</td>
-  </ng-container>
-
-  <ng-container matColumnDef="providerOrganizationCode">
-    <th *matHeaderCellDef mat-header-cell>Provider Organization</th>
-    <td *matCellDef="let element" mat-cell>
-      {{ element.providerOrganizationCode | lookupCode: 'organizations':'name'
-      }}
-    </td>
-  </ng-container>
-
-  <ng-container matColumnDef="organizationName">
-    <th *matHeaderCellDef mat-header-cell>Organization Name</th>
-    <td *matCellDef="let element" mat-cell>
-      <ng-container *ngIf="element.providerOrganizationCode === 1">
-        {{ element.providerOrganizationCode | lookupCode: 'justiceSectors':
-        'name' }}
-      </ng-container>
-      <ng-container *ngIf="element.providerOrganizationCode === 4">
-        {{ element.providerOrganizationCode | lookupCode: 'correctionServices':
-        'name' }}
-      </ng-container>
-    </td>
-  </ng-container>
-
-  <ng-container matColumnDef="digitalEvidenceAccessRequest">
-    <th *matHeaderCellDef mat-header-cell>Digital Evidence</th>
-    <td *matCellDef="let element" mat-cell>
-      <mat-icon
-        [class]="
-          element.digitalEvidenceAccessRequest ? 'has-requested' : 'not-requested'
-        ">
-        {{ element.digitalEvidenceAccessRequest ? 'check_circle' : 'block' }}
-      </mat-icon>
-    </td>
-  </ng-container>
-
-  <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
-  <tr *matRowDef="let row; columns: displayedColumns" mat-row></tr>
-</table>
+</ui-page-footer>

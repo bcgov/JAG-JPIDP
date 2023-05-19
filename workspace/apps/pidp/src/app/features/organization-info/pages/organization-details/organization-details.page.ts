@@ -75,7 +75,6 @@ export class OrganizationDetailsPage
     this.correctionServices = this.lookupService.correctionServices;
     this.lawSocieties = this.lookupService.lawSocieties;
     this.authorizedUserService.identityProvider$.subscribe((val) => {
-      //console.log(val);
 
       if (val === IdentityProvider.BCPS) {
         this.organizations = this.lookupService.organizations

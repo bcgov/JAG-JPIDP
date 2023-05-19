@@ -12,7 +12,7 @@ namespace jumwebapi.Infrastructure.Auth
 {
     public static class AuthenticationSetup
     {
-        public static IServiceCollection AddKeycloakAuth(this IServiceCollection services, jumwebapiConfiguration config)
+        public static IServiceCollection AddKeycloakAuth(this IServiceCollection services, JumWebApiConfiguration config)
         {
             services.ThrowIfNull(nameof(services));
             config.ThrowIfNull(nameof(config));

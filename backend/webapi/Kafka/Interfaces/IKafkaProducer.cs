@@ -1,5 +1,7 @@
 namespace Pidp.Kafka.Interfaces;
 
+using Confluent.Kafka;
+
 public interface IKafkaProducer<TKey, TValue> where TValue : class
 {
     /// <summary>
@@ -9,5 +11,5 @@ public interface IKafkaProducer<TKey, TValue> where TValue : class
     /// <param name="key">Indicates message's key in Kafka topic</param>
     /// <param name="value">Indicates message's value in Kafka topic</param>
     /// <returns></returns>
-    Task ProduceAsync(string topic, TKey key, TValue value);
+    Task<DeliveryResult<TKey, TValue>> ProduceAsync(string topic, TKey key, TValue value);
 }

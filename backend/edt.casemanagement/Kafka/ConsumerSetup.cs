@@ -82,9 +82,11 @@ public static class ConsumerSetup
 
 
         services.AddScoped<IKafkaHandler<string, SubAgencyDomainEvent>, CaseAccessRequestHandler>();
+
         services.AddSingleton(typeof(IKafkaConsumer<,>), typeof(KafkaConsumer<,>));
 
         services.AddHostedService<EdtServiceConsumer>();
+
         return services;
     }
 

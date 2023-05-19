@@ -7,7 +7,12 @@ public class NotificationServiceConfiguration
     public KafkaClusterConfiguration KafkaCluster { get; set; } = new();
     public ConnectionStringConfiguration ConnectionStrings { get; set; } = new();
     public ChesClientConfiguration ChesClient { get; set; } = new();
-
+    public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
+    public class SplunkConfiguration
+    {
+        public string Host { get; set; } = string.Empty;
+        public string CollectorToken { get; set; } = string.Empty;
+    }
     public class KafkaClusterConfiguration
     {
 
@@ -31,6 +36,10 @@ public class NotificationServiceConfiguration
 
 
     }
+
+
+
+
     public class ConnectionStringConfiguration
     {
         public string JumDatabase { get; set; } = string.Empty;

@@ -57,6 +57,8 @@ export const environment: AppEnvironment = {
     },
     initOptions: {
       onLoad: 'check-sso',
+      // LJW See if this removes warning for samesite
+      silentCheckSsoFallback: true,
     },
   },
 };

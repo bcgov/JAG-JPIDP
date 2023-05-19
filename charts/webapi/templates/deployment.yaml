@@ -157,6 +157,11 @@ spec:
                 secretKeyRef:
                   name: kafkaconfig-jpidp
                   key: KafkaCluster__NotificationTopicName
+            - name: KafkaCluster__CourtLocationAccessRequestTopic
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-jpidp
+                  key: KafkaCluster__CourtLocationAccessRequestTopic
             - name: Telemetry__CollectorUrl
               valueFrom: 
                 secretKeyRef:
@@ -169,6 +174,11 @@ spec:
                   key: Telemetry__AzureConnectionString
             - name: ApplicationUrl
               value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"
+            - name: CourtAccess__PollSeconds
+              valueFrom: 
+                secretKeyRef:
+                  name: pidp-court-access
+                  key: pollSeconds
           volumeMounts:
             - name: kafka-truststore
               mountPath: "/opt/kafka/certificates"

@@ -1,0 +1,28 @@
+<ui-page-section>
+  <ui-page-section-subheader icon="table_chart" heading="Identity Providers">
+  </ui-page-section-subheader>
+  <ng-container>
+    <table mat-table [dataSource]="dataSource">
+      <ng-container matColumnDef="name">
+        <th *matHeaderCellDef mat-header-cell>Name</th>
+        <td *matCellDef="let idp" mat-cell>{{ idp.name }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="displayName">
+        <th *matHeaderCellDef mat-header-cell>Display Name</th>
+        <td *matCellDef="let idp" mat-cell>{{ idp.displayName }}</td>
+      </ng-container>
+      <ng-container matColumnDef="alias">
+        <th *matHeaderCellDef mat-header-cell>Alias</th>
+        <td *matCellDef="let idp" mat-cell>{{ idp.alias }}</td>
+      </ng-container>
+      <ng-container matColumnDef="enabled">
+        <th *matHeaderCellDef mat-header-cell>Enabled</th>
+        <td *matCellDef="let idp" mat-cell>{{ idp.enabled }}</td>
+      </ng-container>
+
+      <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
+      <tr *matRowDef="let row; columns: displayedColumns" mat-row></tr>
+    </table>
+  </ng-container>
+</ui-page-section>

@@ -1,13 +1,19 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
+
+
 import { AdminGuard } from '@app/core/guards/admin.guard';
+
+
 
 import { AuthRoutes } from '../auth/auth.routes';
 import { AuthenticationGuard } from '../auth/guards/authentication.guard';
 import { AdminRoutes } from './admin.routes';
 import { PartiesPage } from './pages/parties/parties.page';
+import { PartyComponent } from './party/party.component';
 import { AdminDashboardComponent } from './shared/components/admin-dashboard/admin-dashboard.component';
+
 
 const routes: Routes = [
   {
@@ -25,6 +31,11 @@ const routes: Routes = [
         path: AdminRoutes.PARTIES,
         component: PartiesPage,
         data: { title: 'Provider Identity Portal' },
+      },
+      {
+        path: `${AdminRoutes.PARTY}/:partyID`,
+        component: PartyComponent,
+        data: { title: 'Party Information' },
       },
       {
         path: '',

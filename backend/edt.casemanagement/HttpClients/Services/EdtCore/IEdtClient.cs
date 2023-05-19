@@ -10,6 +10,7 @@ public interface IEdtClient
     Task<Task> HandleCaseRequest(string key, SubAgencyDomainEvent accessRequest);
 
 
+
     Task<EdtUserDto?> GetUser(string userKey);
 
     /// <summary>

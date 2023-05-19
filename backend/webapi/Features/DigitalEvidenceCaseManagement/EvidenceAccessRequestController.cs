@@ -15,6 +15,12 @@ public class EvidenceCaseManagementController : PidpControllerBase
 {
     public EvidenceCaseManagementController(IPidpAuthorizationService authService) : base(authService) { }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="handler"></param>
+    /// <param name="query"></param>
+    /// <returns></returns>
     [HttpGet("{requestId}")]
     [Authorize(Policy = Policies.SubAgencyIdentityProvider)]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -23,6 +29,12 @@ public class EvidenceCaseManagementController : PidpControllerBase
                                                                                        [FromRoute] Query.DigitalEvidenceByRequestIdQuery.Query query)
         => await handler.HandleAsync(new DigitalEvidenceByRequestIdQuery.Query(query.RequestId));
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="handler"></param>
+    /// <param name="query"></param>
+    /// <returns></returns>
     [HttpGet("getCaseUserKeys")]
     [Authorize(Roles = Roles.SubmittingAgencyClient)]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -33,7 +45,6 @@ public class EvidenceCaseManagementController : PidpControllerBase
         var result = await handler.HandleAsync(new SubmittingAgencyByCaseId.Query(query.RCCNumber));
         return Ok(result);
     }
-     
 
 
     /// <summary>
@@ -50,6 +61,12 @@ public class EvidenceCaseManagementController : PidpControllerBase
                                                               [FromQuery] DigitalEvidenceByPartyQuery.Query query)
     => await handler.HandleAsync(new DigitalEvidenceByPartyQuery.Query(query.PartyId));
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="handler"></param>
+    /// <param name="command"></param>
+    /// <returns></returns>
     [HttpPost]
     [Authorize(Policy = Policies.SubAgencyIdentityProvider)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -59,6 +76,12 @@ public class EvidenceCaseManagementController : PidpControllerBase
         => await this.AuthorizePartyBeforeHandleAsync(command.PartyId, handler, command)
         .ToActionResult();
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="handler"></param>
+    /// <param name="command"></param>
+    /// <returns></returns>
     [HttpPut("{requestId}")]
     [Authorize(Policy = Policies.SubAgencyIdentityProvider)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -70,6 +93,12 @@ public class EvidenceCaseManagementController : PidpControllerBase
         return this.NoContent();
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="handler"></param>
+    /// <param name="query"></param>
+    /// <returns></returns>
 
     [HttpGet("search")]
     [Authorize(Policy = Policies.SubAgencyIdentityProvider)]

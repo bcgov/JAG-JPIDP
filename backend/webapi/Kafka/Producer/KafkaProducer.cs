@@ -17,13 +17,18 @@ public class KafkaProducer<TKey, TValue> : IDisposable, IKafkaProducer<TKey, TVa
 
     public async Task ProduceAsyncDeprecated(string topic, TKey key, TValue value) => await this.producer.ProduceAsync(topic, new Message<TKey, TValue> { Key = key, Value = value });
 
-    public async Task ProduceAsync(string topic, TKey key, TValue value)
+    public async Task<DeliveryResult<TKey, TValue>> ProduceAsync(string topic, TKey key, TValue value)
     {
         var message = new Message<TKey, TValue> { Key = key, Value = value };
         var activity = Diagnostics.Producer.Start(topic, message);
         try
         {
-            await this.producer.ProduceAsync(topic, message);
+            return await this.producer.ProduceAsync(topic, message);
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Failed to sent to topic {topic} [{ex.Message}]");
+            throw ex;
         }
         finally
         {

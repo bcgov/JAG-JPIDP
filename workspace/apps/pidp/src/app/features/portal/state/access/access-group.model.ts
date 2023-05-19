@@ -15,6 +15,7 @@ export const accessSectionKeys = [
   'driverFitness',
   'digitalEvidence',
   'digitalEvidenceCaseManagement',
+  'digitalEvidenceCounsel',
   'uci',
   'msTeams',
 ] as const;
@@ -23,7 +24,7 @@ export const accessSectionKeys = [
  * @description
  * Union of keys generated from the tuple.
  */
-export type AccessSectionKey = typeof accessSectionKeys[number];
+export type AccessSectionKey = (typeof accessSectionKeys)[number];
 
 /**
  * @description
@@ -41,6 +42,7 @@ export interface AccessGroup extends IAccessGroup {
   driverFitness: Section;
   digitalEvidence: Section;
   digitalEvidenceCaseManagement: Section;
+  digitalEvidenceCounsel: Section;
   uci: Section;
   msTeams: Section;
 }

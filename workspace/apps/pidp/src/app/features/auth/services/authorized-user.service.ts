@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 
-import { Observable, combineLatest, map } from 'rxjs';
+import { Observable, combineLatest, filter, map } from 'rxjs';
 
 import { LookupService } from '@app/modules/lookup/lookup.service';
 
@@ -68,18 +68,21 @@ export class AuthorizedUserService {
    * on identity provider.
    */
   private getUserResolver(userIdentity: UserIdentity): IUserResolver<User> {
+    debugger;
+
     // see if came from submitting agency
     const submittingAgency = this.lookupService.submittingAgencies.find(
       (agency) =>
-        agency.idpHint === userIdentity.accessTokenParsed.identity_provider
+        agency.idpHint === userIdentity.accessTokenParsed?.identity_provider
     );
 
+    // user is in a submitting agency IDP
     if (submittingAgency != null) {
       return new SubmittingAgencyResolver(userIdentity);
     }
 
-    switch (userIdentity.accessTokenParsed.identity_provider) {
-      case IdentityProvider.IDIR:
+    switch (userIdentity.accessTokenParsed?.identity_provider) {
+      case IdentityProvider.IDIR || IdentityProvider.AZUREIDIR:
         return new IdirResolver(userIdentity);
       case IdentityProvider.BCSC:
         return new BcscResolver(userIdentity);
@@ -90,7 +93,11 @@ export class AuthorizedUserService {
       case IdentityProvider.SUBMITTING_AGENCY:
         return new SubmittingAgencyResolver(userIdentity);
       default:
-        throw new Error('Identity provider not recognized');
+        throw new Error(
+          'Identity provider not [' +
+            userIdentity.accessTokenParsed?.identity_provider +
+            '] recognized'
+        );
     }
   }
 }

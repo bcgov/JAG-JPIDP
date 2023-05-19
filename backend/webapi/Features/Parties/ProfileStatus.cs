@@ -56,6 +56,8 @@ public partial class ProfileStatus
             protected abstract void SetAlertsAndStatus(ProfileStatusDto profile);
         }
 
+
+
         public enum Alert
         {
             TransientError = 1,
@@ -217,6 +219,7 @@ public partial class ProfileStatus
                     new Model.HcimEnrolment(profile),
                     new Model.DigitalEvidence(profile),
                     new Model.DigitalEvidenceCaseManagement(profile),
+                    new Model.DefenseAndDutyCounsel(profile),
                     new Model.MSTeams(profile),
                     new Model.SAEforms(profile),
                     new Model.Uci(profile),
@@ -272,20 +275,6 @@ public partial class ProfileStatus
             return null;
         }
 
-        private async Task<JustinUser?> RecheckJustinUser(OrganizationCode organizationCode, string personalId)
-        {
-            var newUser = new JustinUser();
-            if (organizationCode == OrganizationCode.CorrectionService)
-            {
-                newUser = await this.jumClient.GetJumUserByPartIdAsync(long.Parse(personalId));
-            }
-            else if (organizationCode == OrganizationCode.JusticeSector)
-            {
-                newUser = await this.jumClient.GetJumUserAsync(personalId);
-            }
-
-            return newUser;
-        }
     }
 
 
@@ -338,11 +327,27 @@ public partial class ProfileStatus
         public bool UserIsBcServicesCard => this.User.GetIdentityProvider() == ClaimValues.BCServicesCard;
         public bool UserIsPhsa => this.User.GetIdentityProvider() == ClaimValues.Phsa;
         //public bool UserIsBcps => this.User.GetIdentityProvider() == ClaimValues.Bcps;
-        public bool UserIsBcps => this.User.GetIdentityProvider() == ClaimValues.Bcps && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpApi).Contains(DefaultRoles.Bcps);
+        public bool UserIsBcps => this.User.GetIdentityProvider() == ClaimValues.Bcps && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpApi).Contains(DefaultRoles.Bcps) || (PermitIDIRDEMS() && this.User.GetIdentityProvider() == ClaimValues.Idir);
         public bool UserIsIdir => this.User.GetIdentityProvider() == ClaimValues.Idir;
-        public bool UserIsVicPd => this.User.GetIdentityProvider() == ClaimValues.VicPd;
+        public bool UserIsIdirCaseManagement => this.User.GetIdentityProvider() == ClaimValues.Idir && this.PermitIDIRDEMS() && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpApi).Contains(Roles.SubmittingAgency);
+        public bool UserIsDutyCounsel => (this.User.GetIdentityProvider() == ClaimValues.VerifiedCredentials && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpApi).Contains(Roles.DutyCounsel))
+                  || ( PermitIDIRDEMS() && this.User.GetIdentityProvider() == ClaimValues.Idir && this.User?.Identity is ClaimsIdentity claimsIdentity && claimsIdentity.GetResourceAccessRoles(Clients.PidpApi).Contains(Roles.DutyCounsel));
 
         public bool UserIsInSubmittingAgency;
+
+
+        protected bool PermitIDIRDEMS()
+        {
+            var permitIDIRDemsAccess = Environment.GetEnvironmentVariable("PERMIT_IDIR_DEMS_ACCESS");
+            if (permitIDIRDemsAccess != null && permitIDIRDemsAccess.Equals("true", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
 
         [MemberNotNullWhen(true, nameof(LicenceDeclaration))]
         public bool HasDeclaredLicence => this.LicenceDeclaration?.HasNoLicence == false;
@@ -355,5 +360,7 @@ public partial class ProfileStatus
             [MemberNotNullWhen(false, nameof(CollegeCode), nameof(LicenceNumber))]
             public bool HasNoLicence => this.CollegeCode == null || this.LicenceNumber == null;
         }
+
+ 
     }
 }

@@ -58,7 +58,13 @@ edt-casemgmt:
   migrations:
     enabled: false
 
+edt-disclosure:
+  migrations:
+    enabled: false
+
 jum-backend:
+  route:
+    enabled: false
   migrations:
     enabled: false
 

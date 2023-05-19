@@ -25,11 +25,11 @@ export class AdministratorPortalSection implements IPortalSection {
   ) {
     this.key = 'administrationPanel';
     this.heading = 'Administration Panel';
-    this.description = 'Manage Users, Review, Approve or Deny Access Requests.';
+    this.description = 'Manage Users, Requests and Services';
   }
 
   public get hint(): string {
-    return '15 min to complete';
+    return '';
   }
 
   /**
@@ -42,12 +42,14 @@ export class AdministratorPortalSection implements IPortalSection {
     return {
       label: 'View',
       route: AdminRoutes.routePath(AdminRoutes.PARTIES),
-      disabled: demographicsStatusCode !== StatusCode.COMPLETED,
+      disabled:
+        demographicsStatusCode !== StatusCode.COMPLETED &&
+        demographicsStatusCode !== StatusCode.LOCKED_COMPLETE,
     };
   }
 
   public get statusType(): AlertType {
-    return 'info';
+    return 'danger';
   }
 
   public get status(): string {

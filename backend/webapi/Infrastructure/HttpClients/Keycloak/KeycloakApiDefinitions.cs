@@ -69,6 +69,14 @@ public class Group
 public class UserRepresentation
 {
     public string? Email { get; set; }
+
+    public string? LastName { get; set; }
+    public string? FirstName { get; set; }
+
+    public bool? Enabled { get; set; } = true; // enabled by default
+
+  //  public List<Group> Groups { get; set; } =  new List<Group>();
+
     public Dictionary<string, string[]> Attributes { get; set; } = new();
 
     internal void SetLdapOrgDetails(LdapLoginResponse.OrgDetails orgDetails) => this.SetAttribute("org_details", JsonSerializer.Serialize(orgDetails, new JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
@@ -76,6 +84,7 @@ public class UserRepresentation
     public void SetPhone(string phone) => this.SetAttribute("phone", phone);
 
     public void SetPartId(string partId) => this.SetAttribute("partId", partId);
+
 
     public void SetPhoneNumber(string phoneNumber) => this.SetAttribute("phoneNumber", phoneNumber);
 

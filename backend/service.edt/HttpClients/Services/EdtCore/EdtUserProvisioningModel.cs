@@ -15,7 +15,7 @@ public class EdtUserProvisioningModel : UserProvisoningRetry
     public string? Role { get; set; }
     public bool? IsActive => true;
     public string? AccountType { get; set; }
-
+    public string? SystemName { get; set; } = "DEMS";
     public int AccessRequestId { get; set; }
     public string? OrganizationType { get; set; }
     public string? OrganizationName { get; set; }
