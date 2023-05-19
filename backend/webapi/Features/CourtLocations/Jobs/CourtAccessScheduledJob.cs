@@ -3,6 +3,7 @@ namespace Pidp.Features.CourtLocations.Jobs;
 using System.Threading.Tasks;
 using Microsoft.Identity.Client;
 using Pidp.Data;
+using Pidp.Models;
 using Prometheus;
 using Quartz;
 
@@ -17,7 +18,7 @@ public class CourtAccessScheduledJob : IJob
          .CreateHistogram("pidp_court_location_scheduled_jobs", "Histogram of court location request job executions");
 
 
-    public Task Execute(IJobExecutionContext context)
+    public async Task Execute(IJobExecutionContext context)
     {
 
         using (CourtLocationScheduledJobDuration.NewTimer())
@@ -29,20 +30,31 @@ public class CourtAccessScheduledJob : IJob
             {
                 Serilog.Log.Information($"Processing request {request.RequestId} From {request.ValidFrom} To {request.ValidUntil}");
 
-                if (request.ValidUntil <= DateTime.UtcNow)
+                if (request.ValidUntil <= DateTime.UtcNow && request.RequestStatus != CourtLocationAccessStatus.RemovalPending)
                 {
                     Serilog.Log.Information($"Decommission request for {request.RequestId}");
-                    this.courtAccessService.CreateRemoveCourtAccessDomainEvent(request);
+                    var taskStatus = await this.courtAccessService.CreateRemoveCourtAccessDomainEvent(request);
+                    if (taskStatus)
+                    {
+                        var updated = await this.courtAccessService.SetAccessRequestStatus(request, CourtLocationAccessStatus.RemovalPending.ToString());
+                        if (!updated)
+                        {
+                            Serilog.Log.Error($"Failed to set status of {request.RequestId} to {CourtLocationAccessStatus.RemovalPending}");
+                        }
+
+                    }
                 }
-                else if (request.ValidFrom >= DateTime.UtcNow)
+                else if (request.ValidFrom >= DateTime.UtcNow && request.RequestStatus != CourtLocationAccessStatus.Submitted && request.RequestStatus != CourtLocationAccessStatus.SubmittedFuture)
                 {
                     Serilog.Log.Information($"Provision request for {request.RequestId}");
-                    this.courtAccessService.CreateAddCourtAccessDomainEvent(request);
+                    await this.courtAccessService.CreateAddCourtAccessDomainEvent(request);
+                }
+                else
+                {
+                    Serilog.Log.Information($"Skipping request for {request.RequestId} with status {request.RequestStatus}");
                 }
             }
 
-
-            return Task.CompletedTask;
         }
 
     }

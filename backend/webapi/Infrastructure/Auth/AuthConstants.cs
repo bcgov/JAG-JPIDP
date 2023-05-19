@@ -15,6 +15,12 @@ public static class Claims
     public const string ResourceAccess = "resource_access";
     public const string Subject = "sub";
     public const string Roles = "roles";
+    public const string BcPersonFamilyName = "bcperson_family_name";
+    public const string BcPersonGivenName = "bcperson_given_name";
+    public const string MembershipStatusCode = "membership_status_code";
+
+    public const string VerifiedCredPresentedRequestId = "pres_req_conf_id";
+
 }
 
 public static class DefaultRoles
@@ -29,9 +35,8 @@ public static class ClaimValues
     public const string Phsa = "phsa";
     public const string Bcps = "adfscert";
     public const string Adfs = "adfs"; // test
-    public const string VicPd = "vicpd";
     public const string SubmittingAgency = "SUBMITTING_AGENCY";
-    public const string VerifiedCredentials = "verified-credentials";
+    public const string VerifiedCredentials = "verified";
 
 }
 

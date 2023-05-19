@@ -31,7 +31,7 @@ public static class ClaimValues
     public const string Adfs = "adfs"; // test
     public const string VicPd = "vicpd";
     public const string SubmittingAgency = "SUBMITTING_AGENCY";
-    public const string VerifiedCredentials = "verified-credentials";
+    public const string VerifiedCredentials = "verified";
 
 }
 

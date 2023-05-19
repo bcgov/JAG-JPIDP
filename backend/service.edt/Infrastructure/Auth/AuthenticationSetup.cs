@@ -67,7 +67,8 @@ public static class AuthenticationSetup
                                                                    (c.Value == ClaimValues.BCServicesCard ||
                                                                     c.Value == ClaimValues.Idir ||
                                                                     c.Value == ClaimValues.Phsa ||
-                                                                    c.Value == ClaimValues.Bcps));
+                                                                    c.Value == ClaimValues.Bcps ||
+                                                                    c.Value == ClaimValues.VerifiedCredentials));
                         return hasRole || hasClaim;
                     }));
 
@@ -79,7 +80,8 @@ public static class AuthenticationSetup
                                                                  (c.Value == ClaimValues.BCServicesCard ||
                                                                   c.Value == ClaimValues.Idir ||
                                                                   c.Value == ClaimValues.Phsa ||
-                                                                  c.Value == ClaimValues.Bcps));
+                                                                  c.Value == ClaimValues.Bcps ||
+                                                                  c.Value == ClaimValues.VerifiedCredentials));
                       return hasRole || hasClaim;
                   }));
 
