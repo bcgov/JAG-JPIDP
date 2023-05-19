@@ -43,8 +43,22 @@ webapi:
   replicaCount: 1
   aspnetcore:
     environment: Staging
+  migrations:
+    enabled: false
 
+
+edt-casemgmt:
+  migrations:
+    enabled: false
+
+edt-disclosure:
+  migrations:
+    enabled: false
 
 plr-intake:
   replicaCount: 1
+
+edt-service:
+  migrations:
+    enabled: false
 
