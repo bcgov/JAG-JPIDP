@@ -6,6 +6,7 @@ export interface PartyOrganizationDetails {
   organizationCode: OrganizationCode;
   correctionService: string;
   submittingAgency: any;
+  lawSociety: boolean;
   justiceSectorCode: number;
   correctionServiceCode: CorrectionServiceCode;
   justiceSectorService: string;

@@ -25,7 +25,7 @@ export class DigitalEvidenceCounselPortalSection implements IPortalSection {
     this.key = 'digitalEvidenceCounsel';
     this.heading =
       'Digital Evidence and Disclosure Management System Duty Counsel Access';
-    this.description = `Manage access to your Duty Counsel cases here.`;
+    this.description = `If you act as Duty Counsel then you may manage access to your Duty Counsel cases here.`;
   }
 
   public get hint(): string {

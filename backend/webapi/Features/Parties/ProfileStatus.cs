@@ -317,7 +317,10 @@ public partial class ProfileStatus
 
         // Computed Properties
         [MemberNotNullWhen(true, nameof(Email), nameof(Phone))]
-        public bool DemographicsEntered =>  this.User.GetIdentityProvider() == ClaimValues.Bcps || this.User.GetIdentityProvider() == ClaimValues.Idir || this.User.GetIdentityProvider() == ClaimValues.Adfs ? this.Email != null : this.Email != null && this.Phone != null;
+        public bool DemographicsEntered =>  this.User.GetIdentityProvider() is ClaimValues.Bcps or
+                                            ClaimValues.Idir or
+                                            ClaimValues.Adfs or
+                                            ClaimValues.VerifiedCredentials ? this.Email != null : this.Email != null && this.Phone != null;
         [MemberNotNullWhen(true, nameof(CollegeCode), nameof(LicenceNumber))]
         public bool CollegeCertificationEntered => this.CollegeCode.HasValue && this.LicenceNumber != null;
         [MemberNotNullWhen(true, nameof(OrganizationCode), nameof(EmployeeIdentifier))]
@@ -332,6 +335,8 @@ public partial class ProfileStatus
         public bool UserIsIdirCaseManagement => this.User.GetIdentityProvider() == ClaimValues.Idir && this.PermitIDIRDEMS() && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpApi).Contains(Roles.SubmittingAgency);
         public bool UserIsDutyCounsel => (this.User.GetIdentityProvider() == ClaimValues.VerifiedCredentials && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpApi).Contains(Roles.DutyCounsel))
                   || ( PermitIDIRDEMS() && this.User.GetIdentityProvider() == ClaimValues.Idir && this.User?.Identity is ClaimsIdentity claimsIdentity && claimsIdentity.GetResourceAccessRoles(Clients.PidpApi).Contains(Roles.DutyCounsel));
+
+        public bool UserIsInLawSociety => this.User.GetIdentityProvider() == ClaimValues.VerifiedCredentials;
 
         public bool UserIsInSubmittingAgency;
 

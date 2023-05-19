@@ -9,7 +9,6 @@ using Pidp.Extensions;
 using Pidp.Infrastructure.Auth;
 using Pidp.Models;
 using Pidp.Models.Lookups;
-using Microsoft.AspNetCore.Server.IIS.Core;
 
 public class Create
 {
@@ -22,7 +21,6 @@ public class Create
         public string FirstName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
-
 
     }
 
@@ -58,6 +56,7 @@ public class Create
                     ClaimValues.Phsa => new PhsaValidator(),
                     ClaimValues.Bcps => new BcpsValidator(user),
                     ClaimValues.Idir => new IdirValidator(user),
+                    ClaimValues.VerifiedCredentials => new VerifiedCredentialsValidator(user),
                     _ => throw new NotImplementedException("Given Identity Provider is not supported")
                 });
             }
@@ -116,12 +115,17 @@ public class Create
                 this.RuleFor(x => x.Birthdate).Empty();
             }
         }
-        private class VicPdValidator : AbstractValidator<Command>
+        private class VerifiedCredentialsValidator : AbstractValidator<Command>
         {
-            public VicPdValidator(ClaimsPrincipal? user)
+            public VerifiedCredentialsValidator(ClaimsPrincipal? user)
             {
                 this.RuleFor(x => x.Jpdid).NotEmpty().MatchesUserClaim(user, Claims.PreferredUsername);
-                this.RuleFor(x => x.Birthdate).Empty();
+                this.RuleFor(x => x.LastName).NotEmpty().MatchesUserClaim(user, Claims.BcPersonFamilyName);
+                this.RuleFor(x => x.FirstName).NotEmpty().MatchesUserClaim(user, Claims.BcPersonGivenName);
+                this.RuleFor(x => "PRAC").MatchesUserClaim(user, Claims.MembershipStatusCode);
+
+                // todo - can check but they vary by environment
+                // this.RuleFor(x => "accredited-lawyer-bcpc-dev").MatchesUserClaim(user, Claims.VerifiedCredPresentedRequestId);
             }
         }
     }
@@ -139,7 +143,7 @@ public class Create
 
         public async Task<int> HandleAsync(Command command)
         {
-            var user = httpContextAccessor.HttpContext.User;
+            var user = this.httpContextAccessor.HttpContext.User;
 
             // check party isnt already present - should not happen though
             var party = this.context.Parties.Where(party => party.Jpdid == command.Jpdid).FirstOrDefault();
@@ -171,28 +175,62 @@ public class Create
             // if this user is a verified user we'll also create the organization entry
             if (! (user.GetIdentityProvider().Equals(ClaimValues.Bcps, StringComparison.Ordinal) || user.GetIdentityProvider().Equals(ClaimValues.Idir, StringComparison.Ordinal)))
             {
-                // check if from submitting agency (or later verified credentials )
-                var idp = user.GetIdentityProvider();
-                var submittingAgencies = this.GetSubmittingAgencies(this.context);
 
-                var agency = submittingAgencies.Find(agency => agency.IdpHint.Equals(idp, StringComparison.Ordinal));
-
-                if (agency != null)
+                if (user.GetIdentityProvider() == ClaimValues.VerifiedCredentials)
                 {
-                    Serilog.Log.Information("User {0} is from agency {1} - automatically assigning organization", user.GetUserId(), agency.Name);
-                    var organization = this.GetOrganization(this.context, agency.IdpHint);
+                    Serilog.Log.Information("User {0} is using verified credentials - automatically assigning organization", user.GetUserId());
+                    var lawSociety = this.GetOrganization(this.context, ClaimValues.VerifiedCredentials);
+                    // right now we only have one org using verified credentials - this might change in future
+                    if (lawSociety == null)
+                    {
+                        Serilog.Log.Information("No organization exists for law society - adding new entry");
+                        lawSociety = new Organization
+                        {
+                            IdpHint = ClaimValues.VerifiedCredentials,
+                            Name = "BC Law Society"
+                        };
+                        this.context.Organizations.Add(lawSociety);
+                    }
 
-                    if (organization != null)
+                    if (lawSociety != null)
                     {
                         var org = new PartyOrgainizationDetail
                         {
                             Party = party,
-                            Organization = organization
+                            Organization = lawSociety
                         };
                         this.context.PartyOrgainizationDetails.Add(org);
                     }
+
+                }
+                else
+                {
+                    // check if from submitting agency (or later verified credentials )
+                    var idp = user.GetIdentityProvider();
+
+                    var submittingAgencies = this.GetSubmittingAgencies(this.context);
+
+                    var agency = submittingAgencies.Find(agency => agency.IdpHint.Equals(idp, StringComparison.Ordinal));
+
+                    if (agency != null)
+                    {
+                        Serilog.Log.Information("User {0} is from agency {1} - automatically assigning organization", user.GetUserId(), agency.Name);
+                        var organization = this.GetOrganization(this.context, agency.IdpHint);
+
+                        if (organization != null)
+                        {
+                            var org = new PartyOrgainizationDetail
+                            {
+                                Party = party,
+                                Organization = organization
+                            };
+                            this.context.PartyOrgainizationDetails.Add(org);
+                        }
+                    }
                 }
             }
+
+
 
 
             await this.context.SaveChangesAsync();
@@ -211,7 +249,7 @@ public class Create
             var result = handler.HandleAsync(query);
 
             // get the SubmittingAgencies list from the result
-            return result.Result.Organizations.FirstOrDefault(org => org.IdpHint.Equals(idpHint,StringComparison.Ordinal));
+            return result.Result.Organizations.FirstOrDefault(org => org.IdpHint.Equals(idpHint, StringComparison.Ordinal));
         }
 
         public List<SubmittingAgency> GetSubmittingAgencies(PidpDbContext context)

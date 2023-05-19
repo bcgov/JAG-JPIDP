@@ -59,6 +59,8 @@ export class AccessTokenService implements IAccessTokenService {
           attributes: {
             birthdate: '',
             gender: '',
+            member_status: '',
+            member_status_code: '',
           },
         };
 
