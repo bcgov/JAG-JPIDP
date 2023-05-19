@@ -120,7 +120,7 @@ public partial class ProfileStatus
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
                 this.StatusCode = profile.DemographicsEntered || profile.SubmittingAgency != null ?
-                    (profile.SubmittingAgency != null || profile.UserIsBcps) ? StatusCode.Locked_Complete : StatusCode.Complete : StatusCode.Incomplete;
+                    (profile.SubmittingAgency != null || profile.UserIsBcps || profile.UserIsInLawSociety) ? StatusCode.Locked_Complete : StatusCode.Complete : StatusCode.Incomplete;
             }
         }
 
@@ -132,6 +132,7 @@ public partial class ProfileStatus
             public JusticeSectorCode? JusticeSectorCode { get; set; }
             public CorrectionServiceCode? CorrectionServiceCode { get; set; }
             public SubmittingAgency? SubmittingAgency { get; set; }
+            public bool LawSociety { get; set; }
             public string? EmployeeIdentifier { get; set; }
             public string? orgName { get; set; }
             public string? CorrectionService { get; set; }
@@ -145,18 +146,19 @@ public partial class ProfileStatus
                 this.SubmittingAgency = profile.SubmittingAgency;
                 this.orgName = profile.OrgName;
                 this.CorrectionService = profile.CorrectionService;
+                this.LawSociety = profile.UserIsInLawSociety;
             }
 
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
-                if (!(profile.UserIsPhsa || profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsInSubmittingAgency))
+                if (!(profile.UserIsPhsa || profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsInSubmittingAgency || profile.UserIsInLawSociety))
                 {
                     this.StatusCode = StatusCode.Hidden;
                     return;
                 }
 
                 // user is from an authenticated agency - no need to enter organization details or view/change them
-                if (profile.UserIsInSubmittingAgency)
+                if (profile.UserIsInSubmittingAgency || profile.UserIsInLawSociety)
                 {
                     this.StatusCode = StatusCode.Locked_Complete;
                     return;
@@ -196,7 +198,7 @@ public partial class ProfileStatus
 
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
-                if (!(profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsInSubmittingAgency))
+                if (!(profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsInSubmittingAgency || profile.UserIsInLawSociety))
                 {
                     this.StatusCode = StatusCode.Hidden;
                     return;
@@ -278,7 +280,7 @@ public partial class ProfileStatus
                 {
                     this.StatusCode = StatusCode.Hidden;
                     return;
-                } 
+                }
             }
         }
 
