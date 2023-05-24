@@ -13,5 +13,5 @@ public class GenericProcessStatusResponse
     public string DomainEvent { get; set; } = string.Empty;
     public Instant EventTime { get; set; }
     public string TraceId { get; set; } = string.Empty;
-
+    public string PartId { get; set; } = string.Empty;
 }

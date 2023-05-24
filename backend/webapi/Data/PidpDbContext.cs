@@ -40,6 +40,7 @@ public class PidpDbContext : DbContext
     public DbSet<CourtLocationAccessRequest> CourtLocationAccessRequests { get; set; } = default!;
     public DbSet<CourtLocation> CourtLocations { get; set; } = default!;
     public DbSet<Organization> Organizations { get; set; } = default!;
+    public DbSet<SubmittingAgency> SubmittingAgencies { get; set; } = default!;
 
     public DbSet<UserAccountChange> UserAccountChanges { get; set; } = default!;
 

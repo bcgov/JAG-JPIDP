@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NodaTime;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -14,9 +15,10 @@ using Pidp.Models;
 namespace Pidp.Data.Migrations
 {
     [DbContext(typeof(PidpDbContext))]
-    partial class PidpDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230518162457_PartyAlternateId")]
+    partial class PartyAlternateId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1815,15 +1817,9 @@ namespace Pidp.Data.Migrations
                     b.Property<string>("Code")
                         .HasColumnType("text");
 
-                    b.Property<LocalDate?>("ClientCertExpiry")
-                        .HasColumnType("date");
-
                     b.Property<string>("IdpHint")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<int?>("LevelOfAssurance")
-                        .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .IsRequired()

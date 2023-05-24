@@ -114,6 +114,8 @@ public partial class ProfileStatus
                .ProjectTo<ProfileStatusDto>(this.mapper.ConfigurationProvider)
                .SingleAsync();
 
+            var party = await this.context.Parties.Where(party => party.Id == command.Id).SingleAsync();
+
             var orgCorrectionDetail = profile.OrganizationCode == OrganizationCode.CorrectionService
                 ? await this.context.CorrectionServiceDetails
                 .Include(cor => cor.CorrectionService)
@@ -161,6 +163,23 @@ public partial class ProfileStatus
                     Gender = profile.Gender
                 });
 
+                var justinPartAltId = party.AlternateIds.Where(alt => alt.Name == "JUSTINParticipant").FirstOrDefault();
+                if ( justinPartAltId == null)
+                {
+                    ParticipantDetail? participant = profile.JustinUser.participantDetails.FirstOrDefault();
+                    if ( participant != null)
+                    {
+                        Serilog.Log.Information($"Storing JUSTIN alt id for {party.Id} as {participant.partId}");
+                        party.AlternateIds.Add(new PartyAlternateId
+                        {
+                            Name = "JUSTINParticipant",
+                            Value = participant.partId,
+                            Party = party
+                        });
+                        await this.context.SaveChangesAsync();
+
+                    }
+                }
             }
 
             // if an agency account then we'll mark as complete to prevent any changes
@@ -194,12 +213,9 @@ public partial class ProfileStatus
              profile.User = command.User;
 
             // if the user is not a card user then we shouldnt need more profile info
-            if (!profile.UserIsBcServicesCard )
+            if (!profile.UserIsBcServicesCard)
             {
                 // get the party
-                var party = await this.context.Parties
-               .SingleAsync(party => party.Id == command.Id);
-
                 if (party != null)
                 {
                     profile.Email = party.Email;

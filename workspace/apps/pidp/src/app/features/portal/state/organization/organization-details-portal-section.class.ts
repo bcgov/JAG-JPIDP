@@ -87,7 +87,7 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
           this.profileStatus.status.organizationDetails?.statusCode ===
             StatusCode.COMPLETED
             ? 'Verified'
-            : 'Not Verified',
+            : 'Not Verified - Update to provide your JUSTIN user info in order to request access to systems',
         label: 'JUSTIN User Status:',
       });
     } else if (this.profileStatus.status.organizationDetails.lawSociety) {

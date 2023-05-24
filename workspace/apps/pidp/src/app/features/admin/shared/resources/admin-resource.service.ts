@@ -8,6 +8,7 @@ import { NoContent, NoContentResponse } from '@bcgov/shared/data-access';
 import { ApiHttpClient } from '@app/core/resources/api-http-client.service';
 
 import { PartyModel } from '../../party/party.model';
+import { SubmittingAgency } from '../../submitting-agency/submitting-agency.model';
 
 export interface PartyList {
   id: number;
@@ -29,6 +30,26 @@ export class AdminResource {
         // TODO add logging and toast messaging around specific errors when the admin starts getting a bit of attention
         return of([]);
       })
+    );
+  }
+
+  public getSubmittingAgencies(): Observable<SubmittingAgency[]> {
+    return this.apiResource
+      .get<SubmittingAgency[]>('/admin/submitting-agencies')
+      .pipe(
+        catchError((_: HttpErrorResponse) => {
+          // TODO add logging and toast messaging around specific errors when the admin starts getting a bit of attention
+          return of([]);
+        })
+      );
+  }
+
+  public updateSubmittingAgency(
+    updateRecord: SubmittingAgency
+  ): Observable<SubmittingAgency> {
+    return this.apiResource.put(
+      `admin/submitting-agencies/${updateRecord.code}`,
+      updateRecord
     );
   }
 

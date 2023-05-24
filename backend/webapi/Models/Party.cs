@@ -50,5 +50,7 @@ public class Party : BaseAuditable, IOwnedResource
 
     public ICollection<UserAccountChange> AccountChanges { get; set; } = new List<UserAccountChange>();
 
+    public ICollection<PartyAlternateId> AlternateIds { get; set; } = new List<PartyAlternateId>();
+
 
 }
