@@ -53,7 +53,8 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
     {
 
         // check this message is for us
-        if (!(accessRequestModel.SystemName.Equals("DEMS", StringComparison.Ordinal) || accessRequestModel.SystemName.Equals("DigitalEvidence", StringComparison.Ordinal) || accessRequestModel.SystemName.Equals("DigitalEvidenceCaseManagement", StringComparison.Ordinal)))
+
+        if (accessRequestModel.SystemName != null && !(accessRequestModel.SystemName.Equals("DEMS", StringComparison.Ordinal) || accessRequestModel.SystemName.Equals("DigitalEvidence", StringComparison.Ordinal) || accessRequestModel.SystemName.Equals("DigitalEvidenceCaseManagement", StringComparison.Ordinal)))
         {
             Serilog.Log.Logger.Information($"Ignoring message {key} for system {accessRequestModel.SystemName} as we only handle DEMS requests");
             return Task.CompletedTask;
@@ -75,7 +76,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
                 //await trx.RollbackAsync();
                 return Task.CompletedTask;
             }
-            ///check weather edt service api is available before making any http request
+            ///check whether edt service api is available before making any http request
             ///
             /// call version endpoint via get
             ///
@@ -94,6 +95,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
 
                 await this.context.SaveChangesAsync();
 
+                // submitting agency users(e.g. police) that have limited DEMS access
                 if (result.submittingAgencyUser)
                 {
                     Serilog.Log.Information($"User {result.partId} was for submitting agency - publishing event change only");
@@ -119,7 +121,9 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
                             EventData = eventData,
                         });
 
-
+                        // we'll flag it as completed-provisioning as the account is really not fully complete
+                        // at this stage. Once the ISL service sends us a message that the user also has all cases assigned then we'll send a final
+                        // email stating such to the user
                         await this.ackProducer.ProduceAsync(this.configuration.KafkaCluster.AckTopicName, key: key, new NotificationAckModel
                         {
                             Subject = NotificationSubject.AccessRequest,
@@ -137,6 +141,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
                         await trx.RollbackAsync();
                     }
                 }
+                // non submitting agency users
                 else
                 {
 

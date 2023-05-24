@@ -55,6 +55,9 @@ export class DigitalEvidencePage
   public pending: boolean | null;
   public policeAgency: Observable<string>;
   public result: string;
+  public userIsBCPS?: boolean;
+  public userIsLawyer?: boolean;
+
   public accessRequestFailed: boolean;
   public digitalEvidenceSupportEmail: string;
   public formControlNames: string[];
@@ -89,8 +92,9 @@ export class DigitalEvidencePage
     this.digitalEvidenceUrl = digitalEvidenceUrl;
     this.organizationType = new OrganizationUserType();
     const partyId = this.partyService.partyId;
+    this.userIsBCPS = false;
+    this.userIsLawyer = false;
     this.dataSource = new MatTableDataSource();
-
     this.identityProvider$ = this.authorizedUserService.identityProvider$;
     this.result = '';
     this.policeAgency = accessTokenService
@@ -124,6 +128,7 @@ export class DigitalEvidencePage
         // todo - remove IDIR
         if (idp === IdentityProvider.BCPS || idp === IdentityProvider.IDIR) {
           // if BCPS then get the crown-regions
+          this.userIsBCPS = true;
           this.userOrgunit
             .getUserOrgUnit(
               partyId,
@@ -133,6 +138,9 @@ export class DigitalEvidencePage
               this.assignedRegions = data;
               this.formState.AssignedRegions.patchValue(this.assignedRegions);
             });
+        }
+        if (idp === IdentityProvider.VERIFIED_CREDENTIALS) {
+          this.userIsLawyer = true;
         }
       });
     });
@@ -187,16 +195,6 @@ export class DigitalEvidencePage
 
   public userInAgency(): boolean {
     return this.organizationType.isSubmittingAgency;
-  }
-
-  public userIsBCPS(): boolean {
-    let isBCPS = false;
-
-    this.identityProvider$.subscribe((idp) => {
-      isBCPS = idp === IdentityProvider.BCPS || idp === IdentityProvider.IDIR;
-    });
-
-    return isBCPS;
   }
 
   public onChange(data: number): void {

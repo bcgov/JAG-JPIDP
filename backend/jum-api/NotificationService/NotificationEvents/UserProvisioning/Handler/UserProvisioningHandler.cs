@@ -98,13 +98,15 @@ public class UserProvisioningHandler : IKafkaHandler<string, Notification>
                 await this.context.SaveChangesAsync();
 
                 //After successful operation, we can produce message for other service's consumption
-
+                // if its a non-tombstone account then we'll set the status to completed-pending-finalization
+                var ackStatus = value.DomainEvent.Equals("digitalevidence-bcps-usercreation-complete") ? "Completed-Pending-Case-Allocation" : ChesStatus.Completed;
                 await this.producer.ProduceAsync(this.configuration.KafkaCluster.AckTopicName, key: value.NotificationId.ToString()!, new NotificationAckModel
                 {
                     PartId = !string.IsNullOrEmpty(value.EventData["partyId"]) ? value.EventData["partyId"] : "",
                     NotificationId = value.NotificationId,
                     EmailAddress = value.To!,
-                    Status = ChesStatus.Completed,
+                    Status = ackStatus,
+                    DomainEvent = value.DomainEvent,
                     AccessRequestId = value.EventData.ContainsKey("accessRequestId") ? Convert.ToInt32(value.EventData["accessRequestId"]) : -1
                 });
 

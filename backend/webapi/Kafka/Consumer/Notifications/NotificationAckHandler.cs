@@ -16,7 +16,7 @@ public class NotificationAckHandler : IKafkaHandler<string, NotificationAckModel
     {
 
         Log.Logger.Information("Message received on {0} with key {1}", consumerName, key);
-        //check wheather this message has been processed before   
+        //check whether this message has been processed before   
         if (await this.context.HasBeenProcessed(key, consumerName))
         {
             return Task.CompletedTask;
