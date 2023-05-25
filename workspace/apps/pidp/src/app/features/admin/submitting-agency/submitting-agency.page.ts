@@ -1,5 +1,9 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import {
+  MatSlideToggle,
+  MatSlideToggleChange,
+} from '@angular/material/slide-toggle';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -18,11 +22,16 @@ import { SubmittingAgencyUpdateDialogComponent } from './submitting-agency.updat
 export class SubmittingAgenciesComponent implements OnInit {
   public submittingAgencies: SubmittingAgency[] | undefined;
   public dataSource: MatTableDataSource<SubmittingAgency>;
+  public showInactive = false;
   public displayedColumns: string[] = [
     'name',
     'idpHint',
     'clientCertExpiry',
     'levelOfAssurance',
+    'hasRealm',
+    'hasIdentityProvider',
+    'hasIdentityProviderLink',
+    'warnings',
   ];
 
   public constructor(
@@ -38,13 +47,27 @@ export class SubmittingAgenciesComponent implements OnInit {
 
   public ngOnInit(): void {
     this.submittingAgencies = [];
+    this.updateAgencies();
+  }
+
+  public updateAgencies(): void {
     this.adminResource
       .getSubmittingAgencies()
       .subscribe((agencies: SubmittingAgency[]) => {
+        if (!this.showInactive) {
+          agencies = agencies.filter(
+            (agency) => agency.idpHint !== null && agency.idpHint.length > 0
+          );
+        }
         this.dataSource.data = agencies.sort((a, b) =>
           a.name.localeCompare(b.name)
         );
       });
+  }
+
+  public toggleInactive(event: MatSlideToggleChange): void {
+    this.showInactive = event.checked;
+    this.updateAgencies();
   }
 
   public showUpdateDialog(row: SubmittingAgency): void {
@@ -53,7 +76,7 @@ export class SubmittingAgenciesComponent implements OnInit {
     });
     dialogRef.afterClosed().subscribe((result) => {
       this.adminResource.updateSubmittingAgency(result).subscribe(() => {
-        alert('Updated');
+        this.toastService.openInfoToast('Updated submitting agency');
       });
     });
   }

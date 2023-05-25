@@ -1,7 +1,8 @@
 namespace Pidp.Infrastructure.HttpClients.Keycloak;
 
 using System.Net;
-using Microsoft.Extensions.Configuration.UserSecrets;
+using DomainResults.Common;
+using global::Keycloak.Net.Models.RealmsAdmin;
 
 // TODO Use DomainResult for success/fail?
 public class KeycloakAdministrationClient : BaseClient, IKeycloakAdministrationClient
@@ -149,9 +150,33 @@ public class KeycloakAdministrationClient : BaseClient, IKeycloakAdministrationC
 
         return result.Value;
     }
+
+    public async Task<IdentityProvider> GetIdentityProvider(string alias)
+    {
+        IDomainResult<IdentityProvider>? result = await this.GetAsync<IdentityProvider>($"identity-provider/instances/{alias}");
+        if (!result.IsSuccess)
+        {
+            return null;
+        }
+
+        return result.Value;
+    }
+
+    public async Task<Realm> GetRealm(string realm)
+    {
+        IDomainResult<Realm>? result = await this.GetAsync<Realm>($"realms/{realm}");
+
+        if (!result.IsSuccess)
+        {
+            return null;
+        }
+
+        return result.Value;
+    }
+
     public async Task<Group?> GetRealmGroup(string groupName)
     {
-        var result = await this.GetAsync<IEnumerable<Group>>($"groups?search={groupName}");
+     IDomainResult<IEnumerable<Group>>? result = await this.GetAsync<IEnumerable<Group>>($"groups?search={groupName}");
 
         if (!result.IsSuccess)
         {

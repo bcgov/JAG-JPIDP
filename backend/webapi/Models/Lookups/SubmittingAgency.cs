@@ -18,7 +18,7 @@ public class SubmittingAgency
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string IdpHint { get; set; } = string.Empty;
-    public LocalDate? ClientCertExpiry { get; set; }
+    public Instant? ClientCertExpiry { get; set; }
     public int? LevelOfAssurance { get; set; }
 
 }

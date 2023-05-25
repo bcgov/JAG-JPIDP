@@ -47,10 +47,7 @@ export class AdminResource {
   public updateSubmittingAgency(
     updateRecord: SubmittingAgency
   ): Observable<SubmittingAgency> {
-    return this.apiResource.put(
-      `admin/submitting-agencies/${updateRecord.code}`,
-      updateRecord
-    );
+    return this.apiResource.put(`admin/submitting-agencies`, updateRecord);
   }
 
   public getUserDetails(partyId: string): Observable<PartyModel> {

@@ -4,4 +4,8 @@ export interface SubmittingAgency {
   code: string;
   levelOfAssurance: number;
   clientCertExpiry: Date;
+  hasRealm: boolean;
+  hasIdentityProvider: boolean;
+  hasIdentityProviderLink: boolean;
+  warnings: string[];
 }
