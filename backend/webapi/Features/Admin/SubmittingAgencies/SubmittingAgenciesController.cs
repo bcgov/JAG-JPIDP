@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Pidp.Features.DigitalEvidenceCaseManagement.Commands;
 using Pidp.Infrastructure.Auth;
 using Pidp.Infrastructure.Services;
+using Pidp.Models;
 using Pidp.Models.Lookups;
 
 [Route("api/admin/[controller]")]
@@ -18,15 +19,15 @@ public class SubmittingAgenciesController : PidpControllerBase
 
     [HttpGet()]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<ActionResult<List<SubmittingAgency>>> GetSubmittingAgencies([FromServices] IQueryHandler<SubmittingAgencyQuery, List<SubmittingAgency>> handler,
+    public async Task<ActionResult<List<SubmittingAgencyModel>>> GetSubmittingAgencies([FromServices] IQueryHandler<SubmittingAgencyQuery, List<SubmittingAgencyModel>> handler,
                                                                    [FromQuery] SubmittingAgencyQuery query)
     => await handler.HandleAsync(query);
 
-    [HttpPut("{agencyCode}")]
+    [HttpPut()]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IDomainResult> Update([FromServices] ICommandHandler<UpdateSubmittingAgencyCommand.Command, IDomainResult> handler,
-                                            [FromRoute] UpdateSubmittingAgencyCommand.Command command)
+    public async Task<IDomainResult<SubmittingAgencyModel>> Update([FromServices] ICommandHandler<UpdateSubmittingAgencyCommand.Command, IDomainResult<SubmittingAgencyModel>> handler,
+                                            [FromBody] UpdateSubmittingAgencyCommand.Command command)
         => await handler.HandleAsync(command);
 
 

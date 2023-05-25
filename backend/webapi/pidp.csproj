@@ -29,6 +29,7 @@
     <PackageReference Include="HybridModelBinding" Version="0.18.0" />
     <PackageReference Include="IdentityModel" Version="6.0.0" />
     <PackageReference Include="AspNetCore.HealthChecks.SqlServer" Version="6.0.2" />
+    <PackageReference Include="Keycloak.Net" Version="1.0.18" />
 
     <PackageReference Include="MicroElements.Swashbuckle.FluentValidation" Version="5.4.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.2" />

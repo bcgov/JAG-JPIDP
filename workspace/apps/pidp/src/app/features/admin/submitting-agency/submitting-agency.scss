@@ -1,3 +1,5 @@
+@use 'palette' as palette;
+
 .full-width {
   width: 100%;
 }
@@ -6,4 +8,12 @@
   display: flex;
   align-items: center;
   margin-bottom: 10px;
+}
+
+.valid {
+  color: palette.theme-palette(green);
+}
+
+.invalid {
+  color: palette.theme-palette(red);
 }

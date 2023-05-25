@@ -1,10 +1,8 @@
-import { Component, Inject, ViewChild } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import {
-  MatDatepicker,
-  MatDatepickerInputEvent,
-} from '@angular/material/datepicker';
+import { MatDatepickerInputEvent } from '@angular/material/datepicker';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MatSelectChange } from '@angular/material/select';
 
 import { SubmittingAgency } from './submitting-agency.model';
 
@@ -15,6 +13,7 @@ import { SubmittingAgency } from './submitting-agency.model';
 })
 export class SubmittingAgencyUpdateDialogComponent {
   public certDate: any;
+  public levelOfAssurance: string;
   public loa = [];
   // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
   constructor(
@@ -22,10 +21,15 @@ export class SubmittingAgencyUpdateDialogComponent {
     @Inject(MAT_DIALOG_DATA) public data: SubmittingAgency
   ) {
     this.certDate = new FormControl();
+    this.levelOfAssurance = '' + data.levelOfAssurance;
   }
 
   public updateExpiry(event: MatDatepickerInputEvent<Date>): void {
     if (event.value != null) this.data.clientCertExpiry = event.value;
+  }
+
+  public updateLOA(event: MatSelectChange): void {
+    this.data.levelOfAssurance = +this.levelOfAssurance;
   }
   // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
   onNoClick(): void {

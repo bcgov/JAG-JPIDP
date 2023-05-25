@@ -159,7 +159,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
             }
 
             // if the status is completed then update JUSTIN that this item is processed
-            if (value.Status.Equals("Complete", StringComparison.Ordinal))
+            if (value.Status.Equals("Complete", StringComparison.OrdinalIgnoreCase))
             {
                 Serilog.Log.Information($"Flagging change item {value.Id} with changeId {userChangeEntry.EventMessageId}");
                 var response = await this.jumClient.FlagUserUpdateAsComplete(userChangeEntry.EventMessageId, true);
