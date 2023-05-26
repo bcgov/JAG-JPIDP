@@ -144,6 +144,8 @@ public class CourtAccessRequest
                     else
                     {
                         this.logger.LogInvalidCourtLocationRequest(dto.Jpdid, command.CourtLocation.Code, "Unknown location code");
+                        await trx.RollbackAsync();
+
                     }
 
 

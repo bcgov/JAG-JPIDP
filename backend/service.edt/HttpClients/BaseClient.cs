@@ -142,7 +142,7 @@ public class BaseClient
                     ? await response.Content.ReadAsStringAsync(cancellationToken)
                     : "";
 
-                this.Logger.LogNonSuccessStatusCode(response.StatusCode, responseMessage);
+                this.Logger.LogNonSuccessStatusCodeWithURL(response.StatusCode, responseMessage, url);
                 return DomainResult.Failed<T>(response.StatusCode == HttpStatusCode.NotFound
                     ? $"The URL {url} was not found"
                     : $"Did not receive a successful status code {responseMessage}");
@@ -245,7 +245,7 @@ public class BaseClient
                     ? await response.Content.ReadAsStringAsync(cancellationToken)
                     : "";
 
-                this.Logger.LogNonSuccessStatusCode(response.StatusCode, responseMessage);
+                this.Logger.LogNonSuccessStatusCodeWithURL(response.StatusCode, responseMessage, url);
                 return DomainResult.Failed<T>(response.StatusCode == HttpStatusCode.NotFound
                     ? $"The URL {url} was not found"
                     : "Did not receive a successful status code");
@@ -309,4 +309,7 @@ public static partial class BaseClientLoggingExtensions
 
     [LoggerMessage(3, LogLevel.Error, "Unhandled exception when calling the API.")]
     public static partial void LogBaseClientException(this ILogger logger, Exception e);
+
+    [LoggerMessage(4, LogLevel.Error, "Received non-success status code {statusCode} with message: {responseMessage} [{URL}].")]
+    public static partial void LogNonSuccessStatusCodeWithURL(this ILogger logger, HttpStatusCode statusCode, string responseMessage, string URL);
 }
