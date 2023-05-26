@@ -45,7 +45,7 @@ public class NotificationAckHandler : IKafkaHandler<string, NotificationAckModel
                 }
                 catch (Exception)
                 {
-                    //await trx.RollbackAsync();
+                    await trx.RollbackAsync();
                     return Task.FromException(new InvalidOperationException());
                 }
             }
@@ -87,7 +87,7 @@ public class NotificationAckHandler : IKafkaHandler<string, NotificationAckModel
 
                     await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
                     await this.context.SaveChangesAsync();
-                    trx.Commit();
+                    await trx.CommitAsync();
 
                     return Task.CompletedTask;
                 }

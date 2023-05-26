@@ -194,8 +194,8 @@ public class DigitalEvidenceUpdate
                                     Serilog.Log.Information($"Region changes for {party.UserId}");
 
                                     var regionChanges = changes.ListChangeTypes[ChangeType.REGIONS];
-                                    List<string> newRegions = regionChanges.To.Except(regionChanges.From).ToList();
-                                    List<string> removedRegions = regionChanges.From.Except(regionChanges.To).ToList();
+                                    var newRegions = regionChanges.To.Except(regionChanges.From).ToList();
+                                    var removedRegions = regionChanges.From.Except(regionChanges.To).ToList();
 
                                     if (newRegions.Count > 0)
                                     {
@@ -238,6 +238,8 @@ public class DigitalEvidenceUpdate
                     else
                     {
                         this.logger.LogNoDigitalEvidenceRequestFound(command.UserChangeEvent.PartId);
+                        await trx.RollbackAsync();
+
                     }
                 }
                 catch (Exception ex)
