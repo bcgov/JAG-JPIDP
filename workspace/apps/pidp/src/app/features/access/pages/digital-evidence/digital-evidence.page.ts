@@ -1,6 +1,6 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
-import { Component, Inject, OnInit } from '@angular/core';
-import { FormBuilder } from '@angular/forms';
+import { AfterViewChecked, Component, Inject, OnInit } from '@angular/core';
+import { FormBuilder, FormControl, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -128,6 +128,9 @@ export class DigitalEvidencePage
         // todo - remove IDIR
         if (idp === IdentityProvider.BCPS || idp === IdentityProvider.IDIR) {
           // if BCPS then get the crown-regions
+          this.formState.DefenceUniqueId.setValidators([]);
+          this.formState.DefenceUniqueId.clearValidators();
+
           this.userIsBCPS = true;
           this.userOrgunit
             .getUserOrgUnit(
@@ -157,6 +160,7 @@ export class DigitalEvidencePage
       'OrganizationType',
       'OrganizationName',
       'AssignedRegions',
+      'DefenceUniqueId',
       'ParticipantId',
     ];
   }
@@ -263,6 +267,19 @@ export class DigitalEvidencePage
       this.logger.error('No status code was provided');
       return this.navigateToRoot();
     }
+
+    // dynamically add form validators
+    this.identityProvider$.subscribe((idp) => {
+      if (idp === IdentityProvider.VERIFIED_CREDENTIALS) {
+        this.formState.DefenceUniqueId.setValidators([
+          Validators.pattern('^[A-Za-z]{2,3}-[0-9]{6}$'),
+          Validators.required,
+        ]);
+      }
+      if (idp === IdentityProvider.BCPS) {
+        this.formState.AssignedRegions.setValidators([Validators.required]);
+      }
+    });
   }
 
   private navigateToRoot(): void {

@@ -37,6 +37,12 @@ export class DigitalEvidenceCounselPortalSection implements IPortalSection {
       this.profileStatus.status.demographics.statusCode;
     const organizationStatusCode =
       this.profileStatus.status.organizationDetails.statusCode;
+    const demographicsComplete =
+      demographicsStatusCode === StatusCode.COMPLETED ||
+      demographicsStatusCode === StatusCode.LOCKED_COMPLETE;
+    const orgComplete =
+      organizationStatusCode === StatusCode.COMPLETED ||
+      organizationStatusCode === StatusCode.LOCKED_COMPLETE;
     return {
       label:
         this.getStatusCode() === StatusCode.READY ||
@@ -45,12 +51,7 @@ export class DigitalEvidenceCounselPortalSection implements IPortalSection {
           ? 'View'
           : 'Request',
       route: AccessRoutes.routePath(AccessRoutes.DIGITAL_EVIDENCE_COUNSEL),
-      disabled: !(
-        ((demographicsStatusCode === StatusCode.COMPLETED ||
-          demographicsStatusCode === StatusCode.LOCKED_COMPLETE) &&
-          organizationStatusCode === StatusCode.COMPLETED) ||
-        organizationStatusCode === StatusCode.LOCKED_COMPLETE
-      ),
+      disabled: !(demographicsComplete && orgComplete),
     };
   }
 

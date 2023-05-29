@@ -35,7 +35,7 @@ public partial class ProfileStatus
 
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
-                if (!(profile.UserIsPhsa || profile.UserIsBcServicesCard))
+                if (!(profile.UserIsBcServicesCard))
                 {
                     this.StatusCode = StatusCode.Hidden;
                     return;
@@ -120,7 +120,7 @@ public partial class ProfileStatus
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
                 this.StatusCode = profile.DemographicsEntered || profile.SubmittingAgency != null ?
-                    (profile.SubmittingAgency != null || profile.UserIsBcps || profile.UserIsInLawSociety) ? StatusCode.Locked_Complete : StatusCode.Complete : StatusCode.Incomplete;
+                    (profile.SubmittingAgency != null || profile.UserIsBcps) ? StatusCode.Locked_Complete : StatusCode.Complete : StatusCode.Incomplete;
             }
         }
 
@@ -151,7 +151,7 @@ public partial class ProfileStatus
 
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
-                if (!(profile.UserIsPhsa || profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsInSubmittingAgency || profile.UserIsInLawSociety))
+                if (!( profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsInSubmittingAgency || profile.UserIsInLawSociety))
                 {
                     this.StatusCode = StatusCode.Hidden;
                     return;
@@ -217,7 +217,6 @@ public partial class ProfileStatus
                 }
 
                 if (!profile.DemographicsEntered
-                    || !profile.CollegeCertificationEntered
                     || !profile.OrganizationDetailEntered
                     || !profile.PlrStanding.HasGoodStanding)
                 {
@@ -243,7 +242,6 @@ public partial class ProfileStatus
                 }
 
                 if (!profile.DemographicsEntered
-                    || !profile.CollegeCertificationEntered
                     || !profile.CompletedEnrolments.Contains(AccessTypeCode.DigitalEvidence)
                     || !profile.OrganizationDetailEntered
                     || !profile.PlrStanding.HasGoodStanding)
@@ -321,7 +319,6 @@ public partial class ProfileStatus
                 }
 
                 if (!profile.DemographicsEntered
-                    || !profile.CollegeCertificationEntered
                     || !profile.OrganizationDetailEntered
                     || !profile.PlrStanding.HasGoodStanding)
                 {

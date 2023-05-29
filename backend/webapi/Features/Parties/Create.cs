@@ -9,6 +9,7 @@ using Pidp.Extensions;
 using Pidp.Infrastructure.Auth;
 using Pidp.Models;
 using Pidp.Models.Lookups;
+using System.Transactions;
 
 public class Create
 {
@@ -26,10 +27,10 @@ public class Create
 
     public class CommandValidator : AbstractValidator<Command>
     {
-        public CommandValidator(PidpDbContext context, IHttpContextAccessor accessor)
+
+        public CommandValidator(PidpDbContext context, IHttpContextAccessor accessor, PidpConfiguration config)
         {
             var user = accessor?.HttpContext?.User;
-
 
             this.RuleFor(x => x.UserId).NotEmpty().Equal(user.GetUserId());
             this.RuleFor(x => x.FirstName).NotEmpty().MatchesUserClaim(user, Claims.GivenName);
@@ -42,7 +43,7 @@ public class Create
             // see if user is a member of a submitting agency
             var idp = user.GetIdentityProvider();
 
-            var agency = submittingAgencies.Find(agency => agency.IdpHint.Equals(idp));
+            var agency = submittingAgencies.Find(agency => agency.IdpHint.Equals(idp, StringComparison.Ordinal));
 
             if (agency != null)
             {
@@ -50,14 +51,19 @@ public class Create
             }
             else
             {
-                this.Include<AbstractValidator<Command>>(x => user.GetIdentityProvider() switch
+                this.Include<AbstractValidator<Command>>(x =>
                 {
-                    ClaimValues.BCServicesCard => new BcscValidator(user),
-                    ClaimValues.Phsa => new PhsaValidator(),
-                    ClaimValues.Bcps => new BcpsValidator(user),
-                    ClaimValues.Idir => new IdirValidator(user),
-                    ClaimValues.VerifiedCredentials => new VerifiedCredentialsValidator(user),
-                    _ => throw new NotImplementedException("Given Identity Provider is not supported")
+                    Serilog.Log.Information($"Checking user {x.FirstName} {x.LastName} {user.GetIdentityProvider()} {accessor?.HttpContext?.Connection.RemoteIpAddress}");
+
+                    return user.GetIdentityProvider() switch
+                    {
+                        ClaimValues.BCServicesCard => new BcscValidator(user),
+                        ClaimValues.Phsa => new PhsaValidator(),
+                        ClaimValues.Bcps => new BcpsValidator(user),
+                        ClaimValues.Idir => new IdirValidator(user),
+                        ClaimValues.VerifiedCredentials => new VerifiedCredentialsValidator(user, config),
+                        _ => throw new NotImplementedException($"Given Identity Provider {user.GetIdentityProvider()} is not supported")
+                    };
                 });
             }
         }
@@ -117,15 +123,13 @@ public class Create
         }
         private class VerifiedCredentialsValidator : AbstractValidator<Command>
         {
-            public VerifiedCredentialsValidator(ClaimsPrincipal? user)
+            public VerifiedCredentialsValidator(ClaimsPrincipal? user, PidpConfiguration config)
             {
-                this.RuleFor(x => x.Jpdid).NotEmpty().MatchesUserClaim(user, Claims.PreferredUsername);
-                this.RuleFor(x => x.LastName).NotEmpty().MatchesUserClaim(user, Claims.BcPersonFamilyName);
-                this.RuleFor(x => x.FirstName).NotEmpty().MatchesUserClaim(user, Claims.BcPersonGivenName);
-                this.RuleFor(x => "PRAC").MatchesUserClaim(user, Claims.MembershipStatusCode);
-
-                // todo - can check but they vary by environment
-                // this.RuleFor(x => "accredited-lawyer-bcpc-dev").MatchesUserClaim(user, Claims.VerifiedCredPresentedRequestId);
+                
+                //this.RuleFor(x => x.Jpdid).NotEmpty().MatchesUserClaim(user, Claims.PreferredUsername);
+                //this.RuleFor(x => x.LastName).NotEmpty().MatchesUserClaim(user, Claims.BcPersonFamilyName);
+               // this.RuleFor(x => "PRAC").MatchesUserClaim(user, Claims.MembershipStatusCode);
+                //this.RuleFor(x => config.VerifiableCredentials.PresentedRequestId).MatchesUserClaim(user, Claims.VerifiedCredPresentedRequestId);
             }
         }
     }
@@ -155,7 +159,15 @@ public class Create
             else
             {
 
-                Serilog.Log.Information("Adding new party {0}", command.UserId);
+                Serilog.Log.Information($"Adding new party {command.UserId} with id {command.Jpdid}");
+
+                // if email is invalid (e.g. abc123@vc) then we'll null it here so the user needs
+                // to update it to a valid email
+                var email = command.Email != null && command.Email.EndsWith("@vc", StringComparison.OrdinalIgnoreCase) ? null : command.Email;
+                if (email == null)
+                {
+                    Serilog.Log.Information($"User {command.Jpdid} is logged in with verifiable creds - setting null email address");
+                }
 
                 party = new Party
                 {
@@ -165,7 +177,7 @@ public class Create
                     Birthdate = command.Birthdate,
                     FirstName = command.FirstName,
                     LastName = command.LastName,
-                    Email = command.Email
+                    Email = email
                 };
 
                 this.context.Parties.Add(party);
@@ -173,7 +185,7 @@ public class Create
 
 
             // if this user is a verified user we'll also create the organization entry
-            if (! (user.GetIdentityProvider().Equals(ClaimValues.Bcps, StringComparison.Ordinal) || user.GetIdentityProvider().Equals(ClaimValues.Idir, StringComparison.Ordinal)))
+            if (!(user.GetIdentityProvider().Equals(ClaimValues.Bcps, StringComparison.Ordinal) || user.GetIdentityProvider().Equals(ClaimValues.Idir, StringComparison.Ordinal)))
             {
 
                 if (user.GetIdentityProvider() == ClaimValues.VerifiedCredentials)

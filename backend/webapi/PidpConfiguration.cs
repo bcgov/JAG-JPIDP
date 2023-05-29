@@ -24,8 +24,8 @@ public class PidpConfiguration
     public EdtClientConfiguration EdtClient { get; set; } = new EdtClientConfiguration();
     public EdtCaseManagementClientConfiguration EdtCaseManagementClient { get; set; } = new EdtCaseManagementClientConfiguration();
     public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
-    public CourtAccessConfiguration CourtAccess { get; set; } = new();  
-
+    public CourtAccessConfiguration CourtAccess { get; set; } = new();
+    public VerifiableCredentialsConfiguration VerifiableCredentials { get; set; } = new VerifiableCredentialsConfiguration();
     public TelemeteryConfiguration Telemetry { get; set; } = new TelemeteryConfiguration();
 
 
@@ -55,6 +55,12 @@ public class PidpConfiguration
     public class ConnectionStringConfiguration
     {
         public string PidpDatabase { get; set; } = string.Empty;
+    }
+
+    public class VerifiableCredentialsConfiguration
+    {
+        public string PresentedRequestId { get; set; } = string.Empty;
+        public string RequiredStatusCode { get; set; } = string.Empty;
     }
 
     public class TelemeteryConfiguration

@@ -4,6 +4,7 @@ using System.Numerics;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Pidp.Data;
+using Pidp.Infrastructure.Auth;
 using Pidp.Models;
 using Pidp.Models.Lookups;
 
@@ -76,7 +77,20 @@ public class UserTypeService : IUserTypeService
                 //userType.Add(nameof(OrganizationCode.JusticeSector), new Dictionary<string, string> { { "OrganizationName", jsCode },{"ParticipantId", jsector.JustinUserId } });
             }
         }
-        else if ( orgCode.Organization != null && !string.IsNullOrEmpty(orgCode.Organization.IdpHint))
+        // law society member using verified credentials
+        else if (orgCode.Organization != null && orgCode.Organization.IdpHint == ClaimValues.VerifiedCredentials)
+        {
+            if (orgCode.Party != null)
+            {
+                userType = new UserTypeModel
+                {
+                    OrganizationType = nameof(OrganizationCode.LawSociety),
+                    OrganizationName = orgCode.Organization.Name,
+                    ParticipantId = orgCode.Party.Jpdid
+                };
+            }
+        }
+        else if (orgCode.Organization != null && !string.IsNullOrEmpty(orgCode.Organization.IdpHint))
         {
 
             // get the party
@@ -96,7 +110,7 @@ public class UserTypeService : IUserTypeService
 
             var agency = submittingAgencies.Find(agency => agency.IdpHint.Equals(orgCode?.Organization?.IdpHint));
 
-            if ( agency != null && orgCode.Party != null)
+            if (agency != null && orgCode.Party != null)
             {
                 userType = new UserTypeModel
                 {
@@ -108,7 +122,7 @@ public class UserTypeService : IUserTypeService
                 };
             }
 
-        } 
+        }
         return userType is null ? throw new KeyNotFoundException() : userType;
     }
 }

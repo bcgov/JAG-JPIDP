@@ -15,8 +15,8 @@ public static class Claims
     public const string ResourceAccess = "resource_access";
     public const string Subject = "sub";
     public const string Roles = "roles";
-    public const string BcPersonFamilyName = "bcperson_family_name";
-    public const string BcPersonGivenName = "bcperson_given_name";
+    public const string BcPersonFamilyName = "BCPerID_last_name";
+    public const string BcPersonGivenName = "BCPerID_first_name";
     public const string MembershipStatusCode = "membership_status_code";
 
     public const string VerifiedCredPresentedRequestId = "pres_req_conf_id";
