@@ -145,7 +145,6 @@
       {{ completed || pending ? 'Back Home' : 'Cancel Back Home' }}
     </button>
 
-    {{formState.form.valid }}
     <button *ngIf="!(completed || pending)" mat-flat-button uiPageFooterAction type="button" color="primary"
       [disabled]="!formState.form.valid" (click)="onRequestAccess()">
       Next
