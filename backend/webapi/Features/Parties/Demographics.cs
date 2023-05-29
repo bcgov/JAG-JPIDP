@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 
 using Pidp.Data;
+using Pidp.Infrastructure.HttpClients.Keycloak;
 
 public class Demographics
 {
@@ -41,7 +42,7 @@ public class Demographics
         {
             this.RuleFor(x => x.Id).GreaterThan(0);
             this.RuleFor(x => x.Email).NotEmpty().EmailAddress(); // TODO Custom email validation?
-            this.RuleFor(x => x.Phone).NotEmpty();
+           // this.RuleFor(x => x.Phone).NotEmpty();
         }
     }
 
@@ -68,13 +69,20 @@ public class Demographics
     public class CommandHandler : ICommandHandler<Command>
     {
         private readonly PidpDbContext context;
+        private readonly IKeycloakAdministrationClient administrationClient;
 
-        public CommandHandler(PidpDbContext context) => this.context = context;
+
+        public CommandHandler(PidpDbContext context, IKeycloakAdministrationClient administrationClient) {
+            this.context = context;
+            this.administrationClient = administrationClient;
+        }
 
         public async Task HandleAsync(Command command)
         {
             var party = await this.context.Parties
                 .SingleAsync(party => party.Id == command.Id);
+
+            var currentEmail = party.Email;
 
             party.PreferredFirstName = command.PreferredFirstName;
             party.PreferredMiddleName = command.PreferredMiddleName;
@@ -83,6 +91,20 @@ public class Demographics
             party.Phone = command.Phone;
 
             await this.context.SaveChangesAsync();
+
+            if (currentEmail != command.Email)
+            {
+                Serilog.Log.Information($"Updating {party.Id} email to {command.Email} from {currentEmail}");
+                var userInfo = await this.administrationClient.GetUser(party.UserId);
+                if (userInfo != null)
+                {
+                    userInfo.Email = command.Email;
+                    await this.administrationClient.UpdateUser(party.UserId, userInfo);
+                } else
+                {
+                    Serilog.Log.Error($"No user was found in Keycloak for UID {party.UserId} ID: {party.Id}");
+                }
+            }
         }
     }
 }

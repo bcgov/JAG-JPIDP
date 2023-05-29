@@ -85,6 +85,11 @@ export class PersonalInformationPage
         this.formState.email.disable(); //disable this for bcps users as this must match justin email
         this.userStateLocked = true;
       }
+
+      // no phone required for VC users - but we need a valid email
+      if (idp === IdentityProvider.VERIFIED_CREDENTIALS) {
+        this.formState.phone.validator = null;
+      }
     });
 
     this.resource
