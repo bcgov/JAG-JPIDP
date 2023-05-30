@@ -29,5 +29,6 @@ export interface AppEnvironment extends EnvironmentConfig {
     bcscMobileSetup: string;
     specialAuthority: string;
     doctorsTechnologyOffice: string;
+    aufImport: string;
   };
 }
