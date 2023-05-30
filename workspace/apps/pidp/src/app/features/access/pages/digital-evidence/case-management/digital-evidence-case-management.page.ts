@@ -317,7 +317,7 @@ export class DigitalEvidenceCaseManagementPage
   }
 
   public onUploadToCase(evidenceCase: DigitalEvidenceCase): void {
-    const url = this.config.urls.aufImport + evidenceCase.id;
+    const url = this.config.demsImportURL + evidenceCase.id;
     this.openPopUp(url);
   }
 
@@ -332,7 +332,7 @@ export class DigitalEvidenceCaseManagementPage
     } catch (e) {
       this.toastService.openErrorToast(
         'Popup blocked enabled - please add ' +
-          this.config.urls.aufImport +
+          this.config.demsImportURL +
           ' to your exception list'
       );
     }
