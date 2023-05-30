@@ -85,6 +85,7 @@ frontend:
   tag: "develop"
   replicaCount: 1
   settings:
+    edtURL: https://dems.dev.jag.gov.bc.ca
     environmentName: dev
     keycloak:
       url: https://dev.common-sso.justice.gov.bc.ca/auth
