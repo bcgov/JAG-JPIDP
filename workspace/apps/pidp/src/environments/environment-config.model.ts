@@ -1,6 +1,6 @@
 import { KeycloakOptions } from 'keycloak-angular';
 
-import { environmentName } from './environment.model';
+import { UrlOptions, environmentName } from './environment.model';
 
 export interface EnvironmentConfig {
   apiEndpoint: string;
@@ -9,4 +9,5 @@ export interface EnvironmentConfig {
   environmentName: environmentName;
   applicationUrl: string;
   keycloakConfig: KeycloakOptions;
+  urls: UrlOptions;
 }

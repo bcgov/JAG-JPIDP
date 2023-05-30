@@ -18,8 +18,8 @@ data:
   environment.json: |-
     {
       "environmentName": "{{ .Values.settings.environmentName }}",
-      "apiEndpoint": "https://{{ $domain }}/api/v1",
-      "applicationUrl": "https://{{ $domain }}",
+      "apiEndpoint": "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}/api/v1",
+      "applicationUrl": "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}",
       "urls": {
          "aufImport": "{{ .Values.settings.edtURL }}/Edt.aspx#/import/",
       },

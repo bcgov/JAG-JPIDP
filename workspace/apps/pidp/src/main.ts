@@ -30,10 +30,12 @@ fetch('/assets/environment.json')
       const { keycloakConfig, ...root } = configMap;
       appConfig = { ...appConfig, ...root };
       appConfig.keycloakConfig.config = keycloakConfig.config;
+      appConfig.urls = configMap.urls;
     }
 
     console.log('Using api url %s', appConfig.apiEndpoint);
     console.log('Using app url %s', appConfig.applicationUrl);
+    console.log('Using edt url %o', appConfig.urls);
 
     return appConfig;
   })
