@@ -316,6 +316,28 @@ export class DigitalEvidenceCaseManagementPage
     );
   }
 
+  public onUploadToCase(evidenceCase: DigitalEvidenceCase): void {
+    const url = this.config.urls.aufImport + evidenceCase.id;
+    this.openPopUp(url);
+  }
+
+  public openPopUp(urlToOpen: string): void {
+    const popup_window = window.open(
+      urlToOpen,
+      'myWindow',
+      'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=yes, copyhistory=yes'
+    );
+    try {
+      popup_window?.focus();
+    } catch (e) {
+      this.toastService.openErrorToast(
+        'Popup blocked enabled - please add ' +
+          this.config.urls.aufImport +
+          ' to your exception list'
+      );
+    }
+  }
+
   public onRequestAccess(): void {
     if (this.requestedCase !== null) {
       this.refreshEnabled = true;

@@ -46,6 +46,7 @@ export const environment: AppEnvironment = {
   urls: {
     bcscSupport: `https://www2.gov.bc.ca/gov/content/governments/government-id/bcservicescardapp/help`,
     bcscMobileSetup: 'https://id.gov.bc.ca/account',
+    aufImport: 'https://dems.dev.jag.gov.bc.ca/Edt.aspx#/import/',
     specialAuthority: specialAuthorityUrl,
     doctorsTechnologyOffice: doctorsTechnologyOfficeUrl,
   },
