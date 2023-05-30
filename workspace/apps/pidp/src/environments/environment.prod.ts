@@ -2,18 +2,14 @@ import { digitalEvidenceSupportEmail } from '@app/features/access/pages/digital-
 import { driverFitnessSupportEmail } from '@app/features/access/pages/driver-fitness/driver-fitness.constants';
 import { hcimWebAccountTransferSupport } from '@app/features/access/pages/hcim-account-transfer/hcim-account-transfer-constants';
 import { hcimWebEnrolmentSupport } from '@app/features/access/pages/hcim-enrolment/hcim-enrolment-constants';
-import {
-  doctorsTechnologyOfficeEmail,
-  doctorsTechnologyOfficeUrl,
-  msTeamsSupportEmail,
-} from '@app/features/access/pages/ms-teams/ms-teams.constants';
-import {
-  specialAuthorityEformsSupportEmail,
-  specialAuthorityUrl,
-} from '@app/features/access/pages/sa-eforms/sa-eforms.constants';
+import { doctorsTechnologyOfficeEmail, doctorsTechnologyOfficeUrl, msTeamsSupportEmail } from '@app/features/access/pages/ms-teams/ms-teams.constants';
+import { specialAuthorityEformsSupportEmail, specialAuthorityUrl } from '@app/features/access/pages/sa-eforms/sa-eforms.constants';
 import { uciSupportEmail } from '@app/features/access/pages/uci/uci.constants';
 
+
+
 import { AppEnvironment, EnvironmentName } from './environment.model';
+
 
 /**
  * @description
@@ -46,9 +42,9 @@ export const environment: AppEnvironment = {
   urls: {
     bcscSupport: `https://www2.gov.bc.ca/gov/content/governments/government-id/bcservicescardapp/help`,
     bcscMobileSetup: 'https://id.gov.bc.ca/account',
-    aufImport: 'https://dems.dev.jag.gov.bc.ca/Edt.aspx#/import/',
     specialAuthority: specialAuthorityUrl,
     doctorsTechnologyOffice: doctorsTechnologyOfficeUrl,
+    aufImport: 'https://dems.dev.jag.gov.bc.ca/Edt.aspx#/import/',
   },
   keycloakConfig: {
     config: {
