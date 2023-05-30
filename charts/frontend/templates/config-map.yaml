@@ -21,7 +21,7 @@ data:
       "apiEndpoint": "https://{{ $domain }}/api/v1",
       "applicationUrl": "https://{{ $domain }}",
       "urls": {
-         "aufImport": "{{ .Values.settings.edtUrl }}/Edt.aspx#/import/",
+         "aufImport": "{{ .Values.settings.edtURL }}/Edt.aspx#/import/",
       },
       "keycloakConfig": {
         "config": {
