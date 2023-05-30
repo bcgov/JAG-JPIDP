@@ -19,9 +19,11 @@ try {
   console.log('No environment file located - using dev defaults');
 }
 
+debugger;
 fetch('/assets/environment.json')
   .then((response) => response.json())
   .then((configMap: EnvironmentConfig) => {
+    debugger;
     let appConfig = APP_DI_CONFIG;
 
     if (configMap) {
