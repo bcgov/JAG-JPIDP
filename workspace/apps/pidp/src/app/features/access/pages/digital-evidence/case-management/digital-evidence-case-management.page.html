@@ -89,8 +89,11 @@
 
         <ng-container matColumnDef="caseAction">
           <th *matHeaderCellDef mat-header-cell>Action </th>
-          <td *matCellDef="let case" mat-cell class="centered-column"><i matTooltip="Remove access to this case"
-              *ngIf="case.requestStatus === 'Completed'"
+
+          <td *matCellDef="let case" mat-cell class="centered-column"><i
+              matTooltip="Access to this case to upload evidence" *ngIf="case.requestStatus === 'Completed'"
+              (click)="onUploadToCase(case)"><mat-icon class="me-2">file_upload</mat-icon></i><i
+              matTooltip="Remove access to this case" *ngIf="case.requestStatus === 'Completed'"
               (click)="onRemoveCase(case)"><mat-icon>delete_outline</mat-icon></i></td>
         </ng-container>
         <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>

@@ -13,7 +13,6 @@ export class CounselUser implements User {
   //public roles: string[];
 
   public constructor({ accessTokenParsed, brokerProfile }: UserIdentity) {
-    debugger;
     const { firstName, lastName, email, username: jpdid } = brokerProfile;
     const {
       identity_provider,

@@ -1,21 +1,14 @@
 namespace Pidp.Features.AccessRequests;
 
 using System;
-using System.ComponentModel;
 using System.Diagnostics;
-using System.Diagnostics.Metrics;
-using System.Text.Json.Nodes;
 using DomainResults.Common;
 using FluentValidation;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using NodaTime;
-using Npgsql.PostgresTypes;
 using Pidp.Data;
-using Pidp.Features.Admin;
 using Pidp.Features.Organization.OrgUnitService;
-using Pidp.Features.Parties;
 using Pidp.Infrastructure.HttpClients.Jum;
 using Pidp.Infrastructure.HttpClients.Keycloak;
 using Pidp.Kafka.Consumer.JustinUserChanges;
@@ -129,10 +122,11 @@ public class DigitalEvidenceUpdate
 
                             var changes = await this.DetermineUserChanges(justinUserInfo.participantDetails.FirstOrDefault(), party, keycloakUserInfo);
 
-                            var settings = new JsonSerializerSettings();
-
-                            settings.NullValueHandling = NullValueHandling.Ignore;
-                            settings.DefaultValueHandling = DefaultValueHandling.Ignore;
+                            var settings = new JsonSerializerSettings
+                            {
+                                NullValueHandling = NullValueHandling.Ignore,
+                                DefaultValueHandling = DefaultValueHandling.Ignore
+                            };
 
                             // store the user change record
                             var changeEntry = this.context.UserAccountChanges.Add(new UserAccountChange
@@ -200,8 +194,8 @@ public class DigitalEvidenceUpdate
                                     Serilog.Log.Information($"Region changes for {party.UserId}");
 
                                     var regionChanges = changes.ListChangeTypes[ChangeType.REGIONS];
-                                    List<string> newRegions = regionChanges.To.Except(regionChanges.From).ToList();
-                                    List<string> removedRegions = regionChanges.From.Except(regionChanges.To).ToList();
+                                    var newRegions = regionChanges.To.Except(regionChanges.From).ToList();
+                                    var removedRegions = regionChanges.From.Except(regionChanges.To).ToList();
 
                                     if (newRegions.Count > 0)
                                     {
@@ -244,6 +238,8 @@ public class DigitalEvidenceUpdate
                     else
                     {
                         this.logger.LogNoDigitalEvidenceRequestFound(command.UserChangeEvent.PartId);
+                        await trx.RollbackAsync();
+
                     }
                 }
                 catch (Exception ex)

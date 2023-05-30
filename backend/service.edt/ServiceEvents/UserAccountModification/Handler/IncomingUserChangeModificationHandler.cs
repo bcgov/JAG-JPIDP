@@ -16,10 +16,6 @@ using NodaTime;
 public class IncomingUserChangeModificationHandler : IKafkaHandler<string, IncomingUserModification>
 {
     private readonly IKafkaProducer<string, Notification> producer;
-    private readonly IKafkaProducer<string, NotificationAckModel> ackProducer;
-
-    private readonly IKafkaProducer<string, EdtUserProvisioningModel> retryProducer;
-    private readonly IKafkaProducer<string, UserModificationEvent> userModificationProducer;
     private readonly IKafkaProducer<string, GenericProcessStatusResponse> responseProducer;
 
     private readonly EdtServiceConfiguration configuration;
@@ -31,24 +27,19 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
 
     public IncomingUserChangeModificationHandler(
         IKafkaProducer<string, Notification> producer,
-          IKafkaProducer<string, NotificationAckModel> ackProducer,
-                    IKafkaProducer<string, GenericProcessStatusResponse> responseProducer,
-
-    IKafkaProducer<string, UserModificationEvent> userModificationProducer,
+        IKafkaProducer<string, GenericProcessStatusResponse> responseProducer,
+        IKafkaProducer<string, UserModificationEvent> userModificationProducer,
         EdtServiceConfiguration configuration,
         IEdtClient edtClient,
         EdtDataStoreDbContext context,
         IKafkaProducer<string, EdtUserProvisioningModel> retryProducer, ILogger logger)
     {
         this.producer = producer;
-        this.ackProducer = ackProducer;
         this.responseProducer = responseProducer;
-        this.userModificationProducer = userModificationProducer;
         this.configuration = configuration;
         this.context = context;
         this.logger = logger;
         this.edtClient = edtClient;
-        this.retryProducer = retryProducer;
     }
 
     public async Task<Task> HandleAsync(string consumerName, string key, IncomingUserModification incomingUserModification)

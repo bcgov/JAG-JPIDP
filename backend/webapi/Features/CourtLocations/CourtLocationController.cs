@@ -12,6 +12,7 @@ using Pidp.Models;
 using Pidp.Models.Lookups;
 
 [Route("api/[controller]")]
+[Authorize(Policy = Policies.VerifiedCredentialsProvider)]
 public class CourtLocationController : PidpControllerBase
 {
     public CourtLocationController(IPidpAuthorizationService authService) : base(authService) { }
@@ -24,7 +25,6 @@ public class CourtLocationController : PidpControllerBase
     /// <param name="query"></param>
     /// <returns></returns>
     [HttpGet]
-    [Authorize(Policy = Policies.VerifiedCredentialsProvider)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<List<CourtLocation>>> GetCourtLocations([FromServices] IQueryHandler<CourtLocationQuery.Query, List<CourtLocation>> handler,
@@ -41,7 +41,6 @@ public class CourtLocationController : PidpControllerBase
     /// <param name="command"></param>
     /// <returns></returns>
     [HttpPut("{requestId}")]
-    [Authorize(Policy = Policies.VerifiedCredentialsProvider)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UpdateCourtLocationRequest([FromServices] ICommandHandler<UpdateCourtLocationAccessRequest.Command, IDomainResult> handler,
@@ -52,7 +51,6 @@ public class CourtLocationController : PidpControllerBase
 
 
     [HttpDelete("party/{partyId}/request/{requestId}")]
-    [Authorize(Policy = Policies.VerifiedCredentialsProvider)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> DeleteCourtLocationRequest([FromServices] ICommandHandler<RemoveCourtLocationRequest.Command, IDomainResult> handler,
@@ -69,10 +67,9 @@ public class CourtLocationController : PidpControllerBase
     /// <param name="command"></param>
     /// <returns></returns>
     [HttpPost]
-    //  [Authorize(Policy = Policies.VerifiedCredentialsProvider)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> CreateDigitalEvidenceSubAgencyCaseAccessRequest([FromServices] ICommandHandler<CourtAccessRequest.Command, IDomainResult> handler,
+    public async Task<IActionResult> CreateDigitalEvidenceCourtLocationRequest([FromServices] ICommandHandler<CourtAccessRequest.Command, IDomainResult> handler,
                                                       [FromBody] CourtAccessRequest.Command command)
         => await this.AuthorizePartyBeforeHandleAsync(command.PartyId, handler, command)
         .ToActionResult();
@@ -84,7 +81,6 @@ public class CourtLocationController : PidpControllerBase
     /// <param name="query"></param>
     /// <returns></returns>
     [HttpGet("party/{partyId}/requests")]
-    [Authorize(Policy = Policies.VerifiedCredentialsProvider)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<List<CourtLocationAccessModel>>> GetCourtLocationRequestsByParty(

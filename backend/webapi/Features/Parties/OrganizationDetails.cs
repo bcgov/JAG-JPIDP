@@ -195,6 +195,19 @@ public class OrganizationDetails
                     this.context.JusticeSectorDetails.Update(jpsDetail);
                 }
 
+                // set the alternate ID for the user
+                var justinAlternateId = dto.AlternateIds.Where(a => a.Name == "JUSTINParticipant").FirstOrDefault();
+                if ( justinAlternateId == null)
+                {
+                    Serilog.Log.Information($"Adding alternate ID {jpsDetail.ParticipantId} for {dto.Id} Party {dto.Jpdid}");
+                    dto.AlternateIds.Add(new Models.PartyAlternateId
+                    {
+                        Party = dto,
+                        Name = "JUSTINParticipant",
+                        Value = jpsDetail.ParticipantId
+                    });
+                } 
+
                 org.OrganizationCode = command.OrganizationCode;
                 await this.context.SaveChangesAsync();
             }

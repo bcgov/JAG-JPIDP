@@ -1,0 +1,51 @@
+<ui-page-section>
+  <mat-slide-toggle [checked]="showInactive" color="primary" (change)="toggleInactive($event)">Show
+    inactive</mat-slide-toggle>
+  <ng-container>
+    <table mat-table [dataSource]="dataSource" class="full-width">
+      <ng-container matColumnDef="name">
+        <th *matHeaderCellDef mat-header-cell>Name</th>
+        <td *matCellDef="let subagency" mat-cell>{{ subagency.name }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="idpHint">
+        <th *matHeaderCellDef mat-header-cell>IDP Hint</th>
+        <td *matCellDef="let subagency" mat-cell>{{ subagency.idpHint }}</td>
+      </ng-container>
+      <ng-container matColumnDef="levelOfAssurance">
+        <th *matHeaderCellDef mat-header-cell>Level Of Assurance</th>
+        <td *matCellDef="let subagency" mat-cell>{{ subagency.levelOfAssurance }}</td>
+      </ng-container>
+      <ng-container matColumnDef="clientCertExpiry">
+        <th *matHeaderCellDef mat-header-cell>Cert Expiry</th>
+        <td *matCellDef="let subagency" mat-cell>{{ subagency.clientCertExpiry | date: 'MM-dd-yy' }}</td>
+      </ng-container>
+      <ng-container matColumnDef="hasRealm">
+        <th *matHeaderCellDef mat-header-cell>Realm</th>
+        <td *matCellDef="let subagency" mat-cell><mat-icon [class]="subagency.hasRealm ? 'valid' : 'invalid'">
+            {{ subagency.hasRealm ? 'check_circle' : 'block' }}
+          </mat-icon></td>
+      </ng-container>
+      <ng-container matColumnDef="hasIdentityProvider">
+        <th *matHeaderCellDef mat-header-cell>IDP</th>
+        <td *matCellDef="let subagency" mat-cell><mat-icon
+            [class]="subagency.hasIdentityProvider ? 'valid' : 'invalid'">
+            {{ subagency.hasIdentityProvider ? 'check_circle' : 'block' }}
+          </mat-icon></td>
+      </ng-container>
+      <ng-container matColumnDef="hasIdentityProviderLink">
+        <th *matHeaderCellDef mat-header-cell>Linked</th>
+        <td *matCellDef="let subagency" mat-cell><mat-icon
+            [class]="subagency.hasIdentityProviderLink ? 'valid' : 'invalid'">
+            {{ subagency.hasIdentityProviderLink ? 'check_circle' : 'block' }}
+          </mat-icon></td>
+      </ng-container>
+      <ng-container matColumnDef="warnings">
+        <th *matHeaderCellDef mat-header-cell>Warnings</th>
+        <td *matCellDef="let subagency" mat-cell>{{ subagency.warnings }}</td>
+      </ng-container>
+      <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
+      <tr (click)="showUpdateDialog(row)" *matRowDef="let row; columns: displayedColumns" mat-row></tr>
+    </table>
+  </ng-container>
+</ui-page-section>

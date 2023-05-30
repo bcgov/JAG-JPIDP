@@ -70,20 +70,21 @@ public static class AuthenticationSetup
                                                                     c.Value == ClaimValues.Phsa ||
                                                                     c.Value == ClaimValues.Bcps ||
                                                                     c.Value == ClaimValues.VerifiedCredentials));
+
                         return hasRole || hasClaim;
                     }));
 
             options.AddPolicy(Policies.AllDemsIdentityProvider, policy => policy
                   .RequireAuthenticatedUser().RequireAssertion(context =>
                   {
-                      var hasRole = context.User.IsInRole(Roles.SubmittingAgency);
+                      var hasSARole = context.User.IsInRole(Roles.SubmittingAgency);
                       var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider &&
                                                                  (c.Value == ClaimValues.BCServicesCard ||
                                                                   c.Value == ClaimValues.Idir ||
                                                                   c.Value == ClaimValues.Phsa ||
                                                                   c.Value == ClaimValues.Bcps ||
                                                                   c.Value == ClaimValues.VerifiedCredentials));
-                      return hasRole || hasClaim;
+                      return hasSARole || hasClaim;
                   }));
 
             options.AddPolicy(Policies.AdminAuthentication, policy => policy

@@ -22,6 +22,7 @@ using Newtonsoft.Json;
 using System.Security.Cryptography;
 using Pidp.Features.Parties;
 using Pidp.Features.Organization.OrgUnitService;
+using Confluent.Kafka;
 
 public class DigitalEvidence
 {
@@ -65,6 +66,7 @@ public class DigitalEvidence
         private readonly IKafkaProducer<string, EdtUserProvisioning> kafkaProducer;
         private readonly IKafkaProducer<string, Notification> kafkaNotificationProducer;
         private readonly string SUBMITTING_AGENCY = "SubmittingAgency";
+        private readonly string LAW_SOCIETY = "LawSociety";
 
 
         public CommandHandler(
@@ -121,10 +123,20 @@ public class DigitalEvidence
                     var digitalEvidence = await this.SubmitDigitalEvidenceRequest(command); //save all trx at once for production(remove this and handle using idempotent)
                     var key = Guid.NewGuid().ToString();
                     // no email notifications for submitting agencies currently
-                    if (digitalEvidence != null && !command.OrganizationType.Equals(nameof(OrganizationCode.SubmittingAgency), StringComparison.Ordinal))
-                    {
+                    
 
-                        Serilog.Log.Logger.Information("Sending submission message for {0} to {1}", command.ParticipantId, dto.Email);
+
+
+                    //publish accessRequest Event (Sending Events to the Outbox)
+
+                    var exportedEvent = this.AddOutbox(command, digitalEvidence, dto);
+
+                    var published = await this.PublishAccessRequest(command, dto, digitalEvidence);
+
+                    if(published != null && digitalEvidence != null && !command.OrganizationType.Equals(nameof(OrganizationCode.SubmittingAgency), StringComparison.Ordinal))
+                    {
+                        var domainEvent = command.OrganizationType.Equals("LawSociety", StringComparison.Ordinal) ? "digitalevidence-bclaw-usercreation-request" : "digitalevidence-bcps-usercreation-request";
+                        Serilog.Log.Logger.Information($"Sending {domainEvent}  message for {command.ParticipantId} to {dto.Email}");
 
                         var eventData = new Dictionary<string, string>
                     {
@@ -137,17 +149,11 @@ public class DigitalEvidence
                         await this.kafkaNotificationProducer.ProduceAsync(this.config.KafkaCluster.NotificationTopicName, key: key, new Notification
                         {
                             To = dto.Email,
-                            DomainEvent = "digitalevidence-bcps-usercreation-request",
+                            DomainEvent = domainEvent,
                             EventData = eventData,
                         });
 
                     }
-
-                    //publish accessRequest Event (Sending Events to the Outbox)
-
-                    var exportedEvent = this.AddOutbox(command, digitalEvidence, dto);
-
-                    await this.PublishAccessRequest(command, dto, digitalEvidence);
 
                     await this.context.SaveChangesAsync();
                     await trx.CommitAsync();
@@ -185,13 +191,13 @@ public class DigitalEvidence
                 .SingleAsync();
         }
 
-        private async Task PublishAccessRequest(Command command, PartyDto dto, Models.DigitalEvidence digitalEvidence)
+        private async Task<DeliveryResult<string,EdtUserProvisioning>> PublishAccessRequest(Command command, PartyDto dto, Models.DigitalEvidence digitalEvidence)
         {
             var taskId = Guid.NewGuid().ToString();
             Serilog.Log.Logger.Information("Adding message to topic {0} {1} {2}", this.config.KafkaCluster.ProducerTopicName, command.ParticipantId, taskId);
             var regions = new List<AssignedRegion>();
 
-            if (!digitalEvidence.OrganizationType.Equals(this.SUBMITTING_AGENCY, StringComparison.Ordinal))
+            if (!digitalEvidence.OrganizationType.Equals(this.SUBMITTING_AGENCY, StringComparison.Ordinal) && !digitalEvidence.OrganizationType.Equals(this.LAW_SOCIETY, StringComparison.Ordinal))
             {
                 // get the assigned regions again - this prevents sending requests with an altered list of regions
                 var query = new CrownRegionQuery.Query(command.PartyId, Convert.ToDecimal(command.ParticipantId));
@@ -206,8 +212,10 @@ public class DigitalEvidence
                 var result = handler.HandleAsync(query);
             }
 
+            var systemType = digitalEvidence.OrganizationType.Equals(this.LAW_SOCIETY, StringComparison.Ordinal) ? AccessTypeCode.DigitalEvidenceDisclosure.ToString() : AccessTypeCode.DigitalEvidence.ToString();
+
             // use UUIDs for topic keys
-            await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.ProducerTopicName, taskId, new EdtUserProvisioning
+            var delivered = await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.ProducerTopicName, taskId, new EdtUserProvisioning
             {
                 Key = $"{command.ParticipantId}",
                 UserName = dto.Jpdid,
@@ -216,12 +224,14 @@ public class DigitalEvidence
                 FullName = $"{dto.FirstName} {dto.LastName}",
                 AccountType = "Saml",
                 Role = "User",
-                SystemName = AccessTypeCode.DigitalEvidence.ToString(),
+                SystemName = systemType,
                 AssignedRegions = regions,
                 AccessRequestId = digitalEvidence.Id,
                 OrganizationType = digitalEvidence.OrganizationType,
                 OrganizationName = digitalEvidence.OrganizationName,
             });
+
+            return delivered;
         }
 
         private List<AssignedRegion?>? ConvertOrgUnitRegions(IEnumerable<OrgUnitModel?> orgUnits)

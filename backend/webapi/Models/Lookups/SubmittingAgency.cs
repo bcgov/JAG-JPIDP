@@ -2,6 +2,7 @@ namespace Pidp.Models.Lookups;
 
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using NodaTime;
 
 public enum SubmittingAgencyCode
 {
@@ -17,6 +18,9 @@ public class SubmittingAgency
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string IdpHint { get; set; } = string.Empty;
+    public Instant? ClientCertExpiry { get; set; }
+    public int? LevelOfAssurance { get; set; }
+
 }
 
 public class SubmittingAgencyDataGenerator : ILookupDataGenerator<SubmittingAgency>
