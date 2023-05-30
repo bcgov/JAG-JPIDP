@@ -20,9 +20,7 @@ data:
       "environmentName": "{{ .Values.settings.environmentName }}",
       "apiEndpoint": "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}/api/v1",
       "applicationUrl": "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}",
-      "urls": {
-         "aufImport": "{{ .Values.settings.edtURL }}/Edt.aspx#/import/",
-      },
+      "demsImportURL": "{{ .Values.settings.edtURL }}/Edt.aspx#/import/",
       "keycloakConfig": {
         "config": {
           "url": "{{ .Values.settings.keycloak.url }}",

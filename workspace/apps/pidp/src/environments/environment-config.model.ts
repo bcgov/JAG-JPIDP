@@ -1,13 +1,13 @@
 import { KeycloakOptions } from 'keycloak-angular';
 
-import { UrlOptions, environmentName } from './environment.model';
+import { environmentName } from './environment.model';
 
 export interface EnvironmentConfig {
   apiEndpoint: string;
   authEndpoint: string;
   authRealm: string;
   environmentName: environmentName;
+  demsImportURL: string;
   applicationUrl: string;
   keycloakConfig: KeycloakOptions;
-  urls: UrlOptions;
 }

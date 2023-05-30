@@ -9,14 +9,6 @@ export enum EnvironmentName {
   LOCAL = 'local',
 }
 
-export interface UrlOptions {
-  aufImport: string;
-  bcscSupport: string;
-  bcscMobileSetup: string;
-  specialAuthority: string;
-  doctorsTechnologyOffice: string;
-}
-
 export interface AppEnvironment extends EnvironmentConfig {
   // Only indicates that Angular has been built
   // using --configuration=production
@@ -32,5 +24,10 @@ export interface AppEnvironment extends EnvironmentConfig {
     msTeamsSupport: string;
     doctorsTechnologyOfficeSupport: string;
   };
-  urls: UrlOptions;
+  urls: {
+    bcscSupport: string;
+    bcscMobileSetup: string;
+    specialAuthority: string;
+    doctorsTechnologyOffice: string;
+  };
 }

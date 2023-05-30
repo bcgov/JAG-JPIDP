@@ -2,14 +2,18 @@ import { digitalEvidenceSupportEmail } from '@app/features/access/pages/digital-
 import { driverFitnessSupportEmail } from '@app/features/access/pages/driver-fitness/driver-fitness.constants';
 import { hcimWebAccountTransferSupport } from '@app/features/access/pages/hcim-account-transfer/hcim-account-transfer-constants';
 import { hcimWebEnrolmentSupport } from '@app/features/access/pages/hcim-enrolment/hcim-enrolment-constants';
-import { doctorsTechnologyOfficeEmail, doctorsTechnologyOfficeUrl, msTeamsSupportEmail } from '@app/features/access/pages/ms-teams/ms-teams.constants';
-import { specialAuthorityEformsSupportEmail, specialAuthorityUrl } from '@app/features/access/pages/sa-eforms/sa-eforms.constants';
+import {
+  doctorsTechnologyOfficeEmail,
+  doctorsTechnologyOfficeUrl,
+  msTeamsSupportEmail,
+} from '@app/features/access/pages/ms-teams/ms-teams.constants';
+import {
+  specialAuthorityEformsSupportEmail,
+  specialAuthorityUrl,
+} from '@app/features/access/pages/sa-eforms/sa-eforms.constants';
 import { uciSupportEmail } from '@app/features/access/pages/uci/uci.constants';
 
-
-
 import { AppEnvironment, EnvironmentName } from './environment.model';
-
 
 /**
  * @description
@@ -28,6 +32,7 @@ export const environment: AppEnvironment = {
   authRealm: 'DEMSDEV',
   environmentName: EnvironmentName.LOCAL,
   applicationUrl: 'http://localhost:4200',
+  demsImportURL: 'https://dems.dev.jag.gov.bc.ca/Edt.aspx#/import/',
   emails: {
     providerIdentitySupport: 'jpsprovideridentityportal@gov.bc.ca',
     specialAuthorityEformsSupport: specialAuthorityEformsSupportEmail,
@@ -44,7 +49,6 @@ export const environment: AppEnvironment = {
     bcscMobileSetup: 'https://id.gov.bc.ca/account',
     specialAuthority: specialAuthorityUrl,
     doctorsTechnologyOffice: doctorsTechnologyOfficeUrl,
-    aufImport: 'https://dems.dev.jag.gov.bc.ca/Edt.aspx#/import/',
   },
   keycloakConfig: {
     config: {

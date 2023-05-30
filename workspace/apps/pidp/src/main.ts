@@ -11,35 +11,22 @@ import { EnvironmentConfig } from './environments/environment-config.model';
 // assets folder, otherwise local development in/outside of a container relies
 // on the local environment files.
 
-try {
-  fetch('/assets/environment.json')
-    .then((res) => console.log('Loaded environment.json %o', res))
-    .catch((err) => console.log('Failed to load environment %o', err));
-} catch (err) {
-  console.log('No environment file located - using dev defaults');
-}
-
-debugger;
 fetch('/assets/environment.json')
   .then((response) => response.json())
   .then((configMap: EnvironmentConfig) => {
-    debugger;
     let appConfig = APP_DI_CONFIG;
-
     if (configMap) {
       const { keycloakConfig, ...root } = configMap;
       appConfig = { ...appConfig, ...root };
       appConfig.keycloakConfig.config = keycloakConfig.config;
-      appConfig.urls = configMap.urls;
     }
-
-    console.log('Using api url %s', appConfig.apiEndpoint);
-    console.log('Using app url %s', appConfig.applicationUrl);
-    console.log('Using edt url %o', appConfig.urls);
 
     return appConfig;
   })
-  .catch(() => APP_DI_CONFIG)
+  .catch((err) => {
+    console.warn('Config error - revert to local %o', err);
+    return APP_DI_CONFIG;
+  })
   .then((appConfig: AppConfig) => {
     if (environment.production) {
       enableProdMode();
