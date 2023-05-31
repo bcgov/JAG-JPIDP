@@ -82,18 +82,28 @@ public class UserProvisioningHandler : IKafkaHandler<string, Notification>
 
                 await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
 
-                //save notification ref in notification table database
-                await this.context.Notifications.AddAsync(new NotificationAckModel
+                var existingNotification = this.context.Notifications.Where(notification => notification.NotificationId == value.NotificationId && notification.EmailAddress == value.To).FirstOrDefault();
+
+                if (existingNotification != null)
                 {
-                    PartId = value.EventData.ContainsKey("partyId") ? value.EventData["partyId"] : "",
-                    NotificationId = value.NotificationId,
-                    DomainEvent = value.DomainEvent,
-                    EmailAddress = value.To!,
-                    Status = ChesStatus.Completed,
-                    EventData = value.EventData != null ? JsonConvert.SerializeObject(value.EventData) : "",
-                    Consumer = consumerName,
-                    AccessRequestId = value.EventData.ContainsKey("accessRequestId") ? Convert.ToInt32(value.EventData["accessRequestId"]) : -1
-                });
+                    Serilog.Log.Information($"Notification already exists for {value.NotificationId} - {value.To}");
+
+                }
+                else
+                {
+                    //save notification ref in notification table database
+                    await this.context.Notifications.AddAsync(new NotificationAckModel
+                    {
+                        PartId = value.EventData.ContainsKey("partyId") ? value.EventData["partyId"] : "",
+                        NotificationId = value.NotificationId,
+                        DomainEvent = value.DomainEvent,
+                        EmailAddress = value.To!,
+                        Status = ChesStatus.Completed,
+                        EventData = value.EventData != null ? JsonConvert.SerializeObject(value.EventData) : "",
+                        Consumer = consumerName,
+                        AccessRequestId = value.EventData.ContainsKey("accessRequestId") ? Convert.ToInt32(value.EventData["accessRequestId"]) : -1
+                    });
+                }
 
                 await this.context.SaveChangesAsync();
 
