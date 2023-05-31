@@ -98,7 +98,7 @@
       </div> -->
     </ui-page-section>
     <ui-page-section *ngIf="userIsLawyer">
-      <div class="col-12">
+      <div class="col-12 ">
         <ui-page-section-subheader heading="Defence And Duty Counsel">
           <ng-container uiPageSectionSubheaderDesc>
             Enter the Unqiue Identifier you were provided in your DEMS package below.
@@ -106,8 +106,8 @@
                 [attr.href]="digitalEvidenceSupportEmail"></a>
             </i>
           </ng-container>
-          <div class="col-12">
-            <mat-form-field class="w-100">
+          <div class="col-12 field-highlight">
+            <mat-form-field class="w-50">
               <input matInput placeholder="Unique Identifier" formControlName="DefenceUniqueId" />
             </mat-form-field>
           </div>
