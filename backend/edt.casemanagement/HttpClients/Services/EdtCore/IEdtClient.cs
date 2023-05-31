@@ -28,6 +28,13 @@ public interface IEdtClient
     Task<CaseModel> FindCase(string caseNumber);
 
     /// <summary>
+    /// Get a case based on the case Id
+    /// </summary>
+    /// <param name="caseId"></param>
+    /// <returns></returns>
+    Task<CaseModel> GetCase(int caseId);
+
+    /// <summary>
     /// Get the case Ids currently assigned to a user
     /// </summary>
     /// <param name="userKey"></param>
