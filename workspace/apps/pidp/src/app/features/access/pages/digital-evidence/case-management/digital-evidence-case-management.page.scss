@@ -36,6 +36,14 @@ mat-icon.warning-icon {
   border: 2px palette.theme-palette(blue) solid;
 }
 
+mat-icon {
+  cursor: pointer;
+}
+
+.mat-row:hover {
+  background-color: palette.theme-palette(blue, lightest);
+}
+
 .caseSelectionInvalid {
   width: 100%;
   padding: 5px;

@@ -189,6 +189,80 @@ public class EdtClient : BaseClient, IEdtClient
         return result.IsSuccess;
     }
 
+    public async Task<CaseModel> GetCase(int caseId)
+    {
+        var result = await this.GetAsync<CaseModel?>($"api/v1/cases/{caseId}");
+        if (result.IsSuccess)
+        {
+            if (result != null)
+            {
+                // filter out unwanted data
+                var customFieldsArray = this.configuration.CaseDisplayCustomFields.Select(f => f.Id).ToArray();
+                var customFieldsIds = this.configuration.CaseDisplayCustomFields.Select(f => f.Id).ToList();
+                var filteredFields = result.Value.Fields.Where(f => customFieldsIds.Contains(f.Id)).ToList();
+
+                var removeValues = new List<int>();
+
+                foreach (var field in filteredFields)
+                {
+                    var defn = this.configuration.CaseDisplayCustomFields.FirstOrDefault(f => f.Id == field.Id);
+                    if (defn.RelatedId > 0)
+                    {
+                        var relatedField = result.Value.Fields.FirstOrDefault(f => f.Id == defn.RelatedId);
+                        if (relatedField != null)
+                        {
+                            if (defn.RelatedValueEmpty)
+                            {
+                                if (relatedField.Value != null && !string.IsNullOrEmpty(relatedField.Value.ToString()))
+                                {
+                                    removeValues.Add(field.Id);
+                                }
+                            }
+                            else
+                            {
+                                if (relatedField.Value == null || string.IsNullOrEmpty(relatedField.Value.ToString()))
+                                {
+                                    removeValues.Add(field.Id);
+                                }
+                            }
+                        }
+                    }
+
+                    if (!defn.Display && !removeValues.Contains(field.Id))
+                    {
+                        //removeValues.Add(field.Id);
+                        field.Display = false;
+                    }
+                }
+
+                if (removeValues.Count > 0)
+                {
+                    filteredFields = filteredFields.Where(f => !removeValues.Contains(f.Id)).ToList();
+                }
+
+
+                filteredFields.Sort((f1, f2) =>
+                {
+                    var index1 = Array.IndexOf(customFieldsArray, f1.Id);
+                    var index2 = Array.IndexOf(customFieldsArray, f2.Id);
+                    return index1.CompareTo(index2);
+                });
+
+                result.Value.Fields = filteredFields;
+                return result.Value;
+            }
+            else
+            {
+                throw new EdtServiceException("No data found for case query");
+            }
+
+        }
+        else
+        {
+            throw new EdtServiceException(string.Join(",", result.Errors));
+        }
+    }
+
 
     public async Task<CaseModel> FindCase(string caseIdOrKey)
     {
@@ -225,77 +299,7 @@ public class EdtClient : BaseClient, IEdtClient
                 caseId = cases.First().Id;
             }
 
-            var result = await this.GetAsync<CaseModel?>($"api/v1/cases/{caseId}");
-
-            if (result.IsSuccess)
-            {
-                if (result != null)
-                {
-                    // filter out unwanted data
-                    var customFieldsArray = this.configuration.CaseDisplayCustomFields.Select(f => f.Id).ToArray();
-                    var customFieldsIds = this.configuration.CaseDisplayCustomFields.Select(f => f.Id).ToList();
-                    var filteredFields = result.Value.Fields.Where(f => customFieldsIds.Contains(f.Id)).ToList();
-
-                    var removeValues = new List<int>();
-
-                    foreach (var field in filteredFields)
-                    {
-                        var defn = this.configuration.CaseDisplayCustomFields.FirstOrDefault(f => f.Id == field.Id);
-                        if (defn.RelatedId > 0)
-                        {
-                            var relatedField = result.Value.Fields.FirstOrDefault(f => f.Id == defn.RelatedId);
-                            if (relatedField != null)
-                            {
-                                if (defn.RelatedValueEmpty)
-                                {
-                                    if (relatedField.Value != null && !string.IsNullOrEmpty(relatedField.Value.ToString()))
-                                    {
-                                        removeValues.Add(field.Id);
-                                    }
-                                }
-                                else
-                                {
-                                    if (relatedField.Value == null || string.IsNullOrEmpty(relatedField.Value.ToString()))
-                                    {
-                                        removeValues.Add(field.Id);
-                                    }
-                                }
-                            }
-                        }
-
-                        if (!defn.Display && !removeValues.Contains(field.Id))
-                        {
-                            //removeValues.Add(field.Id);
-                            field.Display = false;
-                        }
-                    }
-
-                    if (removeValues.Count > 0)
-                    {
-                        filteredFields = filteredFields.Where(f => !removeValues.Contains(f.Id)).ToList();
-                    }
-
-
-                    filteredFields.Sort((f1, f2) =>
-                    {
-                        var index1 = Array.IndexOf(customFieldsArray, f1.Id);
-                        var index2 = Array.IndexOf(customFieldsArray, f2.Id);
-                        return index1.CompareTo(index2);
-                    });
-
-                    result.Value.Fields = filteredFields;
-                    return result.Value;
-                }
-                else
-                {
-                    throw new EdtServiceException("No data found for case query");
-                }
-
-            }
-            else
-            {
-                throw new EdtServiceException(string.Join(",", result.Errors));
-            }
+            return await this.GetCase(caseId);
 
         }
         else
