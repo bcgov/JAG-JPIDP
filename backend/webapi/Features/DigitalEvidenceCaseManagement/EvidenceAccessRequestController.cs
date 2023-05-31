@@ -29,6 +29,15 @@ public class EvidenceCaseManagementController : PidpControllerBase
                                                                                        [FromRoute] Query.DigitalEvidenceByRequestIdQuery.Query query)
         => await handler.HandleAsync(new DigitalEvidenceByRequestIdQuery.Query(query.RequestId));
 
+
+    [HttpGet("case/{caseId}")]
+    [Authorize(Policy = Policies.SubAgencyIdentityProvider)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<DigitalEvidenceCaseModel?>> GetSubAgencyRequests([FromServices] IQueryHandler<Query.DigitalEvidenceCaseByIdQuery.Query, DigitalEvidenceCaseModel?> handler,
+                                                                                   [FromRoute] Query.DigitalEvidenceCaseByIdQuery.Query query)
+    => await handler.HandleAsync(new DigitalEvidenceCaseByIdQuery.Query(query.CaseId));
+
     /// <summary>
     /// 
     /// </summary>
