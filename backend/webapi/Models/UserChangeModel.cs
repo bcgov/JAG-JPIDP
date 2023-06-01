@@ -18,6 +18,8 @@ public class UserChangeModel
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
     public Dictionary<ChangeType, BooleanChangeType> BooleanChangeTypes { get; set; } = new Dictionary<ChangeType, BooleanChangeType>();
     public bool IsAccountDeactivated() => this.BooleanChangeTypes.ContainsKey(ChangeType.ACTIVATION) && this.BooleanChangeTypes[ChangeType.ACTIVATION].Equals(false) || this.SingleChangeTypes.ContainsKey(ChangeType.EMAIL);
+
+    public bool ChangesDetected() => this.BooleanChangeTypes.Count > 0 || this.SingleChangeTypes.Count > 0 || this.ListChangeTypes.Count > 0;
 }
 
 public enum ChangeType
