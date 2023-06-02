@@ -25,7 +25,7 @@ export class DigitalEvidenceCaseManagementPortalSection
     private router: Router
   ) {
     this.key = 'digitalEvidenceCaseManagement';
-    this.heading = 'Digital Evidence and Disclosure Case Management System';
+    this.heading = 'Digital Evidence Case Access';
     this.description = `Manage access to your Digital Evidence Cases here.`;
   }
 
