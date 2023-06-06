@@ -5,7 +5,11 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
 
+
+
 import { EMPTY, Observable, catchError, map, noop, of, tap } from 'rxjs';
+
+
 
 import { APP_CONFIG, AppConfig } from '@app/app.config';
 import { AbstractFormPage } from '@app/core/classes/abstract-form-page.class';
@@ -17,7 +21,11 @@ import { AccessTokenService } from '@app/features/auth/services/access-token.ser
 import { AuthorizedUserService } from '@app/features/auth/services/authorized-user.service';
 import { StatusCode } from '@app/features/portal/enums/status-code.enum';
 
+
+
 import { FormUtilsService } from '@core/services/form-utils.service';
+
+
 
 import { PartyUserTypeResource } from '../../../../features/admin/shared/usertype-resource.service';
 import { OrganizationUserType } from '../../../../features/admin/shared/usertype-service.model';
@@ -25,10 +33,8 @@ import { BcpsAuthResourceService } from './auth/bcps-auth-resource.service';
 import { AssignedRegion } from './digital-evidence-account.model';
 import { DigitalEvidenceFormState } from './digital-evidence-form-state';
 import { DigitalEvidenceResource } from './digital-evidence-resource.service';
-import {
-  digitalEvidenceSupportEmail,
-  digitalEvidenceUrl,
-} from './digital-evidence.constants';
+import { digitalEvidenceSupportEmail, digitalEvidenceUrl } from './digital-evidence.constants';
+
 
 @Component({
   selector: 'app-digital-evidence',
@@ -275,11 +281,29 @@ export class DigitalEvidencePage
           Validators.pattern('^[A-Za-z]{2,3}-[0-9]{6}$'),
           Validators.required,
         ]);
+        this.formState.DefenceUniqueIdValid.setValidators([
+          Validators.required,
+        ]);
       }
       if (idp === IdentityProvider.BCPS) {
         this.formState.AssignedRegions.setValidators([Validators.required]);
       }
     });
+  }
+
+  public validateDefenceId(): void {
+    console.log("Validating...");
+  }
+
+  public onUniqueIdInput(): void {
+    if (
+      this.formState.DefenceUniqueId.value &&
+      this.formState.DefenceUniqueId.value.length === 3
+    ) {
+      this.formState.DefenceUniqueId.patchValue(
+        this.formState.DefenceUniqueId.value + '-'
+      );
+    }
   }
 
   private navigateToRoot(): void {

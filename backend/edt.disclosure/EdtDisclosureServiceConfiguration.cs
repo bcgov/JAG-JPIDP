@@ -79,7 +79,7 @@ public class EdtDisclosureServiceConfiguration
         public string CaseAccessResponseTopicName { get; set; } = string.Empty;
         public string CourtLocationAccessRequestTopic { get; set; } = string.Empty;
         public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;
-
+        public string CreateUserTopic { get; set; } = string.Empty;
         public string AckTopicName { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientId { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientSecret { get; set; } = string.Empty;

@@ -24,6 +24,12 @@ export class DigitalEvidenceResource {
     return this.portalResource.getProfileStatus(partyId);
   }
 
+  public validateDefenceId(defenceID: string): Observable<boolean> {
+    return this.apiResource.get(
+      `access-requests/digital-evidence/dduid/${defenceID}`
+    );
+  }
+
   public requestAccess(
     partyId: number,
     organizationType: DemsAccount,
