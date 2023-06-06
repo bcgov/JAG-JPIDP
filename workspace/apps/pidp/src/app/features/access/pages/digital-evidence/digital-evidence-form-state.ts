@@ -22,6 +22,10 @@ export class DigitalEvidenceFormState extends AbstractFormState<DemsAccount> {
     return this.formInstance.get('DefenceUniqueId') as FormControl;
   }
 
+   public get DefenceUniqueIdValid(): FormControl {
+    return this.formInstance.get('DefenceUniqueIdValid') as FormControl;
+  }
+
   public get ParticipantId(): FormControl {
     return this.formInstance.get('ParticipantId') as FormControl;
   }
@@ -51,6 +55,8 @@ export class DigitalEvidenceFormState extends AbstractFormState<DemsAccount> {
       OrganizationName: ['', [Validators.required]],
       ParticipantId: ['', [Validators.required]],
       DefenceUniqueId: [],
+      DefenceUniqueIdValid: [],
+
       // DefenceUniqueId: [
       //   '',
       //   [Validators.pattern('^[A-Za-z]{2,3}-[0-9]{6}$'), Validators.required],

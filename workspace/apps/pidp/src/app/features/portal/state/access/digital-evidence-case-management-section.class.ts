@@ -40,7 +40,7 @@ export class DigitalEvidenceCaseManagementPortalSection
     return {
       label:
         this.getStatusCode() === StatusCode.COMPLETED
-          ? 'View'
+          ? 'Manage'
           : this.getStatusCode() === StatusCode.PENDING
           ? 'View'
           : 'Request',

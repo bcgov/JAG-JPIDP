@@ -7,6 +7,8 @@ using AutoMapper;
 using DomainResults.Common;
 
 using edt.disclosure.Exceptions;
+using edt.disclosure.HttpClients.Services.EdtDIsclosure;
+using edt.disclosure.Kafka.Model;
 using edt.disclosure.ServiceEvents.CourtLocation.Models;
 using edt.disclosure.ServiceEvents.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -115,12 +117,22 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
     }
 
+  public Task<UserModificationEvent> CreateUser(EdtDisclosureUserProvisioningModel accessRequest)
+  {
+    throw new NotImplementedException();
+  }
 
+  public Task<UserModificationEvent> UpdateUser(EdtDisclosureUserProvisioningModel accessRequest, EdtUserDto currentUser)
+  {
+    throw new NotImplementedException();
+  }
 
-    public static class RequestEventType
+  public static class RequestEventType
     {
-        public const string Provisioning = "court-case-provision-event";
-        public const string Decommission = "court-case-decommission-event";
+        public const string CourtAccessProvisionEvent = "digitalevidence-court-case-provision-event";
+        public const string CourtAccessDecommissionEvent = "digitalevidence-court-case-decommission-event";
+        public const string DisclosureUserProvisionEvent = "digitalevidence-disclosure-provision-event";
+        public const string DisclosureUserDecommissionEvent = "igitalevidence-disclosure-decommission-event";
         public const string None = "None";
     }
 

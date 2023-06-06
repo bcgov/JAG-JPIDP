@@ -1,11 +1,16 @@
 namespace edt.disclosure.HttpClients.Services.EdtDisclosure;
 
 using System.Collections.Generic;
+using edt.disclosure.HttpClients.Services.EdtDIsclosure;
+using edt.disclosure.Kafka.Model;
 using edt.disclosure.ServiceEvents.CourtLocation.Models;
 
 public interface IEdtDisclosureClient
 {
- //   Task<Task> CreateDisclosureUser(string key, CourtLocationDomainEvent accessRequest);
+    //   Task<Task> CreateDisclosureUser(string key, CourtLocationDomainEvent accessRequest);
+
+    Task<UserModificationEvent> CreateUser(EdtDisclosureUserProvisioningModel accessRequest);
+    Task<UserModificationEvent> UpdateUser(EdtDisclosureUserProvisioningModel accessRequest, EdtUserDto currentUser);
 
 
     Task<EdtUserDto?> GetUser(string userKey);

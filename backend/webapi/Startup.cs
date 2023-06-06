@@ -63,8 +63,8 @@ public class Startup
     {
         var config = this.InitializeConfiguration(services);
 
-        var assemblyVersion = Assembly.GetExecutingAssembly()
-    .GetName().Version?.ToString() ?? "0.0.0";
+        var assemblyVersion = Assembly.GetExecutingAssembly()    .GetName().Version?.ToString() ?? "0.0.0";
+        var knownProxies = Configuration.GetSection("KnownProxies").Value;
 
 
         if (!string.IsNullOrEmpty(config.Telemetry.CollectorUrl))
