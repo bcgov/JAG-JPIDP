@@ -21,13 +21,13 @@ public class DefenceCounselController : PidpControllerBase
     /// <param name="handler"></param>
     /// <param name="query"></param>
     /// <returns></returns>
-    [HttpGet("{defenceUniqueID}")]
+    [HttpGet("{partyId}/{defenceUniqueID}")]
     [Authorize(Policy = Policies.VerifiedCredentialsProvider)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<DigitalEvidenceCaseModel?>> GetSubAgencyRequests([FromServices] IQueryHandler<Query.DefenceFolioQuery.Query, DigitalEvidenceCaseModel?> handler,
-                                                                                       [FromRoute] Query.DefenceFolioQuery.Query query)
-        => await handler.HandleAsync(new DefenceFolioQuery.Query(query.DefenceUniqueID));
+    public async Task<ActionResult<DigitalEvidenceCaseModel?>> GetSubAgencyRequests([FromServices] IQueryHandler<DefenceFolioQuery.Query, DigitalEvidenceCaseModel?> handler,
+                                                                                       [FromRoute] DefenceFolioQuery.Query query)
+        => await handler.HandleAsync(new DefenceFolioQuery.Query(query.PartyId,query.DefenceUniqueID));
 
 
 }

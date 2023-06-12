@@ -5,10 +5,6 @@ using Flurl;
 using System.Net;
 using System.Text;
 using System.Text.Json;
-
-using Microsoft.Extensions.ObjectPool;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
-using System.Collections.Specialized;
 using System.Net.Mime;
 using EdtDisclosureService.Extensions;
 

@@ -15,7 +15,7 @@ public static class HttpClientSetup
 
         //services.AddHttpClientWithBaseAddress<IAddressAutocompleteClient, AddressAutocompleteClient>(config.AddressAutocompleteClient.Url);
 
-        Log.Logger.Information("Using EDT endpoint {0}", config.EdtClient.Url);
+        Log.Logger.Information("Using EDT Disclosure endpoint {0}", config.EdtClient.Url);
 
         services.AddHttpClientWithBaseAddress<IEdtDisclosureClient, EdtDisclosureClient>(config.EdtClient.Url)
             .ConfigureHttpClient(c => c.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", config.EdtClient.ApiKey));

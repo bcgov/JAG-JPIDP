@@ -101,7 +101,7 @@
       <div class="col-12 ">
         <ui-page-section-subheader heading="Defence And Duty Counsel">
           <ng-container uiPageSectionSubheaderDesc>
-            Enter the Unqiue Identifier you were provided in your DEMS package below.
+            Enter the Unqiue Identifier you were provided in your DEMS on-boarding package.
 
           </ng-container>
 
@@ -114,6 +114,8 @@
 
             <button mat-button color="primary" [disabled]="!formState.DefenceUniqueId.valid" mat-flat-button
               (click)="validateDefenceId()" type="button">Validate ID</button>
+            <mat-error *ngIf="formState.DefenceUniqueId.invalid">{{ defenceValidationMessage }}</mat-error>
+            <div *ngIf="!formState.DefenceUniqueId.invalid">{{ defenceValidationMessage }}</div>
           </div>
           <br /><i>If you do not have your unique ID please contact support at <a uiAnchor scheme="mailto"
               [attr.href]="digitalEvidenceSupportEmail"></a>
@@ -154,7 +156,7 @@
 
     <button *ngIf="!(completed || pending)" mat-flat-button uiPageFooterAction type="button" color="primary"
       [disabled]="!formState.form.valid" (click)="onRequestAccess()">
-      Next
+      Request Access
     </button>
   </ui-page-footer>
 </ui-page>

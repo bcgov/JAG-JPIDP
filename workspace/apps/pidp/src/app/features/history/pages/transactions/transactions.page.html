@@ -2,9 +2,9 @@
   <ui-page-header>{{ title }}</ui-page-header>
 
   <ui-page-section>
-    <ui-page-section-subheader icon="history" heading="Transactions">
+    <ui-page-section-subheader icon="history" heading="Requests">
       <ng-container uiPageSectionSubheaderDesc>
-        This is a log of your transactions and interactions with the Provider
+        This is a log of your interactions with the Provider
         Identity Portal.
       </ng-container>
     </ui-page-section-subheader>
@@ -24,16 +24,11 @@
       </ng-container>
     </ng-container>
 
-    <ng-template #noTransactions>No transactions found</ng-template>
+    <ng-template #noTransactions>No requests found</ng-template>
   </ui-page-section>
 
   <ui-page-footer mode="reverse">
-    <button
-      mat-stroked-button
-      uiPageFooterAction
-      color="primary"
-      type="button"
-      (click)="onBack()">
+    <button mat-stroked-button uiPageFooterAction color="primary" type="button" (click)="onBack()">
       Back Home
     </button>
   </ui-page-footer>

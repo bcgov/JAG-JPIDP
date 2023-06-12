@@ -6,10 +6,9 @@ using edt.disclosure.HttpClients.Services.EdtDisclosure;
 using edt.disclosure.HttpClients.Services.EdtDIsclosure;
 using edt.disclosure.Kafka.Interfaces;
 using edt.disclosure.Kafka.Model;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using edt.disclosure.ServiceEvents.UserAccountCreation.Models;
 using Microsoft.Extensions.Logging;
-using Prometheus;
+using NodaTime;
 
 public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserProvisioningModel>
 {
@@ -17,21 +16,29 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
 
     private readonly EdtDisclosureServiceConfiguration configuration;
     private readonly IEdtDisclosureClient edtClient;
+    private readonly IClock clock;
     private readonly ILogger logger;
     private readonly DisclosureDataStoreDbContext context;
-    private static readonly Counter TombstoneConversions = Metrics.CreateCounter("edt_tombstone_conversions", "Number of tombstone accounts activated");
+    private readonly IKafkaProducer<string, Notification> producer;
 
 
     public UserProvisioningHandler(
         EdtDisclosureServiceConfiguration configuration,
         IEdtDisclosureClient edtClient,
+        IClock clock,
+        ILogger logger,
+            IKafkaProducer<string, Notification> producer,
+
         DisclosureDataStoreDbContext context)
     {
 
         this.configuration = configuration;
         this.context = context;
+        this.clock = clock;
         this.logger = logger;
         this.edtClient = edtClient;
+        this.producer = producer;
+
     }
 
     public async Task<Task> HandleAsync(string consumerName, string key, EdtDisclosureUserProvisioningModel accessRequestModel)
@@ -39,13 +46,11 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
 
         // check this message is for us
 
-        if (accessRequestModel.SystemName != null && !(accessRequestModel.SystemName.Equals("DISCLOSURE", StringComparison.Ordinal)))
+        if (accessRequestModel.SystemName != null && !(accessRequestModel.SystemName.Equals("DigitalEvidenceDisclosure", StringComparison.Ordinal)))
         {
-            Serilog.Log.Logger.Information($"Ignoring message {key} for system {accessRequestModel.SystemName} as we only handle DEMS requests");
+            Serilog.Log.Logger.Information($"Ignoring message {key} for system {accessRequestModel.SystemName} as we only handle DigitalEvidenceDisclosure requests");
             return Task.CompletedTask;
         }
-
-        var plainTextTopic = Environment.GetEnvironmentVariable("USER_CREATION_PLAINTEXT_TOPIC");
 
 
         // set activity info
@@ -56,18 +61,18 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
         try
         {
             //check whether this message has been processed before   
-            //if (await this.context.HasBeenProcessed(key, consumerName))
-            //{
-            //    //await trx.RollbackAsync();
-            //    return Task.CompletedTask;
-            //}
+            if (await this.context.HasBeenProcessed(key, consumerName))
+            {
+                await trx.RollbackAsync();
+                return Task.CompletedTask;
+            }
             ///check whether edt service api is available before making any http request
             ///
             /// call version endpoint via get
             ///
             var edtVersion = await this.CheckEdtServiceVersion();
 
-
+      
 
             //check whether edt user already exist
             var result = await this.AddOrUpdateUser(accessRequestModel);
@@ -76,17 +81,17 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
             if (result.successful)
             {
                 //add to tell message has been processed by consumer
-                //await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
+                await this.context.IdempotentConsumer(messageId: key, consumer: consumerName, consumeDate: clock.GetCurrentInstant());
 
                 await this.context.SaveChangesAsync();
 
-   
 
-                    try
-                    {
 
-                        // create event data
-                        var eventData = new Dictionary<string, string>
+                try
+                {
+
+                    // create event data
+                    var eventData = new Dictionary<string, string>
                         {
                         { "FirstName", accessRequestModel.FullName!.Split(' ').FirstOrDefault("NAME_NOT_SET") },
                         { "Organization", accessRequestModel.OrganizationName! },
@@ -96,40 +101,30 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
                          };
 
 
-                        //await this.producer.ProduceAsync(this.configuration.KafkaCluster.ProducerTopicName, key: key, new Notification
-                        //{
-                        //    To = accessRequestModel.Email,
-                        //    DomainEvent = "digitalevidence-sa-usercreation-complete",
-                        //    EventData = eventData,
-                        //});
-
-                        //// we'll flag it as completed-provisioning as the account is really not fully complete
-                        //// at this stage. Once the ISL service sends us a message that the user also has all cases assigned then we'll send a final
-                        //// email stating such to the user
-                        //await this.ackProducer.ProduceAsync(this.configuration.KafkaCluster.AckTopicName, key: key, new NotificationAckModel
-                        //{
-                        //    Subject = NotificationSubject.AccessRequest,
-                        //    AccessRequestId = accessRequestModel.AccessRequestId,
-                        //    Status = "Completed"
-                        //});
-
-                        await trx.CommitAsync();
-                        Serilog.Log.Information($"User {result.partId} provision event published to {this.configuration.KafkaCluster.AckTopicName}");
-
-                    }
-                    catch (Exception ex)
+                    await this.producer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopic, key: key, new Notification
                     {
-                        Serilog.Log.Logger.Error($"Failed to publish to user notification topic - rolling back transaction [{string.Join(",", ex.Message)}");
-                        await trx.RollbackAsync();
-                    }
+                        DomainEvent = "digitalevidencedisclosure-defence-usercreation-complete",
+                        To = accessRequestModel.Email,
+                        EventData = eventData,
+                    });
+
+                    await trx.CommitAsync();
+                    Serilog.Log.Information($"User {result.partId} provision event published to {this.configuration.KafkaCluster.AckTopicName}");
+
                 }
-               
-            
+                catch (Exception ex)
+                {
+                    Serilog.Log.Logger.Error($"Failed to publish to user notification topic - rolling back transaction [{string.Join(",", ex.Message)}");
+                    await trx.RollbackAsync();
+                }
+            }
+
+
         }
         catch (Exception ex)
         {
             Serilog.Log.Logger.Error("Exception during EDT Disclosure provisioning {0}", ex.Message);
-  
+
         }
 
         return Task.CompletedTask; //create specific exception handler later
@@ -143,17 +138,17 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
         var user = await this.edtClient.GetUser(value.Key!);
 
 
-            //create user account in EDT
-            var result = user == null
-                ? await this.edtClient.CreateUser(value)
-                : await this.edtClient.UpdateUser(value, user);
-            return result;
+        //create user account in EDT
+        var result = user == null
+            ? await this.edtClient.CreateUser(value)
+            : await this.edtClient.UpdateUser(value, user);
+        return result;
 
 
 
     }
 
-   
+
 
     private async Task NotifyUserFailure(EdtDisclosureUserProvisioningModel value, string key, string topic)
     {

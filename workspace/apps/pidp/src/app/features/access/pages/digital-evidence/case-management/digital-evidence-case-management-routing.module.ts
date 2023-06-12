@@ -1,8 +1,11 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
+
+
 import { DigitalEvidenceCaseManagementPage } from './digital-evidence-case-management.page';
 import { DigitalEvidenceCaseManagementResolver } from './digital-evidence-case-management.resolver';
+
 
 const routes: Routes = [
   {
@@ -13,7 +16,7 @@ const routes: Routes = [
         DigitalEvidenceCaseManagementResolver,
     },
     data: {
-      title: 'JPS Provider Identity Portal',
+      title: 'Digital Identity Access Management',
       routes: {
         root: '../../',
       },

@@ -23,9 +23,8 @@ export class DigitalEvidenceCounselPortalSection implements IPortalSection {
     private router: Router
   ) {
     this.key = 'digitalEvidenceCounsel';
-    this.heading =
-      'Digital Evidence and Disclosure Management System Duty Counsel Access';
-    this.description = `If you act as Duty Counsel then you may manage access to your Duty Counsel cases here.`;
+    this.heading = 'Digital Evidence and Disclosure Duty Case Access';
+    this.description = `If you act as Duty Counsel then you may manage access to your Duty Counsel court locations.`;
   }
 
   public get hint(): string {
@@ -33,6 +32,10 @@ export class DigitalEvidenceCounselPortalSection implements IPortalSection {
   }
 
   public get action(): PortalSectionAction {
+    const digitalEvidenceStatusCode =
+      this.profileStatus.status.digitalEvidence.statusCode;
+    const digitalEvidenceComplete =
+      digitalEvidenceStatusCode === StatusCode.COMPLETED;
     const demographicsStatusCode =
       this.profileStatus.status.demographics.statusCode;
     const organizationStatusCode =
@@ -49,9 +52,13 @@ export class DigitalEvidenceCounselPortalSection implements IPortalSection {
         this.getStatusCode() === StatusCode.AVAILABLE ||
         this.getStatusCode() === StatusCode.PENDING
           ? 'View'
-          : 'Request',
+          : 'Manage',
       route: AccessRoutes.routePath(AccessRoutes.DIGITAL_EVIDENCE_COUNSEL),
-      disabled: !(demographicsComplete && orgComplete),
+      disabled: !(
+        demographicsComplete &&
+        orgComplete &&
+        digitalEvidenceComplete
+      ),
     };
   }
 
@@ -60,14 +67,13 @@ export class DigitalEvidenceCounselPortalSection implements IPortalSection {
   }
 
   public get status(): string {
-    const statusCode = this.getStatusCode();
-
-    return statusCode === StatusCode.AVAILABLE
-      ? 'For existing users of DEMS only'
+    const statusCode = this.profileStatus.status.digitalEvidence.statusCode;
+    return statusCode === StatusCode.NOT_AVAILABLE
+      ? 'Enrolment in Digital Evidence and Disclosure Management System required first'
       : statusCode === StatusCode.COMPLETED || statusCode === StatusCode.READY
       ? 'Available'
       : statusCode === StatusCode.PENDING
-      ? 'Pending'
+      ? 'Pending Digital Evidence On-Boarding completion'
       : 'Incomplete';
   }
 

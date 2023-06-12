@@ -24,7 +24,7 @@ export class DigitalEvidencePortalSection implements IPortalSection {
   ) {
     this.key = 'digitalEvidence';
     this.heading = 'Digital Evidence and Disclosure Management System';
-    this.description = `Enrol here for access to Digital Evidence and Disclosure Management System application.`;
+    this.description = this.getDescription();
   }
 
   public get hint(): string {
@@ -55,6 +55,12 @@ export class DigitalEvidencePortalSection implements IPortalSection {
       route: AccessRoutes.routePath(AccessRoutes.DIGITAL_EVIDENCE),
       disabled: !(demographicsComplete && orgComplete),
     };
+  }
+
+  public getDescription(): string {
+    return this.getStatusCode() === StatusCode.COMPLETED
+      ? 'Your enrolment is complete. You can view the terms of enrolment by clicking the View button'
+      : `Enrol here for access to Digital Evidence and Disclosure Management System application.`;
   }
 
   public get statusType(): AlertType {

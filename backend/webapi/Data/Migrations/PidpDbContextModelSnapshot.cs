@@ -3529,6 +3529,32 @@ namespace Pidp.Data.Migrations
                     b.ToTable("DigitalEvidence");
                 });
 
+            modelBuilder.Entity("Pidp.Models.DigitalEvidenceDisclosure", b =>
+                {
+                    b.HasBaseType("Pidp.Models.AccessRequest");
+
+                    b.Property<int>("FolioCaseId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("FolioId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OrganizationName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OrganizationType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ParticipantId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.ToTable("DigitalEvidenceDisclosure");
+                });
+
             modelBuilder.Entity("Pidp.Models.FacilityAddress", b =>
                 {
                     b.HasBaseType("Pidp.Models.Address");
@@ -3825,6 +3851,15 @@ namespace Pidp.Data.Migrations
                     b.HasOne("Pidp.Models.AccessRequest", null)
                         .WithOne()
                         .HasForeignKey("Pidp.Models.DigitalEvidence", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Pidp.Models.DigitalEvidenceDisclosure", b =>
+                {
+                    b.HasOne("Pidp.Models.AccessRequest", null)
+                        .WithOne()
+                        .HasForeignKey("Pidp.Models.DigitalEvidenceDisclosure", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

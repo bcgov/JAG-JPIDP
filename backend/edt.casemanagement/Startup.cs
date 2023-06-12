@@ -153,7 +153,7 @@ public class Startup
 
         services.AddSwaggerGen(options =>
         {
-            options.SwaggerDoc("v1", new OpenApiInfo { Title = "Notification Service API", Version = "v1" });
+            options.SwaggerDoc("v1", new OpenApiInfo { Title = "Case Management Service API", Version = "v1" });
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 Description = "Standard Authorization header using the Bearer scheme. Example: \"bearer {token}\"",
@@ -242,7 +242,7 @@ public class Startup
         //app.UseMiddleware<ExceptionHandlingMiddleware>();
         app.UseExceptionHandler("/error");
         app.UseSwagger();
-        app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.json", "Notification Service API"));
+        app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.json", "Case Management Service API"));
 
         app.UseSerilogRequestLogging(options => options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
         {
