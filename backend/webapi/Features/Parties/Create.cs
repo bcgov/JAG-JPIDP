@@ -53,7 +53,6 @@ public class Create
             {
                 this.Include<AbstractValidator<Command>>(x =>
                 {
-                    Serilog.Log.Information($"Checking user {x.FirstName} {x.LastName} {user.GetIdentityProvider()} {accessor?.HttpContext?.Connection.RemoteIpAddress}");
 
                     return user.GetIdentityProvider() switch
                     {

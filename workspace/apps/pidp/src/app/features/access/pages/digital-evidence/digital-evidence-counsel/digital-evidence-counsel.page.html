@@ -1,7 +1,7 @@
 <ui-page [formGroup]="formState.form">
   <ui-page-header>{{ title }}</ui-page-header>
   <ui-page-section>
-    <ui-page-section-subheader icon="assignment" heading="Digital Evidence and Disclosure Duty Case Management">
+    <ui-page-section-subheader icon="assignment" heading="Digital Evidence and Disclosure Duty Case Access">
       <ng-container uiPageSectionSubheaderDesc>
         Request access to courts and cases for duration of duty.
       </ng-container>
@@ -18,7 +18,8 @@
               {{ location.name }}
             </mat-option>
           </mat-autocomplete>
-          <mat-icon matSuffix (click)="clearLocation()">delete_outline</mat-icon>
+          <mat-icon matSuffix (click)="clearLocation()" *ngIf="this.formState.courtLocation.valid"
+            matTooltip="Clear input">delete_outline</mat-icon>
         </mat-form-field>
       </div>
       <div class="row">

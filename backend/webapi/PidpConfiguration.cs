@@ -23,6 +23,8 @@ public class PidpConfiguration
     public JumClientConfiguration JumClient { get; set; } = new();
     public EdtClientConfiguration EdtClient { get; set; } = new EdtClientConfiguration();
     public EdtCaseManagementClientConfiguration EdtCaseManagementClient { get; set; } = new EdtCaseManagementClientConfiguration();
+    public EdtClientConfiguration EdtDisclosureClient { get; set; } = new EdtClientConfiguration();
+
     public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
     public CourtAccessConfiguration CourtAccess { get; set; } = new();
     public VerifiableCredentialsConfiguration VerifiableCredentials { get; set; } = new VerifiableCredentialsConfiguration();

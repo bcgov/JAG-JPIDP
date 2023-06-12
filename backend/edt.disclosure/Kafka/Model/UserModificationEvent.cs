@@ -21,6 +21,7 @@ public class UserModificationEvent : AuditEvent
     public int accessRequestId { get; set; }
 
     public bool successful { get; set; }
+    public List<string> Errors { get; set; } = new List<string>();
 
 
     public override string ToString() => JsonConvert.SerializeObject(this);

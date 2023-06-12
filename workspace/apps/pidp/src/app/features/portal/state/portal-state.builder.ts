@@ -19,7 +19,6 @@ import { SaEformsPortalSection } from './access/sa-eforms-portal-section.class';
 import { SitePrivacySecurityPortalSection } from './access/site-privacy-security-checklist-portal-section.class';
 import { UciPortalSection } from './access/uci-portal-section.class';
 import { AdministratorPortalSection } from './admin/admin-panel-portal-section.class';
-import { SignedAcceptedDocumentsPortalSection } from './history/signed-accepted-documents-portal-section.class';
 import { TransactionsPortalSection } from './history/transactions-portal-section.class';
 import { AdministratorInfoPortalSection } from './organization/administrator-information-portal-section';
 import { FacilityDetailsPortalSection } from './organization/facility-details-portal-section.class';
@@ -223,10 +222,7 @@ export class PortalStateBuilder {
   }
 
   private createHistoryGroup(): IPortalSection[] {
-    return [
-      new SignedAcceptedDocumentsPortalSection(this.router),
-      new TransactionsPortalSection(this.router),
-    ];
+    return [new TransactionsPortalSection(this.router)];
   }
 
   private insertSection(

@@ -2,7 +2,6 @@ import { Router } from '@angular/router';
 
 import { Observable } from 'rxjs';
 
-import { OrganizationCode } from '@bcgov/shared/data-access';
 import { AlertType } from '@bcgov/shared/ui';
 
 import { OrganizationInfoRoutes } from '@app/features/organization-info/organization-info.routes';
@@ -27,7 +26,7 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
   ) {
     this.key = 'organizationDetails';
     this.heading = 'Organization Details';
-    this.description = 'Provide details about your organization.';
+    this.description = this.getDescription();
   }
 
   public get hint(): string {
@@ -116,7 +115,9 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
     return {
       label:
         this.profileStatus.status.organizationDetails?.statusCode ===
-        StatusCode.LOCKED_COMPLETE
+          StatusCode.LOCKED_COMPLETE ||
+        this.profileStatus.status.organizationDetails?.statusCode ===
+          StatusCode.COMPLETED
           ? ''
           : 'Update',
       route: OrganizationInfoRoutes.routePath(
@@ -126,6 +127,15 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
         this.profileStatus.status.organizationDetails?.statusCode ===
         StatusCode.LOCKED_COMPLETE,
     };
+  }
+
+  public getDescription(): string {
+    return this.profileStatus.status.organizationDetails?.statusCode ===
+      StatusCode.LOCKED_COMPLETE ||
+      this.profileStatus.status.organizationDetails?.statusCode ===
+        StatusCode.COMPLETED
+      ? 'Your oragnization information is completed and validated'
+      : 'Please provide details about your organization in order to proceed to the next steps';
   }
 
   public get statusType(): AlertType {

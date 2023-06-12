@@ -13,13 +13,9 @@ public class AccessRequest : BaseAuditable
     public int Id { get; set; }
 
     public int PartyId { get; set; }
-
     public Party? Party { get; set; }
-
     public Instant RequestedOn { get; set; }
-
     public string Details { get; set; } = string.Empty;
-
 
     public AccessTypeCode AccessTypeCode { get; set; }
     public string Status { get; set; } = AccessRequestStatus.Pending;
@@ -49,6 +45,7 @@ public class HcimEnrolment : AccessRequest
     public bool RecordsNewborns { get; set; }
     public bool SearchesIdentifiers { get; set; }
 }
+
 [Table(nameof(DigitalEvidence))]
 public class DigitalEvidence : AccessRequest
 {
@@ -59,6 +56,16 @@ public class DigitalEvidence : AccessRequest
     public List<AssignedRegion> AssignedRegions { get; set; } = new List<AssignedRegion>();
 }
 
+[Table(nameof(DigitalEvidenceDisclosure))]
+public class DigitalEvidenceDisclosure : AccessRequest
+{
+    public string OrganizationType { get; set; } = string.Empty;
+    public string OrganizationName { get; set; } = string.Empty;
+    public string ParticipantId { get; set; } = string.Empty;
+    public int FolioCaseId { get; set; }
+    public string FolioId { get; set; } = string.Empty;
+
+}
 
 
 

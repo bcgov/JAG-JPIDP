@@ -13,10 +13,12 @@ public class EdtDisclosureUserProvisioningModel
     public string? Role { get; set; }
     public bool? IsActive => true;
     public string? AccountType { get; set; }
-    public string? SystemName { get; set; } = "DISCLOSURE";
+    public string? SystemName { get; set; } = "DigitalEvidenceDisclosure";
     public int AccessRequestId { get; set; }
     public string? OrganizationType { get; set; }
     public string? OrganizationName { get; set; }
+    public string FolioId { get; set; }
+    public int FolioCaseId { get; set; }    
     public override string ToString() => JsonSerializer.Serialize(this);
 
 }

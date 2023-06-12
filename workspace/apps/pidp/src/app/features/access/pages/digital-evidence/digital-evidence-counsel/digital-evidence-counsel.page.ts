@@ -116,7 +116,6 @@ export class DigitalEvidenceCounselPage
   }
 
   public ngOnInit(): void {
-    console.log('Loading known inboxes');
     this.resource.getLocations().subscribe((locations) => {
       this.courtLocations = locations;
       this.filteredOptions = locations;
