@@ -5,12 +5,13 @@ using AutoMapper;
 
 using edt.disclosure.Exceptions;
 using edt.disclosure.Features.Cases;
-using edt.disclosure.HttpClients.Services.EdtDIsclosure;
 using edt.disclosure.Infrastructure.Telemetry;
 using edt.disclosure.Kafka.Model;
 using edt.disclosure.ServiceEvents.CourtLocation.Models;
 using edt.disclosure.ServiceEvents.Models;
 using edt.disclosure.ServiceEvents.UserAccountCreation.Models;
+using Google.Protobuf.WellKnownTypes;
+using MediatR;
 using Prometheus;
 using Serilog;
 
@@ -23,6 +24,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
     private static readonly Counter ProcessedJobCount = Metrics
         .CreateCounter("disclosure_case_searches", "Number of disclosure case search requests.");
     private static readonly Histogram AccountCreationDuration = Metrics.CreateHistogram("edt_disclosure_account_creation_duration", "Histogram of edt disclosure account creations.");
+    private static readonly Histogram AccountUpdateDuration = Metrics.CreateHistogram("edt_disclosure_account_update_duration", "Histogram of edt disclosure account updates.");
 
 
     public EdtDisclosureClient(
@@ -48,11 +50,12 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         {
             if (result.Status == DomainResults.Common.DomainOperationStatus.NotFound)
             {
+                Log.Logger.Information($"User {userKey} not found");
                 return null;
             }
             else
             {
-                throw new EdtDisclosureServiceException($"Failed to query for user {userKey} - check service is available [{string.Join(",",result.Errors)}]");
+                throw new EdtDisclosureServiceException($"Failed to query for user {userKey} - check service is available [{string.Join(",", result.Errors)}]");
             }
         }
         return result.Value;
@@ -72,7 +75,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
         if (!result.IsSuccess)
         {
-            throw new EdtDisclosureServiceException(string.Join(",", result.Errors));
+            throw new EdtDisclosureServiceException($"Failed to communicate with EDT {string.Join(",", result.Errors)}");
         }
 
         return result.Value.Version;
@@ -126,7 +129,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
     public async Task<UserModificationEvent> CreateUser(EdtDisclosureUserProvisioningModel accessRequest)
     {
-        Log.Logger.Information($"Creating user case {accessRequest.Key} {accessRequest.FullName} {accessRequest.AccessRequestId}");
+        Log.Logger.Information($"Creating disclosure user {accessRequest.Key} {accessRequest.FullName} {accessRequest.AccessRequestId}");
 
         using (AccountCreationDuration.NewTimer())
         {
@@ -162,9 +165,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
                 }
                 else
                 {
-                    Log.Error($"Did not found a group called {CounselGroup} in EDT");
-                    userModificationResponse.successful = false;
-                    userModificationResponse.Errors.Add($"Did not found a group called {CounselGroup} in EDT");
+                    Log.Information($"User {newUser.Id} added to {CounselGroup} in EDT");
                 }
 
                 // add user to their folio folder
@@ -197,6 +198,84 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         }
     }
 
+    /// <summary>
+    /// User date the user
+    /// </summary>
+    /// <param name="accessRequest"></param>
+    /// <param name="currentUser"></param>
+    /// <returns></returns>
+    public async Task<UserModificationEvent> UpdateUser(EdtDisclosureUserProvisioningModel accessRequest, EdtUserDto currentUser)
+    {
+
+        if (currentUser == null || accessRequest == null)
+        {
+            throw new EdtDisclosureServiceException("Null user or access request passed to UpdateUser()");
+        }
+
+        using (AccountUpdateDuration.NewTimer())
+        {
+
+            Log.Information($"Performing account update for user {currentUser.Id} with request {accessRequest.Id}");
+
+            var userModificationResponse = new UserModificationEvent
+            {
+                partId = currentUser.Key,
+                eventType = UserModificationEvent.UserEvent.Modify,
+                eventTime = DateTime.Now,
+                accessRequestId = accessRequest.AccessRequestId,
+                successful = true
+            };
+
+            if (!currentUser.IsActive)
+            {
+                Log.Logger.Information($"Enabling disabled user {currentUser.Id}");
+                var enabled = await this.EnableOrDisableAccount(currentUser.Id, true);
+                if (enabled)
+                {
+                    Log.Logger.Information($"User {currentUser.Id} successfully enabled");
+                }
+                else
+                {
+                    Log.Logger.Warning($"User {currentUser.Id} was not enabled");
+
+                }
+            }
+
+            // check user has folio and is associated
+            var groups = await this.GetUserOUGroups(currentUser.Id);
+
+            var inGroup = groups.FirstOrDefault(group => group.Name.Equals(CounselGroup, StringComparison.OrdinalIgnoreCase));
+
+            if (inGroup == null)
+            {
+                Log.Information($"User {currentUser.Id} not currently in {CounselGroup} - adding");
+                var addedToGroup = await this.AddUserToOUGroup(currentUser.Id, CounselGroup);
+
+                if (addedToGroup)
+                {
+                    Log.Information($"Added user {currentUser.Id} to group {CounselGroup}");
+                }
+                else
+                {
+                    Log.Warning($"Failed to add user {currentUser.Id} to group {CounselGroup}");
+                    userModificationResponse.successful = false;
+                    userModificationResponse.Errors.Add($"Failed to add user {currentUser.Id} to group {CounselGroup}");
+                }
+            }
+
+
+            var addedToFolio = await this.AddUserToFolio(accessRequest, currentUser);
+            if (!addedToFolio)
+            {
+                userModificationResponse.successful = false;
+                userModificationResponse.Errors.Add($"Failed to add user {currentUser.Id} to folio {accessRequest.FolioId}");
+            }
+
+            return userModificationResponse;
+        }
+
+    }
+
     private async Task<bool> AddUserToFolio(EdtDisclosureUserProvisioningModel accessRequest, EdtUserDto currentUser)
     {
         if (currentUser == null)
@@ -205,30 +284,51 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             return false;
         }
 
-
-
         // lets confirm that the caseID and UniqueID match and nobody tried to fake it
         var caseById = await this.GetCase(accessRequest.FolioCaseId);
         var folioCase = await this.FindCase("Folio ID", accessRequest.FolioId);
 
         if (caseById.Id != folioCase.Id)
         {
-            Log.Error($"Invalid attempt to access case - folio and case Id do not match - possible attempt to access unathorized cases");
+            Log.Error($"Invalid attempt to access case - folio and case Id do not match - possible attempt to access unauthorized cases");
             return false;
         }
 
-        Log.Logger.Information($"Adding user {accessRequest.Email} to folio case {accessRequest.FolioId}");
-        var completed = await this.AddUserToCase(currentUser.Id, folioCase.Id);
+        var existingCaseAccess = await this.GetUserCaseAccess(currentUser.Id);
+        var alreadyAssigned = existingCaseAccess.FirstOrDefault(cases => cases.Id == folioCase.Id);
+
+        if (alreadyAssigned != null)
+        {
+            Log.Logger.Information($"User already assigned {currentUser.Id} to folio case {accessRequest.FolioId}");
+            var userCaseGroups = await this.GetUserCaseGroups(currentUser.Id, caseById.Id);
+            var caseUserGroup = userCaseGroups.FirstOrDefault(group => group.GroupName.Equals(CounselGroup, StringComparison.OrdinalIgnoreCase));
+            if ( caseUserGroup== null)
+            {
+                await this.AddUserToCaseGroup(currentUser.Id, caseById.Id, CounselGroup);
+            }
+            return true;
+        }
+
+        Log.Logger.Information($"Adding user {currentUser.Id} to folio case {accessRequest.FolioId}");
+        var addedToCase = await this.AddUserToCase(currentUser.Id, folioCase.Id);
 
 
-        if (!completed)
+        if (!addedToCase)
         {
             Log.Error($"Failed to add user {currentUser.Id} to case {folioCase.Id}");
             return false;
         }
         else
         {
-            return true;
+
+            // add user to case group
+            var addedToCaseGroup = await this.AddUserToCaseGroup(currentUser.Id, folioCase.Id, await this.GetCaseGroupId(folioCase.Id, CounselGroup));
+            if (!addedToCaseGroup)
+            {
+                Log.Error($"Failed to add user {currentUser.Id} to case group {folioCase.Id} [{CounselGroup}]");
+            }
+
+            return addedToCaseGroup;
         }
     }
 
@@ -259,8 +359,26 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
     }
 
+
+    private async Task<IEnumerable<OrgUnitModel>> GetUserCaseAccess(string userId)
+    {
+
+        var result = await this.GetAsync<IEnumerable<OrgUnitModel>>($"api/v1/org-units/1/users/{userId}/cases");
+        if (result.IsSuccess)
+        {
+            return result.Value;
+        }
+        else
+        {
+            throw new EdtDisclosureServiceException($"Unable to get case access list for user {userId}");
+        }
+    }
+
     private async Task<bool> AddUserToCase(string userKey, int caseId)
     {
+
+        // check if user already on case
+
 
         Log.Logger.Information("Adding user {0} to case {0}", userKey, caseId);
         var result = await this.PostAsync<JsonObject>($"api/v1/cases/{caseId}/case-users/{userKey}");
@@ -316,7 +434,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
     private async Task<IEnumerable<UserCaseGroup>> GetUserCaseGroups(string userKey, int caseId)
     {
         var result = await this.GetAsync<IEnumerable<UserCaseGroup>>($"api/v1/cases/{caseId}/case-users/{userKey}/groups");
-        Log.Logger.Information("Got user cases {0} user {1}", result, userKey);
+        Log.Logger.Information("Got #{0} user cases  user {1}", result.Value.Count(), userKey);
 
         if (result.IsSuccess)
         {
@@ -330,7 +448,21 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
     }
 
 
-    public async Task<bool> AddUserToCaseGroup(string userId, int caseId, int caseGroupId)
+    public async Task<bool> AddUserToCaseGroup(string userId, int caseId, string caseGroup)
+    {
+        var caseGroupId = await this.GetCaseGroupId(caseId, caseGroup);
+        if (caseGroupId > 0)
+        {
+            return await this.AddUserToCaseGroup(userId, caseGroupId, caseGroupId);
+        }
+        else
+        {
+            Log.Warning($"No case group found for user {userId} in case group {caseGroup}");
+            return false;
+        }
+    }
+
+        public async Task<bool> AddUserToCaseGroup(string userId, int caseId, int caseGroupId)
     {
         Log.Debug("Adding user {0} in case {1} to group {2}", userId, caseId, caseGroupId);
 
@@ -366,10 +498,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         return result.IsSuccess;
     }
 
-    public Task<UserModificationEvent> UpdateUser(EdtDisclosureUserProvisioningModel accessRequest, EdtUserDto currentUser)
-    {
-        throw new NotImplementedException();
-    }
+
 
     public async Task<CaseModel> FindCase(string field, string value)
     {
@@ -535,6 +664,22 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         }
     }
 
+    private async Task<IEnumerable<OrgUnitModel>> GetUserOUGroups(string userId)
+    {
+        var result = await this.GetAsync<IEnumerable<OrgUnitModel?>>($"api/v1/org-units/1/users/{userId}/groups");
+
+        if (!result.IsSuccess)
+        {
+            Log.Warning($"Failed to get current groups for user {userId}");
+            return null; //invalid
+        }
+        else
+        {
+            return result.Value;
+        }
+
+    }
+
     private async Task<int> GetOuGroupId(string regionName)
     {
         var result = await this.GetAsync<IEnumerable<OrgUnitModel?>>($"api/v1/org-units/1/groups");
@@ -572,6 +717,9 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         else
         {
             var groupId = await this.GetOuGroupId(groupName!);
+
+            // see if user already in group
+
 
             var result = await this.PostAsync($"api/v1/org-units/1/groups/{groupId}/users", new AddUserToOuGroup() { UserIdOrKey = userId });
 

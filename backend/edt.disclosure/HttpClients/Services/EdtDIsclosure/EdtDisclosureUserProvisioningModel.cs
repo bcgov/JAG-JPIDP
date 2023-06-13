@@ -1,4 +1,4 @@
-namespace edt.disclosure.HttpClients.Services.EdtDIsclosure;
+namespace edt.disclosure.HttpClients.Services.EdtDisclosure;
 
 
 using System.Text.Json;

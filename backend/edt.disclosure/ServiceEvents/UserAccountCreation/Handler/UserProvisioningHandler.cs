@@ -3,7 +3,6 @@ namespace edt.disclosure.ServiceEvents.UserAccountCreation.Handler;
 using System.Diagnostics;
 using edt.disclosure.Data;
 using edt.disclosure.HttpClients.Services.EdtDisclosure;
-using edt.disclosure.HttpClients.Services.EdtDIsclosure;
 using edt.disclosure.Kafka.Interfaces;
 using edt.disclosure.Kafka.Model;
 using edt.disclosure.ServiceEvents.UserAccountCreation.Models;
@@ -46,6 +45,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
 
         // check this message is for us
 
+
         if (accessRequestModel.SystemName != null && !(accessRequestModel.SystemName.Equals("DigitalEvidenceDisclosure", StringComparison.Ordinal)))
         {
             Serilog.Log.Logger.Information($"Ignoring message {key} for system {accessRequestModel.SystemName} as we only handle DigitalEvidenceDisclosure requests");
@@ -72,7 +72,6 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
             ///
             var edtVersion = await this.CheckEdtServiceVersion();
 
-      
 
             //check whether edt user already exist
             var result = await this.AddOrUpdateUser(accessRequestModel);
@@ -84,8 +83,6 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
                 await this.context.IdempotentConsumer(messageId: key, consumer: consumerName, consumeDate: clock.GetCurrentInstant());
 
                 await this.context.SaveChangesAsync();
-
-
 
                 try
                 {
@@ -103,7 +100,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
 
                     await this.producer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopic, key: key, new Notification
                     {
-                        DomainEvent = "digitalevidencedisclosure-defence-usercreation-complete",
+                        DomainEvent = (result.eventType == UserModificationEvent.UserEvent.Create) ? "digitalevidencedisclosure-defence-usercreation-complete" : "digitalevidencedisclosure-defence-usermodification-complete",
                         To = accessRequestModel.Email,
                         EventData = eventData,
                     });
