@@ -2,7 +2,7 @@ namespace edt.disclosure.Kafka;
 
 using System.Net;
 using Confluent.Kafka;
-using edt.disclosure.HttpClients.Services.EdtDIsclosure;
+using edt.disclosure.HttpClients.Services.EdtDisclosure;
 using edt.disclosure.Kafka.Interfaces;
 using edt.disclosure.ServiceEvents;
 using edt.disclosure.ServiceEvents.CourtLocation;
