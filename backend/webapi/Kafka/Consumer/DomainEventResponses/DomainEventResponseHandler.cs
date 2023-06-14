@@ -7,6 +7,7 @@ using Pidp.Data;
 using Pidp.Infrastructure.HttpClients.Jum;
 using Pidp.Kafka.Interfaces;
 using Pidp.Models;
+using Pidp.Models.Lookups;
 using Prometheus;
 
 public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessStatusResponse>
@@ -15,8 +16,12 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
     private readonly JumClient jumClient;
     private readonly PidpConfiguration configuration;
     private readonly IKafkaProducer<string, Notification> producer;
-    private static readonly Histogram AccessCompletionHistogram = Metrics
-    .CreateHistogram("account_finalization_histogram", "Histogram of account finalizations.");
+    private static readonly Histogram JUSTINAccessCompletionHistogram
+        = Metrics
+    .CreateHistogram("justin_account_finalization_histogram", "Histogram of account finalizations within JUSTIN.");
+    private static readonly Histogram AccessCompletionHistogram
+      = Metrics
+  .CreateHistogram("account_provision_histogram", "Histogram of account provisions roundtrips.");
 
     public DomainEventResponseHandler(PidpDbContext context, JumClient jumClient, PidpConfiguration configuration, IKafkaProducer<string, Notification> producer
 )
@@ -33,7 +38,16 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
 
         switch (value.DomainEvent)
         {
+            case "digitalevidencedisclosure-defence-usercreation-complete":
+            case "digitalevidencedisclosure-defence-usercreation-error":
+            {
+                Serilog.Log.Information($"Handling {value.DomainEvent} for disclosure access request {value.Id}");
+                await this.MarkDisclosureFullyProvisioned(value);
+                break;
+            }
             case "digitalevidence-bcps-edt-userupdate-complete":
+            case "digitalevidence-bcps-edt-userupdate-error":
+
             {
                 Serilog.Log.Information($"Handling {value.DomainEvent} for JustinUserChange {value.Id}");
                 // todo - this could move to a generic service
@@ -41,6 +55,8 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
                 break;
             }
             case "digitalevidence-bcps-usercreation-accountfinalized":
+            case "digitalevidence-bcps-usercreation-accountfinalized-error":
+
             {
                 Serilog.Log.Information($"Handling {value.DomainEvent} for account fully provisioned {value.Id}");
                 // todo - this could move to a generic service
@@ -55,6 +71,52 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
         }
 
         return Task.CompletedTask;
+
+    }
+
+    private async Task MarkDisclosureFullyProvisioned(GenericProcessStatusResponse processResponse)
+    {
+        var accessRequest = this.context.AccessRequests.Include(req => req.Party).Where(req => req.Id == processResponse.Id).FirstOrDefault();
+        if (accessRequest != null)
+        {
+
+            if (processResponse.Status == "Complete")
+            {
+                accessRequest.Status = "Completed";
+            }
+            else
+            {
+                accessRequest.Status = processResponse.Status;
+                accessRequest.Details = string.Join(",", processResponse.ErrorList);
+            }
+
+            var updated = await this.context.SaveChangesAsync();
+            if (updated > 0)
+            {
+                // send a notification to the user that the account is complete/errored
+                var messageKey = Guid.NewGuid().ToString();
+                var duration = accessRequest.Modified - processResponse.EventTime;
+                AccessCompletionHistogram.Observe(duration.TotalMilliseconds);
+                Serilog.Log.Information($"Access request {processResponse.Id} flagged as {processResponse.Status} - sending notification message {messageKey}");
+                var eventData = new Dictionary<string, string>
+                    {
+                        { "FirstName", accessRequest.Party!.FirstName },
+                        { "PartyId", "" + accessRequest.Id },
+                        { "Duration (s)","" + duration.TotalSeconds }
+                    };
+
+                var published = await this.producer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopicName, messageKey, new Notification
+                {
+                    DomainEvent = processResponse.DomainEvent,
+                    To = accessRequest.Party!.Email,
+                    EventData = eventData
+                });
+
+                Serilog.Log.Information($"Publish response for {messageKey} is {published.Status}");
+
+            }
+
+        }
 
     }
 
@@ -101,7 +163,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
             Serilog.Log.Error($"Duration {duration.TotalMinutes} for JUSTIN to fully provision account for request {accessRequest.Id}");
 
 
-            AccessCompletionHistogram.Observe(duration.Minutes);
+            JUSTINAccessCompletionHistogram.Observe(duration.Minutes);
 
             accessRequest.Modified = value.EventTime;
             if (value.ErrorList != null && value.ErrorList.Count > 0)
@@ -123,7 +185,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
                     {
                         { "FirstName", accessRequest.Party!.FirstName },
                         { "PartyId", "" + accessRequest.Id },
-                        { "Duration","" + duration.TotalMinutes }
+                        { "Duration (m)","" + duration.TotalMinutes }
                     };
 
                 var published = await this.producer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopicName, messageKey, new Notification
