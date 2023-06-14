@@ -5,6 +5,7 @@ using edt.disclosure.Data;
 using edt.disclosure.HttpClients.Services.EdtDisclosure;
 using edt.disclosure.Kafka.Interfaces;
 using edt.disclosure.Kafka.Model;
+using edt.disclosure.Models;
 using edt.disclosure.ServiceEvents.UserAccountCreation.Models;
 using Microsoft.Extensions.Logging;
 using NodaTime;
@@ -19,6 +20,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
     private readonly ILogger logger;
     private readonly DisclosureDataStoreDbContext context;
     private readonly IKafkaProducer<string, Notification> producer;
+    private readonly IKafkaProducer<string, GenericProcessStatusResponse> processResponseProducer;
 
 
     public UserProvisioningHandler(
@@ -26,8 +28,8 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
         IEdtDisclosureClient edtClient,
         IClock clock,
         ILogger logger,
-            IKafkaProducer<string, Notification> producer,
-
+        IKafkaProducer<string, Notification> producer,
+        IKafkaProducer<string, GenericProcessStatusResponse> processResponseProducer,
         DisclosureDataStoreDbContext context)
     {
 
@@ -37,6 +39,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
         this.logger = logger;
         this.edtClient = edtClient;
         this.producer = producer;
+        this.processResponseProducer = processResponseProducer;
 
     }
 
@@ -98,11 +101,14 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
                          };
 
 
-                    await this.producer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopic, key: key, new Notification
+                    // send a response that the process is complete
+                    var sentStatus = this.processResponseProducer.ProduceAsync(this.configuration.KafkaCluster.ProcessResponseTopic, Guid.NewGuid().ToString(), new GenericProcessStatusResponse
                     {
-                        DomainEvent = (result.eventType == UserModificationEvent.UserEvent.Create) ? "digitalevidencedisclosure-defence-usercreation-complete" : "digitalevidencedisclosure-defence-usermodification-complete",
-                        To = accessRequestModel.Email,
-                        EventData = eventData,
+                        DomainEvent = (result.eventType == UserModificationEvent.UserEvent.Create) ? "digitalevidencedisclosure-defence-usercreation-complete" : "digitalevidencedisclosure-defence-usercreation-complete",
+                        Id = accessRequestModel.AccessRequestId,
+                        EventTime = SystemClock.Instance.GetCurrentInstant(),
+                        Status = "Complete",
+                        TraceId = key
                     });
 
                     await trx.CommitAsync();
@@ -114,6 +120,20 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
                     Serilog.Log.Logger.Error($"Failed to publish to user notification topic - rolling back transaction [{string.Join(",", ex.Message)}");
                     await trx.RollbackAsync();
                 }
+            }
+            else
+            {
+                // send error response
+                var sentStatus = this.processResponseProducer.ProduceAsync(this.configuration.KafkaCluster.ProcessResponseTopic, Guid.NewGuid().ToString(), new GenericProcessStatusResponse
+                {
+                    DomainEvent = (result.eventType == UserModificationEvent.UserEvent.Create) ? "digitalevidencedisclosure-defence-usercreation-error" : "digitalevidencedisclosure-defence-usermodification-error",
+                    Id = accessRequestModel.AccessRequestId,
+                    EventTime = SystemClock.Instance.GetCurrentInstant(),
+                    ErrorList = result.Errors,
+                    Status = "Error",
+                    TraceId = key
+                });
+
             }
 
 

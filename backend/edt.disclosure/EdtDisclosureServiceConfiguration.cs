@@ -44,6 +44,7 @@ public class EdtDisclosureServiceConfiguration
     {
         public string ApiKey { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
+        public string CaseGroup { get; set; } = "Counsel";
     }
     public class CustomDisplayField
     {
@@ -91,6 +92,7 @@ public class EdtDisclosureServiceConfiguration
         public string CreateUserTopic { get; set; } = string.Empty;
         public string AckTopicName { get; set; } = string.Empty;
         public string NotificationTopic { get; set; } = string.Empty;
+        public string ProcessResponseTopic { get; set; } = string.Empty;
 
         public string SaslOauthbearerProducerClientId { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientSecret { get; set; } = string.Empty;
