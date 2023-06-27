@@ -1,5 +1,7 @@
 import { InjectionToken } from '@angular/core';
 
+import '@bcgov/bc-sans/css/BCSans.css';
+
 import { environment } from '../environments/environment';
 import { AppEnvironment } from '../environments/environment.model';
 import { AdminRoutes } from './features/admin/admin.routes';

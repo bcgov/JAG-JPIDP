@@ -50,6 +50,7 @@ public class CourtAccessService : ICourtAccessService
                     PartyId = request.PartyId,
                     RequestedOn = request.RequestedOn,
                     UserId = accessRequestRecord.Party!.UserId,
+                    Username = accessRequestRecord.Party.Jpdid,
                     EventType = eventType,
                     RequestId = request.RequestId,
                     ValidFrom = request.ValidFrom,

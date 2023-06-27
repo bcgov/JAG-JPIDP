@@ -17,6 +17,7 @@ import { TrainingGroup } from '../state/training/training-group.model';
  */
 export interface ProfileStatus {
   alerts: AlertCode[];
+  order: number;
   status: ProfileGroup &
     AccessGroup &
     OrganizationGroup &

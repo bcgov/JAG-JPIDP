@@ -28,13 +28,13 @@
       <div class="col-12 col-xl-auto">
         <div class="header">
           <div class="heading">
-            <img src="/assets/images/pidp-logo-blue-small.svg" alt="Provider Identity Portal Logo" />
-            <h1>Provider Identity Portal</h1>
+            <img src="/assets/images/diam-logo.svg" alt="Digital Identity Access Management Portal Logo" />
+            <h1>Digital Identity<br /> Access Management</h1>
           </div>
 
-          <p>
-            A portal for approved individuals to enroll for access to provided systems.
-          </p>
+          <h3>
+            Verify yourself and gain access to many applications.
+          </h3>
         </div>
 
         <div class="hide-on-large-viewports">
@@ -47,9 +47,7 @@
           </button>
         </div> -->
 
-        <div class="support">
-          <app-get-support></app-get-support>
-        </div>
+
 
         <div class="systems">
           <ui-page-section>
@@ -89,27 +87,35 @@
             </ui-page-section>
           </ui-page-section>
         </div>
+        <div class="support">
+          <app-get-support></app-get-support>
+        </div>
       </div>
+
       <div class="col-12 col-xl-auto hide-on-small-viewports">
         <ng-container *ngTemplateOutlet="login"></ng-container>
       </div>
     </div>
+
   </ng-container>
 
   <ng-template #login>
     <div class="actions">
-      <div>Login using:</div>
+      <div>Login through our trusted "partners"</div>
       <div>
+        <small class="left">Members of the public</small>
         <button mat-stroked-button (click)="onLogin(IdentityProvider.OIDC)">
           Login with BC Services Card
         </button>
-        <small>
+        <small class="center">
           Need an account?
           <a uiAnchor [attr.href]="bcscMobileSetupUrl">Set up</a>
         </small>
+        <div class="divider"></div>
+        <small>Agencies and Government members</small>
 
         <button mat-stroked-button (click)="onLogin(IdentityProvider.ADFS)">
-          BCPS User
+          Ministries
         </button>
 
         <button mat-stroked-button (click)="onLogin(IdentityProvider.VERIFIED_CREDENTIALS)">

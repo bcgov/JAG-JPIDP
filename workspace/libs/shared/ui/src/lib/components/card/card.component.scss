@@ -1,0 +1,13 @@
+@import 'palette';
+
+.success {
+  border-color: theme-palette(green);
+}
+
+.info {
+  border-color: #00849b;
+}
+
+.warn {
+  border-color: #fcba19;
+}

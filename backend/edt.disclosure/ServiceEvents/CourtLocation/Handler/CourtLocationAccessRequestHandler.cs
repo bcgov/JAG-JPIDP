@@ -5,8 +5,10 @@ using edt.disclosure.Exceptions;
 using edt.disclosure.HttpClients.Keycloak;
 using edt.disclosure.HttpClients.Services.EdtDisclosure;
 using edt.disclosure.Kafka.Interfaces;
+using edt.disclosure.Models;
 using edt.disclosure.ServiceEvents.CourtLocation.Models;
 using edt.disclosure.ServiceEvents.Models;
+using NodaTime;
 using Prometheus;
 
 
@@ -20,14 +22,14 @@ public class CourtLocationAccessRequestHandler : IKafkaHandler<string, CourtLoca
     private readonly IEdtDisclosureClient edtClient;
     private readonly ILogger logger;
     private readonly IKeycloakAdministrationClient keycloakAdministrationClient;
-    private readonly IKafkaProducer<string, NotificationAckModel> producer;
+    private readonly IKafkaProducer<string, GenericProcessStatusResponse> producer;
     private readonly DisclosureDataStoreDbContext context;
     private static readonly Histogram CourtLocationRequestDuration = Metrics.CreateHistogram("court_location_request_duration", "Histogram of court location request call durations.");
 
     public CourtLocationAccessRequestHandler(
     EdtDisclosureServiceConfiguration configuration,
     IKeycloakAdministrationClient keycloakAdministrationClient,
-    IKafkaProducer<string, NotificationAckModel> producer,
+    IKafkaProducer<string, GenericProcessStatusResponse> producer,
     DisclosureDataStoreDbContext context,
 
     IEdtDisclosureClient edtClient,
@@ -53,6 +55,32 @@ public class CourtLocationAccessRequestHandler : IKafkaHandler<string, CourtLoca
             var uniqueKey = Guid.NewGuid().ToString();
 
             var result = await this.edtClient.HandleCourtLocationRequest(uniqueKey, courtLocationEvent);
+            var processResponseKey = Guid.NewGuid().ToString();
+
+            Serilog.Log.Information($"Publishing court location response for {courtLocationEvent.RequestId} {courtLocationEvent.Username} result: {result}");
+
+            if (result.IsCompletedSuccessfully)
+            {
+                var produced = this.producer.ProduceAsync(this.configuration.KafkaCluster.ProcessResponseTopic, processResponseKey, new GenericProcessStatusResponse
+                {
+                    DomainEvent = courtLocationEvent.EventType == "court-location-provision" ? "digitalevidence-court-location-provision-complete" : "digitalevidence-court-location-decommission-complete",
+                    PartId = courtLocationEvent.Username,
+                    Id = courtLocationEvent.RequestId,
+                    Status = "Complete",
+                    EventTime = SystemClock.Instance.GetCurrentInstant()
+                });
+            }
+            else
+            {
+                var produced = this.producer.ProduceAsync(this.configuration.KafkaCluster.ProcessResponseTopic, processResponseKey, new GenericProcessStatusResponse
+                {
+                    DomainEvent = courtLocationEvent.EventType == "court-location-provision" ? "digitalevidence-court-location-provision-error" : "digitalevidence-court-location-decommission-error",
+                    PartId = courtLocationEvent.Username,
+                    Id = courtLocationEvent.RequestId,
+                    Status = "Error",
+                    EventTime = SystemClock.Instance.GetCurrentInstant()
+                });
+            }
 
             return Task.CompletedTask;
         }

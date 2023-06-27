@@ -4,6 +4,7 @@ import { ActivatedRoute, Data, Event, Scroll } from '@angular/router';
 
 import { Observable, delay, map, mergeMap } from 'rxjs';
 
+import '@bcgov/bc-sans/css/BCSans.css';
 import { contentContainerSelector } from '@bcgov/shared/ui';
 
 import { RouteStateService } from '@core/services/route-state.service';

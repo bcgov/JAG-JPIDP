@@ -7,24 +7,31 @@ import { AlertType } from '@bcgov/shared/ui';
 import { AccessRoutes } from '@app/features/access/access.routes';
 import { ShellRoutes } from '@app/features/shell/shell.routes';
 
+import { BasePortalSection } from '../../base-portal-section';
 import { StatusCode } from '../../enums/status-code.enum';
 import { ProfileStatus } from '../../models/profile-status.model';
 import { PortalSectionAction } from '../portal-section-action.model';
 import { PortalSectionKey } from '../portal-section-key.type';
 import { IPortalSection } from '../portal-section.model';
 
-export class DigitalEvidencePortalSection implements IPortalSection {
+export class DigitalEvidencePortalSection
+  extends BasePortalSection
+  implements IPortalSection
+{
   public readonly key: PortalSectionKey;
   public heading: string;
   public description: string;
+  public order: number;
 
   public constructor(
     private profileStatus: ProfileStatus,
     private router: Router
   ) {
+    super();
     this.key = 'digitalEvidence';
     this.heading = 'Digital Evidence and Disclosure Management System';
     this.description = this.getDescription();
+    this.order = this.GetOrder(this.profileStatus.status.digitalEvidence);
   }
 
   public get hint(): string {
