@@ -6,6 +6,7 @@ using NodaTime;
 using Pidp.Models;
 using Pidp.Models.Lookups;
 using Pidp.Models.OutBoxEvent;
+using Pidp.Models.ProcessFlow;
 
 public class PidpDbContext : DbContext
 {
@@ -44,6 +45,8 @@ public class PidpDbContext : DbContext
     public DbSet<SubmittingAgency> SubmittingAgencies { get; set; } = default!;
 
     public DbSet<UserAccountChange> UserAccountChanges { get; set; } = default!;
+    public DbSet<ProcessFlow> ProcessFlows { get; set; } = default!;
+    public DbSet<DomainEventProcessStatus> DomainEventProcessStatus { get; set; } = default!;
 
     public override int SaveChanges()
     {
@@ -73,18 +76,21 @@ public class PidpDbContext : DbContext
 
         modelBuilder.Entity<ExportedEvent>()
             .ToTable("OutBoxedExportedEvent");
-        //.HasKey(x => new { x.EventId, x.AggregateId });
 
-        //#region Seed Court Locations
-        //var locations = new CourtLocation.CourtLocationDataGenerator().Generate();
-        //foreach (var location in locations)
-        //{
-        //    Serilog.Log.Information($"Adding {location.Name} [{location.Code}]");
-        //    modelBuilder.Entity<CourtLocation>().HasData(location);
-        //}
-        //#endregion
 
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(PidpDbContext).Assembly);
+    
+    //.HasKey(x => new { x.EventId, x.AggregateId });
+
+    //#region Seed Court Locations
+    //var locations = new CourtLocation.CourtLocationDataGenerator().Generate();
+    //foreach (var location in locations)
+    //{
+    //    Serilog.Log.Information($"Adding {location.Name} [{location.Code}]");
+    //    modelBuilder.Entity<CourtLocation>().HasData(location);
+    //}
+    //#endregion
+
+    modelBuilder.ApplyConfigurationsFromAssembly(typeof(PidpDbContext).Assembly);
     }
 
     public async Task IdempotentConsumer(string messageId, string consumer)

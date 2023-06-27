@@ -23,9 +23,6 @@ public partial class ProfileStatus
 
     public partial class Model
     {
-
-   
-
         public class AccessAdministrator : ProfileSection
         {
             internal override string SectionName => "administratorInfo";

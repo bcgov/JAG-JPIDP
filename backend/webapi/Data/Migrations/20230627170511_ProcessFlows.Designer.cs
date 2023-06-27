@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NodaTime;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -14,9 +15,10 @@ using Pidp.Models;
 namespace Pidp.Data.Migrations
 {
     [DbContext(typeof(PidpDbContext))]
-    partial class PidpDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230627170511_ProcessFlows")]
+    partial class ProcessFlows
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -3470,8 +3472,8 @@ namespace Pidp.Data.Migrations
                     b.Property<int?>("ProcessSectionId")
                         .HasColumnType("integer");
 
-                    b.Property<decimal>("Sequence")
-                        .HasColumnType("numeric(3,2)");
+                    b.Property<int>("Sequence")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -3533,78 +3535,6 @@ namespace Pidp.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ProcessSection");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = -1,
-                            Created = NodaTime.Instant.FromUnixTimeTicks(0L),
-                            Modified = NodaTime.Instant.FromUnixTimeTicks(0L),
-                            Name = "organizationDetails"
-                        },
-                        new
-                        {
-                            Id = -2,
-                            Created = NodaTime.Instant.FromUnixTimeTicks(0L),
-                            Modified = NodaTime.Instant.FromUnixTimeTicks(0L),
-                            Name = "demographics"
-                        },
-                        new
-                        {
-                            Id = -3,
-                            Created = NodaTime.Instant.FromUnixTimeTicks(0L),
-                            Modified = NodaTime.Instant.FromUnixTimeTicks(0L),
-                            Name = "driverFitness"
-                        },
-                        new
-                        {
-                            Id = -4,
-                            Created = NodaTime.Instant.FromUnixTimeTicks(0L),
-                            Modified = NodaTime.Instant.FromUnixTimeTicks(0L),
-                            Name = "digitalEvidence"
-                        },
-                        new
-                        {
-                            Id = -5,
-                            Created = NodaTime.Instant.FromUnixTimeTicks(0L),
-                            Modified = NodaTime.Instant.FromUnixTimeTicks(0L),
-                            Name = "digitalEvidenceCaseManagement"
-                        },
-                        new
-                        {
-                            Id = -6,
-                            Created = NodaTime.Instant.FromUnixTimeTicks(0L),
-                            Modified = NodaTime.Instant.FromUnixTimeTicks(0L),
-                            Name = "digitalEvidenceCounsel"
-                        },
-                        new
-                        {
-                            Id = -7,
-                            Created = NodaTime.Instant.FromUnixTimeTicks(0L),
-                            Modified = NodaTime.Instant.FromUnixTimeTicks(0L),
-                            Name = "submittingAgencyCaseManagement"
-                        },
-                        new
-                        {
-                            Id = -8,
-                            Created = NodaTime.Instant.FromUnixTimeTicks(0L),
-                            Modified = NodaTime.Instant.FromUnixTimeTicks(0L),
-                            Name = "uci"
-                        },
-                        new
-                        {
-                            Id = -9,
-                            Created = NodaTime.Instant.FromUnixTimeTicks(0L),
-                            Modified = NodaTime.Instant.FromUnixTimeTicks(0L),
-                            Name = "administratorInfo"
-                        },
-                        new
-                        {
-                            Id = -10,
-                            Created = NodaTime.Instant.FromUnixTimeTicks(0L),
-                            Modified = NodaTime.Instant.FromUnixTimeTicks(0L),
-                            Name = "admin"
-                        });
                 });
 
             modelBuilder.Entity("Pidp.Models.SubmittingAgencyRequest", b =>

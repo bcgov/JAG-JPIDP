@@ -1,13 +1,11 @@
 namespace Pidp.Kafka.Consumer.Responses;
 
 using System;
-using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Pidp.Data;
 using Pidp.Infrastructure.HttpClients.Jum;
 using Pidp.Kafka.Interfaces;
 using Pidp.Models;
-using Pidp.Models.Lookups;
 using Prometheus;
 
 public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessStatusResponse>
@@ -36,6 +34,9 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
     {
         Serilog.Log.Information($"Process response received {key} for {value.Id} {value.DomainEvent}");
 
+        // ideally there'd be a single process response service that can handle all processing responses
+        // and these would be in a separate Db for tracking processes.
+
         switch (value.DomainEvent)
         {
             case "digitalevidencedisclosure-defence-usercreation-complete":
@@ -47,10 +48,9 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
             }
             case "digitalevidence-bcps-edt-userupdate-complete":
             case "digitalevidence-bcps-edt-userupdate-error":
-
             {
                 Serilog.Log.Information($"Handling {value.DomainEvent} for JustinUserChange {value.Id}");
-                // todo - this could move to a generic service
+                // todo - this should move to a generic service
                 await this.UpdateUserChangeStatus(value);
                 break;
             }
@@ -59,8 +59,19 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
 
             {
                 Serilog.Log.Information($"Handling {value.DomainEvent} for account fully provisioned {value.Id}");
-                // todo - this could move to a generic service
+                // todo - this should move to a generic service
                 await this.MarkAccountFullyProvisioned(value);
+                break;
+            }
+            case "digitalevidence-court-location-provision-complete":
+            case "digitalevidence-court-location-provision-error":
+            case "digitalevidence-court-location-decommission-complete":
+            case "digitalevidence-court-location-decommission-error":
+
+            {
+                Serilog.Log.Information($"Handling {value.DomainEvent} for Court Location Request {value.Id}");
+                // todo - this could move to a generic service
+                await this.MarkCourtLocationProcessResponse(value);
                 break;
             }
             default:
@@ -71,6 +82,11 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
         }
 
         return Task.CompletedTask;
+
+    }
+
+    private async Task MarkCourtLocationProcessResponse(GenericProcessStatusResponse processResponse)
+    {
 
     }
 

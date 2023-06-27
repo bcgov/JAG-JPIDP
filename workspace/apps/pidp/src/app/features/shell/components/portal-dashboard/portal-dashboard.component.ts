@@ -27,6 +27,7 @@ import { Role } from '@app/shared/enums/roles.enum';
 export class PortalDashboardComponent implements IDashboard {
   public logoutRedirectUrl: string;
   public username: Observable<string>;
+  public email: Observable<string>;
   public headerConfig: DashboardHeaderConfig;
   public brandConfig: { imgSrc: string; imgAlt: string };
   public showMenuItemIcons: boolean;
@@ -43,10 +44,15 @@ export class PortalDashboardComponent implements IDashboard {
     this.username = accessTokenService
       .decodeToken()
       .pipe(map((token) => token?.name ?? ''));
-    this.headerConfig = { theme: 'light', allowMobileToggle: true };
+
+    this.email = accessTokenService
+      .decodeToken()
+      .pipe(map((token) => token?.preferred_username ?? ''));
+
+    this.headerConfig = { theme: 'dark', allowMobileToggle: true };
     this.brandConfig = {
-      imgSrc: '/assets/images/pidp-logo-white.svg',
-      imgAlt: 'Provider Identity Portal Logo',
+      imgSrc: '/assets/images/diam-logo-small.svg',
+      imgAlt: 'DIAM Portal Logo',
     };
     this.showMenuItemIcons = true;
     this.responsiveMenuItems = false;

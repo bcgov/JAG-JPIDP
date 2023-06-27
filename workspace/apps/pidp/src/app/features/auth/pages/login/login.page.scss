@@ -57,7 +57,7 @@
 .header {
   .heading {
     display: flex;
-    align-items: flex-end;
+    align-items: flex-start;
     margin-bottom: 1.5rem;
 
     img {
@@ -67,13 +67,12 @@
     @media (min-width: 645px) {
       img {
         display: block;
-        width: 135px;
-        height: auto;
+        height: 88px;
       }
 
       h1 {
         // Alignment of text with image
-        margin-top: 0.5rem;
+        margin-top: 0;
         margin-left: 1.5rem;
         margin-bottom: 0;
       }
@@ -91,6 +90,10 @@
       width: 600px;
     }
   }
+}
+
+.divider {
+  border-bottom: 1px white solid;
 }
 
 .scroll {
@@ -137,7 +140,6 @@
 
     margin-top: 0.2rem;
     margin-bottom: 0.5rem;
-    padding-left: 1rem;
     display: block;
   }
 
@@ -145,6 +147,10 @@
     max-width: 550px;
     padding-left: 3rem;
   }
+}
+
+.center {
+  text-align: center;
 }
 
 .systems {

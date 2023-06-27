@@ -84,11 +84,40 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
     public async Task<Task> HandleCourtLocationRequest(string key, CourtLocationDomainEvent accessRequest)
     {
-        Log.Debug($"handling court access request {accessRequest.RequestId}");
+        Log.Information($"Handling court access request {accessRequest.RequestId}");
 
         // check user is present
+        var user = await this.GetUser(accessRequest.Username);
 
+        if ( user == null)
+        {
+            throw new EdtDisclosureServiceException($"User [{accessRequest.Username}] not present to assign cases");
+        }
         // get the id of the case
+
+        Log.Information("USING DUMMY COURT LOCATION Victoria Courthouse - Test");
+        var courtLocation = await FindLocationCase("CH-VIC");
+
+        if (courtLocation == null)
+        {
+            throw new EdtDisclosureServiceException($"Unable to determine court location with name {accessRequest.CourtLocation}");
+        }
+        else
+        {
+            Log.Information($"Adding user {user.Id} to court location {courtLocation.Id}");
+            var addedOk = await this.AddUserToCase(user.Id, courtLocation.Id, "Reviewers");
+            if (addedOk)
+            {
+                Log.Information($"Added user {user.Id} to court location {courtLocation.Id}");
+            }
+            else
+            {
+                Log.Error($"Failed to add user {user.Id} to court location {courtLocation.Id}");
+
+            }
+
+        }
+
 
 
         return Task.CompletedTask;
@@ -310,7 +339,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         }
 
         Log.Logger.Information($"Adding user {currentUser.Id} to folio case {accessRequest.FolioId}");
-        var addedToCase = await this.AddUserToCase(currentUser.Id, folioCase.Id);
+        var addedToCase = await this.AddUserToCase(currentUser.Id, folioCase.Id, "Case Manager");
 
 
         if (!addedToCase)
@@ -374,7 +403,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         }
     }
 
-    private async Task<bool> AddUserToCase(string userKey, int caseId)
+    private async Task<bool> AddUserToCase(string userKey, int caseId, string caseGroupName)
     {
 
         // check if user already on case
@@ -387,9 +416,10 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         {
             Log.Information("Successfully added user {0} to case {1}", userKey, caseId);
 
-            var caseGroupId = await this.GetCaseGroupId(caseId, CounselGroup);
+            var caseGroupId = await this.GetCaseGroupId(caseId, caseGroupName);
 
-            if (caseGroupId > 0)
+            // case group Ids are zero-based
+            if (caseGroupId > -1)
             {
                 // see if the user is already in the user/case/group combination
                 var userCaseGroups = await this.GetUserCaseGroups(userKey, caseId);
@@ -406,8 +436,9 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
                     var addUserToCaseGroup = await this.AddUserToCaseGroup(userKey, caseId, caseGroupId);
                     if (!addUserToCaseGroup)
                     {
-                        Log.Error($"Failed to add user {userKey} to case group {CounselGroup} not assigned to case {caseId}");
-                        throw new EdtDisclosureServiceException($"Failed to add user {userKey} to case group {CounselGroup} not assigned to case {caseId}");
+                        Log.Error($"Failed to add user {userKey} to case group {caseGroupName} not assigned to case {caseId}");
+                        Log.Warning("************ NEED TO DETERMINE CASE GROUP ACCESS ************************");
+                       // throw new EdtDisclosureServiceException($"Failed to add user {userKey} to case group {CounselGroup} not assigned to case {caseId}");
                     }
                     else
                     {
@@ -417,7 +448,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             }
             else
             {
-                Log.Error($"{CounselGroup} not assigned to case {caseId}");
+                Log.Error($"{caseGroupName} not assigned to case {caseId}");
                 throw new EdtDisclosureServiceException($"{CounselGroup} not assigned to case {caseId}");
             }
         }

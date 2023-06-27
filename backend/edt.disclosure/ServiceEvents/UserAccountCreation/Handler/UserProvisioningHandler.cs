@@ -104,7 +104,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
                     // send a response that the process is complete
                     var sentStatus = this.processResponseProducer.ProduceAsync(this.configuration.KafkaCluster.ProcessResponseTopic, Guid.NewGuid().ToString(), new GenericProcessStatusResponse
                     {
-                        DomainEvent = (result.eventType == UserModificationEvent.UserEvent.Create) ? "digitalevidencedisclosure-defence-usercreation-complete" : "digitalevidencedisclosure-defence-usercreation-complete",
+                        DomainEvent = (result.eventType == UserModificationEvent.UserEvent.Create) ? "digitalevidencedisclosure-defence-usercreation-complete" : "digitalevidencedisclosure-defence-usermodification-complete",
                         Id = accessRequestModel.AccessRequestId,
                         EventTime = SystemClock.Instance.GetCurrentInstant(),
                         Status = "Complete",

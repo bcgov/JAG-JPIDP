@@ -87,7 +87,6 @@ export class PortalService {
     this._profileStatus = profileStatus;
     this._alerts = this.getAlerts(profileStatus);
     this._completedProfile = this.hasCompletedProfile(profileStatus);
-
     const builder = new PortalStateBuilder(
       this.router,
       this.permissionsService

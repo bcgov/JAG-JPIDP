@@ -19,9 +19,7 @@ using Pidp.Infrastructure.HttpClients.Jum;
 using Pidp.Models;
 using static Pidp.Features.Parties.ProfileStatus.ProfileStatusDto;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Identity;
 using System.Globalization;
-using System.Runtime.InteropServices;
 using Prometheus;
 
 public partial class ProfileStatus
@@ -53,6 +51,7 @@ public partial class ProfileStatus
             internal abstract string SectionName { get; }
             public HashSet<Alert> Alerts { get; set; } = new();
             public StatusCode StatusCode { get; set; }
+            public double Order { get; set; }
 
             public bool IsComplete => this.StatusCode is StatusCode.Complete or StatusCode.Locked_Complete;
 
@@ -132,6 +131,8 @@ public partial class ProfileStatus
                     .FirstOrDefaultAsync()
                     : null;
 
+
+
                 var orgJusticeSecDetail = profile.OrganizationCode == OrganizationCode.JusticeSector
                     ? await this.context.JusticeSectorDetails
                     .Include(jus => jus.JusticeSector)
@@ -189,6 +190,7 @@ public partial class ProfileStatus
                         }
                     }
                 }
+
 
                 // if an agency account then we'll mark as complete to prevent any changes
                 var submittingAgency = await this.GetSubmittingAgency(command.User);
@@ -252,10 +254,40 @@ public partial class ProfileStatus
                     .ToDictionary(section => section.SectionName, section => section)
                 };
 
+                // handle ordering
+                this.OrderProfile(command.User, profileStatus);
+
                 return profileStatus;
             }
 
         }
+
+        private void OrderProfile(ClaimsPrincipal user, Model profileStatus)
+        {
+
+            var identityProvider = user.GetIdentityProvider();
+
+            var processFlows = this.context.ProcessFlows.Include(flow => flow.ProcessSection).Where(flow => flow.IdentityProvider == identityProvider).OrderBy(flow => flow.Sequence).ToList();
+
+            var order = 0.0;
+            foreach (var status in profileStatus.Status)
+            {
+                var flow = processFlows.Find(flow => flow.ProcessSection.Name.Equals(status.Value.SectionName, StringComparison.OrdinalIgnoreCase));
+                if (flow != null)
+                {
+                    status.Value.Order = flow.Sequence;
+                    if ( status.Value.Order > order)
+                    {
+                        order = status.Value.Order;
+                    }
+                }
+                else
+                {
+                    status.Value.Order = ++order;
+                }
+            }
+        }
+
         private async Task<string?> RecheckCpn(int partyId, LicenceDeclarationDto declaration, LocalDate? birthdate)
         {
             if (declaration.HasNoLicence
@@ -279,7 +311,7 @@ public partial class ProfileStatus
         private async Task<SubmittingAgency> GetSubmittingAgency(ClaimsPrincipal user)
         {
             // create an instance of the Query class
-            var query = new Pidp.Features.Lookups.Index.Query();
+            var query = new Lookups.Index.Query();
 
             // create an instance of the QueryHandler class
             var handler = new Pidp.Features.Lookups.Index.QueryHandler(context);
@@ -319,6 +351,7 @@ public partial class ProfileStatus
         public string? LicenceNumber { get; set; }
         public string? Ipc { get; set; }
         public int? OrgDetailId { get; set; }
+        public double Order { get; set; }
         public OrganizationCode? OrganizationCode { get; set; }
         public Organization? Organization { get; set; }
         public CorrectionServiceCode? CorrectionServiceCode { get; set; }

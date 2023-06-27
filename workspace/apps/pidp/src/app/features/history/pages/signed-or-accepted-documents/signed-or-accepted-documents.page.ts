@@ -88,8 +88,8 @@ export class SignedOrAcceptedDocumentsPage implements OnInit {
         status.userAccessAgreement = this.permissionsService.hasRole([
           Role.FEATURE_PIDP_DEMO,
         ])
-          ? { statusCode: StatusCode.COMPLETED }
-          : { statusCode: StatusCode.NOT_AVAILABLE };
+          ? { statusCode: StatusCode.COMPLETED, order: 0 }
+          : { statusCode: StatusCode.NOT_AVAILABLE, order: 0 };
 
         return (
           document.type === DocumentType.PIDP_COLLECTION_NOTICE ||

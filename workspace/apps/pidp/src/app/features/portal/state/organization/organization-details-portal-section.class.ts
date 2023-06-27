@@ -7,6 +7,7 @@ import { AlertType } from '@bcgov/shared/ui';
 import { OrganizationInfoRoutes } from '@app/features/organization-info/organization-info.routes';
 import { ShellRoutes } from '@app/features/shell/shell.routes';
 
+import { BasePortalSection } from '../../base-portal-section';
 import { StatusCode } from '../../enums/status-code.enum';
 import { ProfileStatus } from '../../models/profile-status.model';
 import { PortalSectionAction } from '../portal-section-action.model';
@@ -15,18 +16,24 @@ import { PortalSectionProperty } from '../portal-section-property.model';
 import { IPortalSection } from '../portal-section.model';
 import { PartyOrganizationDetailsSection } from './organization-details-section.model';
 
-export class OrganizationDetailsPortalSection implements IPortalSection {
+export class OrganizationDetailsPortalSection
+  extends BasePortalSection
+  implements IPortalSection
+{
   public readonly key: PortalSectionKey;
   public heading: string;
   public description: string;
+  public order: number;
 
   public constructor(
     private profileStatus: ProfileStatus,
     private router: Router
   ) {
+    super();
     this.key = 'organizationDetails';
     this.heading = 'Organization Details';
     this.description = this.getDescription();
+    this.order = this.GetOrder(profileStatus.status.organizationDetails);
   }
 
   public get hint(): string {
