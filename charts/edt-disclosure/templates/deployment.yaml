@@ -165,6 +165,11 @@ spec:
                 secretKeyRef:
                   name: kafkaconfig-disclosure
                   key: KafkaCluster__SaslOauthbearerTokenEndpointUrl
+            - name: KafkaCluster__CreateUserTopic
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-disclosure
+                  key: KafkaCluster__CreateUserTopic
             - name: KafkaCluster__CourtLocationAccessRequestTopic
               valueFrom:
                 secretKeyRef:
