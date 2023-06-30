@@ -7,6 +7,7 @@ using Pidp.Models;
 using Pidp.Models.Lookups;
 using Pidp.Models.OutBoxEvent;
 using Pidp.Models.ProcessFlow;
+using static Pidp.Models.Lookups.CourtLocation;
 
 public class PidpDbContext : DbContext
 {
@@ -63,6 +64,8 @@ public class PidpDbContext : DbContext
         return await base.SaveChangesAsync(cancellationToken);
     }
 
+
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -78,20 +81,10 @@ public class PidpDbContext : DbContext
         modelBuilder.Entity<ExportedEvent>()
             .ToTable("OutBoxedExportedEvent");
 
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(PidpDbContext).Assembly);
 
-    
-    //.HasKey(x => new { x.EventId, x.AggregateId });
 
-    //#region Seed Court Locations
-    //var locations = new CourtLocation.CourtLocationDataGenerator().Generate();
-    //foreach (var location in locations)
-    //{
-    //    Serilog.Log.Information($"Adding {location.Name} [{location.Code}]");
-    //    modelBuilder.Entity<CourtLocation>().HasData(location);
-    //}
-    //#endregion
-
-    modelBuilder.ApplyConfigurationsFromAssembly(typeof(PidpDbContext).Assembly);
+   
     }
 
     public async Task IdempotentConsumer(string messageId, string consumer)

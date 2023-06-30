@@ -9,7 +9,8 @@ export enum CourtRequestStatus {
 }
 
 export interface CourtLocation {
-  city: string;
+  active: boolean;
+  staffed: boolean;
   name: string;
   code: string;
 }
