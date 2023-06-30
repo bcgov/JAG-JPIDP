@@ -21,7 +21,7 @@ public class CourtLocationQuery
 
         public QueryHandler(PidpDbContext context) => this.context = context;
 
-        public async Task<List<CourtLocation>> HandleAsync(Query query) => await this.context.Set<CourtLocation>().ToListAsync();
+        public async Task<List<CourtLocation>> HandleAsync(Query query) => await this.context.Set<CourtLocation>().Where( loc => loc.Active).OrderBy( loc => loc.Name).ToListAsync();
     }
 
 }

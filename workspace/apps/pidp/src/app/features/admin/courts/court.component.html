@@ -1,0 +1,25 @@
+<ui-page-section>
+  <ui-page-section-subheader icon="table_chart" heading="Court Locations">
+  </ui-page-section-subheader>
+  <ng-container>
+    <table mat-table [dataSource]="dataSource" class="full-width">
+      <ng-container matColumnDef="name">
+        <th *matHeaderCellDef mat-header-cell>Name</th>
+        <td *matCellDef="let court" mat-cell>{{ court.name }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="code">
+        <th *matHeaderCellDef mat-header-cell>Code</th>
+        <td *matCellDef="let court" mat-cell>{{ court.code }}</td>
+      </ng-container>
+      <ng-container matColumnDef="active">
+        <th *matHeaderCellDef mat-header-cell>Enabled</th>
+        <td *matCellDef="let court" mat-cell>{{ court.active }}</td>
+      </ng-container>
+
+      <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
+      <tr (click)="showUpdateDialog(row)" *matRowDef="let row; columns: displayedColumns" mat-row></tr>
+
+    </table>
+  </ng-container>
+</ui-page-section>
