@@ -1,6 +1,7 @@
 namespace Pidp.Kafka.Consumer.Responses;
 
 using System;
+using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
 using Pidp.Data;
 using Pidp.Infrastructure.HttpClients.Jum;
@@ -40,12 +41,19 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
         switch (value.DomainEvent)
         {
             case "digitalevidencedisclosure-defence-usercreation-complete":
+            case "digitalevidencedisclosure-defence-usermodification-complete":
+            case "digitalevidencedisclosure-defence-usermodification-error":
             case "digitalevidencedisclosure-defence-usercreation-error":
+            case "digitalevidence-defence-personcreation-complete":
+            case "digitalevidence-defence-personcreation-error":
             {
-                Serilog.Log.Information($"Handling {value.DomainEvent} for disclosure access request {value.Id}");
-                await this.MarkDisclosureFullyProvisioned(value);
+                Serilog.Log.Information($"Handling {value.DomainEvent} for JustinUserChange {value.Id}");
+                // todo - this should move to a generic service
+                await this.MarkDefenceProcessComplete(value);
                 break;
             }
+
+
             case "digitalevidence-bcps-edt-userupdate-complete":
             case "digitalevidence-bcps-edt-userupdate-error":
             {
@@ -87,6 +95,17 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
 
     private async Task MarkCourtLocationProcessResponse(GenericProcessStatusResponse processResponse)
     {
+        var accessRequest = this.context.CourtLocationAccessRequests.Include(req => req.Party).Where(req => req.RequestId == processResponse.Id).FirstOrDefault();
+        if ( accessRequest == null)
+        {
+            Serilog.Log.Warning($"Received notification for non-existent court request {processResponse.Id} - ignoring");
+            return;
+        }
+
+        Serilog.Log.Information($"Court location request {processResponse.Id} flagged as {processResponse.Status}");
+        accessRequest.RequestStatus = processResponse.Status;
+
+        var updated = await this.context.SaveChangesAsync();
 
     }
 
@@ -98,7 +117,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
 
             if (processResponse.Status == "Complete")
             {
-                accessRequest.Status = "Completed";
+                accessRequest.Status = "Complete";
             }
             else
             {
@@ -134,6 +153,71 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
 
         }
 
+    }
+
+
+    private async Task MarkDefenceProcessComplete(GenericProcessStatusResponse processResponse)
+    {
+        var accessRequest = this.context.AccessRequests.Where(req => req.Id == processResponse.Id).FirstOrDefault();
+
+        if (accessRequest == null)
+        {
+            Serilog.Log.Warning($"Message received for non-existent access request {processResponse.Id} - ignoring");
+            return;
+        }
+
+        accessRequest.Modified = processResponse.EventTime;
+        if (processResponse.ErrorList != null && processResponse.ErrorList.Count > 0)
+        {
+            accessRequest.Status = "Error";
+            accessRequest.Details = string.Join(",", processResponse.ErrorList);
+        }
+        else
+        {
+            accessRequest.Status = "Complete";
+        }
+
+        // see if both accounts are fully provisioned
+        var requests = this.context.AccessRequests.Include(req => req.Party).Where(req => req.PartyId == accessRequest.PartyId).ToList();
+
+        // check if both are done
+        var disclosureUserAdded = false;
+        var corePersonAdded = false;
+        foreach (var request in requests)
+        {
+            if (request.AccessTypeCode == Models.Lookups.AccessTypeCode.DigitalEvidenceDefence)
+            {
+                corePersonAdded = request.Status.Equals("Complete");
+            }
+            if (request.AccessTypeCode == Models.Lookups.AccessTypeCode.DigitalEvidenceDisclosure)
+            {
+                disclosureUserAdded = request.Status.Equals("Complete");
+            }
+        }
+
+        if (disclosureUserAdded && corePersonAdded)
+        {
+            var duration = accessRequest.Modified - processResponse.EventTime;
+
+            Serilog.Log.Information($"Notifying user {accessRequest.PartyId}  of account completion");
+            var eventData = new Dictionary<string, string>
+                    {
+                        { "FirstName", accessRequest.Party!.FirstName },
+                        { "PartyId", "" + accessRequest.Party.Id },
+                        { "Duration (s)","" + duration.TotalSeconds }
+
+                    };
+
+            var messageKey = Guid.NewGuid().ToString();
+            var published = await this.producer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopicName, messageKey, new Notification
+            {
+                DomainEvent = "digitalevidence-bclaw-usercreation-complete",
+                To = accessRequest.Party!.Email,
+                EventData = eventData
+            });
+        }
+
+        var updated = await this.context.SaveChangesAsync();
     }
 
     private async Task MarkAccountFullyProvisioned(GenericProcessStatusResponse value)
@@ -184,11 +268,11 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
             accessRequest.Modified = value.EventTime;
             if (value.ErrorList != null && value.ErrorList.Count > 0)
             {
-                accessRequest.Status = "Errored";
+                accessRequest.Status = "Error";
             }
             else
             {
-                accessRequest.Status = "Completed";
+                accessRequest.Status = "Complete";
             }
 
             var updated = await this.context.SaveChangesAsync();

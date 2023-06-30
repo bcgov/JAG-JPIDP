@@ -100,26 +100,11 @@
     <ui-page-section *ngIf="userIsLawyer">
       <div class="col-12 ">
         <ui-page-section-subheader heading="Defence And Duty Counsel">
-          <ng-container uiPageSectionSubheaderDesc>
-            Enter the Unqiue Identifier you were provided in your DEMS on-boarding package.
-
-          </ng-container>
-
-          <input formControlName="DefenceUniqueIdValid" type="hidden" />
-
-          <div class="col-md-6 col-sm-12 col-lg-6">
-            <mat-form-field class="w-50 no-margin-bottom me-3">
-              <input matInput placeholder="Unique Identifier" formControlName="DefenceUniqueId" />
-            </mat-form-field>
-
-            <button mat-button color="primary" [disabled]="!formState.DefenceUniqueId.valid" mat-flat-button
-              (click)="validateDefenceId()" type="button">Validate ID</button>
-            <mat-error *ngIf="formState.DefenceUniqueId.invalid">{{ defenceValidationMessage }}</mat-error>
-            <div *ngIf="!formState.DefenceUniqueId.invalid">{{ defenceValidationMessage }}</div>
-          </div>
-          <br /><i>If you do not have your unique ID please contact support at <a uiAnchor scheme="mailto"
-              [attr.href]="digitalEvidenceSupportEmail"></a>
-          </i>
+          Once your onboarding process has been completed you will have the ability to request access to Court Locations
+          for the purposes of Duty Counsel
+          <p>If you are acting as Defence Counsel for Accused individuals then contact BCPS for case assignment once
+            your DEMS Onboarding is complete</p>
+          <b style="color:red">Wording here needs attention</b>
         </ui-page-section-subheader>
       </div>
     </ui-page-section>

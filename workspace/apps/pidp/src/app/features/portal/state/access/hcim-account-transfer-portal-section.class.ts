@@ -40,7 +40,7 @@ export class HcimAccountTransferPortalSection implements IPortalSection {
     return {
       label: statusCode === StatusCode.COMPLETED ? 'View' : 'Request',
       route: AccessRoutes.routePath(AccessRoutes.HCIM_ACCOUNT_TRANSFER),
-      disabled: statusCode === StatusCode.NOT_AVAILABLE,
+      disabled: statusCode === StatusCode.LOCKED,
     };
   }
 
@@ -50,7 +50,7 @@ export class HcimAccountTransferPortalSection implements IPortalSection {
 
   public get status(): string {
     const statusCode = this.getStatusCode();
-    return statusCode === StatusCode.AVAILABLE
+    return statusCode === StatusCode.INCOMPLETE
       ? 'For existing users of HCIMWeb only'
       : statusCode === StatusCode.COMPLETED
       ? 'Completed'

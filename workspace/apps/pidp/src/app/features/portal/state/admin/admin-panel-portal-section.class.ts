@@ -5,7 +5,6 @@ import { Observable } from 'rxjs';
 import { AlertType } from '@bcgov/shared/ui';
 
 import { ShellRoutes } from '@app/features/shell/shell.routes';
-import { TrainingRoutes } from '@app/features/training/training.routes';
 
 import { AdminRoutes } from '../../../admin/admin.routes';
 import { StatusCode } from '../../enums/status-code.enum';
@@ -44,7 +43,7 @@ export class AdministratorPortalSection implements IPortalSection {
       route: AdminRoutes.routePath(AdminRoutes.PARTIES),
       disabled:
         demographicsStatusCode !== StatusCode.COMPLETED &&
-        demographicsStatusCode !== StatusCode.LOCKED_COMPLETE,
+        demographicsStatusCode !== StatusCode.LOCKEDCOMPLETE,
     };
   }
 

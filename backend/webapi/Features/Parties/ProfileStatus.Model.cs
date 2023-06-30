@@ -1,6 +1,7 @@
 namespace Pidp.Features.Parties;
 
 using NodaTime;
+using Pidp.Extensions;
 using Pidp.Models;
 using Pidp.Models.Lookups;
 using Serilog;
@@ -117,7 +118,7 @@ public partial class ProfileStatus
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
                 this.StatusCode = profile.DemographicsEntered || profile.SubmittingAgency != null ?
-                    (profile.SubmittingAgency != null || profile.UserIsBcps) ? StatusCode.Locked_Complete : StatusCode.Complete : StatusCode.Incomplete;
+                    (profile.SubmittingAgency != null || profile.UserIsBcps) ? StatusCode.LockedComplete : StatusCode.Complete : StatusCode.Incomplete;
             }
         }
 
@@ -148,7 +149,7 @@ public partial class ProfileStatus
 
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
-                if (!( profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsInSubmittingAgency || profile.UserIsInLawSociety))
+                if (!(profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsInSubmittingAgency || profile.UserIsInLawSociety))
                 {
                     this.StatusCode = StatusCode.Hidden;
                     return;
@@ -157,7 +158,7 @@ public partial class ProfileStatus
                 // user is from an authenticated agency - no need to enter organization details or view/change them
                 if (profile.UserIsInSubmittingAgency || profile.UserIsInLawSociety)
                 {
-                    this.StatusCode = StatusCode.Locked_Complete;
+                    this.StatusCode = StatusCode.LockedComplete;
                     return;
                 }
 
@@ -199,6 +200,32 @@ public partial class ProfileStatus
                 {
                     this.StatusCode = StatusCode.Hidden;
                     return;
+                }
+
+                // if a lawyer then they'll have two access requests pending (disclosure and core)
+                if (profile.UserIsInLawSociety)
+                {
+                    var requests = profile.AccessRequestStatus.Distinct().ToList();
+                    this.StatusCode = StatusCode.Available;
+                    if (requests != null && requests.Count > 1)
+                    {
+                        foreach (var request in requests)
+                        {
+                            // if any request is errored then this is an error status
+                            if (request.Equals(StatusCode.Error))
+                            {
+                                Log.Information($"One or more events resulted in an error for {profile.User.GetUserId()}");
+                                this.StatusCode = StatusCode.Error;
+                                return;
+                            }
+                        }
+                    }
+                    else if (requests != null && requests.Count > 0)
+                    {
+                        this.StatusCode = Enum.Parse<StatusCode>(requests.First());
+                    }
+                    return;
+
                 }
 
                 if (profile.AccessRequestStatus.Contains(AccessRequestStatus.Pending))
@@ -267,7 +294,7 @@ public partial class ProfileStatus
                     }
                     else
                     {
-                        this.StatusCode = StatusCode.Locked;
+                        this.StatusCode = StatusCode.PriorStepRequired;
                         return;
                     }
                 }
@@ -533,5 +560,5 @@ public partial class ProfileStatus
         }
     }
 
- 
+
 }

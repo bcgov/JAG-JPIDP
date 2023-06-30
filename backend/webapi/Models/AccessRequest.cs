@@ -62,9 +62,15 @@ public class DigitalEvidenceDisclosure : AccessRequest
     public string OrganizationType { get; set; } = string.Empty;
     public string OrganizationName { get; set; } = string.Empty;
     public string ParticipantId { get; set; } = string.Empty;
-    public int FolioCaseId { get; set; }
-    public string FolioId { get; set; } = string.Empty;
 
+}
+
+[Table(nameof(DigitalEvidenceDefence))]
+public class DigitalEvidenceDefence : AccessRequest
+{
+    public string OrganizationType { get; set; } = string.Empty;
+    public string OrganizationName { get; set; } = string.Empty;
+    public string ParticipantId { get; set; } = string.Empty;
 }
 
 

@@ -53,7 +53,7 @@ public partial class ProfileStatus
             public StatusCode StatusCode { get; set; }
             public double Order { get; set; }
 
-            public bool IsComplete => this.StatusCode is StatusCode.Complete or StatusCode.Locked_Complete;
+            public bool IsComplete => this.StatusCode is StatusCode.Complete or StatusCode.LockedComplete;
 
             public ProfileSection(ProfileStatusDto profile) => this.SetAlertsAndStatus(profile);
 
@@ -79,8 +79,9 @@ public partial class ProfileStatus
             Hidden,
             Available,
             Pending,
-            Hidden_Complete,   // not shown the in UI but completed
-            Locked_Complete    // shown in the UI but not editable
+            HiddenComplete,   // not shown the in UI but completed
+            LockedComplete,    // shown in the UI but not editable
+            PriorStepRequired
         }
     }
 

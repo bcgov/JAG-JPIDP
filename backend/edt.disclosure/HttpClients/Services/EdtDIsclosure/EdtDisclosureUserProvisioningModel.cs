@@ -17,8 +17,6 @@ public class EdtDisclosureUserProvisioningModel
     public int AccessRequestId { get; set; }
     public string? OrganizationType { get; set; }
     public string? OrganizationName { get; set; }
-    public string FolioId { get; set; }
-    public int FolioCaseId { get; set; }    
     public override string ToString() => JsonSerializer.Serialize(this);
 
 }

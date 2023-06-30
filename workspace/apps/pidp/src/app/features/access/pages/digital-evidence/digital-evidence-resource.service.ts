@@ -32,10 +32,8 @@ export class DigitalEvidenceResource {
     return this.apiResource.get(`defence-counsel/${partyID}/${defenceID}`);
   }
 
-  public requestDisclosureAccess(
+  public requestDefenceCounselAccess(
     partyId: number,
-    folioCaseId: number,
-    folioId: string,
     organizationType: DemsAccount,
     organizationName: DemsAccount,
     participantId: DemsAccount
@@ -43,8 +41,6 @@ export class DigitalEvidenceResource {
     return this.apiResource
       .post<NoContent>('access-requests/digital-evidence-defence', {
         partyId,
-        folioCaseId,
-        folioId,
         organizationType,
         organizationName,
         participantId,

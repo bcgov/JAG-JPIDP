@@ -40,7 +40,7 @@ export class DriverFitnessPortalSection implements IPortalSection {
     return {
       label: statusCode === StatusCode.COMPLETED ? 'View' : 'Request',
       route: AccessRoutes.routePath(AccessRoutes.DRIVER_FITNESS),
-      disabled: statusCode === StatusCode.NOT_AVAILABLE,
+      disabled: statusCode === StatusCode.LOCKED,
     };
   }
 
