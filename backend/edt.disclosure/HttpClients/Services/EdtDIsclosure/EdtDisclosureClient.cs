@@ -197,13 +197,13 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
                     Log.Information($"User {newUser.Id} added to {CounselGroup} in EDT");
                 }
 
-                // add user to their folio folder
-                var addedToFolio = await this.AddUserToFolio(accessRequest, newUser);
-                if (!addedToFolio)
-                {
-                    userModificationResponse.successful = false;
-                    userModificationResponse.Errors.Add($"Failed to add user to Folio");
-                }
+                //// add user to their folio folder
+                //var addedToFolio = await this.AddUserToFolio(accessRequest, newUser);
+                //if (!addedToFolio)
+                //{
+                //    userModificationResponse.successful = false;
+                //    userModificationResponse.Errors.Add($"Failed to add user to Folio");
+                //}
             }
             else
             {
@@ -293,73 +293,73 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             }
 
 
-            var addedToFolio = await this.AddUserToFolio(accessRequest, currentUser);
-            if (!addedToFolio)
-            {
-                userModificationResponse.successful = false;
-                userModificationResponse.Errors.Add($"Failed to add user {currentUser.Id} to folio {accessRequest.FolioId}");
-            }
+            //var addedToFolio = await this.AddUserToFolio(accessRequest, currentUser);
+            //if (!addedToFolio)
+            //{
+            //    userModificationResponse.successful = false;
+            //    userModificationResponse.Errors.Add($"Failed to add user {currentUser.Id} to folio {accessRequest.FolioId}");
+            //}
 
             return userModificationResponse;
         }
 
     }
 
-    private async Task<bool> AddUserToFolio(EdtDisclosureUserProvisioningModel accessRequest, EdtUserDto currentUser)
-    {
-        if (currentUser == null)
-        {
-            Log.Error($"Null user sent to AddUserToFolio({accessRequest.Id})");
-            return false;
-        }
+    //private async Task<bool> AddUserToFolio(EdtDisclosureUserProvisioningModel accessRequest, EdtUserDto currentUser)
+    //{
+    //    if (currentUser == null)
+    //    {
+    //        Log.Error($"Null user sent to AddUserToFolio({accessRequest.Id})");
+    //        return false;
+    //    }
 
-        // lets confirm that the caseID and UniqueID match and nobody tried to fake it
-        var caseById = await this.GetCase(accessRequest.FolioCaseId);
-        var folioCase = await this.FindCase("Folio ID", accessRequest.FolioId);
+    //    // lets confirm that the caseID and UniqueID match and nobody tried to fake it
+    //    var caseById = await this.GetCase(accessRequest.FolioCaseId);
+    //    var folioCase = await this.FindCase("Folio ID", accessRequest.FolioId);
 
-        if (caseById.Id != folioCase.Id)
-        {
-            Log.Error($"Invalid attempt to access case - folio and case Id do not match - possible attempt to access unauthorized cases");
-            return false;
-        }
+    //    if (caseById.Id != folioCase.Id)
+    //    {
+    //        Log.Error($"Invalid attempt to access case - folio and case Id do not match - possible attempt to access unauthorized cases");
+    //        return false;
+    //    }
 
-        var existingCaseAccess = await this.GetUserCaseAccess(currentUser.Id);
-        var alreadyAssigned = existingCaseAccess.FirstOrDefault(cases => cases.Id == folioCase.Id);
+    //    var existingCaseAccess = await this.GetUserCaseAccess(currentUser.Id);
+    //    var alreadyAssigned = existingCaseAccess.FirstOrDefault(cases => cases.Id == folioCase.Id);
 
-        if (alreadyAssigned != null)
-        {
-            Log.Logger.Information($"User already assigned {currentUser.Id} to folio case {accessRequest.FolioId}");
-            var userCaseGroups = await this.GetUserCaseGroups(currentUser.Id, caseById.Id);
-            var caseUserGroup = userCaseGroups.FirstOrDefault(group => group.GroupName.Equals(CounselGroup, StringComparison.OrdinalIgnoreCase));
-            if ( caseUserGroup== null)
-            {
-                await this.AddUserToCaseGroup(currentUser.Id, caseById.Id, CounselGroup);
-            }
-            return true;
-        }
+    //    if (alreadyAssigned != null)
+    //    {
+    //        Log.Logger.Information($"User already assigned {currentUser.Id} to folio case {accessRequest.FolioId}");
+    //        var userCaseGroups = await this.GetUserCaseGroups(currentUser.Id, caseById.Id);
+    //        var caseUserGroup = userCaseGroups.FirstOrDefault(group => group.GroupName.Equals(CounselGroup, StringComparison.OrdinalIgnoreCase));
+    //        if ( caseUserGroup== null)
+    //        {
+    //            await this.AddUserToCaseGroup(currentUser.Id, caseById.Id, CounselGroup);
+    //        }
+    //        return true;
+    //    }
 
-        Log.Logger.Information($"Adding user {currentUser.Id} to folio case {accessRequest.FolioId}");
-        var addedToCase = await this.AddUserToCase(currentUser.Id, folioCase.Id, "Case Manager");
+    //    Log.Logger.Information($"Adding user {currentUser.Id} to folio case {accessRequest.FolioId}");
+    //    var addedToCase = await this.AddUserToCase(currentUser.Id, folioCase.Id, "Case Manager");
 
 
-        if (!addedToCase)
-        {
-            Log.Error($"Failed to add user {currentUser.Id} to case {folioCase.Id}");
-            return false;
-        }
-        else
-        {
+    //    if (!addedToCase)
+    //    {
+    //        Log.Error($"Failed to add user {currentUser.Id} to case {folioCase.Id}");
+    //        return false;
+    //    }
+    //    else
+    //    {
 
-            // add user to case group
-            var addedToCaseGroup = await this.AddUserToCaseGroup(currentUser.Id, folioCase.Id, await this.GetCaseGroupId(folioCase.Id, CounselGroup));
-            if (!addedToCaseGroup)
-            {
-                Log.Error($"Failed to add user {currentUser.Id} to case group {folioCase.Id} [{CounselGroup}]");
-            }
+    //        // add user to case group
+    //        var addedToCaseGroup = await this.AddUserToCaseGroup(currentUser.Id, folioCase.Id, await this.GetCaseGroupId(folioCase.Id, CounselGroup));
+    //        if (!addedToCaseGroup)
+    //        {
+    //            Log.Error($"Failed to add user {currentUser.Id} to case group {folioCase.Id} [{CounselGroup}]");
+    //        }
 
-            return addedToCaseGroup;
-        }
-    }
+    //        return addedToCaseGroup;
+    //    }
+    //}
 
 
     private async Task<int> GetCaseGroupId(int caseId, string groupName)

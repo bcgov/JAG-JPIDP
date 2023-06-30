@@ -208,13 +208,10 @@ export class DigitalEvidencePage
   }
 
   public onRequestAccess(): void {
-    debugger;
-    if (this.folioId) {
+    if (this.userIsLawyer) {
       this.resource
-        .requestDisclosureAccess(
+        .requestDefenceCounselAccess(
           this.partyService.partyId,
-          this.folioId,
-          this.formState.DefenceUniqueId.value,
           this.formState.OrganizationType.value,
           this.formState.OrganizationName.value,
           this.formState.ParticipantId.value

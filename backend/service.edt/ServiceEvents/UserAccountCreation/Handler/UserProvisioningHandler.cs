@@ -8,8 +8,6 @@ using edt.service.Kafka;
 using edt.service.Kafka.Interfaces;
 using edt.service.Kafka.Model;
 using edt.service.ServiceEvents.UserAccountCreation.Models;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Prometheus;
 using static edt.service.EdtServiceConfiguration;
@@ -53,8 +51,9 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
     {
 
         // check this message is for us
-
-        if (accessRequestModel.SystemName != null && !(accessRequestModel.SystemName.Equals("DEMS", StringComparison.Ordinal) || accessRequestModel.SystemName.Equals("DigitalEvidence", StringComparison.Ordinal) || accessRequestModel.SystemName.Equals("DigitalEvidenceCaseManagement", StringComparison.Ordinal)))
+        if (accessRequestModel.SystemName != null && !(accessRequestModel.SystemName.Equals("DEMS", StringComparison.Ordinal)
+            || accessRequestModel.SystemName.Equals("DigitalEvidence", StringComparison.Ordinal)
+            || accessRequestModel.SystemName.Equals("DigitalEvidenceCaseManagement", StringComparison.Ordinal)))
         {
             Serilog.Log.Logger.Information($"Ignoring message {key} for system {accessRequestModel.SystemName} as we only handle DEMS requests");
             return Task.CompletedTask;
@@ -128,7 +127,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
                         {
                             Subject = NotificationSubject.AccessRequest,
                             AccessRequestId = accessRequestModel.AccessRequestId,
-                            Status = "Completed"
+                            Status = "Complete"
                         });
 
                         await trx.CommitAsync();
@@ -471,7 +470,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
 
     }
 }
-public static partial class UserProvisioningHandlerLoggingExtensions
+public static partial class DefenceUserProvisioningHandlerLoggingExtensions
 {
     [LoggerMessage(1, LogLevel.Warning, "Cannot provisioned user with partId {partId} and request Id {accessrequestId}. Published event key {accessrequestId} of {fromTopic} record to {topic} topic for retrial")]
     public static partial void LogUserAccessPublishError(this ILogger logger, string? partId, string accessrequestId, string fromTopic, string topic);

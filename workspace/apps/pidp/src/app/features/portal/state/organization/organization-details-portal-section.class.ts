@@ -122,7 +122,7 @@ export class OrganizationDetailsPortalSection
     return {
       label:
         this.profileStatus.status.organizationDetails?.statusCode ===
-          StatusCode.LOCKED_COMPLETE ||
+          StatusCode.LOCKEDCOMPLETE ||
         this.profileStatus.status.organizationDetails?.statusCode ===
           StatusCode.COMPLETED
           ? ''
@@ -132,13 +132,13 @@ export class OrganizationDetailsPortalSection
       ),
       disabled:
         this.profileStatus.status.organizationDetails?.statusCode ===
-        StatusCode.LOCKED_COMPLETE,
+        StatusCode.LOCKEDCOMPLETE,
     };
   }
 
   public getDescription(): string {
     return this.profileStatus.status.organizationDetails?.statusCode ===
-      StatusCode.LOCKED_COMPLETE ||
+      StatusCode.LOCKEDCOMPLETE ||
       this.profileStatus.status.organizationDetails?.statusCode ===
         StatusCode.COMPLETED
       ? 'Your oragnization information is completed and validated'
@@ -149,7 +149,7 @@ export class OrganizationDetailsPortalSection
     const statusCode = this.getStatusCode();
     return statusCode === StatusCode.ERROR
       ? 'danger'
-      : statusCode === StatusCode.LOCKED_COMPLETE
+      : statusCode === StatusCode.LOCKEDCOMPLETE
       ? 'success'
       : statusCode === StatusCode.COMPLETED
       ? 'success'
@@ -159,7 +159,7 @@ export class OrganizationDetailsPortalSection
   public get status(): string {
     const statusCode = this.getStatusCode();
     return statusCode === StatusCode.COMPLETED ||
-      statusCode === StatusCode.LOCKED_COMPLETE
+      statusCode === StatusCode.LOCKEDCOMPLETE
       ? 'Completed'
       : statusCode === StatusCode.ERROR
       ? 'Invalid JUSTIN Details Entered'

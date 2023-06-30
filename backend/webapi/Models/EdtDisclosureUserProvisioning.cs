@@ -13,8 +13,5 @@ public class EdtDisclosureUserProvisioning
     public string? OrganizationType { get; set; }
     public string? OrganizationName { get; set; }
     public string? SystemName { get; set; } = "DISCLOSURE";
-    public int FolioCaseId { get; set; }
-    public string FolioId { get; set; } = string.Empty;
-
     public int AccessRequestId { get; set; }
 }

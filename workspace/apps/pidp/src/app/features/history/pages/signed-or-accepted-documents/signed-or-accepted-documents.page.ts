@@ -89,7 +89,7 @@ export class SignedOrAcceptedDocumentsPage implements OnInit {
           Role.FEATURE_PIDP_DEMO,
         ])
           ? { statusCode: StatusCode.COMPLETED, order: 0 }
-          : { statusCode: StatusCode.NOT_AVAILABLE, order: 0 };
+          : { statusCode: StatusCode.LOCKED, order: 0 };
 
         return (
           document.type === DocumentType.PIDP_COLLECTION_NOTICE ||

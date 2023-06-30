@@ -11,7 +11,8 @@ public enum AccessTypeCode
     DriverFitness,
     DigitalEvidence,
     DigitalEvidenceCaseManagement,
-    DigitalEvidenceDisclosure,
+    DigitalEvidenceDisclosure,   // defence/duty will be User in Disclosure
+    DigitalEvidenceDefence,      // defence/duty will be Participant in Core
     Uci,
     MSTeams
 }
@@ -38,5 +39,7 @@ public class AccessTypeDataGenerator : ILookupDataGenerator<AccessType>
         new AccessType { Code = AccessTypeCode.Uci,                                 Name = "Fraser Health UCI"         },
         new AccessType { Code = AccessTypeCode.MSTeams,                             Name = "MS Teams for Clinical Use" },
         new AccessType { Code = AccessTypeCode.DigitalEvidenceDisclosure,           Name = "Digital Evidence Disclosure" },
+        new AccessType { Code = AccessTypeCode.DigitalEvidenceDefence,              Name = "Digital Evidence Defence" },
+
     };
 }

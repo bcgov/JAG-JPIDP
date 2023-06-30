@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NodaTime;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -14,9 +15,10 @@ using Pidp.Models;
 namespace Pidp.Data.Migrations
 {
     [DbContext(typeof(PidpDbContext))]
-    partial class PidpDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230628183505_DefenceCounsel")]
+    partial class DefenceCounsel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -3732,28 +3734,16 @@ namespace Pidp.Data.Migrations
                     b.ToTable("DigitalEvidence");
                 });
 
-            modelBuilder.Entity("Pidp.Models.DigitalEvidenceDefence", b =>
-                {
-                    b.HasBaseType("Pidp.Models.AccessRequest");
-
-                    b.Property<string>("OrganizationName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("OrganizationType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ParticipantId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.ToTable("DigitalEvidenceDefence");
-                });
-
             modelBuilder.Entity("Pidp.Models.DigitalEvidenceDisclosure", b =>
                 {
                     b.HasBaseType("Pidp.Models.AccessRequest");
+
+                    b.Property<int>("FolioCaseId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("FolioId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("OrganizationName")
                         .IsRequired()
@@ -4093,15 +4083,6 @@ namespace Pidp.Data.Migrations
                     b.HasOne("Pidp.Models.AccessRequest", null)
                         .WithOne()
                         .HasForeignKey("Pidp.Models.DigitalEvidence", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Pidp.Models.DigitalEvidenceDefence", b =>
-                {
-                    b.HasOne("Pidp.Models.AccessRequest", null)
-                        .WithOne()
-                        .HasForeignKey("Pidp.Models.DigitalEvidenceDefence", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

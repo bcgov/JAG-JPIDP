@@ -90,10 +90,10 @@ public static class AuthenticationSetup
             options.AddPolicy(Policies.AdminAuthentication, policy => policy
                .RequireAuthenticatedUser().RequireAssertion(context =>
                 {
-                    var hasRole = context.User.IsInRole(Roles.SubmittingAgency);
+                    var hasRole = context.User.IsInRole(Roles.Admin);
                     var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider &&
                                                                (
-                                                                c.Value == ClaimValues.Idir ||
+                                                                c.Value == ClaimValues.Idir || c.Value == ClaimValues.Adfs || 
                                                                 c.Value == ClaimValues.Bcps));
                     return hasRole || hasClaim;
                 }));

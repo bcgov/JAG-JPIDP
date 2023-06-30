@@ -51,14 +51,14 @@ export class DigitalEvidenceCounselPortalSection
       this.profileStatus.status.organizationDetails.statusCode;
     const demographicsComplete =
       demographicsStatusCode === StatusCode.COMPLETED ||
-      demographicsStatusCode === StatusCode.LOCKED_COMPLETE;
+      demographicsStatusCode === StatusCode.LOCKEDCOMPLETE;
     const orgComplete =
       organizationStatusCode === StatusCode.COMPLETED ||
-      organizationStatusCode === StatusCode.LOCKED_COMPLETE;
+      organizationStatusCode === StatusCode.LOCKEDCOMPLETE;
     return {
       label:
-        this.getStatusCode() === StatusCode.READY ||
         this.getStatusCode() === StatusCode.AVAILABLE ||
+        this.getStatusCode() === StatusCode.INCOMPLETE ||
         this.getStatusCode() === StatusCode.PENDING
           ? 'View'
           : 'Manage',
@@ -72,14 +72,14 @@ export class DigitalEvidenceCounselPortalSection
   }
 
   public get statusType(): AlertType {
-    return this.getStatusCode() === StatusCode.READY ? 'info' : 'warn';
+    return this.getStatusCode() === StatusCode.AVAILABLE ? 'info' : 'warn';
   }
 
   public get status(): string {
     const statusCode = this.profileStatus.status.digitalEvidence.statusCode;
-    return statusCode === StatusCode.NOT_AVAILABLE
+    return statusCode === StatusCode.AVAILABLE
       ? 'Enrolment in Digital Evidence and Disclosure Management System required first'
-      : statusCode === StatusCode.COMPLETED || statusCode === StatusCode.READY
+      : statusCode === StatusCode.COMPLETED
       ? 'Available'
       : statusCode === StatusCode.PENDING
       ? 'Pending Digital Evidence On-Boarding completion'

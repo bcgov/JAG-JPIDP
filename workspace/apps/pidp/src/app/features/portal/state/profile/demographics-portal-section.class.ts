@@ -40,7 +40,7 @@ export class DemographicsPortalSection
     return [
       StatusCode.ERROR,
       StatusCode.COMPLETED,
-      StatusCode.LOCKED_COMPLETE,
+      StatusCode.LOCKEDCOMPLETE,
     ].includes(this.getStatusCode())
       ? ''
       : '1 min to complete';
@@ -49,7 +49,7 @@ export class DemographicsPortalSection
   public get properties(): PortalSectionProperty[] {
     const { firstName, lastName, email, phone } = this.getSectionStatus();
     return this.getStatusCode() === StatusCode.COMPLETED ||
-      this.getStatusCode() === StatusCode.LOCKED_COMPLETE
+      this.getStatusCode() === StatusCode.LOCKEDCOMPLETE
       ? [
           {
             key: 'fullName',
@@ -74,11 +74,10 @@ export class DemographicsPortalSection
   public get action(): PortalSectionAction {
     const statusCode = this.getStatusCode();
     return {
-      label: statusCode === StatusCode.LOCKED_COMPLETE ? '' : 'Update',
+      label: statusCode === StatusCode.LOCKEDCOMPLETE ? '' : 'Update',
       route: ProfileRoutes.routePath(ProfileRoutes.PERSONAL_INFO),
       disabled:
-        statusCode === StatusCode.ERROR ||
-        statusCode === StatusCode.NOT_AVAILABLE,
+        statusCode === StatusCode.ERROR || statusCode === StatusCode.LOCKED,
     };
   }
 
@@ -87,7 +86,7 @@ export class DemographicsPortalSection
     return statusCode === StatusCode.ERROR
       ? 'danger'
       : statusCode === StatusCode.COMPLETED ||
-        statusCode === StatusCode.LOCKED_COMPLETE
+        statusCode === StatusCode.LOCKEDCOMPLETE
       ? 'success'
       : 'warn';
   }
@@ -97,7 +96,7 @@ export class DemographicsPortalSection
     return statusCode === StatusCode.ERROR
       ? ''
       : statusCode === StatusCode.COMPLETED ||
-        statusCode === StatusCode.LOCKED_COMPLETE
+        statusCode === StatusCode.LOCKEDCOMPLETE
       ? 'Completed'
       : 'Incomplete';
   }

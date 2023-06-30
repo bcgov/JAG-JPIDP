@@ -112,6 +112,8 @@ public class PidpConfiguration
         public string IncomingChangeEventTopic { get; set; } = string.Empty;
         public string ProducerTopicName { get; set; } = string.Empty;
         public string CaseAccessRequestTopicName { get; set; } = string.Empty;
+        public string PersonCreationTopic { get; set; } = string.Empty;
+        public string DisclosureUserCreationTopic { get; set; } = string.Empty;
         public string ProcessResponseTopic { get; set;} = string.Empty;
         public string UserAccountChangeTopicName { get; set; } = string.Empty;
         public string NotificationTopicName { get; set; } = string.Empty;

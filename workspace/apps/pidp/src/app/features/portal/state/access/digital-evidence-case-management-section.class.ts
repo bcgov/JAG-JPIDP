@@ -7,14 +7,15 @@ import { AlertType } from '@bcgov/shared/ui';
 import { AccessRoutes } from '@app/features/access/access.routes';
 import { ShellRoutes } from '@app/features/shell/shell.routes';
 
+import { BasePortalSection } from '../../base-portal-section';
 import { StatusCode } from '../../enums/status-code.enum';
 import { ProfileStatus } from '../../models/profile-status.model';
 import { PortalSectionAction } from '../portal-section-action.model';
 import { PortalSectionKey } from '../portal-section-key.type';
 import { IPortalSection } from '../portal-section.model';
-import { BasePortalSection } from '../../base-portal-section';
 
-export class DigitalEvidenceCaseManagementPortalSection extends BasePortalSection
+export class DigitalEvidenceCaseManagementPortalSection
+  extends BasePortalSection
   implements IPortalSection
 {
   public readonly key: PortalSectionKey;
@@ -30,7 +31,9 @@ export class DigitalEvidenceCaseManagementPortalSection extends BasePortalSectio
     this.key = 'digitalEvidenceCaseManagement';
     this.heading = 'Digital Evidence Case Access';
     this.description = `Manage access to your Digital Evidence Cases here.`;
-    this.order = this.GetOrder(this.profileStatus.status.digitalEvidenceCaseManagement);
+    this.order = this.GetOrder(
+      this.profileStatus.status.digitalEvidenceCaseManagement
+    );
   }
 
   public get action(): PortalSectionAction {
@@ -54,9 +57,9 @@ export class DigitalEvidenceCaseManagementPortalSection extends BasePortalSectio
       disabled: !(
         digitalEvidenceStatusCode === StatusCode.COMPLETED &&
         (demographicsStatusCode === StatusCode.COMPLETED ||
-          demographicsStatusCode === StatusCode.LOCKED_COMPLETE) &&
+          demographicsStatusCode === StatusCode.LOCKEDCOMPLETE) &&
         (organizationStatusCode === StatusCode.COMPLETED ||
-          organizationStatusCode === StatusCode.LOCKED_COMPLETE)
+          organizationStatusCode === StatusCode.LOCKEDCOMPLETE)
       ),
     };
   }

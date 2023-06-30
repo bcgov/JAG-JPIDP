@@ -170,7 +170,7 @@ public class CourtAccessRequest
                 .Where(party => party.Id == command.PartyId)
                 .Select(party => new PartyDto
                 {
-                    AlreadyEnroled = party.AccessRequests.Any(request => request.AccessTypeCode == AccessTypeCode.DigitalEvidence),
+                    AlreadyEnroled = party.AccessRequests.Any(request => request.AccessTypeCode == AccessTypeCode.DigitalEvidence || request.AccessTypeCode == AccessTypeCode.DigitalEvidenceDefence),
                     Cpn = party.Cpn,
                     Jpdid = party.Jpdid,
                     UserId = party.UserId,

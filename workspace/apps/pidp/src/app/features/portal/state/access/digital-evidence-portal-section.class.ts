@@ -48,10 +48,10 @@ export class DigitalEvidencePortalSection
       this.profileStatus.status.organizationDetails.statusCode;
     const demographicsComplete =
       demographicsStatusCode === StatusCode.COMPLETED ||
-      demographicsStatusCode === StatusCode.LOCKED_COMPLETE;
+      demographicsStatusCode === StatusCode.LOCKEDCOMPLETE;
     const orgComplete =
       organizationStatusCode === StatusCode.COMPLETED ||
-      organizationStatusCode === StatusCode.LOCKED_COMPLETE;
+      organizationStatusCode === StatusCode.LOCKEDCOMPLETE;
     return {
       label:
         this.getStatusCode() === StatusCode.COMPLETED
@@ -82,7 +82,7 @@ export class DigitalEvidencePortalSection
   public get status(): string {
     const statusCode = this.getStatusCode();
 
-    return statusCode === StatusCode.AVAILABLE
+    return statusCode === StatusCode.INCOMPLETE
       ? 'For existing users of DEMS only'
       : statusCode === StatusCode.COMPLETED
       ? 'Completed'
