@@ -10,6 +10,19 @@
   margin-bottom: 10px;
 }
 
+mat-icon {
+  color: #999;
+  padding-top: 0.5rem;
+
+  &.active {
+    color: palette.theme-palette(green);
+  }
+
+  &.inactive {
+    color: palette.theme-palette(red);
+  }
+}
+
 .valid {
   color: palette.theme-palette(green);
 }

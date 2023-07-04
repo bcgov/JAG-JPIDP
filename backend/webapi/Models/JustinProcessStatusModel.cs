@@ -1,4 +1,4 @@
-namespace jumwebapi.Features.UserChangeManagement.Models;
+namespace Pidp.Models;
 
 public class JustinProcessStatusModel
 {

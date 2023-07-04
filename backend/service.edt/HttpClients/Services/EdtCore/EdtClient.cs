@@ -327,7 +327,7 @@ public class EdtClient : BaseClient, IEdtClient
     {
         using (GetUserDuration.NewTimer())
         {
-            this.meters.GetUser();
+            this.meters.GetPerson();
             Log.Logger.Information("Checking if person with key {0} already present", userKey);
             var result = await this.GetAsync<EdtPersonUpdateDto?>($"api/v1/org-units/1/persons/{userKey}");
 
@@ -386,7 +386,7 @@ public class EdtClient : BaseClient, IEdtClient
     {
         Log.Logger.Information($"Account change active to {activateAccount} for user {userIdOrKey}");
 
-        EdtUserDto? user = await this.GetUser(userIdOrKey);
+        var user = await this.GetUser(userIdOrKey);
 
         if (user == null)
         {

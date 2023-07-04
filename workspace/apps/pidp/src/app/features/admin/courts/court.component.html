@@ -14,7 +14,11 @@
       </ng-container>
       <ng-container matColumnDef="active">
         <th *matHeaderCellDef mat-header-cell>Enabled</th>
-        <td *matCellDef="let court" mat-cell>{{ court.active }}</td>
+        <td *matCellDef="let court" mat-cell><mat-icon [class]="
+                    court.active ? 'active' : 'inactive'
+                  ">
+            {{ court.active ? 'check_circle' : 'block' }}
+          </mat-icon></td>
       </ng-container>
 
       <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>

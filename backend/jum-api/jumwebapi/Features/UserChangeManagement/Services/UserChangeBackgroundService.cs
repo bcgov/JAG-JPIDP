@@ -2,6 +2,7 @@ namespace jumwebapi.Features.UserChangeManagement.Services;
 
 using System.Threading;
 using Flurl.Util;
+using jumwebapi.Extensions;
 using jumwebapi.Infrastructure.Auth;
 using jumwebapi.Infrastructure.HttpClients.JustinUserChangeManagement;
 using Microsoft.AspNetCore.Mvc;
@@ -56,6 +57,12 @@ public class UserChangeBackgroundService : BackgroundService
                 {
                     var response = await userService.ProcessChangeEvents(changes);
                 }
+            }
+            catch ( Exception ex)
+            {
+                Log.Error($"Exception occurred in user change handler [{ex.Message}]");
+                Log.Error($"Trace [{ex.StackTrace}]");
+
             }
             finally
             {
