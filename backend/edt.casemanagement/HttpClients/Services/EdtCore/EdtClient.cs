@@ -104,7 +104,7 @@ public class EdtClient : BaseClient, IEdtClient
 
     public async Task<IEnumerable<UserCaseGroup>> GetUserCaseGroups(string userKey, int caseId)
     {
-        var result = await this.GetAsync<IEnumerable<UserCaseGroup>>($"api/v1/cases/{caseId}/case-users/{userKey}/groups");
+        var result = await this.GetAsync<IEnumerable<UserCaseGroup>>($"api/v1/cases/{caseId}/users/{userKey}/groups");
         Log.Logger.Information("Got user cases {0} user {1}", result, userKey);
 
         if (result.IsSuccess)
@@ -122,8 +122,26 @@ public class EdtClient : BaseClient, IEdtClient
     public async Task<bool> AddUserToCase(string userKey, int caseId)
     {
 
+        // make sure user isnt already added to case
+        var existingUsers = await this.GetAsync<CaseUsersModel>($"api/v1/cases/{caseId}/users");
+
+        if (!existingUsers.IsSuccess)
+        {
+            Log.Error($"Failed to get existing users for case {caseId} [{string.Join(",", existingUsers.Errors)}");
+            return false;
+
+        }
+
+        var alreadyCaseUser = existingUsers.Value.CaseUsers.FirstOrDefault(user => user.UserId.Equals(userKey));
+
+        if (alreadyCaseUser != null)
+        {
+            Log.Information($"User {userKey} {alreadyCaseUser.UserName} already exists on case {caseId}");
+            return true;
+        }
+
         Log.Logger.Information("Adding user {0} to case {0}", userKey, caseId);
-        var result = await this.PostAsync<JsonObject>($"api/v1/cases/{caseId}/case-users/{userKey}");
+        var result = await this.PostAsync<JsonObject>($"api/v1/cases/{caseId}/users/{userKey}");
 
         if (result.IsSuccess)
         {
@@ -176,7 +194,7 @@ public class EdtClient : BaseClient, IEdtClient
     public async Task<bool> RemoveUserFromCase(string userId, int caseId)
     {
         // var result = await this.PostAsync<>($"api/v1/version");
-        var result = await this.DeleteAsync($"api/v1/cases/{caseId}/case-users/remove/{userId}");
+        var result = await this.DeleteAsync($"api/v1/cases/{caseId}/users/remove/{userId}");
 
         if (result.IsSuccess)
         {
@@ -404,7 +422,7 @@ public class EdtClient : BaseClient, IEdtClient
     }
 
 
-  public static class CaseEventType
+    public static class CaseEventType
     {
         public const string Provisioning = "case-provision-event";
         public const string Decommission = "case-decommission-event";

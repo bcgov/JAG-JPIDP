@@ -410,7 +410,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
 
         Log.Logger.Information("Adding user {0} to case {0}", userKey, caseId);
-        var result = await this.PostAsync<JsonObject>($"api/v1/cases/{caseId}/case-users/{userKey}");
+        var result = await this.PostAsync<JsonObject>($"api/v1/cases/{caseId}/users/{userKey}");
 
         if (result.IsSuccess)
         {
@@ -464,7 +464,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
     private async Task<IEnumerable<UserCaseGroup>> GetUserCaseGroups(string userKey, int caseId)
     {
-        var result = await this.GetAsync<IEnumerable<UserCaseGroup>>($"api/v1/cases/{caseId}/case-users/{userKey}/groups");
+        var result = await this.GetAsync<IEnumerable<UserCaseGroup>>($"api/v1/cases/{caseId}/users/{userKey}/groups");
         Log.Logger.Information("Got #{0} user cases  user {1}", result.Value.Count(), userKey);
 
         if (result.IsSuccess)
@@ -516,7 +516,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
     public async Task<bool> RemoveUserFromCase(string userId, int caseId)
     {
         // var result = await this.PostAsync<>($"api/v1/version");
-        var result = await this.DeleteAsync($"api/v1/cases/{caseId}/case-users/remove/{userId}");
+        var result = await this.DeleteAsync($"api/v1/cases/{caseId}/users/remove/{userId}");
 
         if (result.IsSuccess)
         {

@@ -92,6 +92,7 @@ public partial class ProfileStatus
 
     public class CommandHandler : ICommandHandler<Command, Model>
     {
+        private const string SUBAGENCY = "subagency";
         private readonly IMapper mapper;
         private readonly IPlrClient client;
         private readonly IJumClient jumClient;
@@ -267,8 +268,11 @@ public partial class ProfileStatus
         {
 
             var identityProvider = user.GetIdentityProvider();
+            var agency = this.context.SubmittingAgencies.Where(agency => agency.IdpHint.Equals(identityProvider)).FirstOrDefault();
 
-            var processFlows = this.context.ProcessFlows.Include(flow => flow.ProcessSection).Where(flow => flow.IdentityProvider == identityProvider).OrderBy(flow => flow.Sequence).ToList();
+            var idpKey = (agency != null) ? SUBAGENCY : identityProvider;
+
+            var processFlows = this.context.ProcessFlows.Include(flow => flow.ProcessSection).Where(flow => flow.IdentityProvider == idpKey).OrderBy(flow => flow.Sequence).ToList();
 
             var order = 0.0;
             foreach (var status in profileStatus.Status)
