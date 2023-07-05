@@ -79,18 +79,22 @@ public class PartyDetailQueryHandler : IQueryHandler<PartyDetailQuery, PartyMode
                     partyModel.ParticipantId = decimal.Parse(partId);
                     var participant = part?.participantDetails.FirstOrDefault();
 
-                    var justinUserModel = new SystemUserModel
+                    if (participant != null)
                     {
-                        AccountType = "oidc",
-                        Key = partId,
-                        Roles = participant.GrantedRoles.Select((role) => role.role.ToString()).ToList(),
-                        System = "JUSTIN",
-                        Enabled = participant.GrantedRoles.Where((role) => role.role.ToString().Contains("JRS")).Any(),
-                        Username = participant.partUserId,
-                        Regions = participant.assignedAgencies.Select((agency) => agency.agencyName).ToList(),
-                    };
 
-                    partyModel.SystemsAccess.Add("JUSTIN", justinUserModel);
+                        var justinUserModel = new SystemUserModel
+                        {
+                            AccountType = "oidc",
+                            Key = partId,
+                            Roles = participant.GrantedRoles.Select((role) => role.role.ToString()).ToList(),
+                            System = "JUSTIN",
+                            Enabled = participant.GrantedRoles.Where((role) => role.role.ToString().Contains("JRS")).Any(),
+                            Username = participant.partUserId,
+                            Regions = participant.assignedAgencies.Select((agency) => agency.agencyName).ToList(),
+                        };
+
+                        partyModel.SystemsAccess.Add("JUSTIN", justinUserModel);
+                    }
                 }
                 else
                 {

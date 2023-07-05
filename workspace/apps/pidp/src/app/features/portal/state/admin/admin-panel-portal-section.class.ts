@@ -48,7 +48,7 @@ export class AdministratorPortalSection implements IPortalSection {
   }
 
   public get statusType(): AlertType {
-    return 'danger';
+    return 'info';
   }
 
   public get status(): string {
