@@ -77,7 +77,11 @@ export class DigitalEvidenceCaseManagementPortalSection
   }
 
   public get statusType(): AlertType {
-    return this.getStatusCode() === StatusCode.COMPLETED ? 'info' : 'warn';
+    const digitalEvidenceStatusCode =
+      this.profileStatus.status.digitalEvidence.statusCode;
+    return digitalEvidenceStatusCode === StatusCode.COMPLETED
+      ? 'completed'
+      : 'greyed';
   }
 
   public performAction(): void | Observable<void> {

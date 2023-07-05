@@ -150,9 +150,9 @@ export class OrganizationDetailsPortalSection
     return statusCode === StatusCode.ERROR
       ? 'danger'
       : statusCode === StatusCode.LOCKEDCOMPLETE
-      ? 'success'
+      ? 'completed'
       : statusCode === StatusCode.COMPLETED
-      ? 'success'
+      ? 'completed'
       : 'warn';
   }
 

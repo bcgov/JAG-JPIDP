@@ -20,6 +20,8 @@ export class CardSummaryComponent {
   @Input() public order?: number;
 
   @Input() public statusType?: AlertType;
+  @Input() public child?: boolean;
+
   @Input() public status?: string;
   @Input() public actionLabel?: string;
   @Input() public actionDisabled?: boolean;
@@ -31,6 +33,11 @@ export class CardSummaryComponent {
 
   public hasActions(): boolean {
     return (this.actionLabel && this.actionLabel?.length > 0) || false;
+  }
+
+  public getStatusTypeClass(): string {
+    const isChild = (this.order && this.order % 1 !== 0) || 0;
+    return isChild ? this.statusType + ' indent' : '' + this.statusType;
   }
 
   public onAction(): void {

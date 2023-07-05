@@ -217,7 +217,7 @@ export class DigitalEvidencePage
           this.formState.ParticipantId.value
         )
         .pipe(
-          tap(() => (this.completed = true)),
+          tap(() => (this.pending = true)),
           catchError((error: HttpErrorResponse) => {
             if (error.status === HttpStatusCode.NotFound) {
               this.navigateToRoot();
@@ -238,7 +238,7 @@ export class DigitalEvidencePage
             this.formState.AssignedRegions?.value || []
           )
           .pipe(
-            tap(() => (this.completed = true)),
+            tap(() => (this.pending = true)),
             catchError((error: HttpErrorResponse) => {
               if (error.status === HttpStatusCode.NotFound) {
                 this.navigateToRoot();
@@ -258,7 +258,7 @@ export class DigitalEvidencePage
             this.formState.AssignedRegions?.value || []
           )
           .pipe(
-            tap(() => (this.completed = true)),
+            tap(() => (this.pending = true)),
             catchError((error: HttpErrorResponse) => {
               if (error.status === HttpStatusCode.NotFound) {
                 this.navigateToRoot();

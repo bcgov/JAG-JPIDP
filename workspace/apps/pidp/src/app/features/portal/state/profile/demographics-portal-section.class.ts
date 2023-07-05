@@ -87,7 +87,7 @@ export class DemographicsPortalSection
       ? 'danger'
       : statusCode === StatusCode.COMPLETED ||
         statusCode === StatusCode.LOCKEDCOMPLETE
-      ? 'success'
+      ? 'completed'
       : 'warn';
   }
 

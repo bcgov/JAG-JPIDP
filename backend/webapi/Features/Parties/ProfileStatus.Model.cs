@@ -240,15 +240,15 @@ public partial class ProfileStatus
                     return;
                 }
 
-                if (!profile.DemographicsEntered
+                if (!profile.UserIsInLawSociety && !profile.UserIsInSubmittingAgency && !profile.DemographicsEntered
                     || !profile.OrganizationDetailEntered
-                    || !profile.PlrStanding.HasGoodStanding)
+                    )
                 {
-                    this.StatusCode = StatusCode.Locked;
+                    this.StatusCode = StatusCode.PriorStepRequired;
                     return;
                 }
 
-                this.StatusCode = StatusCode.Incomplete;
+                this.StatusCode = StatusCode.Available;
             }
         }
         public class SubmittingAgencyCaseManagement : ProfileSection
