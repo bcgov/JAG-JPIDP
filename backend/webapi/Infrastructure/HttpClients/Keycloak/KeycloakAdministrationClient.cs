@@ -200,6 +200,8 @@ public class KeycloakAdministrationClient : BaseClient, IKeycloakAdministrationC
 
 
 
+
+
     public async Task<UserRepresentation?> GetUser(Guid userId)
     {
         var result = await this.GetAsync<UserRepresentation>($"users/{userId}");
@@ -243,6 +245,18 @@ public class KeycloakAdministrationClient : BaseClient, IKeycloakAdministrationC
         updateAction(user);
 
         return await this.UpdateUser(userId, user);
+    }
+
+    public async Task<IEnumerable<IdentityProvider>> GetIdentityProviders()
+    {
+        var result = await this.GetAsync<IEnumerable<IdentityProvider>>($"identity-provider/instances");
+        if (!result.IsSuccess)
+        {
+            Serilog.Log.Error($"Failed to get identity providers [{string.Join(",",result.Errors)}].");
+            return null;
+        }
+
+        return result.Value;
     }
 }
 
