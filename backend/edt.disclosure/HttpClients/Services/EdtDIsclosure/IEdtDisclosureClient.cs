@@ -14,6 +14,7 @@ public interface IEdtDisclosureClient
     Task<UserModificationEvent> UpdateUser(EdtDisclosureUserProvisioningModel accessRequest, EdtUserDto currentUser);
     Task<CaseModel> FindCase(string field, string value);
     Task<CaseModel> GetCase(int caseID);
+    Task<CaseModel> FindCaseByKey(string caseKey);
 
     Task<EdtUserDto?> GetUser(string userKey);
 

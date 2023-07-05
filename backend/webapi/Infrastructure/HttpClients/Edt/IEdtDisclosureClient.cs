@@ -5,5 +5,6 @@ using Pidp.Models;
 public interface IEdtDisclosureClient
 {
     Task<DigitalEvidenceCaseModel?> FindFolio(int partyID, string folioID);
+    Task<DigitalEvidenceCaseModel?> GetCaseModelByKey(string key);
 
 }

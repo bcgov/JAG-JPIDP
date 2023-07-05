@@ -11,8 +11,19 @@ export enum CourtRequestStatus {
 export interface CourtLocation {
   active: boolean;
   staffed: boolean;
+  edtId: number;
+  status: string;
   name: string;
   code: string;
+  key: string;
+  edtFields: EdtField[];
+}
+
+export interface EdtField {
+  id: number;
+  name: string;
+  value: any;
+  display: boolean;
 }
 
 export interface CourtLocationRequest {

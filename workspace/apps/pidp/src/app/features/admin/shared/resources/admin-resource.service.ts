@@ -35,13 +35,23 @@ export class AdminResource {
     );
   }
 
-  public getCourtLocations(): Observable<CourtLocation[]> {
-    return this.apiResource.get<CourtLocation[]>('/admin/court-location').pipe(
-      catchError((_: HttpErrorResponse) => {
-        // TODO add logging and toast messaging around specific errors when the admin starts getting a bit of attention
-        return of([]);
+  public getCourtLocations(
+    includeEdtInfo: boolean,
+    activeOnly: boolean
+  ): Observable<CourtLocation[]> {
+    return this.apiResource
+      .get<CourtLocation[]>('/admin/court-location', {
+        params: {
+          activeOnly: activeOnly,
+          includeEdtDetails: includeEdtInfo,
+        },
       })
-    );
+      .pipe(
+        catchError((_: HttpErrorResponse) => {
+          // TODO add logging and toast messaging around specific errors when the admin starts getting a bit of attention
+          return of([]);
+        })
+      );
   }
 
   public updateCourtLocation(
@@ -52,7 +62,7 @@ export class AdminResource {
 
   public getSubmittingAgencies(): Observable<SubmittingAgency[]> {
     return this.apiResource
-      .get<SubmittingAgency[]>('/admin/submitting-agencies')
+      .get<SubmittingAgency[]>('/admin/submitting-agencies', {})
       .pipe(
         catchError((_: HttpErrorResponse) => {
           // TODO add logging and toast messaging around specific errors when the admin starts getting a bit of attention
