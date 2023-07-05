@@ -11,8 +11,8 @@ public class DefenceDisclosureController : ControllerBase
 {
     private readonly IMediator _mediator;
 
-    private static readonly Histogram FolioFindDuration = Metrics
-    .CreateHistogram("folio_search_duration", "Histogram of folio searches.");
+    private static readonly Histogram FolioFindDuration = Metrics.CreateHistogram("folio_lookup_duration", "Histogram of folio searches.");
+    private static readonly Histogram CaseSearchDuration = Metrics.CreateHistogram("case_search_duration", "Histogram of case searches.");
 
     public DefenceDisclosureController(IMediator mediator)
     {
@@ -30,11 +30,32 @@ public class DefenceDisclosureController : ControllerBase
             var response = await this._mediator.Send(new CaseQuery("Folio ID", folioID));
             if (response == null)
             {
-                return NotFound();
+                return this.NotFound();
             }
             else
             {
-                return Ok(response);
+                return this.Ok(response);
+            }
+        }
+    }
+
+    [HttpGet("case/{key}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<CaseModel>> FindCaseByKey([FromRoute] string key)
+    {
+        using (CaseSearchDuration.NewTimer())
+        {
+
+            var response = await this._mediator.Send(new CaseKeyQuery(key));
+            if (response == null)
+            {
+                return this.NotFound();
+            }
+            else
+            {
+                return this.Ok(response);
             }
         }
     }

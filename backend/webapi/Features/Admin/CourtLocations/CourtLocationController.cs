@@ -16,7 +16,7 @@ public class CourtLocationController : PidpControllerBase
 
     [HttpGet()]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<ActionResult<List<CourtLocation>>> GetSubmittingAgencies([FromServices] IQueryHandler<CourtLocationQuery, List<CourtLocation>> handler,
+    public async Task<ActionResult<List<CourtLocationAdminModel>>> GetSubmittingAgencies([FromServices] IQueryHandler<CourtLocationQuery, List<CourtLocationAdminModel>> handler,
                                                                [FromQuery] CourtLocationQuery query)
 => await handler.HandleAsync(query);
 

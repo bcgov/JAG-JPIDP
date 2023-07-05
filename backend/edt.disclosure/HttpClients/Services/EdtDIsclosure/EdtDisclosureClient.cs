@@ -89,7 +89,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         // check user is present
         var user = await this.GetUser(accessRequest.Username);
 
-        if ( user == null)
+        if (user == null)
         {
             throw new EdtDisclosureServiceException($"User [{accessRequest.Username}] not present to assign cases");
         }
@@ -438,7 +438,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
                     {
                         Log.Error($"Failed to add user {userKey} to case group {caseGroupName} not assigned to case {caseId}");
                         Log.Warning("************ NEED TO DETERMINE CASE GROUP ACCESS ************************");
-                       // throw new EdtDisclosureServiceException($"Failed to add user {userKey} to case group {CounselGroup} not assigned to case {caseId}");
+                        // throw new EdtDisclosureServiceException($"Failed to add user {userKey} to case group {CounselGroup} not assigned to case {caseId}");
                     }
                     else
                     {
@@ -493,7 +493,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         }
     }
 
-        public async Task<bool> AddUserToCaseGroup(string userId, int caseId, int caseGroupId)
+    public async Task<bool> AddUserToCaseGroup(string userId, int caseId, int caseGroupId)
     {
         Log.Debug("Adding user {0} in case {1} to group {2}", userId, caseId, caseGroupId);
 
@@ -544,48 +544,49 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
         Log.Logger.Information("Finding case {0}", searchString);
 
-        var caseSearch = await this.GetAsync<IEnumerable<CaseId>?>($"api/v1/org-units/1/cases/{searchString}/id");
+        var caseIds = await this.SearchForCase(searchString);
 
-        if (caseSearch.IsSuccess)
+        if (caseIds != null)
         {
-            var caseSearchValue = caseSearch?.Value;
-
-            // Do something with the caseSearchValue
-
-            if (caseSearchValue.Count() == 0)
-            {
-                Log.Information("No cases found for {0}", searchString);
-                return null;
-            }
 
             // see if we have multiple cases with the same id - if e do then we want the one with a key
-            var cases = caseSearch?.Value;
             int caseId;
-
-            if (cases != null)
+            if (caseIds?.Count() > 1)
             {
-                if (cases?.Count() > 1)
-                {
-                    Log.Information("Multiple cases found for {0}", searchString.ToString());
-                    caseId = cases.FirstOrDefault(c => c.Key != null).Id;
-                }
-                else
-                {
-                    caseId = cases.First().Id;
-                }
-
-                return await this.GetCase(caseId);
+                Log.Information("Multiple cases found for {0}", searchString.ToString());
+                caseId = caseIds.FirstOrDefault(c => c.Key != null).Id;
             }
             else
             {
-                return null;
+                caseId = caseIds.First().Id;
             }
+
+            return await this.GetCase(caseId);
 
         }
         else
         {
-            throw new EdtDisclosureServiceException(string.Join(",", caseSearch.Errors));
+            Log.Information("No cases found for {0}", searchString);
+            return null;
+        }
 
+    }
+
+    private async Task<IEnumerable<CaseId>> SearchForCase(string search)
+    {
+        Log.Logger.Information("Finding case {0}", search);
+
+        var result = await this.GetAsync<IEnumerable<CaseId>?>($"api/v1/org-units/1/cases/{search}/id");
+
+        if (result.IsSuccess)
+        {
+            return result.Value;
+
+        }
+        else
+        {
+            Log.Logger.Warning("No matching cases found for {0}", search);
+            return null;
         }
     }
 
@@ -622,9 +623,9 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
     }
 
-    public async Task<CaseModel> GetCase(int caseId)
+    public async Task<CaseModel> GetCase(int caseID)
     {
-        var result = await this.GetAsync<CaseModel?>($"api/v1/cases/{caseId}");
+        var result = await this.GetAsync<CaseModel?>($"api/v1/cases/{caseID}");
         if (result.IsSuccess)
         {
             if (result != null)
@@ -769,6 +770,31 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
     }
 
+    /// <summary>
+    ///
+    /// Key is unique within cases
+    /// </summary>
+    /// <param name="caseKey"></param>
+    /// <returns></returns>
+    public async Task<CaseModel> FindCaseByKey(string caseKey)
+    {
+        if (caseKey == null)
+        {
+            Log.Error($"Null key passed to FindCaseByKey()");
+            return null;
+        }
+
+        var caseIds = await this.SearchForCase(caseKey);
+        if (caseIds != null && caseIds.Any())
+        {
+            return await this.GetCase(caseIds.First().Id);
+        }
+        else
+        {
+            Log.Information("No cases found for key {0}", caseKey);
+            return null;
+        }
+    }
 
     public static class RequestEventType
     {

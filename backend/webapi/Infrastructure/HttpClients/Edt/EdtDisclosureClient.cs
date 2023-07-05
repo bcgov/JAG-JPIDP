@@ -25,4 +25,17 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         return result.Value;
     }
 
+    public async Task<DigitalEvidenceCaseModel?> GetCaseModelByKey(string key)
+    {
+
+        var result = await this.GetAsync<DigitalEvidenceCaseModel>($"defence-disclosure/case/{key}");
+
+        if (!result.IsSuccess)
+        {
+            return null;
+        }
+
+
+        return result.Value;
+    }
 }

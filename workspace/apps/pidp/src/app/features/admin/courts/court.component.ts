@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, Inject, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -18,8 +19,17 @@ import { CourtLocationUpdateDialogComponent } from './court-location.update-dial
 export class CourtLocationComponent implements AfterViewInit {
   public courts: CourtLocation[] | undefined;
   public dataSource!: MatTableDataSource<CourtLocation>;
-  public displayedColumns: string[] = ['name', 'code', 'active'];
-  public showInactive = false;
+
+  public columnDefinitions = [
+    { def: 'name', nonEdt: true },
+    { def: 'code', nonEdt: true },
+    { def: 'active', nonEdt: true },
+    { def: 'edtId', nonEdt: false },
+    { def: 'status', nonEdt: false },
+    { def: 'key', nonEdt: false },
+  ];
+  public activeOnly = false;
+  public showEdtInfo = false;
 
   public constructor(
     @Inject(APP_CONFIG) private config: AppConfig,
@@ -39,12 +49,28 @@ export class CourtLocationComponent implements AfterViewInit {
 
   public updateCourts(): void {
     this.adminResource
-      .getCourtLocations()
+      .getCourtLocations(this.showEdtInfo, this.activeOnly)
       .subscribe((results: CourtLocation[]) => {
         this.dataSource.data = results.sort((a, b) =>
           a.name.localeCompare(b.name)
         );
       });
+  }
+
+  public toggleActiveOnly(event: MatSlideToggleChange): void {
+    this.activeOnly = event.checked;
+    this.updateCourts();
+  }
+
+  public toggleEdtInfo(event: MatSlideToggleChange): void {
+    this.showEdtInfo = event.checked;
+    this.updateCourts();
+  }
+
+  public getDisplayedColumns(): string[] {
+    return this.columnDefinitions
+      .filter((cd) => (!this.showEdtInfo ? cd.nonEdt : cd))
+      .map((cd) => cd.def);
   }
 
   public showUpdateDialog(row: CourtLocation): void {

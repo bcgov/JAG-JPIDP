@@ -1,11 +1,9 @@
 namespace Pidp.Features.Admin.IdentityProviders;
 
-using DomainResults.Common;
 using Keycloak.Net.Models.RealmsAdmin;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Pidp.Infrastructure.Auth;
 using Pidp.Infrastructure.Services;
 
 [Route("api/admin/[controller]")]

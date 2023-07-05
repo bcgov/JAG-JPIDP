@@ -7,6 +7,7 @@ using static NodaTime.Extensions.DateTimeExtensions;
 using Pidp.Infrastructure.HttpClients.Plr;
 using Pidp.Models;
 using Pidp.Models.Lookups;
+using Pidp.Features.Admin.CourtLocations;
 
 public class MappingProfile : Profile
 {
@@ -37,6 +38,7 @@ public class MappingProfile : Profile
         this.CreateProjection<PartyLicenceDeclaration, ProfileStatus.ProfileStatusDto.LicenceDeclarationDto>();
         this.CreateProjection<PartyOrgainizationDetail, OrganizationDetails.Command>();
         this.CreateMap<SubmittingAgency, SubmittingAgencyModel>();
+        this.CreateMap<CourtLocation, CourtLocationAdminModel>();
 
         this.CreateMap<PlrRecord, CollegeCertifications.Model>()
             .ForMember(dest => dest.IsGoodStanding, opt => opt.MapFrom(src => src.IsGoodStanding()))
