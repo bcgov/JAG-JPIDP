@@ -1,16 +1,15 @@
 <ui-page-section>
-  <ui-page-section-subheader icon="table_chart" heading="Identity Providers">
-  </ui-page-section-subheader>
+
   <ng-container>
-    <table mat-table [dataSource]="dataSource">
-      <ng-container matColumnDef="name">
-        <th *matHeaderCellDef mat-header-cell>Name</th>
-        <td *matCellDef="let idp" mat-cell>{{ idp.name }}</td>
+    <table mat-table [dataSource]="dataSource" class="full-width">
+      <ng-container matColumnDef="internalId">
+        <th *matHeaderCellDef mat-header-cell>Internal Id</th>
+        <td *matCellDef="let idp" mat-cell>{{ idp.internalId }}</td>
       </ng-container>
 
-      <ng-container matColumnDef="displayName">
-        <th *matHeaderCellDef mat-header-cell>Display Name</th>
-        <td *matCellDef="let idp" mat-cell>{{ idp.displayName }}</td>
+      <ng-container matColumnDef="providerId">
+        <th *matHeaderCellDef mat-header-cell>Type</th>
+        <td *matCellDef="let idp" mat-cell>{{ idp.providerId }}</td>
       </ng-container>
       <ng-container matColumnDef="alias">
         <th *matHeaderCellDef mat-header-cell>Alias</th>

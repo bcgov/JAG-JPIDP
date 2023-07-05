@@ -1,6 +1,5 @@
 namespace Pidp.Features.Admin.SubmittingAgencies;
 
-using Pidp.Models.Lookups;
 using System.Threading.Tasks;
 using AutoMapper;
 using Pidp.Data;

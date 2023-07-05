@@ -1,24 +1,16 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
-
-
 import { Observable, catchError, of } from 'rxjs';
 
-
-
 import { NoContent, NoContentResponse } from '@bcgov/shared/data-access';
-
-
 
 import { ApiHttpClient } from '@app/core/resources/api-http-client.service';
 import { CourtLocation } from '@app/features/access/pages/digital-evidence/digital-evidence-counsel/digital-evidence-counsel-model';
 
-
-
+import { IdentityProvider } from '../../idp/idp.model';
 import { PartyModel } from '../../party/party.model';
 import { SubmittingAgency } from '../../submitting-agency/submitting-agency.model';
-
 
 export interface PartyList {
   id: number;
@@ -77,6 +69,10 @@ export class AdminResource {
 
   public getUserDetails(partyId: string): Observable<PartyModel> {
     return this.apiResource.get(`admin/party/${partyId}`, {});
+  }
+
+  public getIdentityProviders(): Observable<IdentityProvider[]> {
+    return this.apiResource.get(`admin/identity-provider`, {});
   }
 
   public resetAccessRequest(partyId: string): Observable<PartyModel> {

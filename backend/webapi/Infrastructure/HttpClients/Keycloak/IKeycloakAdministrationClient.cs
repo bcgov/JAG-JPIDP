@@ -85,4 +85,11 @@ public interface IKeycloakAdministrationClient
     Task<Realm> GetRealm(string name);
 
     Task<IdentityProvider> GetIdentityProvider(string name);
+
+    /// <summary>
+    /// Get Identity providers within realm
+    /// </summary>
+    /// <returns></returns>
+    Task<IEnumerable<IdentityProvider>> GetIdentityProviders();
+
 }
