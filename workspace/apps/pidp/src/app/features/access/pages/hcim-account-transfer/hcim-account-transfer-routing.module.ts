@@ -12,7 +12,7 @@ const routes: Routes = [
       hcimAccountTransferStatusCode: HcimAccountTransferResolver,
     },
     data: {
-      title: 'Provider Identity Portal',
+      title: 'Digital Identity Access Management',
       routes: {
         root: '../../',
       },

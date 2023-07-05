@@ -17,6 +17,12 @@ $palettes: (
   yellow: (
     base: map-get($material-theme-secondary, 500),
   ),
+  bermuda: (
+    base: #349e92,
+  ),
+  buff: (
+    base: #fbc368,
+  ),
   red: (
     base: #ed202a,
   ),
@@ -55,6 +61,24 @@ $alerts: (
     // more contrast in the UI compared to #055160
     color: theme-palette(blue),
   ),
+  completed: (
+    backgroundColor: #349e92,
+    backgroundColorSolid: theme-palette(bermuda),
+    borderColor: #349e92,
+    color: #000000,
+  ),
+  available: (
+    backgroundColor: #349e92,
+    backgroundColorSolid: theme-palette(buff),
+    borderColor: #ffecb5,
+    color: #000000,
+  ),
+  pending: (
+    backgroundColor: #e2e3e5,
+    backgroundColorSolid: #a2a2a2,
+    borderColor: #d3d6d8,
+    color: #000000,
+  ),
   warn: (
     backgroundColor: #fff3cd,
     backgroundColorSolid: theme-palette(yellow),
@@ -72,6 +96,12 @@ $alerts: (
     backgroundColorSolid: #575757,
     borderColor: #d3d6d8,
     color: #41464b,
+  ),
+  greyed: (
+    backgroundColor: #e2e3e5,
+    backgroundColorSolid: #b2b2b2,
+    borderColor: #d3d6d8,
+    color: #000000,
   ),
   primary: (
     backgroundColor: #e0d7f8,

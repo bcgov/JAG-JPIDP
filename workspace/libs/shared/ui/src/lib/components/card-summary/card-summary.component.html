@@ -1,7 +1,7 @@
 <ng-container>
-  <div class="card-status" [class]="statusType">
+  <div class="card-status" [class]="getStatusTypeClass()">
     <ng-container *ngTemplateOutlet="card"></ng-container>
-    <span *ngIf="status || statusType">{{ status }}</span>
+    <span class="status-text" *ngIf="status || statusType">{{ status }}</span>
   </div>
 </ng-container>
 

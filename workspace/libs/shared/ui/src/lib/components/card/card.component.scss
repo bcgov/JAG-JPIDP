@@ -12,6 +12,27 @@
   border-color: #fcba19;
 }
 
+.available {
+  border-color: theme-palette(buff);
+}
+
+.completed {
+  border-color: theme-palette(bermuda);
+}
+
+.pending {
+  border-color: #a2a2a2;
+}
+
 .danger {
   border-color: #a11622;
+}
+
+.greyed {
+  border-color: #a2a2a2;
+  color: #a2a2a2;
+}
+
+.indent {
+  margin-left: 32px;
 }

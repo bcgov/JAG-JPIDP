@@ -71,19 +71,21 @@ export class DigitalEvidencePortalSection
   }
 
   public get statusType(): AlertType {
-    let u = this.getStatusCode();
     return this.getStatusCode() === StatusCode.COMPLETED
-      ? 'success'
+      ? 'completed'
+      : this.getStatusCode() === StatusCode.AVAILABLE ||
+        this.getStatusCode() === StatusCode.INCOMPLETE
+      ? 'available'
       : this.getStatusCode() === StatusCode.PENDING
-      ? 'info'
-      : 'warn';
+      ? 'pending'
+      : 'greyed';
   }
 
   public get status(): string {
     const statusCode = this.getStatusCode();
-
-    return statusCode === StatusCode.INCOMPLETE
-      ? 'For existing users of DEMS only'
+    return statusCode === StatusCode.AVAILABLE ||
+      this.getStatusCode() === StatusCode.INCOMPLETE
+      ? 'Access Request Available'
       : statusCode === StatusCode.COMPLETED
       ? 'Completed'
       : statusCode === StatusCode.PENDING

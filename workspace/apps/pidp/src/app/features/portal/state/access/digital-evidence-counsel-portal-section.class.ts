@@ -72,7 +72,9 @@ export class DigitalEvidenceCounselPortalSection
   }
 
   public get statusType(): AlertType {
-    return this.getStatusCode() === StatusCode.AVAILABLE ? 'info' : 'warn';
+    return this.getStatusCode() === StatusCode.AVAILABLE
+      ? 'available'
+      : 'greyed';
   }
 
   public get status(): string {
