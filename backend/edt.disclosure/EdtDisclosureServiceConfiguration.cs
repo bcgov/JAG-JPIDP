@@ -45,6 +45,10 @@ public class EdtDisclosureServiceConfiguration
         public string ApiKey { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
         public string CaseGroup { get; set; } = "Counsel";
+        public string DefenceFolioTemplateName { get; set; } = string.Empty;
+        public int DefenceFolioTemplateId { get; set; } = -1;
+        public string DefenceCaseGroup { get; set; } = string.Empty;
+
     }
     public class CustomDisplayField
     {

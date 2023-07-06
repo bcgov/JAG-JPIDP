@@ -135,7 +135,7 @@ spec:
                 secretKeyRef:
                   name: kafkaconfig-jpidp
                   key: KafkaCluster__ProducerTopicName
-    
+ 
             - name: KafkaCluster__SaslOauthbearerConsumerClientSecret
               valueFrom:
                 secretKeyRef:
@@ -167,6 +167,16 @@ spec:
                 secretKeyRef:
                   name: kafkaconfig-jpidp
                   key: KafkaCluster__CourtLocationAccessRequestTopic
+            - name: KafkaCluster__DisclosureUserCreationTopic
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-jpidp
+                  key: KafkaCluster__DisclosureUserCreationTopic
+            - name: KafkaCluster__PersonCreationTopic
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-jpidp
+                  key: KafkaCluster__PersonCreationTopic
             - name: Telemetry__CollectorUrl
               valueFrom: 
                 secretKeyRef:

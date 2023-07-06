@@ -27,7 +27,7 @@ public class KafkaProducer<TKey, TValue> : IDisposable, IKafkaProducer<TKey, TVa
         }
         catch (Exception ex)
         {
-            Log.Error($"Failed to sent to topic {topic} [{ex.Message}]");
+            Log.Error($"Failed to sent to topic [{topic}] [{ex.Message}]");
             throw ex;
         }
         finally
