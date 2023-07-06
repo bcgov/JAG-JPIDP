@@ -212,10 +212,15 @@ public partial class ProfileStatus
                         foreach (var request in requests)
                         {
                             // if any request is errored then this is an error status
-                            if (request.Equals(StatusCode.Error))
+                            if (request.Equals(StatusCode.Error.ToString(), StringComparison.Ordinal))
                             {
                                 Log.Information($"One or more events resulted in an error for {profile.User.GetUserId()}");
                                 this.StatusCode = StatusCode.Error;
+                                return;
+                            }
+                            if (request.Equals(StatusCode.Pending.ToString(), StringComparison.Ordinal))
+                            {
+                                this.StatusCode = StatusCode.Pending;
                                 return;
                             }
                         }
@@ -237,6 +242,13 @@ public partial class ProfileStatus
                 if (profile.CompletedEnrolments.Contains(AccessTypeCode.DigitalEvidence))
                 {
                     this.StatusCode = StatusCode.Complete;
+                    return;
+                }
+
+                if (!profile.IsJumUser && !profile.UserIsInSubmittingAgency && !profile.UserIsInLawSociety && profile.OrganizationDetailEntered)
+                {
+                    // cannot continue as prior step is incomplete
+                    this.StatusCode = StatusCode.PriorStepRequired;
                     return;
                 }
 
