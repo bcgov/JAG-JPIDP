@@ -47,6 +47,11 @@ spec:
           env:
             - name: PlrClient__Url
               value: http://{{ $release }}-plr-intake:8080/api
+            - name: EDTDisclosureClient__Url
+              valueFrom:
+                secretKeyRef:
+                  name: pidp-edt-disclosure-api
+                  key: url
             - name: EdtCaseManagementClient__Url
               valueFrom:
                 secretKeyRef:

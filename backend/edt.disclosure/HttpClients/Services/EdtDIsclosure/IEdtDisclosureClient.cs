@@ -14,7 +14,10 @@ public interface IEdtDisclosureClient
     Task<UserModificationEvent> UpdateUser(EdtDisclosureUserProvisioningModel accessRequest, EdtUserDto currentUser);
     Task<CaseModel> FindCase(string field, string value);
     Task<CaseModel> GetCase(int caseID);
+    Task<CaseModel> GetCase(int caseID, bool includeFields);
+
     Task<CaseModel> FindCaseByKey(string caseKey);
+    Task<CaseModel> FindCaseByKey(string caseKey, bool includeFields);
 
     Task<EdtUserDto?> GetUser(string userKey);
 

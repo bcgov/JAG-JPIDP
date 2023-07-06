@@ -623,65 +623,72 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
     }
 
-    public async Task<CaseModel> GetCase(int caseID)
+    // include fields by default
+    public async Task<CaseModel> GetCase(int caseID) => await this.GetCase(caseID, true);
+
+
+    public async Task<CaseModel> GetCase(int caseID, bool includeFields)
     {
         var result = await this.GetAsync<CaseModel?>($"api/v1/cases/{caseID}");
         if (result.IsSuccess)
         {
             if (result != null)
             {
-                // filter out unwanted data
-                var customFieldsArray = this.configuration.CaseDisplayCustomFields.Select(f => f.Id).ToArray();
-                var customFieldsIds = this.configuration.CaseDisplayCustomFields.Select(f => f.Id).ToList();
-                var filteredFields = result.Value.Fields.Where(f => customFieldsIds.Contains(f.Id)).ToList();
-
-                var removeValues = new List<int>();
-
-                foreach (var field in filteredFields)
+                if (includeFields)
                 {
-                    var defn = this.configuration.CaseDisplayCustomFields.FirstOrDefault(f => f.Id == field.Id);
-                    if (defn.RelatedId > 0)
+                    // filter out unwanted data
+                    var customFieldsArray = this.configuration.CaseDisplayCustomFields.Select(f => f.Id).ToArray();
+                    var customFieldsIds = this.configuration.CaseDisplayCustomFields.Select(f => f.Id).ToList();
+                    var filteredFields = result.Value.Fields.Where(f => customFieldsIds.Contains(f.Id)).ToList();
+
+                    var removeValues = new List<int>();
+
+                    foreach (var field in filteredFields)
                     {
-                        var relatedField = result.Value.Fields.FirstOrDefault(f => f.Id == defn.RelatedId);
-                        if (relatedField != null)
+                        var defn = this.configuration.CaseDisplayCustomFields.FirstOrDefault(f => f.Id == field.Id);
+                        if (defn.RelatedId > 0)
                         {
-                            if (defn.RelatedValueEmpty)
+                            var relatedField = result.Value.Fields.FirstOrDefault(f => f.Id == defn.RelatedId);
+                            if (relatedField != null)
                             {
-                                if (relatedField.Value != null && !string.IsNullOrEmpty(relatedField.Value.ToString()))
+                                if (defn.RelatedValueEmpty)
                                 {
-                                    removeValues.Add(field.Id);
+                                    if (relatedField.Value != null && !string.IsNullOrEmpty(relatedField.Value.ToString()))
+                                    {
+                                        removeValues.Add(field.Id);
+                                    }
                                 }
-                            }
-                            else
-                            {
-                                if (relatedField.Value == null || string.IsNullOrEmpty(relatedField.Value.ToString()))
+                                else
                                 {
-                                    removeValues.Add(field.Id);
+                                    if (relatedField.Value == null || string.IsNullOrEmpty(relatedField.Value.ToString()))
+                                    {
+                                        removeValues.Add(field.Id);
+                                    }
                                 }
                             }
                         }
+
+                        if (!defn.Display && !removeValues.Contains(field.Id))
+                        {
+                            field.Display = false;
+                        }
                     }
 
-                    if (!defn.Display && !removeValues.Contains(field.Id))
+                    if (removeValues.Count > 0)
                     {
-                        field.Display = false;
+                        filteredFields = filteredFields.Where(f => !removeValues.Contains(f.Id)).ToList();
                     }
+
+
+                    filteredFields.Sort((f1, f2) =>
+                    {
+                        var index1 = Array.IndexOf(customFieldsArray, f1.Id);
+                        var index2 = Array.IndexOf(customFieldsArray, f2.Id);
+                        return index1.CompareTo(index2);
+                    });
+
+                    result.Value.Fields = filteredFields;
                 }
-
-                if (removeValues.Count > 0)
-                {
-                    filteredFields = filteredFields.Where(f => !removeValues.Contains(f.Id)).ToList();
-                }
-
-
-                filteredFields.Sort((f1, f2) =>
-                {
-                    var index1 = Array.IndexOf(customFieldsArray, f1.Id);
-                    var index2 = Array.IndexOf(customFieldsArray, f2.Id);
-                    return index1.CompareTo(index2);
-                });
-
-                result.Value.Fields = filteredFields;
                 return result.Value;
             }
             else
@@ -770,13 +777,16 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
     }
 
+    public async Task<CaseModel> FindCaseByKey(string caseKey) => await this.FindCaseByKey(caseKey, true);
+
+
     /// <summary>
     ///
     /// Key is unique within cases
     /// </summary>
     /// <param name="caseKey"></param>
     /// <returns></returns>
-    public async Task<CaseModel> FindCaseByKey(string caseKey)
+    public async Task<CaseModel> FindCaseByKey(string caseKey, bool includeFields)
     {
         if (caseKey == null)
         {
@@ -787,7 +797,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         var caseIds = await this.SearchForCase(caseKey);
         if (caseIds != null && caseIds.Any())
         {
-            return await this.GetCase(caseIds.First().Id);
+            return await this.GetCase(caseIds.First().Id, includeFields);
         }
         else
         {
