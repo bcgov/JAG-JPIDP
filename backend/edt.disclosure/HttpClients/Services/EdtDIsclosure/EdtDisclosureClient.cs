@@ -1,4 +1,6 @@
 namespace edt.disclosure.HttpClients.Services.EdtDisclosure;
+
+using System.Dynamic;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -7,6 +9,7 @@ using edt.disclosure.Exceptions;
 using edt.disclosure.Features.Cases;
 using edt.disclosure.Infrastructure.Telemetry;
 using edt.disclosure.Kafka.Model;
+using edt.disclosure.Models;
 using edt.disclosure.ServiceEvents.CourtLocation.Models;
 using edt.disclosure.ServiceEvents.Models;
 using edt.disclosure.ServiceEvents.UserAccountCreation.Models;
@@ -25,7 +28,8 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         .CreateCounter("disclosure_case_searches", "Number of disclosure case search requests.");
     private static readonly Histogram AccountCreationDuration = Metrics.CreateHistogram("edt_disclosure_account_creation_duration", "Histogram of edt disclosure account creations.");
     private static readonly Histogram AccountUpdateDuration = Metrics.CreateHistogram("edt_disclosure_account_update_duration", "Histogram of edt disclosure account updates.");
-
+    private static readonly Counter CaseAddRequest = Metrics
+    .CreateCounter("disclosure_case_additions", "Number of disclosure cases added.");
 
     public EdtDisclosureClient(
         HttpClient httpClient, OtelMetrics meters, EdtDisclosureServiceConfiguration edtServiceConfiguration,
@@ -403,62 +407,88 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         }
     }
 
-    private async Task<bool> AddUserToCase(string userKey, int caseId, string caseGroupName)
+    public async Task<bool> AddUserToCase(string userKey, int caseId)
     {
+        var caseListing = await this.GetUserCases(userKey);
 
-        // check if user already on case
+        var userOnCase = caseListing.FirstOrDefault(caze => caze.Id == caseId);
 
-
-        Log.Logger.Information("Adding user {0} to case {0}", userKey, caseId);
-        var result = await this.PostAsync<JsonObject>($"api/v1/cases/{caseId}/users/{userKey}");
-
-        if (result.IsSuccess)
+        if (userOnCase != null)
         {
-            Log.Information("Successfully added user {0} to case {1}", userKey, caseId);
-
-            var caseGroupId = await this.GetCaseGroupId(caseId, caseGroupName);
-
-            // case group Ids are zero-based
-            if (caseGroupId > -1)
-            {
-                // see if the user is already in the user/case/group combination
-                var userCaseGroups = await this.GetUserCaseGroups(userKey, caseId);
-
-                var existing = userCaseGroups.Any((caseGroup) => caseGroup.UserId == userKey && caseGroup.GroupId == caseGroupId);
-
-                if (existing)
-                {
-                    Log.Information($"User {userKey} already assigned to case {caseId}");
-                }
-                else
-                {
-
-                    var addUserToCaseGroup = await this.AddUserToCaseGroup(userKey, caseId, caseGroupId);
-                    if (!addUserToCaseGroup)
-                    {
-                        Log.Error($"Failed to add user {userKey} to case group {caseGroupName} not assigned to case {caseId}");
-                        Log.Warning("************ NEED TO DETERMINE CASE GROUP ACCESS ************************");
-                        // throw new EdtDisclosureServiceException($"Failed to add user {userKey} to case group {CounselGroup} not assigned to case {caseId}");
-                    }
-                    else
-                    {
-                        Log.Information($"User {userKey} successfully added to group {caseGroupId} for case {caseId}");
-                    }
-                }
-            }
-            else
-            {
-                Log.Error($"{caseGroupName} not assigned to case {caseId}");
-                throw new EdtDisclosureServiceException($"{CounselGroup} not assigned to case {caseId}");
-            }
+            Log.Logger.Information("User user {0} already assigned to case {0}", userKey, caseId);
+            return true;
         }
         else
         {
-            Log.Error("Failed to add user {0} to case {1} [{2}]", userKey, caseId, string.Join(',', result.Errors));
-            throw new EdtDisclosureServiceException($"Failed to add user {userKey} to case {caseId} [{string.Join(',', result.Errors)}]");
+            Log.Logger.Information("Adding user {0} to case {0}", userKey, caseId);
+            var result = await this.PostAsync<EdtCaseUserDto>($"api/v1/cases/{caseId}/users/{userKey}");
+            if (result.IsSuccess)
+            {
+                Log.Information("Successfully added user {0} to case {1}", userKey, caseId);
+                return true;
+            }
+            else
+            {
+                Log.Error("Failed to add user {0} to case {1} [{2}]", userKey, caseId, string.Join(',', result.Errors));
+                throw new EdtDisclosureServiceException($"Failed to add user {userKey} to case {caseId} [{string.Join(',', result.Errors)}]");
+            }
+        }
+    }
+
+    public async Task<bool> AddUserToCase(string userKey, int caseId, int caseGroupId)
+    {
+        var addResponse = await this.AddUserToCase(userKey, caseId);
+
+
+        // see if the user is already in the user/case/group combination
+        var userCaseGroups = await this.GetUserCaseGroups(userKey, caseId);
+
+        var existing = userCaseGroups.Any((caseGroup) => caseGroup.UserId == userKey && caseGroup.GroupId == caseGroupId);
+
+        if (existing)
+        {
+            Log.Information($"User {userKey} already assigned to case {caseId}");
+        }
+        else
+        {
+
+
+            var addUserToCaseGroup = await this.AddUserToCaseGroup(userKey, caseId, caseGroupId);
+            if (!addUserToCaseGroup)
+            {
+                Log.Error($"Failed to add user {userKey} to case group {caseGroupId} not assigned to case {caseId}");
+                Log.Warning("************ NEED TO DETERMINE CASE GROUP ACCESS ************************");
+                // throw new EdtDisclosureServiceException($"Failed to add user {userKey} to case group {CounselGroup} not assigned to case {caseId}");
+            }
+            else
+            {
+                Log.Information($"User {userKey} successfully added to group {caseGroupId} for case {caseId}");
+            }
+
         }
 
-        return result.IsSuccess;
+        return true;
+    }
+
+    public async Task<bool> AddUserToCase(string userKey, int caseId, string caseGroupName)
+    {
+
+
+        var caseGroupId = await this.GetCaseGroupId(caseId, caseGroupName);
+
+        // case group Ids are zero-based
+        if (caseGroupId > -1)
+        {
+            return await this.AddUserToCase(userKey, caseId, caseGroupId);
+        }
+        else
+        {
+            Log.Error($"{caseGroupName} not assigned to case {caseId}");
+            throw new EdtDisclosureServiceException($"{CounselGroup} not assigned to case {caseId}");
+        }
+
+
+        return false;
     }
 
 
@@ -590,6 +620,55 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         }
     }
 
+    /// <summary>
+    /// Create a new case
+    /// </summary>
+    /// <param name="caseInfo"></param>
+    /// <returns></returns>
+    /// <exception cref="EdtDisclosureServiceException"></exception>
+    public async Task<int> CreateCase(EdtCaseDto caseInfo)
+    {
+        Log.Logger.Information($"Case creation request {caseInfo.Name}");
+        if (caseInfo.Key == null || caseInfo.Name == null)
+        {
+            throw new EdtDisclosureServiceException($"Invalid case creation request received");
+        }
+        var response = await this.PostAsync<CaseModel>($"api/v1/org-units/1/cases", caseInfo);
+        if (!response.IsSuccess)
+        {
+            var msg = $"Case creation failed {caseInfo.Name} {string.Join(",", response.Errors)}";
+            Log.Logger.Error(msg);
+            throw new EdtDisclosureServiceException(msg);
+
+        }
+        else
+        {
+            Log.Logger.Information($"Case creation complete {caseInfo.Name} {response.Value.Id}");
+            return response.Value.Id;
+        }
+
+
+    }
+
+    public async Task<IEnumerable<KeyIdPair>> GetUserCases(string userIdOrKey)
+    {
+        Log.Logger.Information($"Getting cases for user {userIdOrKey}");
+
+        var response = await this.GetAsync<IEnumerable<KeyIdPair>>($"api/v1/org-units/1/users/{userIdOrKey}/cases");
+
+        if (response.IsSuccess)
+        {
+            Log.Logger.Information($"Found {response.Value.Count()} cases for user {userIdOrKey}");
+            return response.Value;
+        }
+        else
+        {
+            var msg = $"Case lookup for user {userIdOrKey} failed - {string.Join(",", response.Errors)}";
+            Log.Logger.Error(msg);
+            throw new EdtDisclosureServiceException(msg);
+        }
+
+    }
 
     public async Task<bool> EnableOrDisableAccount(string userIdOrKey, bool activateAccount)
     {

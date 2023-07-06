@@ -1,12 +1,17 @@
 namespace edt.disclosure.ServiceEvents.UserAccountCreation.Handler;
 
 using System.Diagnostics;
+using AutoMapper;
 using edt.disclosure.Data;
+using edt.disclosure.Exceptions;
+using edt.disclosure.Features.Cases;
 using edt.disclosure.HttpClients.Services.EdtDisclosure;
 using edt.disclosure.Kafka.Interfaces;
 using edt.disclosure.Kafka.Model;
 using edt.disclosure.Models;
 using edt.disclosure.ServiceEvents.UserAccountCreation.Models;
+using Google.Protobuf.WellKnownTypes;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.Extensions.Logging;
 using NodaTime;
 
@@ -16,6 +21,8 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
 
     private readonly EdtDisclosureServiceConfiguration configuration;
     private readonly IEdtDisclosureClient edtClient;
+    private readonly IMapper mapper;
+
     private readonly IClock clock;
     private readonly ILogger logger;
     private readonly DisclosureDataStoreDbContext context;
@@ -27,6 +34,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
         EdtDisclosureServiceConfiguration configuration,
         IEdtDisclosureClient edtClient,
         IClock clock,
+        IMapper mapper,
         ILogger logger,
         IKafkaProducer<string, Notification> producer,
         IKafkaProducer<string, GenericProcessStatusResponse> processResponseProducer,
@@ -36,6 +44,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
         this.configuration = configuration;
         this.context = context;
         this.clock = clock;
+        this.mapper = mapper;
         this.logger = logger;
         this.edtClient = edtClient;
         this.producer = producer;
@@ -86,6 +95,23 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
                 await this.context.IdempotentConsumer(messageId: key, consumer: consumerName, consumeDate: clock.GetCurrentInstant());
 
                 await this.context.SaveChangesAsync();
+
+                // get the folio for the user (if present)
+                var existingFolio = await this.edtClient.FindCaseByKey(accessRequestModel.Key);
+
+                if (existingFolio == null)
+                {
+                    Serilog.Log.Information($"User with key {accessRequestModel.Key} does not currently have a folio - adding folio");
+                    var folio = await this.CreateUserFolio(accessRequestModel);
+                    var linked = await this.LinkUserToFolio(accessRequestModel, folio.Id);
+                }
+                else
+                {
+                    Serilog.Log.Information($"User with key {accessRequestModel.Key} has a folio - adding user to folio if not already linked");
+                    var linked = await this.LinkUserToFolio(accessRequestModel, existingFolio.Id);
+
+
+                }
 
                 try
                 {
@@ -141,12 +167,68 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
         catch (Exception ex)
         {
             Serilog.Log.Logger.Error("Exception during EDT Disclosure provisioning {0}", ex.Message);
-
+            return Task.FromException(ex);
         }
 
         return Task.CompletedTask; //create specific exception handler later
     }
 
+
+    private async Task<CaseModel> CreateUserFolio(EdtDisclosureUserProvisioningModel accessRequestModel)
+    {
+        // check case isnt present
+        var caseModel = await this.edtClient.FindCaseByKey(accessRequestModel.Key);
+        if (caseModel != null)
+        {
+            return caseModel;
+        }
+
+        var caseName = accessRequestModel.FullName + " (Defence Folio)";
+        var caseCreation = new EdtCaseDto
+        {
+            Name = caseName,
+            Description = "Folio Case for Defence Counsel",
+            Key = accessRequestModel.Key,
+            TemplateCase = (this.configuration.EdtClient.DefenceFolioTemplateId < 0 && !string.IsNullOrEmpty(this.configuration.EdtClient.DefenceFolioTemplateName)) ? this.configuration.EdtClient.DefenceFolioTemplateName : null,
+            TemplateCaseId = (this.configuration.EdtClient.DefenceFolioTemplateId > -1 ) ? this.configuration.EdtClient.DefenceFolioTemplateId.ToString() : null,
+
+        };
+
+        Serilog.Log.Information($"Creating new case {caseCreation}");
+
+        var createResponseID = await this.edtClient.CreateCase(caseCreation);
+
+        caseModel = await this.edtClient.GetCase(createResponseID);
+
+
+        return caseModel;
+
+
+    }
+
+    public async Task<bool> LinkUserToFolio(EdtDisclosureUserProvisioningModel accessRequestModel, int caseId)
+    {
+        var addedOk = false;
+
+        var user = await this.edtClient.GetUser(accessRequestModel.Key!) ?? throw new EdtDisclosureServiceException($"User was not found {accessRequestModel.Key}");
+
+
+        if (this.configuration.EdtClient.DefenceCaseGroup != null)
+        {
+            addedOk = await this.edtClient.AddUserToCase(user.Id, caseId, this.configuration.EdtClient.DefenceCaseGroup);
+        }
+        else
+        {
+            Serilog.Log.Warning($"*** NO case group for defence assigned in configuration - no case group will be assigned for user {user.Id} and case {caseId} ***");
+            addedOk = await this.edtClient.AddUserToCase(user.Id, caseId);
+        }
+
+        if (!addedOk)
+        {
+            throw new EdtDisclosureServiceException($"Failed to add user {user.Id} to defence folio");
+        }
+        return true;
+    }
 
     private async Task<string> CheckEdtServiceVersion() => await this.edtClient.GetVersion();
 
