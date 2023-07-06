@@ -240,6 +240,13 @@ public partial class ProfileStatus
                     return;
                 }
 
+                if (!profile.IsJumUser && !profile.UserIsInSubmittingAgency && profile.OrganizationDetailEntered)
+                {
+                    // cannot continue as prior step is incomplete
+                    this.StatusCode = StatusCode.PriorStepRequired;
+                    return;
+                }
+
                 if (!profile.UserIsInLawSociety && !profile.UserIsInSubmittingAgency && !profile.DemographicsEntered
                     || !profile.OrganizationDetailEntered
                     )
