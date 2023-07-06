@@ -48,7 +48,28 @@ public class DefenceDisclosureController : ControllerBase
         using (CaseSearchDuration.NewTimer())
         {
 
-            var response = await this._mediator.Send(new CaseKeyQuery(key));
+            var response = await this._mediator.Send(new CaseKeyQuery(key, true));
+            if (response == null)
+            {
+                return this.NotFound();
+            }
+            else
+            {
+                return this.Ok(response);
+            }
+        }
+    }
+
+    [HttpGet("case/summary/{key}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<CaseModel>> FindCaseSummaryByKey([FromRoute] string key)
+    {
+        using (CaseSearchDuration.NewTimer())
+        {
+
+            var response = await this._mediator.Send(new CaseKeyQuery(key, false));
             if (response == null)
             {
                 return this.NotFound();
