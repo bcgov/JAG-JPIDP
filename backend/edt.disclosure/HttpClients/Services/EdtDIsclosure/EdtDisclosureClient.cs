@@ -484,7 +484,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         else
         {
             Log.Error($"{caseGroupName} not assigned to case {caseId}");
-            throw new EdtDisclosureServiceException($"{CounselGroup} not assigned to case {caseId}");
+            throw new EdtDisclosureServiceException($"{caseGroupName} not assigned to case {caseId}");
         }
 
 

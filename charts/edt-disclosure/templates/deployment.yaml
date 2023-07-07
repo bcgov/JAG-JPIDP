@@ -182,11 +182,30 @@ spec:
                 secretKeyRef:
                   name: edt-disclosure-client
                   key: EdtClient__Apikey
+
             - name: EdtClient__Url
               valueFrom:
                 secretKeyRef:
                   name: edt-disclosure-client
                   key: EdtClient__Url
+
+            - name: EdtClient__DefenceFolioTemplateName
+              valueFrom:
+                secretKeyRef:
+                  name: edt-disclosure-client
+                  key: EdtClient__DefenceFolioTemplateName
+            - name: EdtClient__DefenceFolioTemplateId
+              valueFrom:
+                secretKeyRef:
+                  name: edt-disclosure-client
+                  key: EdtClient__DefenceFolioTemplateId
+
+            - name: EdtClient__DefenceCaseGroup
+              valueFrom:
+                secretKeyRef:
+                  name: edt-disclosure-client
+                  key: EdtClient__DefenceCaseGroup
+
             - name: Telemetry__CollectorUrl
               valueFrom: 
                 secretKeyRef:
