@@ -98,12 +98,14 @@ public static class ConsumerSetup
         services.AddScoped<IKafkaHandler<string, IncomingUserModification>, IncomingUserChangeModificationHandler>();
 
         services.AddScoped<IKafkaHandler<string, EdtUserProvisioningModel>, UserProvisioningHandler>();
-        services.AddScoped<IKafkaHandler<string, EdtPersonProvisioningModel>, DefenceParticipantHandler>();
+        // no longer required - ISL handling
+        //services.AddScoped<IKafkaHandler<string, EdtPersonProvisioningModel>, DefenceParticipantHandler>();
 
         services.AddSingleton(typeof(IKafkaConsumer<,>), typeof(KafkaConsumer<,>));
 
         services.AddHostedService<EdtServiceConsumer>();
-        services.AddHostedService<EdtPersonCreationConsumer>();
+        // no longer required - ISL handling
+        //services.AddHostedService<EdtPersonCreationConsumer>();
 
         services.AddHostedService<EdtUserModificationServiceConsumer>();
 
