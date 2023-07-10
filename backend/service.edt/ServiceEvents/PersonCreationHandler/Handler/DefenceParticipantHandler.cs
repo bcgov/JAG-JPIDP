@@ -121,7 +121,7 @@ public class DefenceParticipantHandler : IKafkaHandler<string, EdtPersonProvisio
     {
         Serilog.Log.Information($"Handling request to add/update participant {accessRequestModel.FirstName} {accessRequestModel.LastName} {accessRequestModel.Id}");
 
-        EdtPersonDto? user = await this.edtClient.GetPerson(accessRequestModel.Key!);
+        var user = await this.edtClient.GetPerson(accessRequestModel.Key!);
 
         if (user == null)
         {

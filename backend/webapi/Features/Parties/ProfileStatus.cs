@@ -67,7 +67,9 @@ public partial class ProfileStatus
             TransientError = 1,
             PlrBadStanding,
             JumValidationError,
-            PendingRequest
+            PendingRequest,
+            LawyerStatusError,
+            PersonVerificationError
         }
 
         public enum StatusCode

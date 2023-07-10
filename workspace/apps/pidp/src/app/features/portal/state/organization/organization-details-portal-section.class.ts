@@ -8,6 +8,7 @@ import { OrganizationInfoRoutes } from '@app/features/organization-info/organiza
 import { ShellRoutes } from '@app/features/shell/shell.routes';
 
 import { BasePortalSection } from '../../base-portal-section';
+import { AlertCode } from '../../enums/alert-code.enum';
 import { StatusCode } from '../../enums/status-code.enum';
 import { ProfileStatus } from '../../models/profile-status.model';
 import { PortalSectionAction } from '../portal-section-action.model';
@@ -158,11 +159,28 @@ export class OrganizationDetailsPortalSection
 
   public get status(): string {
     const statusCode = this.getStatusCode();
+    let message = '';
+    this.profileStatus.alerts.forEach((altr) => {
+      switch (altr) {
+        case AlertCode.JUM_VALIDATION_ERROR: {
+          message += 'Invalid JUSTIN Details Entered';
+          break;
+        }
+        case AlertCode.LAWYER_STATUS_ERROR: {
+          message += 'Lawyer credentials invalid';
+          break;
+        }
+        case AlertCode.PERSON_VERIFICATION_ERROR: {
+          message += 'Identification validation failed';
+          break;
+        }
+      }
+    });
     return statusCode === StatusCode.COMPLETED ||
       statusCode === StatusCode.LOCKEDCOMPLETE
       ? 'Completed'
       : statusCode === StatusCode.ERROR
-      ? 'Invalid JUSTIN Details Entered'
+      ? message
       : 'Incomplete';
   }
 

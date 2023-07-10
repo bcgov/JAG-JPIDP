@@ -111,8 +111,6 @@ public class JumClient : BaseClient, IJumClient
         return participant;
     }
 
-
-
     public Task<bool> IsJumUser(Participant? justinUser, Party party)
     {
         if (justinUser == null || justinUser?.participantDetails.Count == 0
