@@ -156,7 +156,38 @@ public partial class ProfileStatus
                 }
 
                 // user is from an authenticated agency - no need to enter organization details or view/change them
-                if (profile.UserIsInSubmittingAgency || profile.UserIsInLawSociety)
+                if (profile.UserIsInLawSociety)
+                {
+
+                    var hasError = false;
+                    var BCServicesCardLastName = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("BCPerID_last_name"));
+                    var BCServicesCardFirstName = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("BCPerID_first_name"));
+                    var familyName = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("family_name"));
+                    var givenName = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("given_name"));
+
+                    if ( BCServicesCardLastName.Value != familyName.Value || BCServicesCardFirstName.Value != givenName.Value)
+                    {
+                        this.Alerts.Add(Alert.PersonVerificationError);
+                        this.StatusCode = StatusCode.Error;
+                    }
+
+                    var standing = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("membership_status_code"));
+                    if (standing == null || standing.Value != "PRAC")
+                    {
+                        this.Alerts.Add(Alert.LawyerStatusError);
+                        this.StatusCode = StatusCode.Error;
+                    }
+                    else
+                    {
+                        // check user info is valid
+                        this.StatusCode = StatusCode.LockedComplete;
+                    }
+
+                    return;
+
+                }
+
+                if (profile.UserIsInSubmittingAgency)
                 {
                     this.StatusCode = StatusCode.LockedComplete;
                     return;

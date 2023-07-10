@@ -118,6 +118,17 @@ export class PortalService {
             heading: 'Pending access request!',
             content: 'Your access request is pending for approval',
           };
+        case AlertCode.LAWYER_STATUS_ERROR:
+          return {
+            heading: 'Lawyer credentials invalid!',
+            content:
+              'Your BC Law account does not appear to be valid, please check that your BC Services Card information matches your BC Law Credentials and check your membership is active',
+          };
+        case AlertCode.PERSON_VERIFICATION_ERROR:
+          return {
+            heading: 'Personal information validation error!',
+            content: 'Your personal information does not appear to be correct',
+          };
       }
     });
   }
