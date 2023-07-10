@@ -1,6 +1,7 @@
 namespace Pidp.Kafka.Consumer.Responses;
 
 using System;
+using System.Security.Policy;
 using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
 using Pidp.Data;
@@ -96,7 +97,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
     private async Task MarkCourtLocationProcessResponse(GenericProcessStatusResponse processResponse)
     {
         var accessRequest = this.context.CourtLocationAccessRequests.Include(req => req.Party).Where(req => req.RequestId == processResponse.Id).FirstOrDefault();
-        if ( accessRequest == null)
+        if (accessRequest == null)
         {
             Serilog.Log.Warning($"Received notification for non-existent court request {processResponse.Id} - ignoring");
             return;
@@ -105,7 +106,16 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
         Serilog.Log.Information($"Court location request {processResponse.Id} flagged as {processResponse.Status}");
         accessRequest.RequestStatus = processResponse.Status;
 
+        if (processResponse.Status == "Error")
+        {
+            accessRequest.Details = string.Join(",", processResponse.ErrorList);
+        }
+
         var updated = await this.context.SaveChangesAsync();
+        if ( updated > 0)
+        {
+            Serilog.Log.Information($"Process marked as complete for {accessRequest.RequestId}");
+        }
 
     }
 

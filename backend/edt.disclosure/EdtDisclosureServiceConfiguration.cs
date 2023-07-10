@@ -48,6 +48,10 @@ public class EdtDisclosureServiceConfiguration
         public string DefenceFolioTemplateName { get; set; } = string.Empty;
         public int DefenceFolioTemplateId { get; set; } = -1;
         public string DefenceCaseGroup { get; set; } = string.Empty;
+        public string CourtLocationKeyPrefix { get; set; } = "CH-";
+        public string CourtLocationGroup { get; set; } = string.Empty;
+        public int CourtLocationTemplateId { get; set; }
+        public bool CreateCourtLocations { get; set; }
 
     }
     public class CustomDisplayField

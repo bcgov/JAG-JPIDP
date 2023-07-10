@@ -90,6 +90,12 @@ public class CourtAccessRequest
                         // see if existing request falls within new request timeframe
                         foreach (var req in existingRequests)
                         {
+                            if (req.RequestStatus is CourtLocationAccessStatus.Error or CourtLocationAccessStatus.Deleted)
+                            {
+                                // ignore errored or deleted so they can be re-added
+                                continue;
+                            }
+
                             if (command.ValidFrom == req.ValidFrom && command.ValidUntil == req.ValidUntil)
                             {
                                 Serilog.Log.Information($"Duplicate request - {req.RequestId} ignoring");

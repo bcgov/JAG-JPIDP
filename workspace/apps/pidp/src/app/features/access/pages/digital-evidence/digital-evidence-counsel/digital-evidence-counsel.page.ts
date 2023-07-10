@@ -15,7 +15,16 @@ import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { EMPTY, Observable, catchError, exhaustMap, noop, of } from 'rxjs';
+import {
+  EMPTY,
+  Observable,
+  catchError,
+  exhaustMap,
+  interval,
+  noop,
+  of,
+  takeWhile,
+} from 'rxjs';
 
 import {
   ConfirmDialogComponent,
@@ -64,6 +73,9 @@ export class DigitalEvidenceCounselPage
   public minDate: Date = new Date();
   public maxDate: Date = new Date(this.minDate);
   private MAX_DAYS_OUT = 90;
+  public refreshEnabled: boolean;
+  public refreshCount: number;
+
   public courtLocations!: CourtLocation[];
   public filteredOptions!: CourtLocation[];
   public formControlNames: string[];
@@ -102,7 +114,8 @@ export class DigitalEvidenceCounselPage
       this.courtLocations = data;
     });
     this.dateAdapter.setLocale('en-GB'); //dd/MM/yyyy
-
+    this.refreshEnabled = false;
+    this.refreshCount = 0;
     this.title = routeData.title;
     this.formState = new DigitalEvidenceCounselFormState(fb);
     this.maxDate.setDate(this.minDate.getDate() + this.MAX_DAYS_OUT);
@@ -119,6 +132,7 @@ export class DigitalEvidenceCounselPage
     this.resource.getLocations().subscribe((locations) => {
       this.courtLocations = locations;
       this.filteredOptions = locations;
+      this.refreshTable();
     });
 
     this.formState.courtLocation.valueChanges.subscribe((value: any) => {
@@ -162,6 +176,20 @@ export class DigitalEvidenceCounselPage
         // Set the sorting and pagination properties of the dataSource
         this.dataSource.data = this.courtListing;
         this.dataSource.sort = this.sort;
+        const incomplete = results.filter(
+          (location) => location.requestStatus !== CourtRequestStatus.Complete
+        );
+
+        if (this.refreshEnabled && incomplete.length > 0) {
+          this.refreshCount++;
+          if (this.refreshCount >= 4) {
+            this.refreshEnabled = false;
+            this.refreshCount = 0;
+          }
+        } else {
+          this.refreshEnabled = false;
+          this.refreshCount = 0;
+        }
       });
   }
 
@@ -177,7 +205,8 @@ export class DigitalEvidenceCounselPage
     const dateFrom = new Date(this.formState.dateFrom.value);
     const dateTo = new Date(this.formState.dateTo.value);
     const partyId = this.partyService.partyId;
-
+    this.refreshEnabled = true;
+    this.refreshCount = 0;
     const locationRequest: CourtLocationRequest = {
       partyId: partyId,
       validFrom: dateFrom,
@@ -204,7 +233,7 @@ export class DigitalEvidenceCounselPage
       .subscribe(() => {
         this.clearLocation();
         this.formState.reset();
-        this.loadExistingRequests();
+        this.refreshTable();
       });
   }
 
@@ -238,6 +267,14 @@ export class DigitalEvidenceCounselPage
 
   public onBack(): void {
     this.navigateToRoot();
+  }
+
+  public refreshTable(): void {
+    interval(8000)
+      .pipe(takeWhile(() => this.refreshEnabled))
+      .subscribe(() => {
+        this.loadExistingRequests();
+      });
   }
 
   public clearLocation(): void {

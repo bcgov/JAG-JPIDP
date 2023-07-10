@@ -72,9 +72,9 @@ export class DigitalEvidenceCounselPortalSection
   }
 
   public get statusType(): AlertType {
-    return this.getStatusCode() === StatusCode.AVAILABLE
-      ? 'available'
-      : 'greyed';
+    const statusCode = this.profileStatus.status.digitalEvidence.statusCode;
+
+    return statusCode === StatusCode.COMPLETED ? 'available' : 'greyed';
   }
 
   public get status(): string {

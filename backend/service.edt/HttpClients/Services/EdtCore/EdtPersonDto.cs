@@ -1,7 +1,11 @@
 namespace edt.service.HttpClients.Services.EdtCore;
 
+using System.Text.Json.Serialization;
+
 public class EdtPersonDto
 {
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public int? Id { get; set; }
     public string? Key { get; set; }
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
@@ -14,6 +18,8 @@ public class EdtPersonDto
 
 public class EdtPersonAddress
 {
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public int? Id { get; set; }
     public string? Email { get; set; }
     public string? Mobile { get; set; }
     public string? Phone { get; set; }

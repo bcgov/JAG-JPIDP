@@ -84,13 +84,11 @@ public static class ConsumerSetup
         services.AddSingleton(typeof(IKafkaProducer<,>), typeof(KafkaProducer<,>));
 
         services.AddScoped<IKafkaHandler<string, CourtLocationDomainEvent>, CourtLocationAccessRequestHandler>();
-        // no longer required - ISL handling
         services.AddScoped<IKafkaHandler<string, EdtDisclosureUserProvisioningModel>, UserProvisioningHandler>();
 
         services.AddSingleton(typeof(IKafkaConsumer<,>), typeof(KafkaConsumer<,>));
 
         services.AddHostedService<CourtLocationConsumer>();
-        // no longer required - ISL handling
         services.AddHostedService<UserProvisioningConsumer>();
 
         return services;
