@@ -22,9 +22,8 @@ public class DefenceParticipantHandler : IKafkaHandler<string, EdtPersonProvisio
 
 
     public DefenceParticipantHandler(
-              IKafkaProducer<string, GenericProcessStatusResponse> processResponseProducer,
-
-    IKafkaProducer<string, UserModificationEvent> userModificationProducer,
+        IKafkaProducer<string, GenericProcessStatusResponse> processResponseProducer,
+        IKafkaProducer<string, UserModificationEvent> userModificationProducer,
         EdtServiceConfiguration configuration,
         IEdtClient edtClient,
         IClock clock,
@@ -122,7 +121,7 @@ public class DefenceParticipantHandler : IKafkaHandler<string, EdtPersonProvisio
     {
         Serilog.Log.Information($"Handling request to add/update participant {accessRequestModel.FirstName} {accessRequestModel.LastName} {accessRequestModel.Id}");
 
-        EdtPersonUpdateDto? user = await this.edtClient.GetPerson(accessRequestModel.Key!);
+        EdtPersonDto? user = await this.edtClient.GetPerson(accessRequestModel.Key!);
 
         if (user == null)
         {
@@ -139,7 +138,7 @@ public class DefenceParticipantHandler : IKafkaHandler<string, EdtPersonProvisio
 
     private async Task<string> CheckEdtServiceVersion() => await this.edtClient.GetVersion();
 
-   
+
 }
 public static partial class DefenceParticipantHandlerLoggingExtensions
 {

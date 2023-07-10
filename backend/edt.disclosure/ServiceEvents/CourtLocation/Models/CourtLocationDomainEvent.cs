@@ -1,6 +1,5 @@
 namespace edt.disclosure.ServiceEvents.CourtLocation.Models;
 
-using NodaTime;
 
 public class CourtLocationDomainEvent
 {
@@ -8,7 +7,8 @@ public class CourtLocationDomainEvent
     public int RequestId { get; set; }
     public int PartyId { get; set; }
     public string? Username { get; set; }
-    public string CourtLocation { get; set; }
+    public string CourtLocationKey { get; set; } = string.Empty;
+    public string CourtLocationName { get; set; } = string.Empty;
     public Guid UserId { get; set; }
     // todo - set court case name from EDT
     public string EventType { get; set; } = CourtLocationEventType.None;

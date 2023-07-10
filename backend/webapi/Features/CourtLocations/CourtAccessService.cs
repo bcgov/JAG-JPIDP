@@ -46,7 +46,8 @@ public class CourtAccessService : ICourtAccessService
 
                 var courtLocationDomainEvent = new CourtLocationDomainEvent
                 {
-                    CourtLocation = request.CourtLocation!.Code,
+                    CourtLocationKey = request.CourtLocation!.Code,
+                    CourtLocationName = request.CourtLocation!.Name,
                     PartyId = request.PartyId,
                     RequestedOn = request.RequestedOn,
                     UserId = accessRequestRecord.Party!.UserId,

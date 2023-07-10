@@ -83,7 +83,8 @@
             <ng-container matColumnDef="requestStatus">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
               <td *matCellDef="let request" mat-cell>{{ request.requestStatus }}
-
+                <mat-icon class="warning-icon" matTooltip="{{request.details}}"
+                  *ngIf="request.requestStatus === 'Error'">error</mat-icon>
               </td>
             </ng-container>
             <ng-container matColumnDef="action">

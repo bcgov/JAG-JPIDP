@@ -323,13 +323,13 @@ public class EdtClient : BaseClient, IEdtClient
         }
     }
 
-    public async Task<EdtPersonUpdateDto?> GetPerson(string userKey)
+    public async Task<EdtPersonDto?> GetPerson(string userKey)
     {
         using (GetUserDuration.NewTimer())
         {
             this.meters.GetPerson();
             Log.Logger.Information("Checking if person with key {0} already present", userKey);
-            var result = await this.GetAsync<EdtPersonUpdateDto?>($"api/v1/org-units/1/persons/{userKey}");
+            var result = await this.GetAsync<EdtPersonDto?>($"api/v1/org-units/1/persons/{userKey}");
 
             if (!result.IsSuccess)
             {
@@ -539,18 +539,21 @@ public class EdtClient : BaseClient, IEdtClient
     }
 
 
-    public async Task<UserModificationEvent> ModifyPerson(EdtPersonProvisioningModel accessRequest, EdtPersonUpdateDto currentUser)
+    public async Task<UserModificationEvent> ModifyPerson(EdtPersonProvisioningModel accessRequest, EdtPersonDto currentUser)
     {
         using (ParticipantModificationDuration.NewTimer())
         {
             this.meters.UpdatePerson();
-            var edtPersonDto = this.mapper.Map<EdtPersonProvisioningModel, EdtPersonUpdateDto>(accessRequest);
-            edtPersonDto.Id = currentUser.Id;
+
+            var edtPersonDto = this.mapper.Map<EdtPersonProvisioningModel, EdtPersonDto>(accessRequest);
+
+            edtPersonDto.Id = currentUser.Id; ;
             edtPersonDto.Address.Id = currentUser.Address.Id;
+
             var result = await this.PutAsync($"api/v1/org-units/1/persons/" + currentUser.Id, edtPersonDto);
             var userModificationResponse = new UserModificationEvent
             {
-                partId = edtPersonDto.Key,
+                partId = accessRequest.Key,
                 eventType = UserModificationEvent.UserEvent.Create,
                 eventTime = DateTime.Now,
                 accessRequestId = accessRequest.AccessRequestId,

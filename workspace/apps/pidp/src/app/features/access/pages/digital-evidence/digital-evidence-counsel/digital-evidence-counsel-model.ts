@@ -5,7 +5,7 @@ export enum CourtRequestStatus {
   SubmittedFuture = 'Future',
   Active = 'Active',
   Pending = 'Pending',
-  Completed = 'Completed',
+  Complete = 'Complete',
 }
 
 export interface CourtLocation {
@@ -13,6 +13,7 @@ export interface CourtLocation {
   staffed: boolean;
   edtId: number;
   status: string;
+  details: string;
   name: string;
   code: string;
   key: string;

@@ -92,19 +92,42 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
         // check user is present
         var user = await this.GetUser(accessRequest.Username);
+        CourtLocationCaseModel courtLocation = null;
 
         if (user == null)
         {
             throw new EdtDisclosureServiceException($"User [{accessRequest.Username}] not present to assign cases");
         }
-        // get the id of the case
 
-        Log.Information("USING DUMMY COURT LOCATION Victoria Courthouse - Test");
-        var courtLocation = await FindLocationCase("CH-VIC");
-
-        if (courtLocation == null)
+        try
         {
-            throw new EdtDisclosureServiceException($"Unable to determine court location with name {accessRequest.CourtLocation}");
+            // get the id of the case
+            courtLocation = await this.FindLocationCase(this.configuration.EdtClient.CourtLocationKeyPrefix + accessRequest.CourtLocationKey);
+        }
+        catch ( ResourceNotFoundException ex)
+        {
+            if (this.configuration.EdtClient.CreateCourtLocations)
+            {
+                Log.Information($"Court location did not exists - adding new court location {accessRequest.CourtLocationName} Key: {accessRequest.CourtLocationKey}");
+                var courtId = await this.CreateCourtLocation(accessRequest);
+                if (courtId > -1)
+                {
+                    Log.Information($"New court location added {accessRequest.CourtLocationKey} with ID {courtId}");
+                    courtLocation = await this.FindLocationCase(this.configuration.EdtClient.CourtLocationKeyPrefix + accessRequest.CourtLocationKey);
+                }
+            }
+            else
+            {
+                throw new EdtDisclosureServiceException($"Unable to determine court location with key {accessRequest.CourtLocationKey}");
+
+            }
+        }
+
+
+
+        if (courtLocation == null && !this.configuration.EdtClient.CreateCourtLocations)
+        {
+            throw new EdtDisclosureServiceException($"Unable to determine court location with key {accessRequest.CourtLocationKey}");
         }
         else
         {
@@ -127,6 +150,23 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         return Task.CompletedTask;
     }
 
+    private async Task<int?> CreateCourtLocation(CourtLocationDomainEvent accessRequest)
+    {
+        var courtLocation = new EdtCaseDto
+        {
+            Key = this.configuration.EdtClient.CourtLocationKeyPrefix + accessRequest.CourtLocationKey,
+            Name = accessRequest.CourtLocationName,
+            Description = "Court Location Folio",
+            TemplateCaseId = "" + this.configuration.EdtClient.CourtLocationTemplateId
+        };
+
+        var created = await this.CreateCase(courtLocation);
+
+        return created;
+
+
+    }
+
     public async Task<CourtLocationCaseModel> FindLocationCase(string caseName)
     {
         ProcessedJobCount.Inc();
@@ -134,28 +174,40 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
         var caseSearch = await this.GetAsync<IEnumerable<CourtLocationCaseModel>?>($"api/v1/org-units/1/cases/{caseName}/id");
 
-        var cases = caseSearch?.Value;
-        int caseId;
-
-        if (cases?.Count() > 1)
+        if (!caseSearch.IsSuccess)
         {
-            Log.Information("Multiple cases found for {0}", caseName);
-            caseId = cases.FirstOrDefault(c => c.Key != null).Id;
+            throw new ResourceNotFoundException("Case", caseName);
         }
         else
         {
-            caseId = cases.First().Id;
-        }
+            var cases = caseSearch?.Value;
+   
+            if (cases?.Count() == 0)
+            {
+                throw new ResourceNotFoundException("Case", caseName);
+            }
 
-        var result = await this.GetAsync<CourtLocationCaseModel?>($"api/v1/cases/{caseId}");
+            int caseId;
+            if (cases?.Count() > 1)
+            {
+                Log.Information("Multiple cases found for {0}", caseName);
+                caseId = cases.FirstOrDefault(c => c.Key != null).Id;
+            }
+            else
+            {
+                caseId = cases.First().Id;
+            }
 
-        if (result.IsSuccess)
-        {
-            return result?.Value;
-        }
-        else
-        {
-            throw new EdtDisclosureServiceException($"Failed to find case {caseName} : {string.Join(",", result.Errors)}");
+            var result = await this.GetAsync<CourtLocationCaseModel?>($"api/v1/cases/{caseId}");
+
+            if (result.IsSuccess)
+            {
+                return result?.Value;
+            }
+            else
+            {
+                throw new EdtDisclosureServiceException($"Failed to find case {caseName} : {string.Join(",", result.Errors)}");
+            }
         }
 
     }
@@ -421,7 +473,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         else
         {
             Log.Logger.Information("Adding user {0} to case {0}", userKey, caseId);
-            var result = await this.PostAsync<EdtCaseUserDto>($"api/v1/cases/{caseId}/users/{userKey}");
+            var result = await this.PostAsync<EdtCaseUserDto>($"api/v1/cases/{caseId}/case-users/{userKey}");
             if (result.IsSuccess)
             {
                 Log.Information("Successfully added user {0} to case {1}", userKey, caseId);
