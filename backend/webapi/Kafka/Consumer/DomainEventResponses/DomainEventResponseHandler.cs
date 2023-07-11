@@ -4,6 +4,8 @@ using System;
 using System.Security.Policy;
 using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
+using NodaTime;
+using NodaTime.Extensions;
 using Pidp.Data;
 using Pidp.Infrastructure.HttpClients.Jum;
 using Pidp.Kafka.Interfaces;
@@ -15,6 +17,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
     private readonly PidpDbContext context;
     private readonly JumClient jumClient;
     private readonly PidpConfiguration configuration;
+    private readonly IClock clock;
     private readonly IKafkaProducer<string, Notification> producer;
     private static readonly Histogram JUSTINAccessCompletionHistogram
         = Metrics
@@ -23,10 +26,11 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
       = Metrics
   .CreateHistogram("account_provision_histogram", "Histogram of account provisions roundtrips.");
 
-    public DomainEventResponseHandler(PidpDbContext context, JumClient jumClient, PidpConfiguration configuration, IKafkaProducer<string, Notification> producer
+    public DomainEventResponseHandler(PidpDbContext context, JumClient jumClient,IClock clock, PidpConfiguration configuration, IKafkaProducer<string, Notification> producer
 )
     {
         this.context = context;
+        this.clock = clock;
         this.jumClient = jumClient;
         this.producer = producer;
         this.configuration = configuration;
@@ -105,6 +109,10 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
 
         Serilog.Log.Information($"Court location request {processResponse.Id} flagged as {processResponse.Status}");
         accessRequest.RequestStatus = processResponse.Status;
+        if ( processResponse.Status == CourtLocationAccessStatus.Deleted)
+        {
+            accessRequest.DeletedOn = processResponse.EventTime;
+        }
 
         if (processResponse.Status == "Error")
         {

@@ -44,7 +44,10 @@ public class CourtAccessScheduledJob : IJob
 
                     }
                 }
-                else if (request.ValidFrom >= DateTime.UtcNow && request.RequestStatus != CourtLocationAccessStatus.Submitted && request.RequestStatus != CourtLocationAccessStatus.SubmittedFuture)
+                else if (request.ValidFrom <= DateTime.UtcNow && request.ValidUntil >= DateTime.Now
+                    && request.RequestStatus != CourtLocationAccessStatus.RemovalPending
+                    && request.RequestStatus != CourtLocationAccessStatus.Submitted
+                    && request.RequestStatus != CourtLocationAccessStatus.Deleted)
                 {
                     Serilog.Log.Information($"Provision request for {request.RequestId}");
                     await this.courtAccessService.CreateAddCourtAccessDomainEvent(request);

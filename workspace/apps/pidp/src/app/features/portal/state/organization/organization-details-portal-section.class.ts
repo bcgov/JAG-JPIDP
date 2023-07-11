@@ -127,7 +127,7 @@ export class OrganizationDetailsPortalSection
         this.profileStatus.status.organizationDetails?.statusCode ===
           StatusCode.COMPLETED
           ? ''
-          : 'Update',
+          : 'Manage',
       route: OrganizationInfoRoutes.routePath(
         OrganizationInfoRoutes.ORGANIZATION_DETAILS
       ),

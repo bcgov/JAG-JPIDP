@@ -95,7 +95,7 @@ export class PortalDashboardComponent implements IDashboard {
         ]
       ),
       new DashboardRouteMenuItem(
-        'Access to Systems',
+        'Applications Access',
         {
           commands: PortalRoutes.MODULE_PATH,
           extras: { fragment: 'access' },

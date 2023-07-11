@@ -30,7 +30,7 @@
             <input matStartDate formControlName="dateFrom" placeholder="Start Date" (click)="picker.open()">
             <input matEndDate formControlName="dateTo" placeholder="End Date" (click)="picker.open()">
           </mat-date-range-input>
-          <mat-hint>DD MMM – DD MMM</mat-hint>
+          <mat-hint>DD MMM YYYY – DD MMM YYYY</mat-hint>
           <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
           <mat-date-range-picker #picker></mat-date-range-picker>
         </mat-form-field>

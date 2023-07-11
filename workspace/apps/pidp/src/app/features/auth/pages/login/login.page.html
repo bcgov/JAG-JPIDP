@@ -29,13 +29,17 @@
         <div class="header">
           <div class="heading">
             <img src="/assets/images/diam-logo.svg" alt="Digital Identity Access Management Portal Logo" />
-            <h1>Digital Identity<br /> Access Management</h1>
+            <div>
+              <h1>Digital Identity</h1>
+              <h2> Access Management</h2>
+            </div>
+
           </div>
 
-          <h3>
-            Verify yourself and gain access to many applications.
-          </h3>
+
         </div>
+
+
 
         <div class="hide-on-large-viewports">
           <ng-container *ngTemplateOutlet="login"></ng-container>
@@ -47,28 +51,25 @@
           </button>
         </div> -->
 
+        <div class="tagline">
+          <ui-page-section>
+
+            <h1>
+              Verify yourself and gain access to many applications.
+            </h1>
+            <span>
+              Pick your sign in method and login using your authorized security credentials. Note: You may be redirected
+              to complete this process.
+            </span>
+          </ui-page-section>
+
+        </div>
 
 
-        <div class="systems">
+        <!-- <div class="systems">
           <ui-page-section>
             <ui-scroll-target targetId="systems"></ui-scroll-target>
             <ui-page-section-subheader icon="assignment" heading="Systems Available"></ui-page-section-subheader>
-
-            <!-- <ui-page-section>
-              <h3>Digital Evidence Management System</h3>
-              <p>
-                B.C. court associates, lawyers, police and Out of Custody users
-                can enrol for access to Digital Evidence Management System.
-              </p>
-              <p>
-                You need to set up the
-                <a uiAnchor [attr.href]="bcscMobileSetupUrl">
-                  BC Services Card app
-                </a>
-                to enrol. You will use the app each time you access the DEMS
-                application.
-              </p>
-            </ui-page-section> -->
 
             <ui-page-section>
               <h3>Driver Medical Fitness Transformation Program</h3>
@@ -86,7 +87,7 @@
               </p>
             </ui-page-section>
           </ui-page-section>
-        </div>
+        </div> -->
         <div class="support">
           <app-get-support></app-get-support>
         </div>

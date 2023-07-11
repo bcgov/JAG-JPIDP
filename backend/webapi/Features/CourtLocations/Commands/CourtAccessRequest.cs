@@ -121,14 +121,20 @@ public class CourtAccessRequest
                         }
 
                         // if request is for today then we'll want to send an event immediately
-
+                        var newRequest = false;
                         if (courtLocationRequest != null)
                         {
                             Serilog.Log.Information($"Updating request {courtLocationRequest.RequestId}");
+                            // request has been moved to today from a future date
+                            if (command.ValidFrom.DayOfYear == today.DayOfYear && courtLocationRequest.RequestStatus == CourtLocationAccessStatus.SubmittedFuture )
+                            {
+                                courtLocationRequest.RequestStatus = CourtLocationAccessStatus.Submitted;
+                                newRequest = true;
+                            }
                         }
                         else
                         {
-
+                            newRequest = true;
                             courtLocationRequest = await this.courtAccessService.CreateCourtLocationRequest(command, location);
                             var duration = courtLocationRequest.ValidUntil - courtLocationRequest.ValidFrom;
 
@@ -137,15 +143,17 @@ public class CourtAccessRequest
 
                         }
 
-                        await this.context.SaveChangesAsync();
-                        await trx.CommitAsync();
 
-                        if (command.ValidFrom.DayOfYear == today.DayOfYear)
+
+                        if (command.ValidFrom.DayOfYear == today.DayOfYear && newRequest)
                         {
                             Serilog.Log.Information($"Request {courtLocationRequest.RequestId} is for today - adding to event topic");
                             var response = this.courtAccessService.CreateAddCourtAccessDomainEvent(courtLocationRequest);
 
                         }
+
+                        await this.context.SaveChangesAsync();
+                        await trx.CommitAsync();
                     }
                     else
                     {
