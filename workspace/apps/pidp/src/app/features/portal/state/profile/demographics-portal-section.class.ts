@@ -74,7 +74,7 @@ export class DemographicsPortalSection
   public get action(): PortalSectionAction {
     const statusCode = this.getStatusCode();
     return {
-      label: statusCode === StatusCode.LOCKEDCOMPLETE ? '' : 'Update',
+      label: statusCode === StatusCode.LOCKEDCOMPLETE ? '' : 'Manage',
       route: ProfileRoutes.routePath(ProfileRoutes.PERSONAL_INFO),
       disabled:
         statusCode === StatusCode.ERROR || statusCode === StatusCode.LOCKED,

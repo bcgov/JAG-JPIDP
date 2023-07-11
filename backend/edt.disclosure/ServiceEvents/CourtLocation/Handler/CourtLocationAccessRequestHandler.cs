@@ -69,7 +69,7 @@ public class CourtLocationAccessRequestHandler : IKafkaHandler<string, CourtLoca
                         DomainEvent = courtLocationEvent.EventType == "court-location-provision" ? "digitalevidence-court-location-provision-complete" : "digitalevidence-court-location-decommission-complete",
                         PartId = courtLocationEvent.Username,
                         Id = courtLocationEvent.RequestId,
-                        Status = "Complete",
+                        Status = courtLocationEvent.EventType == "court-location-provision" ? "Complete" : "Deleted",
                         EventTime = SystemClock.Instance.GetCurrentInstant()
                     });
                 }

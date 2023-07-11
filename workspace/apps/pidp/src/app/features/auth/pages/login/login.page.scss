@@ -54,11 +54,29 @@
   }
 }
 
+.support {
+  margin-top: 88px;
+}
+
+.tagline {
+  display: flex;
+  align-items: flex-start;
+}
+
 .header {
   .heading {
     display: flex;
     align-items: flex-start;
     margin-bottom: 1.5rem;
+
+    h1 {
+      font-size: 2em;
+    }
+
+    h2 {
+      margin-left: 72px;
+      font-style: italic;
+    }
 
     img {
       display: none;
@@ -151,6 +169,12 @@
 
 .center {
   text-align: center;
+}
+
+.tagline {
+  @include media-breakpoint-up(xl) {
+    width: 600px;
+  }
 }
 
 .systems {

@@ -176,11 +176,11 @@ export class DigitalEvidenceCounselPage
         // Set the sorting and pagination properties of the dataSource
         this.dataSource.data = this.courtListing;
         this.dataSource.sort = this.sort;
-        const incomplete = results.filter(
-          (location) => location.requestStatus !== CourtRequestStatus.Complete
+        const pending = results.filter(
+          (location) => location.requestStatus == CourtRequestStatus.Submitted
         );
 
-        if (this.refreshEnabled && incomplete.length > 0) {
+        if (this.refreshEnabled && pending.length > 0) {
           this.refreshCount++;
           if (this.refreshCount >= 4) {
             this.refreshEnabled = false;
