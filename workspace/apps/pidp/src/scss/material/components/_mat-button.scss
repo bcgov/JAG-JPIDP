@@ -8,9 +8,13 @@
   &.mat-button-base.mat-primary {
     // Stroked button default has a grey border
     border-color: theme-palette(blue);
+    background-color: #0561a6;
+    color: white;
   }
+
   &.mat-button-base.mat-primary.mat-button-disabled {
     // Return to default style when disabled
     border-color: inherit;
+    background-color: #a2a2a2;
   }
 }

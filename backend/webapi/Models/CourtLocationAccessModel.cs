@@ -7,6 +7,7 @@ public class CourtLocationAccessModel
 {
     public int RequestId { get; set; }
     public int PartyId { get; set; }
+    public string Details { get; set; }
     public CourtLocation CourtLocation { get; set; }
     public CourtSubLocation CourtSubLocation { get; set; }
     public Instant RequestedOn { get; set; }

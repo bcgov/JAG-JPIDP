@@ -20,6 +20,9 @@ public class EdtClient : BaseClient, IEdtClient
     private static readonly Histogram AccountCreationDuration = Metrics.CreateHistogram("edt_account_creation_duration", "Histogram of edt account creations.");
     private static readonly Histogram AccountUpdateDuration = Metrics.CreateHistogram("edt_account_update_duration", "Histogram of edt account updates.");
     private static readonly Histogram GetUserDuration = Metrics.CreateHistogram("edt_get_user_duration", "Histogram of edt account lookups.");
+    private static readonly Histogram ParticipantCreationDuration = Metrics.CreateHistogram("edt_participant_creation_duration", "Histogram of edt participant creations.");
+    private static readonly Histogram ParticipantModificationDuration = Metrics.CreateHistogram("edt_participant_modification_duration", "Histogram of edt participant modifications.");
+
 
 
     public EdtClient(
@@ -320,9 +323,25 @@ public class EdtClient : BaseClient, IEdtClient
         }
     }
 
+    public async Task<EdtPersonDto?> GetPerson(string userKey)
+    {
+        using (GetUserDuration.NewTimer())
+        {
+            this.meters.GetPerson();
+            Log.Logger.Information("Checking if person with key {0} already present", userKey);
+            var result = await this.GetAsync<EdtPersonDto?>($"api/v1/org-units/1/persons/{userKey}");
+
+            if (!result.IsSuccess)
+            {
+                return null;
+            }
+            return result.Value;
+        }
+    }
+
     public async Task<int> GetOuGroupId(string regionName)
     {
-        IDomainResult<IEnumerable<OrgUnitModel?>>? result = await this.GetAsync<IEnumerable<OrgUnitModel?>>($"api/v1/org-units/1/groups");
+        var result = await this.GetAsync<IEnumerable<OrgUnitModel?>>($"api/v1/org-units/1/groups");
 
         if (!result.IsSuccess)
         {
@@ -367,7 +386,7 @@ public class EdtClient : BaseClient, IEdtClient
     {
         Log.Logger.Information($"Account change active to {activateAccount} for user {userIdOrKey}");
 
-        EdtUserDto? user = await this.GetUser(userIdOrKey);
+        var user = await this.GetUser(userIdOrKey);
 
         if (user == null)
         {
@@ -483,6 +502,74 @@ public class EdtClient : BaseClient, IEdtClient
 
     }
 
+
+
+    public async Task<UserModificationEvent> CreatePerson(EdtPersonProvisioningModel accessRequest)
+    {
+
+        using (ParticipantCreationDuration.NewTimer())
+        {
+            this.meters.AddPerson();
+            var edtPersonDto = this.mapper.Map<EdtPersonProvisioningModel, EdtPersonDto>(accessRequest);
+            var result = await this.PostAsync($"api/v1/org-units/1/persons", edtPersonDto);
+            var userModificationResponse = new UserModificationEvent
+            {
+                partId = edtPersonDto.Key,
+                eventType = UserModificationEvent.UserEvent.Create,
+                eventTime = DateTime.Now,
+                accessRequestId = accessRequest.AccessRequestId,
+                successful = true
+            };
+
+            if (!result.IsSuccess)
+            {
+                Log.Logger.Error("Failed to create EDT participant {0}", string.Join(",", result.Errors));
+                userModificationResponse.successful = false;
+            }
+            else
+            {
+                Log.Logger.Information($"Successfully added {accessRequest.LastName} as a participant");
+
+            }
+
+
+            return userModificationResponse;
+
+        }
+    }
+
+
+    public async Task<UserModificationEvent> ModifyPerson(EdtPersonProvisioningModel accessRequest, EdtPersonDto currentUser)
+    {
+        using (ParticipantModificationDuration.NewTimer())
+        {
+            this.meters.UpdatePerson();
+
+            var edtPersonDto = this.mapper.Map<EdtPersonProvisioningModel, EdtPersonDto>(accessRequest);
+
+            edtPersonDto.Id = currentUser.Id; ;
+            edtPersonDto.Address.Id = currentUser.Address.Id;
+
+            var result = await this.PutAsync($"api/v1/org-units/1/persons/" + currentUser.Id, edtPersonDto);
+            var userModificationResponse = new UserModificationEvent
+            {
+                partId = accessRequest.Key,
+                eventType = UserModificationEvent.UserEvent.Create,
+                eventTime = DateTime.Now,
+                accessRequestId = accessRequest.AccessRequestId,
+                successful = true
+            };
+
+            if (!result.IsSuccess)
+            {
+                Log.Logger.Error("Failed to update EDT person {0}", string.Join(",", result.Errors));
+                userModificationResponse.successful = false;
+            }
+
+
+            return userModificationResponse;
+        }
+    }
 
     public class AddUserToOuGroup
     {

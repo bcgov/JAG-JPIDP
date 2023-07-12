@@ -109,15 +109,9 @@ public class Startup
           .AddKafkaConsumer(config)
           .AddHttpClients(config)
 
-          // .AddScoped<IEdtAuthorizationService, IEdtAuthorizationService>() // add to control authorization to endpoints beyond having a valid jwt
 
           .AddSingleton<IClock>(SystemClock.Instance)
           .AddSingleton<Microsoft.Extensions.Logging.ILogger>(svc => svc.GetRequiredService<ILogger<CourtLocationAccessRequestHandler>>());
-
-        services.AddAuthorization(options =>
-        {
-            //options.AddPolicy("Administrator", policy => policy.Requirements.Add(new RealmAccessRoleRequirement("administrator")));
-        });
 
         services.AddDbContext<DisclosureDataStoreDbContext>(options => options
             .UseNpgsql(config.ConnectionStrings.DisclosureDataStore, sql => sql.UseNodaTime())
@@ -151,7 +145,7 @@ public class Startup
 
         services.AddSwaggerGen(options =>
         {
-            options.SwaggerDoc("v1", new OpenApiInfo { Title = "Notification Service API", Version = "v1" });
+            options.SwaggerDoc("v1", new OpenApiInfo { Title = "Disclosure Service API", Version = "v1" });
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 Description = "Standard Authorization header using the Bearer scheme. Example: \"bearer {token}\"",
@@ -229,7 +223,7 @@ public class Startup
         //app.UseMiddleware<ExceptionHandlingMiddleware>();
         app.UseExceptionHandler("/error");
         app.UseSwagger();
-        app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.json", "Notification Service API"));
+        app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.json", "Disclosure Service API"));
 
         app.UseSerilogRequestLogging(options => options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
         {

@@ -23,7 +23,7 @@ public class SubmittingAgencyByCaseId
 
 
             var result = await this.context.SubmittingAgencyRequests
-              .Where(access => access.RCCNumber == query.RCCNumber && (access.RequestStatus == AgencyRequestStatus.Completed || access.RequestStatus == AccessRequestStatus.Pending))
+              .Where(access => access.RCCNumber == query.RCCNumber && (access.RequestStatus == AgencyRequestStatus.Complete || access.RequestStatus == AccessRequestStatus.Pending))
               .Include(party => party.Party)
               .OrderBy(access => access.RequestedOn)
                             .Select(access => access.Party.Jpdid)

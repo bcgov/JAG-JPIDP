@@ -43,7 +43,7 @@ export class UserAccessAgreementPortalSection implements IPortalSection {
       route: ProfileRoutes.routePath(ProfileRoutes.USER_ACCESS_AGREEMENT),
       disabled:
         demographicsStatusCode !== StatusCode.COMPLETED ||
-        this.getStatusCode() === StatusCode.NOT_AVAILABLE,
+        this.getStatusCode() === StatusCode.LOCKED,
     };
   }
 

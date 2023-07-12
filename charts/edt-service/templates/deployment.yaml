@@ -193,6 +193,11 @@ spec:
                 secretKeyRef:
                   name: kafkaconfig-edt
                   key: KafkaCluster__ProcessResponseTopic
+            - name: KafkaCluster__PersonCreationTopic
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-edt
+                  key: KafkaCluster__PersonCreationTopic
             - name: ApplicationUrl
               value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"
             - name: EdtClient__Url

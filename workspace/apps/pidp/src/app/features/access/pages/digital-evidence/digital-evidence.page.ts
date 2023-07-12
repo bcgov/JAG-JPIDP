@@ -22,6 +22,7 @@ import { FormUtilsService } from '@core/services/form-utils.service';
 import { PartyUserTypeResource } from '../../../../features/admin/shared/usertype-resource.service';
 import { OrganizationUserType } from '../../../../features/admin/shared/usertype-service.model';
 import { BcpsAuthResourceService } from './auth/bcps-auth-resource.service';
+import { DigitalEvidenceCase } from './case-management/digital-evidence-case.model';
 import { AssignedRegion } from './digital-evidence-account.model';
 import { DigitalEvidenceFormState } from './digital-evidence-form-state';
 import { DigitalEvidenceResource } from './digital-evidence-resource.service';
@@ -46,7 +47,7 @@ export class DigitalEvidencePage
   public assignedRegions: AssignedRegion[] = [];
   public digitalEvidenceUrl: string;
   public dataSource: MatTableDataSource<AssignedRegion>;
-
+  public defenceValidationMessage: string;
   public identityProvider$: Observable<IdentityProvider>;
   //public userType$: Observable<OrganizationUserType[]>;
   public IdentityProvider = IdentityProvider;
@@ -57,7 +58,7 @@ export class DigitalEvidencePage
   public result: string;
   public userIsBCPS?: boolean;
   public userIsLawyer?: boolean;
-
+  public folioId?: number;
   public accessRequestFailed: boolean;
   public digitalEvidenceSupportEmail: string;
   public formControlNames: string[];
@@ -97,6 +98,7 @@ export class DigitalEvidencePage
     this.dataSource = new MatTableDataSource();
     this.identityProvider$ = this.authorizedUserService.identityProvider$;
     this.result = '';
+    this.defenceValidationMessage = '';
     this.policeAgency = accessTokenService
       .decodeToken()
       .pipe(map((token) => token?.identity_provider ?? ''));
@@ -206,17 +208,16 @@ export class DigitalEvidencePage
   }
 
   public onRequestAccess(): void {
-    if (this.selectedOption == 1) {
+    if (this.userIsLawyer) {
       this.resource
-        .requestAccess(
+        .requestDefenceCounselAccess(
           this.partyService.partyId,
           this.formState.OrganizationType.value,
           this.formState.OrganizationName.value,
-          this.formState.ParticipantId.value,
-          this.formState.AssignedRegions?.value || []
+          this.formState.ParticipantId.value
         )
         .pipe(
-          tap(() => (this.completed = true)),
+          tap(() => (this.pending = true)),
           catchError((error: HttpErrorResponse) => {
             if (error.status === HttpStatusCode.NotFound) {
               this.navigateToRoot();
@@ -227,36 +228,52 @@ export class DigitalEvidencePage
         )
         .subscribe();
     } else {
-      this.resource
-        .requestAccess(
-          this.partyService.partyId,
-          this.formState.OrganizationType.value,
-          this.formState.OrganizationName.value,
-          this.formState.ParticipantId.value,
-          this.formState.AssignedRegions?.value || []
-        )
-        .pipe(
-          tap(() => (this.completed = true)),
-          catchError((error: HttpErrorResponse) => {
-            if (error.status === HttpStatusCode.NotFound) {
-              this.navigateToRoot();
-            }
-            this.accessRequestFailed = true;
-            return of(noop());
-          })
-        )
-        .subscribe();
+      if (this.selectedOption == 1) {
+        this.resource
+          .requestAccess(
+            this.partyService.partyId,
+            this.formState.OrganizationType.value,
+            this.formState.OrganizationName.value,
+            this.formState.ParticipantId.value,
+            this.formState.AssignedRegions?.value || []
+          )
+          .pipe(
+            tap(() => (this.pending = true)),
+            catchError((error: HttpErrorResponse) => {
+              if (error.status === HttpStatusCode.NotFound) {
+                this.navigateToRoot();
+              }
+              this.accessRequestFailed = true;
+              return of(noop());
+            })
+          )
+          .subscribe();
+      } else {
+        this.resource
+          .requestAccess(
+            this.partyService.partyId,
+            this.formState.OrganizationType.value,
+            this.formState.OrganizationName.value,
+            this.formState.ParticipantId.value,
+            this.formState.AssignedRegions?.value || []
+          )
+          .pipe(
+            tap(() => (this.pending = true)),
+            catchError((error: HttpErrorResponse) => {
+              if (error.status === HttpStatusCode.NotFound) {
+                this.navigateToRoot();
+              }
+              this.accessRequestFailed = true;
+              return of(noop());
+            })
+          )
+          .subscribe();
+      }
     }
   }
 
   public ngOnInit(): void {
     const partyId = this.partyService.partyId;
-
-    // this.form = new FormGroup({
-    //   userType: new FormControl('', [Validators.required]),
-    //   ikeyCertCode: new FormControl('', [Validators.required]),
-    //   pidNumber: new FormControl('', [Validators.required]),
-    // });
 
     if (!partyId) {
       this.logger.error('No party ID was provided');
@@ -275,11 +292,52 @@ export class DigitalEvidencePage
           Validators.pattern('^[A-Za-z]{2,3}-[0-9]{6}$'),
           Validators.required,
         ]);
+        this.formState.DefenceUniqueIdValid.setValidators([
+          Validators.required,
+        ]);
       }
       if (idp === IdentityProvider.BCPS) {
         this.formState.AssignedRegions.setValidators([Validators.required]);
       }
     });
+  }
+
+  public validateDefenceId(): void {
+    const partyId = this.partyService.partyId;
+
+    this.resource
+      .validateDefenceId(partyId, this.formState.DefenceUniqueId.value)
+      .pipe(
+        tap((response: DigitalEvidenceCase) => {
+          this.formState.DefenceUniqueIdValid.patchValue(response.id);
+          this.formState.DefenceUniqueId.disable();
+          this.folioId = response.id;
+          this.defenceValidationMessage =
+            'ID Validated - you may now request access';
+        }),
+        catchError((error: HttpErrorResponse) => {
+          this.formState.DefenceUniqueId.patchValue('');
+          this.defenceValidationMessage =
+            'Invalid ID entered - please correct and validate again';
+
+          if (error.status === HttpStatusCode.NotFound) {
+            this.navigateToRoot();
+          }
+          return of(noop());
+        })
+      )
+      .subscribe();
+  }
+
+  public onUniqueIdInput(): void {
+    if (
+      this.formState.DefenceUniqueId.value &&
+      this.formState.DefenceUniqueId.value.length === 3
+    ) {
+      this.formState.DefenceUniqueId.patchValue(
+        this.formState.DefenceUniqueId.value + '-'
+      );
+    }
   }
 
   private navigateToRoot(): void {

@@ -10,7 +10,7 @@ public class EdtUserDto
     public string? Email { get; set; }
     public string Phone { get; set; } = string.Empty;
     public string? Role { get; set; }
-    public bool? IsActive => true;
+    public bool IsActive { get; set; } = true;
     public string? AccountType { get; set; }
 
     // tostring that provides details of the object

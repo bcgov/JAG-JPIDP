@@ -2,21 +2,18 @@ namespace Pidp.Features.Admin.IdentityProviders;
 
 using System.Threading.Tasks;
 using AutoMapper;
+using Keycloak.Net.Models.RealmsAdmin;
 using Pidp.Data;
-using Pidp.Infrastructure.HttpClients.Jum;
 using Pidp.Infrastructure.HttpClients.Keycloak;
-using Pidp.Infrastructure.Services;
 
-public record IdentityProviderQuery() : IQuery<IEnumerable<IdentityProviderModel>>;
+public record IdentityProviderQuery() : IQuery<List<IdentityProvider>>;
 
-public class IdentityProviderQueryHandler : IQueryHandler<IdentityProviderQuery, IEnumerable<IdentityProviderModel>>
+public class IdentityProviderQueryHandler : IQueryHandler<IdentityProviderQuery, List<IdentityProvider>>
 {
 
     private readonly IMapper mapper;
     private readonly PidpDbContext context;
     private readonly IKeycloakAdministrationClient keycloakAdministrationClient;
-    private readonly IEdtService edtService;
-    private readonly IJumClient jumClient;
     private readonly IHttpContextAccessor httpContextAccessor;
 
 
@@ -25,13 +22,13 @@ public class IdentityProviderQueryHandler : IQueryHandler<IdentityProviderQuery,
         this.mapper = mapper;
         this.context = context;
         this.keycloakAdministrationClient = keycloakAdministrationClient;
-        this.jumClient = jumClient;
         this.httpContextAccessor = httpContextAccessor;
     }
 
-    public Task<IEnumerable<IdentityProviderModel>> HandleAsync(IdentityProviderQuery query)
+    public async Task<List<IdentityProvider>> HandleAsync(IdentityProviderQuery query)
     {
-        return null;
+        var providers = await this.keycloakAdministrationClient.GetIdentityProviders();
+        return providers.ToList();
     }
 }
 

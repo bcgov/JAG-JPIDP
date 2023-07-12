@@ -23,6 +23,8 @@ public class PidpConfiguration
     public JumClientConfiguration JumClient { get; set; } = new();
     public EdtClientConfiguration EdtClient { get; set; } = new EdtClientConfiguration();
     public EdtCaseManagementClientConfiguration EdtCaseManagementClient { get; set; } = new EdtCaseManagementClientConfiguration();
+    public EdtClientConfiguration EdtDisclosureClient { get; set; } = new EdtClientConfiguration();
+
     public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
     public CourtAccessConfiguration CourtAccess { get; set; } = new();
     public VerifiableCredentialsConfiguration VerifiableCredentials { get; set; } = new VerifiableCredentialsConfiguration();
@@ -110,6 +112,8 @@ public class PidpConfiguration
         public string IncomingChangeEventTopic { get; set; } = string.Empty;
         public string ProducerTopicName { get; set; } = string.Empty;
         public string CaseAccessRequestTopicName { get; set; } = string.Empty;
+        public string PersonCreationTopic { get; set; } = string.Empty;
+        public string DisclosureUserCreationTopic { get; set; } = string.Empty;
         public string ProcessResponseTopic { get; set;} = string.Empty;
         public string UserAccountChangeTopicName { get; set; } = string.Empty;
         public string NotificationTopicName { get; set; } = string.Empty;

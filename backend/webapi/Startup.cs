@@ -43,6 +43,9 @@ using Quartz;
 using Quartz.Impl;
 using static Quartz.Logging.OperationName;
 using Pidp.Features.CourtLocations.Jobs;
+using Pidp.Models.Lookups;
+using static Pidp.Models.Lookups.CourtLocation;
+using Microsoft.Extensions.DependencyInjection;
 
 public class Startup
 {
@@ -63,8 +66,8 @@ public class Startup
     {
         var config = this.InitializeConfiguration(services);
 
-        var assemblyVersion = Assembly.GetExecutingAssembly()
-    .GetName().Version?.ToString() ?? "0.0.0";
+        var assemblyVersion = Assembly.GetExecutingAssembly()    .GetName().Version?.ToString() ?? "0.0.0";
+        var knownProxies = Configuration.GetSection("KnownProxies").Value;
 
 
         if (!string.IsNullOrEmpty(config.Telemetry.CollectorUrl))
@@ -189,6 +192,8 @@ public class Startup
             try
             {
                 dbContext.Database.Migrate();
+                LoadCourts(dbContext);
+
             }
             catch (Exception ex)
             {
@@ -237,10 +242,26 @@ public class Startup
             options.WaitForJobsToComplete = true;
         });
 
+
         Log.Logger.Information("Startup configuration complete");
 
 
 
+    }
+
+    public void LoadCourts(PidpDbContext context)
+    {
+        var generator = new CourtLocationDataGenerator();
+        foreach (var location in generator.Generate())
+        {
+            var existingLocation = context.CourtLocations.Where(loc => loc.Code == location.Code).FirstOrDefault();
+            if (existingLocation == null)
+            {
+                Log.Information($"Adding court location {location.Name}");
+                context.CourtLocations.Add(location);
+            }
+            context.SaveChanges();
+        }
     }
 
     private PidpConfiguration InitializeConfiguration(IServiceCollection services)

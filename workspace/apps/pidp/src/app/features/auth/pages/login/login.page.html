@@ -8,7 +8,7 @@
         <ui-alert *ngIf="loginCancelled" type="info" icon="error_outline" heading="Login Cancelled">
           <ng-container uiAlertContent>
             <p>
-              You have cancelled your login to the Provider Identity Portal.
+              You have cancelled your login to the Digital Identity Access Management.
             </p>
             <ul>
               <li>
@@ -28,14 +28,18 @@
       <div class="col-12 col-xl-auto">
         <div class="header">
           <div class="heading">
-            <img src="/assets/images/pidp-logo-blue-small.svg" alt="Provider Identity Portal Logo" />
-            <h1>Provider Identity Portal</h1>
+            <img src="/assets/images/diam-logo.svg" alt="Digital Identity Access Management Portal Logo" />
+            <div>
+              <h1>Digital Identity</h1>
+              <h2> Access Management</h2>
+            </div>
+
           </div>
 
-          <p>
-            A portal for approved individuals to enroll for access to provided systems.
-          </p>
+
         </div>
+
+
 
         <div class="hide-on-large-viewports">
           <ng-container *ngTemplateOutlet="login"></ng-container>
@@ -47,30 +51,25 @@
           </button>
         </div> -->
 
-        <div class="support">
-          <app-get-support></app-get-support>
+        <div class="tagline">
+          <ui-page-section>
+
+            <h1>
+              Verify yourself and gain access to many applications.
+            </h1>
+            <span>
+              Pick your sign in method and login using your authorized security credentials. Note: You may be redirected
+              to complete this process.
+            </span>
+          </ui-page-section>
+
         </div>
 
-        <div class="systems">
+
+        <!-- <div class="systems">
           <ui-page-section>
             <ui-scroll-target targetId="systems"></ui-scroll-target>
             <ui-page-section-subheader icon="assignment" heading="Systems Available"></ui-page-section-subheader>
-
-            <!-- <ui-page-section>
-              <h3>Digital Evidence Management System</h3>
-              <p>
-                B.C. court associates, lawyers, police and Out of Custody users
-                can enrol for access to Digital Evidence Management System.
-              </p>
-              <p>
-                You need to set up the
-                <a uiAnchor [attr.href]="bcscMobileSetupUrl">
-                  BC Services Card app
-                </a>
-                to enrol. You will use the app each time you access the DEMS
-                application.
-              </p>
-            </ui-page-section> -->
 
             <ui-page-section>
               <h3>Driver Medical Fitness Transformation Program</h3>
@@ -88,28 +87,36 @@
               </p>
             </ui-page-section>
           </ui-page-section>
+        </div> -->
+        <div class="support">
+          <app-get-support></app-get-support>
         </div>
       </div>
+
       <div class="col-12 col-xl-auto hide-on-small-viewports">
         <ng-container *ngTemplateOutlet="login"></ng-container>
       </div>
     </div>
+
   </ng-container>
 
   <ng-template #login>
     <div class="actions">
-      <div>Login using:</div>
+      <div>Login through our trusted "partners"</div>
       <div>
+        <small class="left">Members of the public</small>
         <button mat-stroked-button (click)="onLogin(IdentityProvider.OIDC)">
           Login with BC Services Card
         </button>
-        <small>
+        <small class="center">
           Need an account?
           <a uiAnchor [attr.href]="bcscMobileSetupUrl">Set up</a>
         </small>
+        <div class="divider"></div>
+        <small>Agencies and Government members</small>
 
         <button mat-stroked-button (click)="onLogin(IdentityProvider.ADFS)">
-          BCPS User
+          Ministries
         </button>
 
         <button mat-stroked-button (click)="onLogin(IdentityProvider.VERIFIED_CREDENTIALS)">
@@ -136,7 +143,7 @@
   <ng-template #admin>
     <div class="row admin">
       <div class="col-12">
-        <img src="/assets/images/pidp-logo-blue.svg" alt="Provider Identity Portal Logo" />
+        <img src="/assets/images/pidp-logo-blue.svg" alt="Digital Identity Access Management Logo" />
       </div>
       <div class="col-12">
         <button mat-flat-button color="primary" (click)="onLogin()">

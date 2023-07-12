@@ -7,25 +7,33 @@ import { AlertType } from '@bcgov/shared/ui';
 import { AccessRoutes } from '@app/features/access/access.routes';
 import { ShellRoutes } from '@app/features/shell/shell.routes';
 
+import { BasePortalSection } from '../../base-portal-section';
 import { StatusCode } from '../../enums/status-code.enum';
 import { ProfileStatus } from '../../models/profile-status.model';
 import { PortalSectionAction } from '../portal-section-action.model';
 import { PortalSectionKey } from '../portal-section-key.type';
 import { IPortalSection } from '../portal-section.model';
 
-export class DigitalEvidenceCounselPortalSection implements IPortalSection {
+export class DigitalEvidenceCounselPortalSection
+  extends BasePortalSection
+  implements IPortalSection
+{
   public readonly key: PortalSectionKey;
   public heading: string;
   public description: string;
+  public order: number;
 
   public constructor(
     private profileStatus: ProfileStatus,
     private router: Router
   ) {
+    super();
     this.key = 'digitalEvidenceCounsel';
-    this.heading =
-      'Digital Evidence and Disclosure Management System Duty Counsel Access';
-    this.description = `If you act as Duty Counsel then you may manage access to your Duty Counsel cases here.`;
+    this.heading = 'Digital Evidence and Disclosure Duty Case Access';
+    this.description = `If you act as Duty Counsel then you may manage access to your Duty Counsel court locations.`;
+    this.order = this.GetOrder(
+      this.profileStatus.status.digitalEvidenceCounsel
+    );
   }
 
   public get hint(): string {
@@ -33,41 +41,50 @@ export class DigitalEvidenceCounselPortalSection implements IPortalSection {
   }
 
   public get action(): PortalSectionAction {
+    const digitalEvidenceStatusCode =
+      this.profileStatus.status.digitalEvidence.statusCode;
+    const digitalEvidenceComplete =
+      digitalEvidenceStatusCode === StatusCode.COMPLETED;
     const demographicsStatusCode =
       this.profileStatus.status.demographics.statusCode;
     const organizationStatusCode =
       this.profileStatus.status.organizationDetails.statusCode;
     const demographicsComplete =
       demographicsStatusCode === StatusCode.COMPLETED ||
-      demographicsStatusCode === StatusCode.LOCKED_COMPLETE;
+      demographicsStatusCode === StatusCode.LOCKEDCOMPLETE;
     const orgComplete =
       organizationStatusCode === StatusCode.COMPLETED ||
-      organizationStatusCode === StatusCode.LOCKED_COMPLETE;
+      organizationStatusCode === StatusCode.LOCKEDCOMPLETE;
     return {
       label:
-        this.getStatusCode() === StatusCode.READY ||
         this.getStatusCode() === StatusCode.AVAILABLE ||
+        this.getStatusCode() === StatusCode.INCOMPLETE ||
         this.getStatusCode() === StatusCode.PENDING
           ? 'View'
-          : 'Request',
+          : 'Manage',
       route: AccessRoutes.routePath(AccessRoutes.DIGITAL_EVIDENCE_COUNSEL),
-      disabled: !(demographicsComplete && orgComplete),
+      disabled: !(
+        demographicsComplete &&
+        orgComplete &&
+        digitalEvidenceComplete
+      ),
     };
   }
 
   public get statusType(): AlertType {
-    return this.getStatusCode() === StatusCode.READY ? 'info' : 'warn';
+    const statusCode = this.profileStatus.status.digitalEvidence.statusCode;
+
+    return statusCode === StatusCode.COMPLETED ? 'available' : 'greyed';
   }
 
   public get status(): string {
-    const statusCode = this.getStatusCode();
-
+    const statusCode = this.profileStatus.status.digitalEvidence.statusCode;
     return statusCode === StatusCode.AVAILABLE
-      ? 'For existing users of DEMS only'
-      : statusCode === StatusCode.COMPLETED || statusCode === StatusCode.READY
+      ? 'Enrolment in Digital Evidence and Disclosure Management System required first'
+      : statusCode === StatusCode.COMPLETED
       ? 'Available'
       : statusCode === StatusCode.PENDING
-      ? 'Pending'
+      ? 'Pending Digital Evidence On-Boarding completion'
       : 'Incomplete';
   }
 

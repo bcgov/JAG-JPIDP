@@ -39,6 +39,8 @@ public static class HttpClientSetup
 
         services.AddHttpClientWithBaseAddress<ILdapClient, LdapClient>(config.LdapClient.Url);
         services.AddHttpClientWithBaseAddress<IEdtCaseManagementClient, EdtCaseManagementClient>(config.EdtCaseManagementClient.Url);
+        services.AddHttpClientWithBaseAddress<IEdtDisclosureClient, EdtDisclosureClient>(config.EdtDisclosureClient.Url);
+
         services.AddHttpClientWithBaseAddress<IJumClient, JumClient>(config.JumClient.Url).WithBearerToken(new KeycloakAdministrationClientCredentials
         {
             Address = config.Keycloak.TokenUrl,
@@ -112,7 +114,7 @@ public static class HttpClientSetup
 
         services.AddSingleton(consumerConfig);
         services.AddSingleton(producerConfig);
-        services.AddTransient(typeof(IKafkaProducer<,>), typeof(KafkaProducer<,>));
+        services.AddSingleton(typeof(IKafkaProducer<,>), typeof(KafkaProducer<,>));
 
         services.AddScoped<IKafkaHandler<string, NotificationAckModel>, NotificationAckHandler>();
         services.AddSingleton(typeof(IKafkaConsumer<,>), typeof(KafkaConsumer<,>));

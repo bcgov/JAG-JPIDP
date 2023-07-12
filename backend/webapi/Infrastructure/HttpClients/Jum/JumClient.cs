@@ -50,7 +50,7 @@ public class JumClient : BaseClient, IJumClient
             this.Logger.LogNoUserFound(username);
             return null;
         }
-     
+
         return user;
     }
     public async Task<Participant?> GetJumUserByPartIdAsync(string partId)
@@ -67,7 +67,7 @@ public class JumClient : BaseClient, IJumClient
 
     }
 
-        public async Task<Participant?> GetJumUserByPartIdAsync(decimal partId)
+    public async Task<Participant?> GetJumUserByPartIdAsync(decimal partId)
     {
         var result = await this.GetAsync<Participant>($"participant/{partId}");
 
@@ -81,7 +81,7 @@ public class JumClient : BaseClient, IJumClient
             this.Logger.LogNoUserWithPartIdFound(partId);
             return null;
         }
- 
+
         return user;
     }
     public async Task<Participant?> GetJumUserByPartIdAsync(decimal partId, string accessToken)
@@ -110,8 +110,6 @@ public class JumClient : BaseClient, IJumClient
         }
         return participant;
     }
-
-
 
     public Task<bool> IsJumUser(Participant? justinUser, Party party)
     {
@@ -168,8 +166,21 @@ public class JumClient : BaseClient, IJumClient
 
     public async Task<bool> FlagUserUpdateAsComplete(int eventMessageId, bool isSuccessful)
     {
-        var result = await this.PostAsync<bool>($"user-change-management", null);
+        var statusResponse = new JustinProcessStatusModel
+        {
+            EventMessageId = eventMessageId,
+            IsSuccess = isSuccessful
+        };
 
+        var result = await this.PostAsync<bool>($"user-change-management", statusResponse);
+        if (result.IsSuccess)
+        {
+
+        }
+        else
+        { 
+            this.Logger.LogFailedToMarkProcessComplete(eventMessageId);
+        }
 
         return result.Value;
     }
@@ -178,18 +189,22 @@ public static partial class JumClientLoggingExtensions
 {
     [LoggerMessage(1, LogLevel.Warning, "Provided User information does not match = {expected} {provided}.")]
     public static partial void LogJustinUserNotMatching(this ILogger logger, string expected, string provided);
-    [LoggerMessage(1, LogLevel.Warning, "No User found in JUM with Username = {username}.")]
+    [LoggerMessage(2, LogLevel.Warning, "No User found in JUM with Username = {username}.")]
     public static partial void LogNoUserFound(this ILogger logger, string username);
-    [LoggerMessage(2, LogLevel.Warning, "No User found in JUM with PartId = {partId}.")]
+    [LoggerMessage(3, LogLevel.Warning, "No User found in JUM with PartId = {partId}.")]
     public static partial void LogNoUserWithPartIdFound(this ILogger logger, decimal partId);
-    [LoggerMessage(3, LogLevel.Warning, "User found but disabled in JUM with Username = {username}.")]
+    [LoggerMessage(4, LogLevel.Warning, "User found but disabled in JUM with Username = {username}.")]
     public static partial void LogDisabledUserFound(this ILogger logger, string username);
-    [LoggerMessage(4, LogLevel.Warning, "User found but disabled in JUM with PartId = {partId}.")]
+    [LoggerMessage(5, LogLevel.Warning, "User found but disabled in JUM with PartId = {partId}.")]
     public static partial void LogDisabledPartIdFound(this ILogger logger, decimal partId);
-    [LoggerMessage(5, LogLevel.Error, "Justin user not found.")]
+    [LoggerMessage(6, LogLevel.Error, "Justin user not found.")]
     public static partial void LogJustinUserNotFound(this ILogger logger);
     [LoggerMessage(7, LogLevel.Warning, "User found but disabled in JUM with PartId = {partId}.")]
     public static partial void LogDisabledPartyIdFound(this ILogger logger, decimal partId);
-    [LoggerMessage(8, LogLevel.Warning, "Mutiple User Record Found with PartId = {partId}.")]
+    [LoggerMessage(8, LogLevel.Warning, "Multiple User Records Found with PartId = {partId}.")]
     public static partial void LogMatchMultipleRecord(this ILogger logger, decimal partId);
+    [LoggerMessage(9, LogLevel.Error, "Failed to mark event as complete EventMessageId = {eventMessageId}.")]
+    public static partial void LogFailedToMarkProcessComplete(this ILogger logger, decimal eventMessageId);
+    [LoggerMessage(10, LogLevel.Information, "JUSTIN change Event flagged as complete {eventMessageId}.")]
+    public static partial void LogMarkedProcessComplete(this ILogger logger, decimal eventMessageId);
 }

@@ -1,6 +1,7 @@
 namespace Pidp.Features.Parties;
 
 using NodaTime;
+using Pidp.Extensions;
 using Pidp.Models;
 using Pidp.Models.Lookups;
 using Serilog;
@@ -23,9 +24,6 @@ public partial class ProfileStatus
 
     public partial class Model
     {
-
-   
-
         public class AccessAdministrator : ProfileSection
         {
             internal override string SectionName => "administratorInfo";
@@ -120,7 +118,7 @@ public partial class ProfileStatus
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
                 this.StatusCode = profile.DemographicsEntered || profile.SubmittingAgency != null ?
-                    (profile.SubmittingAgency != null || profile.UserIsBcps) ? StatusCode.Locked_Complete : StatusCode.Complete : StatusCode.Incomplete;
+                    (profile.SubmittingAgency != null || profile.UserIsBcps) ? StatusCode.LockedComplete : StatusCode.Complete : StatusCode.Incomplete;
             }
         }
 
@@ -151,16 +149,47 @@ public partial class ProfileStatus
 
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
-                if (!( profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsInSubmittingAgency || profile.UserIsInLawSociety))
+                if (!(profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsInSubmittingAgency || profile.UserIsInLawSociety))
                 {
                     this.StatusCode = StatusCode.Hidden;
                     return;
                 }
 
                 // user is from an authenticated agency - no need to enter organization details or view/change them
-                if (profile.UserIsInSubmittingAgency || profile.UserIsInLawSociety)
+                if (profile.UserIsInLawSociety)
                 {
-                    this.StatusCode = StatusCode.Locked_Complete;
+
+                    var hasError = false;
+                    var BCServicesCardLastName = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("BCPerID_last_name"));
+                    var BCServicesCardFirstName = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("BCPerID_first_name"));
+                    var familyName = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("family_name"));
+                    var givenName = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("given_name"));
+
+                    if ( BCServicesCardLastName.Value != familyName.Value || BCServicesCardFirstName.Value != givenName.Value)
+                    {
+                        this.Alerts.Add(Alert.PersonVerificationError);
+                        this.StatusCode = StatusCode.Error;
+                    }
+
+                    var standing = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("membership_status_code"));
+                    if (standing == null || standing.Value != "PRAC")
+                    {
+                        this.Alerts.Add(Alert.LawyerStatusError);
+                        this.StatusCode = StatusCode.Error;
+                    }
+                    else
+                    {
+                        // check user info is valid
+                        this.StatusCode = StatusCode.LockedComplete;
+                    }
+
+                    return;
+
+                }
+
+                if (profile.UserIsInSubmittingAgency)
+                {
+                    this.StatusCode = StatusCode.LockedComplete;
                     return;
                 }
 
@@ -204,6 +233,37 @@ public partial class ProfileStatus
                     return;
                 }
 
+                // if a lawyer then they'll have two access requests pending (disclosure and core)
+                if (profile.UserIsInLawSociety)
+                {
+                    var requests = profile.AccessRequestStatus.Distinct().ToList();
+                    this.StatusCode = StatusCode.Available;
+                    if (requests != null && requests.Count > 1)
+                    {
+                        foreach (var request in requests)
+                        {
+                            // if any request is errored then this is an error status
+                            if (request.Equals(StatusCode.Error.ToString(), StringComparison.Ordinal))
+                            {
+                                Log.Information($"One or more events resulted in an error for {profile.User.GetUserId()}");
+                                this.StatusCode = StatusCode.Error;
+                                return;
+                            }
+                            if (request.Equals(StatusCode.Pending.ToString(), StringComparison.Ordinal))
+                            {
+                                this.StatusCode = StatusCode.Pending;
+                                return;
+                            }
+                        }
+                    }
+                    else if (requests != null && requests.Count > 0)
+                    {
+                        this.StatusCode = Enum.Parse<StatusCode>(requests.First());
+                    }
+                    return;
+
+                }
+
                 if (profile.AccessRequestStatus.Contains(AccessRequestStatus.Pending))
                 {
                     this.StatusCode = StatusCode.Pending;
@@ -216,15 +276,22 @@ public partial class ProfileStatus
                     return;
                 }
 
-                if (!profile.DemographicsEntered
-                    || !profile.OrganizationDetailEntered
-                    || !profile.PlrStanding.HasGoodStanding)
+                if (!profile.IsJumUser && !profile.UserIsInSubmittingAgency && !profile.UserIsInLawSociety && profile.OrganizationDetailEntered)
                 {
-                    this.StatusCode = StatusCode.Locked;
+                    // cannot continue as prior step is incomplete
+                    this.StatusCode = StatusCode.PriorStepRequired;
                     return;
                 }
 
-                this.StatusCode = StatusCode.Incomplete;
+                if (!profile.UserIsInLawSociety && !profile.UserIsInSubmittingAgency && !profile.DemographicsEntered
+                    || !profile.OrganizationDetailEntered
+                    )
+                {
+                    this.StatusCode = StatusCode.PriorStepRequired;
+                    return;
+                }
+
+                this.StatusCode = StatusCode.Available;
             }
         }
         public class SubmittingAgencyCaseManagement : ProfileSection
@@ -270,7 +337,7 @@ public partial class ProfileStatus
                     }
                     else
                     {
-                        this.StatusCode = StatusCode.Locked;
+                        this.StatusCode = StatusCode.PriorStepRequired;
                         return;
                     }
                 }
@@ -536,5 +603,5 @@ public partial class ProfileStatus
         }
     }
 
- 
+
 }

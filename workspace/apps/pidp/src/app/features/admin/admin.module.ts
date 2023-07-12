@@ -12,6 +12,8 @@ import { LookupModule } from '@app/modules/lookup/lookup.module';
 import { SharedModule } from '@app/shared/shared.module';
 
 import { AdminRoutingModule } from './admin-routing.module';
+import { CourtLocationUpdateDialogComponent } from './courts/court-location.update-dialog';
+import { CourtLocationComponent } from './courts/court.component';
 import { IdentityProviderComponent } from './idp/idp.component';
 import { PartiesPage } from './pages/parties/parties.page';
 import { PartyComponent } from './party/party.component';
@@ -26,7 +28,9 @@ import { SubmittingAgencyUpdateDialogComponent } from './submitting-agency/submi
     PartyComponent,
     IdentityProviderComponent,
     SubmittingAgenciesComponent,
+    CourtLocationComponent,
     SubmittingAgencyUpdateDialogComponent,
+    CourtLocationUpdateDialogComponent,
   ],
 
   imports: [

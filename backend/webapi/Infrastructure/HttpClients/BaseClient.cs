@@ -238,7 +238,7 @@ public class BaseClient
         catch (HttpRequestException exception)
         {
             this.Logger.LogBaseClientException(exception);
-            return DomainResult.Failed<T>("HttpRequestException during call to API");
+            return DomainResult.Failed<T>($"HttpRequestException during call to API {exception.Message}");
         }
         catch (TimeoutException exception)
         {

@@ -69,7 +69,8 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
     private async Task StartConsumerLoop(CancellationToken cancellationToken)
     {
 
-        Log.Logger.Information("Start consuming from {0}", this.topic);
+   
+        Log.Logger.Information("Start consuming from [{0}]", this.topic);
 
         this.consumer.Subscribe(this.topic);
         while (!cancellationToken.IsCancellationRequested)

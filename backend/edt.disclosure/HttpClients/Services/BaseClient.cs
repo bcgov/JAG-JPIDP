@@ -5,10 +5,6 @@ using Flurl;
 using System.Net;
 using System.Text;
 using System.Text.Json;
-
-using Microsoft.Extensions.ObjectPool;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
-using System.Collections.Specialized;
 using System.Net.Mime;
 using EdtDisclosureService.Extensions;
 
@@ -132,20 +128,13 @@ public class BaseClient
 
             if (!response.IsSuccessStatusCode)
             {
-                // TODO: retryable status codes?
-                // if (RetryableStatusCodes.Contains(response.StatusCode))
-                // {
-                //     ???
-                // }
 
                 var responseMessage = response.Content != null
                     ? await response.Content.ReadAsStringAsync(cancellationToken)
                     : "";
 
                 this.Logger.LogNonSuccessStatusCode(response.StatusCode, responseMessage);
-                return DomainResult.Failed<T>(response.StatusCode == HttpStatusCode.NotFound
-                    ? $"The URL {url} was not found"
-                    : $"Did not receive a successful status code {responseMessage}");
+                return (response.StatusCode == HttpStatusCode.NotFound) ? DomainResult.NotFound<T>($"The resource {url} was not found") : DomainResult.Failed<T>($"{url} Did not receive a successful status code {responseMessage}");
             }
 
             if (ignoreResponseContent)

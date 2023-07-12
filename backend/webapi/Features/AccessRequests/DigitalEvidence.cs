@@ -1,8 +1,6 @@
 namespace Pidp.Features.AccessRequests;
 
 using System.Diagnostics;
-using System.Diagnostics.Metrics;
-using System.Globalization;
 using DomainResults.Common;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -15,11 +13,7 @@ using Pidp.Kafka.Interfaces;
 using Pidp.Models;
 using Pidp.Models.Lookups;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using Azure.Core.Serialization;
 using Newtonsoft.Json;
-using System.Security.Cryptography;
 using Pidp.Features.Parties;
 using Pidp.Features.Organization.OrgUnitService;
 using Confluent.Kafka;
@@ -122,18 +116,12 @@ public class DigitalEvidence
 
                     var digitalEvidence = await this.SubmitDigitalEvidenceRequest(command); //save all trx at once for production(remove this and handle using idempotent)
                     var key = Guid.NewGuid().ToString();
-                    // no email notifications for submitting agencies currently
-                    
-
-
-
-                    //publish accessRequest Event (Sending Events to the Outbox)
 
                     var exportedEvent = this.AddOutbox(command, digitalEvidence, dto);
 
                     var published = await this.PublishAccessRequest(command, dto, digitalEvidence);
 
-                    if(published != null && digitalEvidence != null && !command.OrganizationType.Equals(nameof(OrganizationCode.SubmittingAgency), StringComparison.Ordinal))
+                    if (published != null && digitalEvidence != null && !command.OrganizationType.Equals(nameof(OrganizationCode.SubmittingAgency), StringComparison.Ordinal))
                     {
                         var domainEvent = command.OrganizationType.Equals("LawSociety", StringComparison.Ordinal) ? "digitalevidence-bclaw-usercreation-request" : "digitalevidence-bcps-usercreation-request";
                         Serilog.Log.Logger.Information($"Sending {domainEvent}  message for {command.ParticipantId} to {dto.Email}");
@@ -191,7 +179,7 @@ public class DigitalEvidence
                 .SingleAsync();
         }
 
-        private async Task<DeliveryResult<string,EdtUserProvisioning>> PublishAccessRequest(Command command, PartyDto dto, Models.DigitalEvidence digitalEvidence)
+        private async Task<DeliveryResult<string, EdtUserProvisioning>> PublishAccessRequest(Command command, PartyDto dto, Models.DigitalEvidence digitalEvidence)
         {
             var taskId = Guid.NewGuid().ToString();
             Serilog.Log.Logger.Information("Adding message to topic {0} {1} {2}", this.config.KafkaCluster.ProducerTopicName, command.ParticipantId, taskId);
@@ -254,7 +242,7 @@ public class DigitalEvidence
         private async Task<Models.DigitalEvidence> SubmitDigitalEvidenceRequest(Command command)
         {
 
-            var digitalEvident = new Models.DigitalEvidence
+            var digitalEvidence = new Models.DigitalEvidence
             {
                 PartyId = command.PartyId,
                 Status = AccessRequestStatus.Pending,
@@ -265,10 +253,10 @@ public class DigitalEvidence
                 RequestedOn = this.clock.GetCurrentInstant(),
                 AssignedRegions = command.AssignedRegions
             };
-            this.context.DigitalEvidences.Add(digitalEvident);
+            this.context.DigitalEvidences.Add(digitalEvidence);
 
             await this.context.SaveChangesAsync();
-            return digitalEvident;
+            return digitalEvidence;
         }
         private Task<Models.OutBoxEvent.ExportedEvent> AddOutbox(Command command, Models.DigitalEvidence digitalEvidence, PartyDto dto)
         {

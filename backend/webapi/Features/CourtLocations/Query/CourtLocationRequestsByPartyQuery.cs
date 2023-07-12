@@ -45,6 +45,7 @@ public class CourtLocationRequestsByPartyQuery
                     CourtSubLocation = caseRequest.CourtSubLocation,
                     RequestStatus = caseRequest.RequestStatus,
                     PartyId = caseRequest.PartyId,
+                    Details = caseRequest.Details,
                     RequestedOn = caseRequest.RequestedOn,
                     RequestId = caseRequest.RequestId,
                     ValidFrom = caseRequest.ValidFrom,

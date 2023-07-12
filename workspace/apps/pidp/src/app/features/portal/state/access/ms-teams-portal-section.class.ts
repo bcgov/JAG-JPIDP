@@ -40,7 +40,7 @@ export class MsTeamsPortalSection implements IPortalSection {
     return {
       label: statusCode === StatusCode.COMPLETED ? 'View' : 'Request',
       route: AccessRoutes.routePath(AccessRoutes.MS_TEAMS),
-      disabled: statusCode === StatusCode.NOT_AVAILABLE,
+      disabled: statusCode === StatusCode.LOCKED,
     };
   }
 
@@ -50,7 +50,7 @@ export class MsTeamsPortalSection implements IPortalSection {
 
   public get status(): string {
     const statusCode = this.getStatusCode();
-    return statusCode === StatusCode.AVAILABLE
+    return statusCode === StatusCode.INCOMPLETE
       ? 'You are eligible to access MS Teams'
       : statusCode === StatusCode.COMPLETED
       ? 'Completed'

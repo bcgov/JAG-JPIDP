@@ -12,7 +12,7 @@ const routes: Routes = [
       digitalEvidenceStatusCode: DigitalEvidenceResolver,
     },
     data: {
-      title: 'JPS Provider Identity Portal',
+      title: 'Digital Identity Access Management',
       routes: {
         root: '../../',
       },

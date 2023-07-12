@@ -1,4 +1,4 @@
-# Provider Identity Portal (PIDP)
+# Digital Identity Access Management (PIDP)
 
 ## Table of Contents
 

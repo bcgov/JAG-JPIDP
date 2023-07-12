@@ -1,0 +1,19 @@
+<h1 mat-dialog-title>{{initialName}}</h1>
+<div mat-dialog-content>
+  <div class="form-field-container">
+    <mat-form-field class="full-width">
+
+      <input placeholder="Name" name="name" [(ngModel)]="court.name" matInput>
+    </mat-form-field>
+
+  </div>
+  <div class="form-field-container">
+
+    <mat-slide-toggle [checked]="court.active" color="primary" (change)="toggleInactive($event)">Active
+    </mat-slide-toggle>
+  </div>
+</div>
+<div mat-dialog-actions>
+  <button mat-button (click)="onNoClick()">Cancel</button>
+  <button mat-button [mat-dialog-close]="data" cdkFocusInitial>Ok</button>
+</div>
