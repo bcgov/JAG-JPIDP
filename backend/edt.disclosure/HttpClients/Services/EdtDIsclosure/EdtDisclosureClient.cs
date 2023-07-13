@@ -557,7 +557,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         else
         {
             Log.Logger.Information("Adding user {0} to case {0}", userKey, caseId);
-            var result = await this.PostAsync<EdtCaseUserDto>($"api/v1/cases/{caseId}/users/{userKey}");
+            var result = await this.PostAsync($"api/v1/cases/{caseId}/users/{userKey}");
             if (result.IsSuccess)
             {
                 Log.Information("Successfully added user {0} to case {1}", userKey, caseId);
