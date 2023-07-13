@@ -75,27 +75,43 @@ public class DefenceParticipantHandler : IKafkaHandler<string, EdtPersonProvisio
             if (result.successful)
             {
                 // send process response to webapi
-                var sentStatus = this.processResponseProducer.ProduceAsync(this.configuration.KafkaCluster.ProcessResponseTopic, Guid.NewGuid().ToString(), new GenericProcessStatusResponse
+                var sentStatus = await this.processResponseProducer.ProduceAsync(this.configuration.KafkaCluster.ProcessResponseTopic, Guid.NewGuid().ToString(), new GenericProcessStatusResponse
                 {
-                    DomainEvent = (result.eventType == UserModificationEvent.UserEvent.Create) ? "digitalevidence-defence-personcreation-complete" : "digitalevidence-defence-personmodifiction-complete",
+                    DomainEvent = (result.eventType == UserModificationEvent.UserEvent.Create) ? "digitalevidence-defence-personcreation-complete" : "digitalevidence-defence-personmodification-complete",
                     Id = accessRequestModel.AccessRequestId,
                     EventTime = this.clock.GetCurrentInstant(),
                     Status = "Complete",
                     TraceId = key
                 });
+                if (sentStatus.Status == Confluent.Kafka.PersistenceStatus.Persisted)
+                {
+                    Serilog.Log.Information($"Success response sent for person creation {accessRequestModel.AccessRequestId} {accessRequestModel.Key}");
+                }
+                else
+                {
+                    Serilog.Log.Error($"Failed to send success response for person creation {accessRequestModel.AccessRequestId} {accessRequestModel.Key}");
+                }
             }
             else
             {
                 // send error process response to webapi
                 // send process response to webapi
-                var sentStatus = this.processResponseProducer.ProduceAsync(this.configuration.KafkaCluster.ProcessResponseTopic, Guid.NewGuid().ToString(), new GenericProcessStatusResponse
+                var sentStatus = await this.processResponseProducer.ProduceAsync(this.configuration.KafkaCluster.ProcessResponseTopic, Guid.NewGuid().ToString(), new GenericProcessStatusResponse
                 {
-                    DomainEvent = (result.eventType == UserModificationEvent.UserEvent.Create) ? "digitalevidence-defence-personcreation-error" : "digitalevidence-defence-personmodifiction-error",
+                    DomainEvent = (result.eventType == UserModificationEvent.UserEvent.Create) ? "digitalevidence-defence-personcreation-error" : "digitalevidence-defence-personmodification-error",
                     Id = accessRequestModel.AccessRequestId,
                     EventTime = this.clock.GetCurrentInstant(),
                     Status = "Error",
                     TraceId = key
                 });
+                if (sentStatus.Status == Confluent.Kafka.PersistenceStatus.Persisted)
+                {
+                    Serilog.Log.Information($"Error response sent for person creation {accessRequestModel.AccessRequestId} {accessRequestModel.Key}");
+                }
+                else
+                {
+                    Serilog.Log.Error($"Failed to send error response for person creation {accessRequestModel.AccessRequestId} {accessRequestModel.Key}");
+                }
             }
 
             //add to tell message has been proccessed by consumer - if errored then the error would need to be handled - likely something on the EDT side
