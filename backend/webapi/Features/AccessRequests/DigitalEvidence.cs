@@ -121,27 +121,29 @@ public class DigitalEvidence
 
                     var published = await this.PublishAccessRequest(command, dto, digitalEvidence);
 
-                    if (published != null && digitalEvidence != null && !command.OrganizationType.Equals(nameof(OrganizationCode.SubmittingAgency), StringComparison.Ordinal))
-                    {
-                        var domainEvent = command.OrganizationType.Equals("LawSociety", StringComparison.Ordinal) ? "digitalevidence-bclaw-usercreation-request" : "digitalevidence-bcps-usercreation-request";
-                        Serilog.Log.Logger.Information($"Sending {domainEvent}  message for {command.ParticipantId} to {dto.Email}");
+                    // removed - no longer sending 2 emails - request and complete - just complete or error will go now
 
-                        var eventData = new Dictionary<string, string>
-                    {
-                        { "FirstName", dto.FirstName! },
-                        { "AccessRequestId", "" + digitalEvidence.Id },
-                        { "ParticipantId", command.ParticipantId! },
-                        { "PartyId", "" + command.PartyId! }
-                    };
+                    //if (published != null && digitalEvidence != null && !command.OrganizationType.Equals(nameof(OrganizationCode.SubmittingAgency), StringComparison.Ordinal))
+                    //{
+                    //    var domainEvent = command.OrganizationType.Equals("LawSociety", StringComparison.Ordinal) ? "digitalevidence-bclaw-usercreation-request" : "digitalevidence-bcps-usercreation-request";
+                    //    Serilog.Log.Logger.Information($"Sending {domainEvent}  message for {command.ParticipantId} to {dto.Email}");
 
-                        await this.kafkaNotificationProducer.ProduceAsync(this.config.KafkaCluster.NotificationTopicName, key: key, new Notification
-                        {
-                            To = dto.Email,
-                            DomainEvent = domainEvent,
-                            EventData = eventData,
-                        });
+                    //    var eventData = new Dictionary<string, string>
+                    //{
+                    //    { "FirstName", dto.FirstName! },
+                    //    { "AccessRequestId", "" + digitalEvidence.Id },
+                    //    { "ParticipantId", command.ParticipantId! },
+                    //    { "PartyId", "" + command.PartyId! }
+                    //};
 
-                    }
+                    //    await this.kafkaNotificationProducer.ProduceAsync(this.config.KafkaCluster.NotificationTopicName, key: key, new Notification
+                    //    {
+                    //        To = dto.Email,
+                    //        DomainEvent = domainEvent,
+                    //        EventData = eventData,
+                    //    });
+
+                    //}
 
                     await this.context.SaveChangesAsync();
                     await trx.CommitAsync();
