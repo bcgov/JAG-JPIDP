@@ -13,5 +13,6 @@ public class GenericProcessStatusResponse
 
     public string TraceId { get; set; } = string.Empty;
     public string PartId { get; set; } = string.Empty;
+    public Dictionary<string, string> ResponseData { get; set; } = new Dictionary<string, string>();
 
 }

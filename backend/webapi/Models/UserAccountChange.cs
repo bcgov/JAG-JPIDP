@@ -29,3 +29,4 @@ public class UserAccountChange : BaseAuditable
     public string Status { get; set; } = string.Empty;
 
 }
+

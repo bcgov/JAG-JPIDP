@@ -7,7 +7,8 @@ public class IncomingUserModification
 {
     public string UserID { get; set; } = string.Empty;
     public int ChangeId { get; set; }
-
+    public string Organization { get; set; } = string.Empty;
+    public string IdpType { get; set; } = string.Empty;
     public string Key { get; set; } = string.Empty;
     public DateTime ChangeDateTime { get; set; } = DateTime.Now;
     public Dictionary<ChangeType, SingleChangeType> SingleChangeTypes { get; set; } = new Dictionary<ChangeType, SingleChangeType>();

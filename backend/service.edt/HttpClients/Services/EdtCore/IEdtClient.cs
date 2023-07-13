@@ -1,6 +1,7 @@
 namespace edt.service.HttpClients.Services.EdtCore;
 
 using edt.service.Kafka.Model;
+using edt.service.ServiceEvents.UserAccountModification.Models;
 
 public interface IEdtClient
 {
@@ -8,6 +9,7 @@ public interface IEdtClient
     Task<UserModificationEvent> UpdateUser(EdtUserProvisioningModel accessRequest, EdtUserDto previousRequest, bool fromTombstone);
     Task<UserModificationEvent> CreatePerson(EdtPersonProvisioningModel accessRequest);
     Task<UserModificationEvent> ModifyPerson(EdtPersonProvisioningModel accessRequest, EdtPersonDto currentUser);
+    Task<UserModificationEvent> ModifyPerson(IncomingUserModification modificationInfo);
 
     Task<UserModificationEvent> UpdateUserDetails(EdtUserDto userDetails);
 
