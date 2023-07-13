@@ -49,6 +49,8 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
             case "digitalevidencedisclosure-defence-usermodification-complete":
             case "digitalevidencedisclosure-defence-usermodification-error":
             case "digitalevidencedisclosure-defence-usercreation-error":
+            case "digitalevidence-defence-personmodification-complete":
+            case "digitalevidence-defence-personmodification-error":
             case "digitalevidence-defence-personcreation-complete":
             case "digitalevidence-defence-personcreation-error":
             {
