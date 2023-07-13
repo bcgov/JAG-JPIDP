@@ -65,7 +65,7 @@ public class UserChangeHandler : IKafkaHandler<string, UserChangeModel>
         else
         {
             Serilog.Log.Error($"Failed to create response {responseID} for update request {userChangeEvent.ChangeId}");
-            return Task.FromException(new EdtDisclosureServiceException($"Failed to create response {responseID} for update request {userChangeEvent.ChangeId}");
+            return Task.FromException(new EdtDisclosureServiceException($"Failed to create response {responseID} for update request {userChangeEvent.ChangeId}"));
         }
 
     }
