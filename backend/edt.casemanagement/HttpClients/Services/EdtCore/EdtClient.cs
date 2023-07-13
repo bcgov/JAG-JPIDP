@@ -140,8 +140,8 @@ public class EdtClient : BaseClient, IEdtClient
             return true;
         }
 
-        Log.Logger.Information("Adding user {0} to case {0}", userKey, caseId);
-        var result = await this.PostAsync<JsonObject>($"api/v1/cases/{caseId}/users/{userKey}");
+        Log.Logger.Information($"Adding user {userKey} to case {caseId}");
+        var result = await this.PostAsync($"api/v1/cases/{caseId}/users/{userKey}");
 
         if (result.IsSuccess)
         {
