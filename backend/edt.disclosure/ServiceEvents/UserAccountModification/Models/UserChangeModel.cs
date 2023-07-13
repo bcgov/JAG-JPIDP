@@ -1,4 +1,5 @@
-namespace Pidp.Models;
+namespace edt.disclosure.ServiceEvents.UserAccountModification.Models;
+
 
 using System.Collections.Generic;
 using Newtonsoft.Json;

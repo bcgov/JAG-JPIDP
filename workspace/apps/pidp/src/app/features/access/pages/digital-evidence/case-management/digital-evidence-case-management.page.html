@@ -91,11 +91,11 @@
           <th *matHeaderCellDef mat-header-cell>Action </th>
 
           <td *matCellDef="let case" mat-cell class="centered-column"><i matTooltip="Show case info"
-              *ngIf="case.requestStatus === 'Completed'" (click)="getCaseData(case)"><mat-icon
+              *ngIf="case.requestStatus === 'Complete'" (click)="getCaseData(case)"><mat-icon
                 class="me-2">info_outline</mat-icon></i>
-            <i matTooltip="Access to this case to upload evidence" *ngIf="case.requestStatus === 'Completed'"
+            <i matTooltip="Access to this case to upload evidence" *ngIf="case.requestStatus === 'Complete'"
               (click)="onUploadToCase(case)"><mat-icon class="me-2">file_upload</mat-icon></i><i
-              matTooltip="Remove access to this case" *ngIf="case.requestStatus === 'Completed'"
+              matTooltip="Remove access to this case" *ngIf="case.requestStatus === 'Complete'"
               (click)="onRemoveCase(case)"><mat-icon>delete_outline</mat-icon></i>
           </td>
         </ng-container>

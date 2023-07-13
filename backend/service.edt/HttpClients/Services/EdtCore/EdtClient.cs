@@ -7,6 +7,7 @@ using edt.service.Exceptions;
 using edt.service.Infrastructure.Telemetry;
 using edt.service.Kafka.Model;
 using edt.service.ServiceEvents.UserAccountCreation.Models;
+using edt.service.ServiceEvents.UserAccountModification.Models;
 using Prometheus;
 using Serilog;
 
@@ -539,6 +540,60 @@ public class EdtClient : BaseClient, IEdtClient
     }
 
 
+    /// <summary>
+    /// Permits changing a persons email
+    /// </summary>
+    /// <param name="modificationInfo"></param>
+    /// <returns></returns>
+    /// <exception cref="EdtServiceException"></exception>
+    public async Task<UserModificationEvent> ModifyPerson(IncomingUserModification modificationInfo)
+    {
+        using (ParticipantModificationDuration.NewTimer())
+        {
+            this.meters.UpdatePerson();
+
+            var person = await this.GetPerson(modificationInfo.Key);
+
+            if (person == null)
+            {
+                var msg = $"Request to update unknown user {modificationInfo.Key}";
+                Log.Error(msg);
+                throw new EdtServiceException(msg);
+            }
+
+            var emailChange = modificationInfo.SingleChangeTypes.FirstOrDefault(change => change.Key == ChangeType.EMAIL);
+            var changeValue = emailChange.Value;
+
+            if (changeValue == null || changeValue.To == null || (changeValue.From == changeValue.To))
+            {
+                throw new EdtServiceException($"Unable to update user {modificationInfo.Key} with invalid email info");
+            }
+
+            person.Address.Email = changeValue.To;
+
+
+            var result = await this.PutAsync($"api/v1/org-units/1/persons/" + person.Id, person);
+            var userModificationResponse = new UserModificationEvent
+            {
+                partId = modificationInfo.Key,
+                eventType = UserModificationEvent.UserEvent.Modify,
+                eventTime = DateTime.Now,
+                accessRequestId = modificationInfo.ChangeId,
+                successful = true
+            };
+
+            if (!result.IsSuccess)
+            {
+                Log.Logger.Error("Failed to update EDT person {0}", string.Join(",", result.Errors));
+                userModificationResponse.successful = false;
+            }
+
+
+            return userModificationResponse;
+        }
+    }
+
+
     public async Task<UserModificationEvent> ModifyPerson(EdtPersonProvisioningModel accessRequest, EdtPersonDto currentUser)
     {
         using (ParticipantModificationDuration.NewTimer())
@@ -554,7 +609,7 @@ public class EdtClient : BaseClient, IEdtClient
             var userModificationResponse = new UserModificationEvent
             {
                 partId = accessRequest.Key,
-                eventType = UserModificationEvent.UserEvent.Create,
+                eventType = UserModificationEvent.UserEvent.Modify,
                 eventTime = DateTime.Now,
                 accessRequestId = accessRequest.AccessRequestId,
                 successful = true

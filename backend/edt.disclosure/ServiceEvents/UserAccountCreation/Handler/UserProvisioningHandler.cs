@@ -99,18 +99,22 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
                 // get the folio for the user (if present)
                 var existingFolio = await this.edtClient.FindCaseByKey(accessRequestModel.Key);
 
+                // we'll track the created case Id so that we can later notify core if necessary to add as LinkDicsloureCaseId to the participant in core
+                var processResponseData = new Dictionary<string, string>();
+
                 if (existingFolio == null)
                 {
                     Serilog.Log.Information($"User with key {accessRequestModel.Key} does not currently have a folio - adding folio");
                     var folio = await this.CreateUserFolio(accessRequestModel);
                     var linked = await this.LinkUserToFolio(accessRequestModel, folio.Id);
+                    processResponseData.Add("caseID", ""+ folio.Id);
+
                 }
                 else
                 {
                     Serilog.Log.Information($"User with key {accessRequestModel.Key} has a folio - adding user to folio if not already linked");
                     var linked = await this.LinkUserToFolio(accessRequestModel, existingFolio.Id);
-
-
+                    processResponseData.Add("caseID", "" + existingFolio.Id);
                 }
 
                 try
@@ -126,6 +130,8 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
                         { "MessageId", key! }
                          };
 
+          
+                    
 
                     // send a response that the process is complete
                     var sentStatus = this.processResponseProducer.ProduceAsync(this.configuration.KafkaCluster.ProcessResponseTopic, Guid.NewGuid().ToString(), new GenericProcessStatusResponse
@@ -134,6 +140,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
                         Id = accessRequestModel.AccessRequestId,
                         EventTime = SystemClock.Instance.GetCurrentInstant(),
                         Status = "Complete",
+                        ResponseData = processResponseData,
                         TraceId = key
                     });
 

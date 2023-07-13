@@ -13,8 +13,10 @@ using edt.disclosure.Models;
 using edt.disclosure.ServiceEvents.CourtLocation.Models;
 using edt.disclosure.ServiceEvents.Models;
 using edt.disclosure.ServiceEvents.UserAccountCreation.Models;
+using edt.disclosure.ServiceEvents.UserAccountModification.Models;
 using Google.Protobuf.WellKnownTypes;
 using MediatR;
+using Microsoft.AspNetCore.Connections.Features;
 using Prometheus;
 using Serilog;
 
@@ -361,6 +363,88 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
     }
 
+    public async Task<UserModificationEvent> UpdateUser(UserChangeModel changeEvent)
+    {
+        using (AccountUpdateDuration.NewTimer())
+        {
+
+
+            // check the user exists
+            EdtUserDto? currentUser = await this.GetUser(changeEvent.Key);
+            if (currentUser == null)
+            {
+                throw new EdtDisclosureServiceException($"No user found in disclosure with key {changeEvent.Key}");
+            }
+
+            var userModificationResponse = new UserModificationEvent
+            {
+                partId = currentUser.Key,
+                eventType = UserModificationEvent.UserEvent.Modify,
+                eventTime = DateTime.Now,
+                accessRequestId = changeEvent.ChangeId,
+                successful = true
+            };
+
+            // handle the change
+            if (changeEvent.SingleChangeTypes.Any())
+            {
+                foreach (var changeType in changeEvent.SingleChangeTypes)
+                {
+                    switch (changeType.Key)
+                    {
+                        case ChangeType.EMAIL:
+                        {
+                            Log.Information($"Handling email change event for {changeEvent.Key} to {changeType.Value.To}");
+                            currentUser.Email = changeType.Value.To;
+                            break;
+                        }
+
+                        default:
+                        {
+                            Log.Warning($"Ignoring change event {changeType.Key} for {changeEvent.UserID} ({changeType.Value.To})");
+                            break;
+                        }
+                  
+                    }
+
+                }
+            }
+            if (changeEvent.BooleanChangeTypes.Any())
+            {
+                foreach (var changeType in changeEvent.BooleanChangeTypes)
+                {
+                    switch (changeType.Key)
+                    {
+                        case ChangeType.ACTIVATION:
+                        {
+                            Log.Information($"Handling activation change event for {changeEvent.Key} to {changeType.Value.To}");
+                            currentUser.IsActive = changeType.Value.To;
+                            break;
+                        }
+
+                        default:
+                        {
+                            Log.Warning($"Ignoring change event {changeType.Key} for {changeEvent.UserID} ({changeType.Value.To})");
+                            break;
+                        }
+
+                    }
+                }
+            }
+
+            var result = await this.PutAsync($"api/v1/users", currentUser);
+
+            if ( !result.IsSuccess)
+            {
+                userModificationResponse.successful = false;
+                userModificationResponse.Errors.AddRange(result.Errors);
+            }
+
+            return userModificationResponse;
+        }
+
+    }
+
     //private async Task<bool> AddUserToFolio(EdtDisclosureUserProvisioningModel accessRequest, EdtUserDto currentUser)
     //{
     //    if (currentUser == null)
@@ -473,7 +557,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         else
         {
             Log.Logger.Information("Adding user {0} to case {0}", userKey, caseId);
-            var result = await this.PostAsync<EdtCaseUserDto>($"api/v1/cases/{caseId}/case-users/{userKey}");
+            var result = await this.PostAsync($"api/v1/cases/{caseId}/users/{userKey}");
             if (result.IsSuccess)
             {
                 Log.Information("Successfully added user {0} to case {1}", userKey, caseId);
@@ -597,8 +681,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
     public async Task<bool> RemoveUserFromCase(string userId, int caseId)
     {
-        // var result = await this.PostAsync<>($"api/v1/version");
-        var result = await this.DeleteAsync($"api/v1/cases/{caseId}/users/remove/{userId}");
+        var result = await this.DeleteAsync($"api/v1/cases/{caseId}/users/{userId}");
 
         if (result.IsSuccess)
         {
@@ -936,6 +1019,8 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             return null;
         }
     }
+
+
 
     public static class RequestEventType
     {

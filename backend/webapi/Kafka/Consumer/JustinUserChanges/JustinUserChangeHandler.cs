@@ -3,7 +3,6 @@ namespace Pidp.Kafka.Consumer.JustinUserChanges;
 using DomainResults.Common;
 using Pidp.Data;
 using Pidp.Features;
-using Pidp.Features.AccessRequests;
 using Pidp.Kafka.Interfaces;
 using Serilog;
 using static Pidp.Features.AccessRequests.DigitalEvidenceUpdate;
