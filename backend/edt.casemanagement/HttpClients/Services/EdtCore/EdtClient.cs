@@ -194,7 +194,7 @@ public class EdtClient : BaseClient, IEdtClient
     public async Task<bool> RemoveUserFromCase(string userId, int caseId)
     {
         // var result = await this.PostAsync<>($"api/v1/version");
-        var result = await this.DeleteAsync($"api/v1/cases/{caseId}/users/remove/{userId}");
+        var result = await this.DeleteAsync($"api/v1/cases/{caseId}/users/{userId}");
 
         if (result.IsSuccess)
         {
