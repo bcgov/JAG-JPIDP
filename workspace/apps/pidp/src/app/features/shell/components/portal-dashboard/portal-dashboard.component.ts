@@ -28,6 +28,8 @@ export class PortalDashboardComponent implements IDashboard {
   public logoutRedirectUrl: string;
   public username: Observable<string>;
   public email: Observable<string>;
+  public organization: string;
+
   public headerConfig: DashboardHeaderConfig;
   public brandConfig: { imgSrc: string; imgAlt: string };
   public showMenuItemIcons: boolean;
@@ -48,6 +50,8 @@ export class PortalDashboardComponent implements IDashboard {
     this.email = accessTokenService
       .decodeToken()
       .pipe(map((token) => token?.preferred_username ?? ''));
+
+    this.organization = 'test';
 
     this.headerConfig = { theme: 'dark', allowMobileToggle: true };
     this.brandConfig = {

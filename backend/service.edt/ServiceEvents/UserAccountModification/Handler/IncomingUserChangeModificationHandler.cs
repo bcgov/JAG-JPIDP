@@ -47,6 +47,24 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
 
         Serilog.Log.Information($"Message {key} received on topic {consumerName} for {incomingUserModification.UserID} {incomingUserModification.Key}");
 
+
+        if (incomingUserModification.IdpType == "verified")
+        {
+            // we'll only permit email changes for verified credentials users (TBD how we handle name changes)
+            await this.edtClient.ModifyPerson(incomingUserModification);
+        }
+        else
+        {
+            return this.HandleBCPSUserChange(consumerName, key, incomingUserModification);
+        }
+
+        return Task.CompletedTask;
+
+    }
+
+
+    private async Task<Task> HandleBCPSUserChange(string consumerName, string key, IncomingUserModification incomingUserModification)
+    {
         var userInfo = await this.edtClient.GetUser(incomingUserModification.Key);
 
         if (userInfo == null)
@@ -171,10 +189,7 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
 
 
         return Task.CompletedTask;
-
-
     }
-
 
     public Task<Task> HandleRetryAsync(string consumerName, string key, IncomingUserModification value, int retryCount, string topicName)
     {
