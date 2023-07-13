@@ -59,9 +59,10 @@
     <ui-page-section *ngIf="!userIsLawyer">
       <ui-page-section-subheader heading="Digital Evidence and Disclosure Management System">
         <ng-container uiPageSectionSubheaderDesc>
-          Check the information below is correct and click Next to request access to the DEMS System.
-          If the information below is incorrect please contact <a uiAnchor scheme="mailto"
-            [attr.href]="digitalEvidenceSupportEmail"></a> for assistance.
+          Check that the information below is correct, then click Request Access. If the information needs updating,
+          please
+          contact
+          <a uiAnchor scheme="mailto" [attr.href]="digitalEvidenceSupportEmail"></a>.
 
           <div class="submitting-agency mat-elevation-z4" *ngIf="userInAgency()">
             As a submitting agency, you will be able to request access to the appropriate cases.
