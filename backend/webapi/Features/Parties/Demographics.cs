@@ -101,6 +101,9 @@ public class Demographics
 
             await this.context.SaveChangesAsync();
 
+            // if user has access requests then we'll send a status update too
+            var accessRequests = this.context.AccessRequests.Where(req => req.Party == party).Any();
+
             if (currentEmail != command.Email)
             {
                 Serilog.Log.Information($"Updating {party.Id} email to {command.Email} from {currentEmail}");
@@ -139,16 +142,19 @@ public class Demographics
                     userInfo.Email = command.Email;
                     await this.administrationClient.UpdateUser(party.UserId, userInfo);
 
-                    // publish change event
-                    var publishCoreResponse = await this.producer.ProduceAsync(this.configuration.KafkaCluster.UserAccountChangeTopicName, messageId , changeModel);
-                    if (publishCoreResponse.Status == Confluent.Kafka.PersistenceStatus.NotPersisted)
+                    if (accessRequests)
                     {
-                        Serilog.Log.Warning("Failed to send update request for user modification to core");
-                    }
-                    var publishDisclosureResponse = await this.producer.ProduceAsync(this.configuration.KafkaCluster.DisclosureUserModificationTopic, messageId, changeModel);
-                    if (publishDisclosureResponse.Status == Confluent.Kafka.PersistenceStatus.NotPersisted)
-                    {
-                        Serilog.Log.Warning("Failed to send update request for user modification to disclosure");
+                        // publish change event
+                        var publishCoreResponse = await this.producer.ProduceAsync(this.configuration.KafkaCluster.UserAccountChangeTopicName, messageId, changeModel);
+                        if (publishCoreResponse.Status == Confluent.Kafka.PersistenceStatus.NotPersisted)
+                        {
+                            Serilog.Log.Warning("Failed to send update request for user modification to core");
+                        }
+                        var publishDisclosureResponse = await this.producer.ProduceAsync(this.configuration.KafkaCluster.DisclosureUserModificationTopic, messageId, changeModel);
+                        if (publishDisclosureResponse.Status == Confluent.Kafka.PersistenceStatus.NotPersisted)
+                        {
+                            Serilog.Log.Warning("Failed to send update request for user modification to disclosure");
+                        }
                     }
                 }
                 else

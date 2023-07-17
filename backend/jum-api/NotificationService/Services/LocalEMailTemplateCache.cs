@@ -48,7 +48,7 @@ public class LocalEMailTemplateCache : IEmailTemplateCache, IDisposable
 
         await Task.Delay(5000);
 
-        Log.Information($"Change detectected to email template file [{e.Name}]");
+        Log.Information($"Change detected to email template file [{e.Name}]");
 
         var templatePath = Path.Combine(this.config.ChesClient.TemplateFolder, e.Name);
         var templateContent = await File.ReadAllTextAsync(templatePath);
@@ -94,12 +94,14 @@ public class LocalEMailTemplateCache : IEmailTemplateCache, IDisposable
             Directory.GetFiles(folderPath);
             return true;
         }
-        catch (UnauthorizedAccessException)
+        catch (UnauthorizedAccessException uae)
         {
+            Log.Error($"Unable to access email templates [{uae.Message}]");
             return false;
         }
-        catch (DirectoryNotFoundException)
+        catch (DirectoryNotFoundException dnfe)
         {
+            Log.Error($"Unable to access email templates - no folder found [{dnfe.Message}]");
             return false;
         }
     }

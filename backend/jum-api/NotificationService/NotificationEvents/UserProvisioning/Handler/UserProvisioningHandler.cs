@@ -82,7 +82,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, Notification>
 
                 await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
 
-                var existingNotification = this.context.Notifications.Where(notification => notification.NotificationId == value.NotificationId && notification.EmailAddress == value.To).FirstOrDefault();
+                var existingNotification = this.context.Notifications.Where(notification => notification.NotificationId == value.NotificationId).FirstOrDefault();
 
                 if (existingNotification != null)
                 {
@@ -135,7 +135,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, Notification>
             return Task.FromException(new NotificationException(string.Join(",", ex.Message)));
         }
 
-        return Task.FromException(new NotificationException());
+                return Task.CompletedTask;
     }
     private async Task<Guid?> SendConfirmationEmailAsync(Notification model)
     {
