@@ -42,7 +42,7 @@ public class NotificationServiceConfiguration
 
     public class ConnectionStringConfiguration
     {
-        public string JumDatabase { get; set; } = string.Empty;
+        public string NotificationDatabase { get; set; } = string.Empty;
     }
     public class ChesClientConfiguration
     {

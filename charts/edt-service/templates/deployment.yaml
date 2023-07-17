@@ -50,8 +50,6 @@ spec:
 
 
           env:
-            - name: DB_HOST
-              value: jum-database
             - name: Seq__Url
               valueFrom:
                 secretKeyRef:
@@ -75,16 +73,18 @@ spec:
                   key: KafkaCluster__ConsumerClientId
             - name: KafkaCluster__ConsumerGroupId
               value: {{ include "edt-service.fullname" . }}-consumer-group
-            - name: DB_PASSWORD
+            - name: database-password
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "edt-service.fullname" . }}-jum-database
-                  key: DB_PASSWORD
-            - name: DB_USER
+                  name: {{ include "edt-service.fullname" . }}-database
+                  key: database-password
+            - name: database-username
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "edt-service.fullname" . }}-jum-database
-                  key: DB_USER
+                  name: {{ include "edt-service.fullname" . }}-database
+                  key: database-username
+            - name: DATABASE_NAME
+              value: notification
             - name: USER_CREATION_PLAINTEXT_TOPIC
               value: digitalevidence-usercreation-plain-topic
             - name: DATABASE_NAME
@@ -94,8 +94,8 @@ spec:
             - name: ConnectionStrings__EdtDataStore
               valueFrom:
                 configMapKeyRef:
-                  name: jum-api-database
-                  key: CONNECTION_STRINGS_JUM         
+                  name: edt-api-database
+                  key: CONNECTION_STRINGS_DB    
             - name: SchemaRegistry__Url
               valueFrom:
                 secretKeyRef:

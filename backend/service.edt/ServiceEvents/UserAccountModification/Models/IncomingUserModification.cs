@@ -33,7 +33,7 @@ public class IncomingUserModification
 
         foreach (var key in this.ListChangeTypes.Keys)
         {
-            changes.Append("<h3>").Append(key.GetChangeTypeInfo().DisplayName).Append("</h3><table border=\"1px grey solid\"><thead><th>From</th><th>To</th></thead><tbody><tr><td>");
+            changes.Append("<h3>").Append(key.GetChangeTypeInfo().DisplayName).Append("</h3><table border=\"1px grey solid\" style=\"padding:4px;border-collapse: collapse;\"><thead><th>From</th><th>To</th></thead><tbody><tr><td>");
             foreach (var oldVal in this.ListChangeTypes[key].From)
             {
                 changes.Append(oldVal).Append("<br/>");

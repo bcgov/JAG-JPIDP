@@ -129,15 +129,23 @@ public class Startup
 
 
 
+        //services.AddDbContext<EdtDataStoreDbContext>(options => options
+        //    .UseSqlServer(config.ConnectionStrings.EdtDataStore, sql => sql.UseNodaTime())
+        //    .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
+
         services.AddDbContext<EdtDataStoreDbContext>(options => options
-            .UseSqlServer(config.ConnectionStrings.EdtDataStore, sql => sql.UseNodaTime())
+            .UseNpgsql(config.ConnectionStrings.EdtDataStore, npg => npg.UseNodaTime())
             .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
 
         services.AddMediatR(typeof(Startup).Assembly);
 
+        //services.AddHealthChecks()
+        //        .AddCheck("liveliness", () => HealthCheckResult.Healthy())
+        //        .AddSqlServer(config.ConnectionStrings.EdtDataStore, tags: new[] { "services" }).ForwardToPrometheus();
+
         services.AddHealthChecks()
-                .AddCheck("liveliness", () => HealthCheckResult.Healthy())
-                .AddSqlServer(config.ConnectionStrings.EdtDataStore, tags: new[] { "services" }).ForwardToPrometheus();
+        .AddCheck("liveliness", () => HealthCheckResult.Healthy())
+        .AddNpgSql(config.ConnectionStrings.EdtDataStore, tags: new[] { "services" }).ForwardToPrometheus();
 
         services.AddControllers(options => options.Conventions.Add(new RouteTokenTransformerConvention(new KabobCaseParameterTransformer())))
              .AddFluentValidation(options => options.RegisterValidatorsFromAssemblyContaining<Startup>())

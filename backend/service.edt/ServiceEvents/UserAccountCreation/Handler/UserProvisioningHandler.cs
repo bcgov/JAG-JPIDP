@@ -8,6 +8,7 @@ using edt.service.Kafka;
 using edt.service.Kafka.Interfaces;
 using edt.service.Kafka.Model;
 using edt.service.ServiceEvents.UserAccountCreation.Models;
+using edt.service.ServiceEvents.UserAccountModification.Models;
 using Microsoft.Extensions.Logging;
 using Prometheus;
 using static edt.service.EdtServiceConfiguration;
@@ -29,13 +30,13 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
 
     public UserProvisioningHandler(
         IKafkaProducer<string, Notification> producer,
-          IKafkaProducer<string, NotificationAckModel> ackProducer,
-
-    IKafkaProducer<string, UserModificationEvent> userModificationProducer,
+        IKafkaProducer<string, NotificationAckModel> ackProducer,
+        IKafkaProducer<string, UserModificationEvent> userModificationProducer,
         EdtServiceConfiguration configuration,
         IEdtClient edtClient,
         EdtDataStoreDbContext context,
-        IKafkaProducer<string, EdtUserProvisioningModel> retryProducer, ILogger logger)
+        IKafkaProducer<string, EdtUserProvisioningModel> retryProducer,
+        ILogger logger)
     {
         this.producer = producer;
         this.ackProducer = ackProducer;
@@ -164,6 +165,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
 
                         EventData = eventData,
                     });
+
 
                     if (string.IsNullOrEmpty(this.configuration.SchemaRegistry.Url))
                     {

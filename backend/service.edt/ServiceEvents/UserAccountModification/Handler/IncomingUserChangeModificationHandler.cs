@@ -55,7 +55,7 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
         }
         else
         {
-            return this.HandleBCPSUserChange(consumerName, key, incomingUserModification);
+            return await this.HandleBCPSUserChange(consumerName, key, incomingUserModification);
         }
 
         return Task.CompletedTask;
@@ -93,7 +93,7 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
         {
 
             domainEvent = "digitalevidence-bcps-userupdate-deactivated";
-            Serilog.Log.Information($"Deactiviating account for {incomingUserModification.Key}");
+            Serilog.Log.Information($"Deactivating account for {incomingUserModification.Key}");
 
             var disabledOk = await this.edtClient.DisableAccount(incomingUserModification.Key);
 

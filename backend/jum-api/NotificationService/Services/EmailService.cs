@@ -1,11 +1,7 @@
 namespace NotificationService.Services;
 
-using Azure;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 using NodaTime;
-using NodaTime.Extensions;
 using NotificationService.Data;
 using NotificationService.Exceptions;
 using NotificationService.HttpClients.Mail;
@@ -13,10 +9,7 @@ using NotificationService.Models;
 using NotificationService.NotificationEvents.UserProvisioning.Models;
 using Prometheus;
 using Serilog;
-using System.Collections.Generic;
 using System.Linq.Expressions;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
 
 public class EmailService : IEmailService
 {
