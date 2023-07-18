@@ -172,17 +172,18 @@ public class JumClient : BaseClient, IJumClient
             IsSuccess = isSuccessful
         };
 
-        var result = await this.PostAsync<bool>($"user-change-management", statusResponse);
+        var result = await this.PutAsync($"user-change-management", statusResponse);
         if (result.IsSuccess)
         {
-
+            Serilog.Log.Information($"Updated JUM User change {statusResponse.ToString()}");
+            return true;
         }
         else
-        { 
+        {
             this.Logger.LogFailedToMarkProcessComplete(eventMessageId);
+            return false;
         }
 
-        return result.Value;
     }
 }
 public static partial class JumClientLoggingExtensions

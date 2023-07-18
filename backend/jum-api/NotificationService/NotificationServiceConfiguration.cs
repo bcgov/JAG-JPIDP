@@ -22,7 +22,7 @@ public class NotificationServiceConfiguration
         public string BootstrapServers { get; set; } = string.Empty;
         public string TopicName { get; set; } = string.Empty;
         public string AckTopicName { get; set; } = string.Empty;
-        public string NotificationTopic { get; set; } = string.Empty;   
+        public string NotificationTopic { get; set; } = string.Empty;
         public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientId { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientSecret { get; set; } = string.Empty;
