@@ -128,7 +128,7 @@ public class DigitalEvidenceUpdate
                                 await trx.RollbackAsync();
                             }
                             else
-                            { 
+                            {
                                 var settings = new JsonSerializerSettings
                                 {
                                     NullValueHandling = NullValueHandling.Ignore,
@@ -143,7 +143,7 @@ public class DigitalEvidenceUpdate
                                     ChangeData = JsonConvert.SerializeObject(changes, settings),
                                     Reason = "JUSTIN Change",
                                     TraceId = activity.TraceId.ToString(),
-                                    Status = "Pending"
+                                    Status = "pending"
 
                                 });
 
@@ -189,11 +189,14 @@ public class DigitalEvidenceUpdate
                                     if (changes.SingleChangeTypes.ContainsKey(ChangeType.LASTNAME))
                                     {
                                         keycloakUserInfo.LastName = changes.SingleChangeTypes[ChangeType.LASTNAME].To;
+                                        party.LastName = keycloakUserInfo.LastName;
                                     }
 
                                     if (changes.SingleChangeTypes.ContainsKey(ChangeType.FIRSTNAME))
                                     {
                                         keycloakUserInfo.FirstName = changes.SingleChangeTypes[ChangeType.FIRSTNAME].To;
+                                        party.FirstName = keycloakUserInfo.FirstName;
+
                                     }
 
                                     if (changes.ListChangeTypes.ContainsKey(ChangeType.REGIONS))
@@ -228,17 +231,28 @@ public class DigitalEvidenceUpdate
                                 var updated = await this.UpdateKeycloakUser(party.UserId, keycloakUserInfo);
 
                                 await this.context.SaveChangesAsync();
-                                await trx.CommitAsync();
 
                                 var changeId = changeEntry.Entity.Id;
                                 changes.ChangeId = changeId;
 
+                                var messageId = Guid.NewGuid().ToString();
+
+                                Serilog.Log.Information($"Publishing to {this.config.KafkaCluster.UserAccountChangeTopicName} for {messageId}");
 
                                 // flag the changes for other systems to process
-                                var produceResponse = await this.kafkaAccountChangeProducer.ProduceAsync(this.config.KafkaCluster.UserAccountChangeTopicName, Guid.NewGuid().ToString(), changes);
-
+                                var produceResponse = await this.kafkaAccountChangeProducer.ProduceAsync(this.config.KafkaCluster.UserAccountChangeTopicName, messageId, changes);
+                                if (produceResponse.Status == Confluent.Kafka.PersistenceStatus.Persisted)
+                                {
+                                    Serilog.Log.Information($"{messageId} published to partition {produceResponse.Partition.Value}");
+                                    await trx.CommitAsync();
+                                }
+                                else
+                                {
+                                    Serilog.Log.Error($"Failed to publish {messageId} with status {produceResponse.Status}");
+                                    await trx.RollbackAsync();
+                                }
                             }
-                            
+
                         }
 
 
@@ -313,15 +327,21 @@ public class DigitalEvidenceUpdate
         private async Task<UserChangeModel> DetermineUserChanges(ParticipantDetail justinUserInfo, Party party, UserRepresentation? keycloakUserInfo)
         {
 
-            UserChangeModel userChangeModel = new UserChangeModel();
-            // the user account for these users is the email address from JUSTIN
-            userChangeModel.UserID = party.Email;
-            userChangeModel.Key = justinUserInfo.partId;
+            var userChangeModel = new UserChangeModel
+            {
+                // the user account for these users is the email address from JUSTIN
+                UserID = party.Email,
+                Key = justinUserInfo.partId
+            };
 
             // see if email has changed - case insensitive
             if (!string.IsNullOrEmpty(justinUserInfo.emailAddress))
             {
-                if (!party.Email.Equals(justinUserInfo.emailAddress, StringComparison.OrdinalIgnoreCase))
+                if (string.IsNullOrEmpty(justinUserInfo.emailAddress))
+                {
+                    Serilog.Log.Warning($"User {party.Id} email is null or empty in JUSTIN");
+                }
+                else if (!party.Email.Equals(justinUserInfo.emailAddress, StringComparison.OrdinalIgnoreCase))
                 {
                     Serilog.Log.Information($"User {party.Id} email changed from {party.Email} to {justinUserInfo.emailAddress}");
                     userChangeModel.SingleChangeTypes.Add(ChangeType.EMAIL, new SingleChangeType(party.Email, justinUserInfo.emailAddress));

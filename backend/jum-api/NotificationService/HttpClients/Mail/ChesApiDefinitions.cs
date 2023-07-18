@@ -78,8 +78,7 @@ public static class ChesStatus
 {
     public const string Accepted = "accepted";
     public const string Cancelled = "cancelled";
-    public const string Completed = "completed";
-    public const string Sent = "sent";
+    public const string Complete = "completed";
     public const string Failed = "failed";
     public const string Pending = "pending";
 }
