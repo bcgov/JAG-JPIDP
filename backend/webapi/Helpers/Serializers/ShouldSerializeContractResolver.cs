@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Collections;
 using Pidp.Models;
 
-public class ShouldSerializeContractResolver : DefaultContractResolver
+public class ShouldSerializeContractResolver : CamelCasePropertyNamesContractResolver
 {
     public static readonly ShouldSerializeContractResolver Instance = new();
 

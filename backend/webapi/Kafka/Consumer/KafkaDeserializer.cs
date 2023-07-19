@@ -5,6 +5,9 @@ using Confluent.Kafka;
 using Newtonsoft.Json;
 using NodaTime.Text;
 using NodaTime;
+using NodaTime.Extensions;
+using System.Globalization;
+using System;
 
 internal sealed class KafkaDeserializer<T> : IDeserializer<T>
 {
@@ -43,7 +46,24 @@ public class InstantConverter : JsonConverter
         if (reader.TokenType == JsonToken.String)
         {
             var instantString = (string)reader.Value;
-            return InstantPattern.ExtendedIso.Parse(instantString).Value;
+
+            try
+            {
+                return InstantPattern.ExtendedIso.Parse(instantString).Value;
+            }
+            catch (UnparsableValueException ex)
+            {
+
+                Serilog.Log.Warning($"Failed to parse instant value {instantString} {ex.Message}");
+                // try to parse as regular date
+
+                var dateTime = DateTime.ParseExact(instantString, "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal);
+                var localTime = TimeZoneInfo.ConvertTimeToUtc(dateTime, TimeZoneInfo.Local);
+                var instant = Instant.FromDateTimeUtc(DateTime.SpecifyKind(localTime, DateTimeKind.Utc));
+                return instant;
+
+
+            }
         }
         else if (reader.TokenType == JsonToken.Date)
         {
