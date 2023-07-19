@@ -13,7 +13,6 @@ using edt.service.ServiceEvents.UserAccountModification;
 using edt.service.ServiceEvents.UserAccountModification.Handler;
 using edt.service.ServiceEvents.UserAccountModification.Models;
 using EdtService.Extensions;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 public static class ConsumerSetup
 {
@@ -34,7 +33,7 @@ public static class ConsumerSetup
             SaslOauthbearerTokenEndpointUrl = config.KafkaCluster.SaslOauthbearerTokenEndpointUrl,
             SaslOauthbearerMethod = SaslOauthbearerMethod.Oidc,
             SocketKeepaliveEnable = true,
-            ConnectionsMaxIdleMs = 300000,
+            ConnectionsMaxIdleMs = 2147483647,
             TopicMetadataRefreshIntervalMs = 10000,
             SaslOauthbearerScope = config.KafkaCluster.Scope,
             SslEndpointIdentificationAlgorithm = SslEndpointIdentificationAlgorithm.Https,
@@ -82,9 +81,7 @@ public static class ConsumerSetup
             AutoOffsetReset = AutoOffsetReset.Earliest,
             ClientId = Dns.GetHostName(),
             EnableAutoOffsetStore = false,
-            AutoCommitIntervalMs = 4000,
-            SessionTimeoutMs = 200000,
-            HeartbeatIntervalMs = 200000,
+            MaxPollIntervalMs = 60000,
             BootstrapServers = config.KafkaCluster.BootstrapServers,
             SaslOauthbearerClientId = config.KafkaCluster.SaslOauthbearerConsumerClientId,
             SaslOauthbearerClientSecret = config.KafkaCluster.SaslOauthbearerConsumerClientSecret,

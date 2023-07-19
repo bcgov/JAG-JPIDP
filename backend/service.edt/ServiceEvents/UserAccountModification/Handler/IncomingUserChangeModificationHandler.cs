@@ -113,9 +113,8 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
         else
         {
 
-            if (incomingUserModification.SingleChangeTypes.ContainsKey(ChangeType.ACTIVATION))
+            if (incomingUserModification.IsAccountActivated())
             {
-                // must be an activation request
                 var responseOk = await this.edtClient.EnableAccount(incomingUserModification.Key);
                 Serilog.Log.Information($"Account for participant {incomingUserModification.Key} has been activated");
                 userModificationEvent.eventType = UserModificationEvent.UserEvent.Enable;
@@ -155,11 +154,7 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
 
                 var changesMade = await this.edtClient.UpdateUserAssignedGroups(incomingUserModification.Key, newRegions, removedRegions);
 
-                // if user we deactivated then re-activate
-                if (userInfo.IsActive == false)
-                {
-                    // TODO - do we re-activate in this case?
-                }
+               
             }
         }
 

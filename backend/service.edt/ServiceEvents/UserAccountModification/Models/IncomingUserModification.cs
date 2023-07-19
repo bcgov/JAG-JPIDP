@@ -14,8 +14,9 @@ public class IncomingUserModification
     public Dictionary<ChangeType, SingleChangeType> SingleChangeTypes { get; set; } = new Dictionary<ChangeType, SingleChangeType>();
     public Dictionary<ChangeType, ListChangeType> ListChangeTypes { get; set; } = new Dictionary<ChangeType, ListChangeType>();
     public Dictionary<ChangeType, BooleanChangeType> BooleanChangeTypes { get; set; } = new Dictionary<ChangeType, BooleanChangeType>();
+    public bool IsAccountActivated() => (this.BooleanChangeTypes.ContainsKey(ChangeType.ACTIVATION) && this.BooleanChangeTypes[ChangeType.ACTIVATION].Equals(true)) || (this.ListChangeTypes.ContainsKey(ChangeType.REGIONS) && this.ListChangeTypes[ChangeType.REGIONS].From.Any() == false && this.ListChangeTypes[ChangeType.REGIONS].To.Any());
 
-    public bool IsAccountDeactivated() => (this.BooleanChangeTypes.ContainsKey(ChangeType.ACTIVATION) && this.BooleanChangeTypes[ChangeType.ACTIVATION].Equals(false)) || this.SingleChangeTypes.ContainsKey(ChangeType.EMAIL);
+    public bool IsAccountDeactivated() => (this.BooleanChangeTypes.ContainsKey(ChangeType.ACTIVATION) && this.BooleanChangeTypes[ChangeType.ACTIVATION].To.Equals(false)) || this.SingleChangeTypes.ContainsKey(ChangeType.EMAIL);
     internal string ToChangeHtml()
     {
         var changes = new StringBuilder();
@@ -28,12 +29,30 @@ public class IncomingUserModification
 
         foreach (var key in this.BooleanChangeTypes.Keys)
         {
-            changes.Append("<li>").Append(key.GetChangeTypeInfo().DisplayName).Append(" From: ").Append(this.BooleanChangeTypes[key].From).Append(" To: ").Append(this.SingleChangeTypes[key].To).Append("</li>\n");
+            if (key == ChangeType.ACTIVATION)
+            {
+                // account re-activated
+                if (this.BooleanChangeTypes[ChangeType.ACTIVATION].From == false && this.BooleanChangeTypes[ChangeType.ACTIVATION].To == true)
+                {
+                    changes.Append("<li>Your account has been <b>reactivated</b></li>\n");
+                }
+                // deactivated
+                else
+                {
+                    changes.Append("<li>Your account has been <b>disabled</b></li>\n");
+
+                }
+            }
+            else
+            {
+                changes.Append("<li>").Append(key.GetChangeTypeInfo().DisplayName).Append(" From: ").Append(this.BooleanChangeTypes[key].From).Append(" To: ").Append(this.BooleanChangeTypes[key].To).Append("</li>\n");
+            }
         }
 
         foreach (var key in this.ListChangeTypes.Keys)
         {
-            changes.Append("<h3>").Append(key.GetChangeTypeInfo().DisplayName).Append("</h3><table border=\"1px grey solid\" style=\"padding:4px;border-collapse: collapse;\"><thead><th>From</th><th>To</th></thead><tbody><tr><td>");
+            changes.Append("<h3>").Append(key.GetChangeTypeInfo().DisplayName).Append("</h3><table cellpadding='8px' border='2px #0066CC solid' style='border-collapse: collapse;'><thead><th>From</th><th>To</th></thead><tbody><tr><td>");
+
             foreach (var oldVal in this.ListChangeTypes[key].From)
             {
                 changes.Append(oldVal).Append("<br/>");
@@ -65,7 +84,7 @@ public enum ChangeType
 
 public class ChangeTypeInfo
 {
-    public string DisplayName { get; set; }
+    public string DisplayName { get; set; } = string.Empty;
     public bool IsList { get; set; }
     public bool IsBoolean { get; set; }
 }
