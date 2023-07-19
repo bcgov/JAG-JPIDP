@@ -128,7 +128,7 @@ public class DigitalEvidenceUpdate
                                 await trx.RollbackAsync();
                             }
                             else
-                            { 
+                            {
                                 var settings = new JsonSerializerSettings
                                 {
                                     NullValueHandling = NullValueHandling.Ignore,
@@ -143,7 +143,7 @@ public class DigitalEvidenceUpdate
                                     ChangeData = JsonConvert.SerializeObject(changes, settings),
                                     Reason = "JUSTIN Change",
                                     TraceId = activity.TraceId.ToString(),
-                                    Status = "Pending"
+                                    Status = "pending"
 
                                 });
 
@@ -189,11 +189,14 @@ public class DigitalEvidenceUpdate
                                     if (changes.SingleChangeTypes.ContainsKey(ChangeType.LASTNAME))
                                     {
                                         keycloakUserInfo.LastName = changes.SingleChangeTypes[ChangeType.LASTNAME].To;
+                                        party.LastName = keycloakUserInfo.LastName;
                                     }
 
                                     if (changes.SingleChangeTypes.ContainsKey(ChangeType.FIRSTNAME))
                                     {
                                         keycloakUserInfo.FirstName = changes.SingleChangeTypes[ChangeType.FIRSTNAME].To;
+                                        party.FirstName = keycloakUserInfo.FirstName;
+
                                     }
 
                                     if (changes.ListChangeTypes.ContainsKey(ChangeType.REGIONS))
@@ -228,17 +231,28 @@ public class DigitalEvidenceUpdate
                                 var updated = await this.UpdateKeycloakUser(party.UserId, keycloakUserInfo);
 
                                 await this.context.SaveChangesAsync();
-                                await trx.CommitAsync();
 
                                 var changeId = changeEntry.Entity.Id;
                                 changes.ChangeId = changeId;
 
+                                var messageId = Guid.NewGuid().ToString();
+
+                                Serilog.Log.Information($"Publishing to {this.config.KafkaCluster.UserAccountChangeTopicName} for {messageId}");
 
                                 // flag the changes for other systems to process
-                                var produceResponse = await this.kafkaAccountChangeProducer.ProduceAsync(this.config.KafkaCluster.UserAccountChangeTopicName, Guid.NewGuid().ToString(), changes);
-
+                                var produceResponse = await this.kafkaAccountChangeProducer.ProduceAsync(this.config.KafkaCluster.UserAccountChangeTopicName, messageId, changes);
+                                if (produceResponse.Status == Confluent.Kafka.PersistenceStatus.Persisted)
+                                {
+                                    Serilog.Log.Information($"{messageId} published to partition {produceResponse.Partition.Value}");
+                                    await trx.CommitAsync();
+                                }
+                                else
+                                {
+                                    Serilog.Log.Error($"Failed to publish {messageId} with status {produceResponse.Status}");
+                                    await trx.RollbackAsync();
+                                }
                             }
-                            
+
                         }
 
 
@@ -313,15 +327,21 @@ public class DigitalEvidenceUpdate
         private async Task<UserChangeModel> DetermineUserChanges(ParticipantDetail justinUserInfo, Party party, UserRepresentation? keycloakUserInfo)
         {
 
-            UserChangeModel userChangeModel = new UserChangeModel();
-            // the user account for these users is the email address from JUSTIN
-            userChangeModel.UserID = party.Email;
-            userChangeModel.Key = justinUserInfo.partId;
+            var userChangeModel = new UserChangeModel
+            {
+                // the user account for these users is the email address from JUSTIN
+                UserID = party.Email,
+                Key = justinUserInfo.partId
+            };
 
             // see if email has changed - case insensitive
             if (!string.IsNullOrEmpty(justinUserInfo.emailAddress))
             {
-                if (!party.Email.Equals(justinUserInfo.emailAddress, StringComparison.OrdinalIgnoreCase))
+                if (string.IsNullOrEmpty(justinUserInfo.emailAddress))
+                {
+                    Serilog.Log.Warning($"User {party.Id} email is null or empty in JUSTIN");
+                }
+                else if (!party.Email.Equals(justinUserInfo.emailAddress, StringComparison.OrdinalIgnoreCase))
                 {
                     Serilog.Log.Information($"User {party.Id} email changed from {party.Email} to {justinUserInfo.emailAddress}");
                     userChangeModel.SingleChangeTypes.Add(ChangeType.EMAIL, new SingleChangeType(party.Email, justinUserInfo.emailAddress));
@@ -351,6 +371,7 @@ public class DigitalEvidenceUpdate
                 Serilog.Log.Information($"User {party.Id} has no granted roles in JUSTIN - disabling account");
                 userChangeModel.BooleanChangeTypes.Add(ChangeType.ACTIVATION, new BooleanChangeType(true, false));
             }
+            var allRegions = await this.GetAllCrownRegions();
 
             // see if regions has changed
             if (justinUserInfo.assignedAgencies.Count > 0)
@@ -371,10 +392,17 @@ public class DigitalEvidenceUpdate
                 // get all regions (e.g. Van Isl, Interior) from the list of assigned regions in JUSTIN
                 var assignedJUSTINRegions = await this.GetCrownRegions(justinAgencies);
                 // get all known regions
-                var allRegions = await this.GetAllCrownRegions();
 
                 // get the regions assigned in keycloak that are valid regions (could be additional groups added that are unrelated)
                 var keycloakRegions = allRegions.Intersect(keycloakGroups).ToList();
+
+                // no current regions assigned
+                if (keycloakRegions.Count == 0)
+                {
+                    Serilog.Log.Information($"User account {justinUserInfo.partUserId} will be re-activated if disabled");
+                    userChangeModel.BooleanChangeTypes.Add(ChangeType.ACTIVATION, new BooleanChangeType(false, true));
+
+                }
 
                 // find the differences
                 var unwantedRegions = keycloakRegions.Except(assignedJUSTINRegions).ToList();
@@ -394,6 +422,15 @@ public class DigitalEvidenceUpdate
 
                 Serilog.Log.Information($"User {party.Id} has no granted agencies in JUSTIN - disabling account");
                 userChangeModel.BooleanChangeTypes.Add(ChangeType.ACTIVATION, new BooleanChangeType(true, false));
+                // see what regions were removed (if any)
+                var groups = await this.keycloakClient.GetUserGroups(party.UserId);
+                var keycloakGroups = groups.Select(group => group.Name).ToList();
+                var keycloakRegions = allRegions.Intersect(keycloakGroups).ToList();
+                if ( keycloakRegions.Count > 0)
+                {
+                    userChangeModel.ListChangeTypes.Add(ChangeType.REGIONS, new ListChangeType(keycloakRegions, Enumerable.Empty<string>()));
+                }
+
             }
 
             return userChangeModel;

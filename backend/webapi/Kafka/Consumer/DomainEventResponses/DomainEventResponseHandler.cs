@@ -15,7 +15,7 @@ using Prometheus;
 public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessStatusResponse>
 {
     private readonly PidpDbContext context;
-    private readonly JumClient jumClient;
+    private readonly IJumClient jumClient;
     private readonly PidpConfiguration configuration;
     private readonly IClock clock;
     private readonly IKafkaProducer<string, Notification> producer;
@@ -26,7 +26,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
       = Metrics
   .CreateHistogram("account_provision_histogram", "Histogram of account provisions roundtrips.");
 
-    public DomainEventResponseHandler(PidpDbContext context, JumClient jumClient,IClock clock, PidpConfiguration configuration, IKafkaProducer<string, Notification> producer
+    public DomainEventResponseHandler(PidpDbContext context, IJumClient jumClient, IClock clock, PidpConfiguration configuration, IKafkaProducer<string, Notification> producer
 )
     {
         this.context = context;
@@ -280,7 +280,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
         {
             // get last modified time
             var duration = accessRequest.Modified - value.EventTime;
-            Serilog.Log.Error($"Duration {duration.TotalMinutes} for JUSTIN to fully provision account for request {accessRequest.Id}");
+            Serilog.Log.Information($"Duration {duration.TotalMinutes} for JUSTIN to fully provision account for request {accessRequest.Id}");
 
 
             JUSTINAccessCompletionHistogram.Observe(duration.Minutes);
@@ -311,7 +311,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
                 var published = await this.producer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopicName, messageKey, new Notification
                 {
                     DomainEvent = "digitalevidence-bcps-usercreation-fully-provisioned",
-                    To = accessRequest.Party!.Jpdid,
+                    To = accessRequest.Party!.Email,
                     EventData = eventData
                 });
 
@@ -323,7 +323,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
 
     private async Task UpdateUserChangeStatus(GenericProcessStatusResponse value)
     {
-        var userChangeEntry = this.context.UserAccountChanges.Where(change => change.Id == value.Id).FirstOrDefault();
+         var userChangeEntry = this.context.UserAccountChanges.Where(change => change.Id == value.Id).FirstOrDefault();
 
         if (userChangeEntry == null)
         {

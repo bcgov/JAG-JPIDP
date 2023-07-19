@@ -2,55 +2,56 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using NodaTime;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using jumwebapi.Data;
 
 #nullable disable
 
-namespace jumwebapi.Data.Migrations
+namespace jumwebapi.Migrations
 {
     [DbContext(typeof(JumDbContext))]
-    [Migration("20220723062124_PersonGender")]
-    partial class PersonGender
+    [Migration("20230717201715_initial")]
+    partial class initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "6.0.6")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+                .HasAnnotation("ProductVersion", "6.0.7")
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder, 1L, 1);
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("jumwebapi.Data.ef.JustinAddress", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("City")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("CountryCode")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Postal")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("ProvinceCode")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Street")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -67,29 +68,76 @@ namespace jumwebapi.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("AgencyId"), 1L, 1);
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("AgencyId"));
 
                     b.Property<string>("AgencyCode")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("datetime2");
+                    b.Property<Instant>("Created")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("Modified")
-                        .HasColumnType("datetime2");
+                    b.Property<Instant>("Modified")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("AgencyId");
 
                     b.ToTable("JustinAgency");
+
+                    b.HasData(
+                        new
+                        {
+                            AgencyId = 1L,
+                            AgencyCode = "SPD",
+                            Created = NodaTime.Instant.FromUnixTimeTicks(0L),
+                            Description = "",
+                            Modified = NodaTime.Instant.FromUnixTimeTicks(0L),
+                            Name = "Sannich Police Department"
+                        },
+                        new
+                        {
+                            AgencyId = 2L,
+                            AgencyCode = "VICPD",
+                            Created = NodaTime.Instant.FromUnixTimeTicks(0L),
+                            Description = "",
+                            Modified = NodaTime.Instant.FromUnixTimeTicks(0L),
+                            Name = "Victoria Police Department"
+                        },
+                        new
+                        {
+                            AgencyId = 3L,
+                            AgencyCode = "DPD",
+                            Created = NodaTime.Instant.FromUnixTimeTicks(0L),
+                            Description = "",
+                            Modified = NodaTime.Instant.FromUnixTimeTicks(0L),
+                            Name = "Delta Police Department"
+                        },
+                        new
+                        {
+                            AgencyId = 4L,
+                            AgencyCode = "VPD",
+                            Created = NodaTime.Instant.FromUnixTimeTicks(0L),
+                            Description = "",
+                            Modified = NodaTime.Instant.FromUnixTimeTicks(0L),
+                            Name = "Vancouver Police Department"
+                        },
+                        new
+                        {
+                            AgencyId = 5L,
+                            AgencyCode = "RCMP",
+                            Created = NodaTime.Instant.FromUnixTimeTicks(0L),
+                            Description = "",
+                            Modified = NodaTime.Instant.FromUnixTimeTicks(0L),
+                            Name = "Royal Canada Mount Police"
+                        });
                 });
 
             modelBuilder.Entity("jumwebapi.Data.ef.JustinAgencyAssignment", b =>
@@ -98,7 +146,7 @@ namespace jumwebapi.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("AgencyAssignmentId"), 1L, 1);
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("AgencyAssignmentId"));
 
                     b.Property<long?>("AgencyId")
                         .IsRequired()
@@ -106,11 +154,11 @@ namespace jumwebapi.Data.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("AgencyAssignmentId");
 
@@ -125,46 +173,46 @@ namespace jumwebapi.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("IdentityProviderId"), 1L, 1);
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("IdentityProviderId"));
 
                     b.Property<string>("Alias")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)")
+                        .HasColumnType("text")
                         .HasColumnName("Keycloak_idp_alias");
 
                     b.Property<string>("AuthUrl")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("datetime2");
+                    b.Property<Instant>("Created")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<Guid>("InternalId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uuid");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
-                    b.Property<DateTime>("Modified")
-                        .HasColumnType("datetime2");
+                    b.Property<Instant>("Modified")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("ProviderId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("TokenUrl")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("IdentityProviderId");
 
@@ -174,11 +222,11 @@ namespace jumwebapi.Data.Migrations
             modelBuilder.Entity("jumwebapi.Data.ef.JustinPartyType", b =>
                 {
                     b.Property<int>("Code")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("Code");
 
@@ -208,64 +256,64 @@ namespace jumwebapi.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("PersonId"), 1L, 1);
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("PersonId"));
 
                     b.Property<string>("AddressComment")
                         .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
+                        .HasColumnType("character varying(2000)");
 
                     b.Property<int?>("AddressId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("BirthDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Comment")
                         .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
+                        .HasColumnType("character varying(2000)");
 
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("datetime2");
+                    b.Property<Instant>("Created")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("Gender")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<bool?>("IsDisabled")
                         .IsRequired()
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("MiddleNames")
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
-                    b.Property<DateTime>("Modified")
-                        .HasColumnType("datetime2");
+                    b.Property<Instant>("Modified")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("NameSuffix")
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("Phone")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("PreferredName")
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("Surname")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.HasKey("PersonId");
 
@@ -280,30 +328,30 @@ namespace jumwebapi.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("RoleId"), 1L, 1);
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("RoleId"));
 
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("datetime2");
+                    b.Property<Instant>("Created")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<bool?>("IsDisabled")
                         .IsRequired()
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<bool?>("IsPublic")
                         .IsRequired()
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
-                    b.Property<DateTime>("Modified")
-                        .HasColumnType("datetime2");
+                    b.Property<Instant>("Modified")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("RoleId");
 
@@ -313,61 +361,61 @@ namespace jumwebapi.Data.Migrations
                         new
                         {
                             RoleId = 1L,
-                            Created = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Created = NodaTime.Instant.FromUnixTimeTicks(0L),
                             Description = "Super Users",
                             IsDisabled = false,
                             IsPublic = false,
-                            Modified = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Modified = NodaTime.Instant.FromUnixTimeTicks(0L),
                             Name = "Administrator"
                         },
                         new
                         {
                             RoleId = 2L,
-                            Created = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Created = NodaTime.Instant.FromUnixTimeTicks(0L),
                             Description = "BCPS Users",
                             IsDisabled = false,
                             IsPublic = false,
-                            Modified = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Modified = NodaTime.Instant.FromUnixTimeTicks(0L),
                             Name = "BCPS"
                         },
                         new
                         {
                             RoleId = 3L,
-                            Created = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Created = NodaTime.Instant.FromUnixTimeTicks(0L),
                             Description = "Defence Users",
                             IsDisabled = false,
                             IsPublic = false,
-                            Modified = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Modified = NodaTime.Instant.FromUnixTimeTicks(0L),
                             Name = "Defence Council"
                         },
                         new
                         {
                             RoleId = 4L,
-                            Created = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Created = NodaTime.Instant.FromUnixTimeTicks(0L),
                             Description = "Police Users",
                             IsDisabled = false,
                             IsPublic = false,
-                            Modified = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Modified = NodaTime.Instant.FromUnixTimeTicks(0L),
                             Name = "Police"
                         },
                         new
                         {
                             RoleId = 5L,
-                            Created = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Created = NodaTime.Instant.FromUnixTimeTicks(0L),
                             Description = "Accused Users",
                             IsDisabled = false,
                             IsPublic = false,
-                            Modified = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Modified = NodaTime.Instant.FromUnixTimeTicks(0L),
                             Name = "Accused"
                         },
                         new
                         {
                             RoleId = 6L,
-                            Created = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Created = NodaTime.Instant.FromUnixTimeTicks(0L),
                             Description = "OutofCustody Users",
                             IsDisabled = false,
                             IsPublic = false,
-                            Modified = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Modified = NodaTime.Instant.FromUnixTimeTicks(0L),
                             Name = "OutofCustody"
                         });
                 });
@@ -378,38 +426,38 @@ namespace jumwebapi.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("UserId"), 1L, 1);
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("UserId"));
 
                     b.Property<long>("AgencyId")
                         .HasColumnType("bigint");
 
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("datetime2");
+                    b.Property<Instant>("Created")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("DigitalIdentifier")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uuid");
 
                     b.Property<long?>("IdentityProviderId")
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDisabled")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
-                    b.Property<DateTime>("Modified")
-                        .HasColumnType("datetime2");
+                    b.Property<Instant>("Modified")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<long>("ParticipantId")
                         .HasColumnType("bigint");
 
                     b.Property<int?>("PartyTypeCode")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<long>("PersonId")
                         .HasColumnType("bigint");
 
                     b.Property<string>("UserName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.HasKey("UserId");
 
@@ -437,16 +485,16 @@ namespace jumwebapi.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("UserRoleId"), 1L, 1);
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("UserRoleId"));
 
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("datetime2");
+                    b.Property<Instant>("Created")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool?>("IsDisabled")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
-                    b.Property<DateTime>("Modified")
-                        .HasColumnType("datetime2");
+                    b.Property<Instant>("Modified")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<long>("RoleId")
                         .HasColumnType("bigint");
@@ -463,14 +511,86 @@ namespace jumwebapi.Data.Migrations
                     b.ToTable("JustinUserRole");
                 });
 
+            modelBuilder.Entity("jumwebapi.Features.UserChangeManagement.Data.JustinUserChange", b =>
+                {
+                    b.Property<int>("EventMessageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("EventMessageId"));
+
+                    b.Property<Instant>("Completed")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Instant>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Instant>("EventTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Instant>("Modified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PartId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("EventMessageId");
+
+                    b.ToTable("JustinUserChange");
+                });
+
+            modelBuilder.Entity("jumwebapi.Features.UserChangeManagement.Data.JustinUserChangeTarget", b =>
+                {
+                    b.Property<int>("ChangeTargetId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ChangeTargetId"));
+
+                    b.Property<string>("ChangeStatus")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Instant>("CompletedTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Instant>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ErrorDetails")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("JustinUserChangeId")
+                        .HasColumnType("integer");
+
+                    b.Property<Instant>("Modified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ServiceName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("ChangeTargetId");
+
+                    b.HasIndex("JustinUserChangeId");
+
+                    b.ToTable("JustinUserChangeTarget");
+                });
+
             modelBuilder.Entity("jumwebapi.Models.Lookups.Country", b =>
                 {
                     b.Property<string>("Code")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("Code");
 
@@ -492,15 +612,15 @@ namespace jumwebapi.Data.Migrations
             modelBuilder.Entity("jumwebapi.Models.Lookups.Province", b =>
                 {
                     b.Property<string>("Code")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.Property<string>("CountryCode")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("Code");
 
@@ -929,38 +1049,6 @@ namespace jumwebapi.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("jumwebapi.Models.Player", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
-                    b.Property<int>("Apperance")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("Goals")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("Modified")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ShirtNo")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Players");
-                });
-
             modelBuilder.Entity("jumwebapi.Data.ef.JustinAddress", b =>
                 {
                     b.HasOne("jumwebapi.Models.Lookups.Country", "Country")
@@ -1047,6 +1135,17 @@ namespace jumwebapi.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("jumwebapi.Features.UserChangeManagement.Data.JustinUserChangeTarget", b =>
+                {
+                    b.HasOne("jumwebapi.Features.UserChangeManagement.Data.JustinUserChange", "JustinUserChange")
+                        .WithMany("TargetChanges")
+                        .HasForeignKey("JustinUserChangeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("JustinUserChange");
+                });
+
             modelBuilder.Entity("jumwebapi.Data.ef.JustinAgency", b =>
                 {
                     b.Navigation("AgencyAssignments");
@@ -1067,6 +1166,11 @@ namespace jumwebapi.Data.Migrations
             modelBuilder.Entity("jumwebapi.Data.ef.JustinUser", b =>
                 {
                     b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("jumwebapi.Features.UserChangeManagement.Data.JustinUserChange", b =>
+                {
+                    b.Navigation("TargetChanges");
                 });
 #pragma warning restore 612, 618
         }

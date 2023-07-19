@@ -15,6 +15,11 @@ public class UserChangeManagementController : ControllerBase
 
     private readonly IMediator _mediator;
 
+    public UserChangeManagementController(IMediator mediator)
+    {
+        _mediator = mediator;
+    }
+
 
     [HttpPut]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

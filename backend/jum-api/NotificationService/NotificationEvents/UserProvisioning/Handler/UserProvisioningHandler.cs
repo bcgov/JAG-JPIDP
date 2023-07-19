@@ -51,7 +51,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, Notification>
         }
 
         //check whether the message tag has already been processed via ches
-        if (await this.context.EmailLogs.AnyAsync(emailLog => emailLog.NotificationId == value.NotificationId && emailLog.LatestStatus == ChesStatus.Completed))
+        if (await this.context.EmailLogs.AnyAsync(emailLog => emailLog.NotificationId == value.NotificationId && emailLog.LatestStatus == ChesStatus.Complete))
         {
             return Task.CompletedTask;
         }
@@ -62,8 +62,9 @@ public class UserProvisioningHandler : IKafkaHandler<string, Notification>
             sendResponseId = await this.SendConfirmationEmailAsync(value);
         }
 
+        // email will be flagged as accepted once submitted to CHES
         var emailLogs = await this.context.EmailLogs
-             .Where(emailLog => emailLog.NotificationId.Equals(value.NotificationId) && emailLog.LatestStatus != ChesStatus.Completed)
+             .Where(emailLog => emailLog.NotificationId.Equals(value.NotificationId) && emailLog.LatestStatus == ChesStatus.Accepted)
              .ToListAsync();
 
         using var trx = this.context.Database.BeginTransaction();
@@ -82,7 +83,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, Notification>
 
                 await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
 
-                var existingNotification = this.context.Notifications.Where(notification => notification.NotificationId == value.NotificationId && notification.EmailAddress == value.To).FirstOrDefault();
+                var existingNotification = this.context.Notifications.Where(notification => notification.NotificationId == value.NotificationId).FirstOrDefault();
 
                 if (existingNotification != null)
                 {
@@ -98,7 +99,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, Notification>
                         NotificationId = value.NotificationId,
                         DomainEvent = value.DomainEvent,
                         EmailAddress = value.To!,
-                        Status = ChesStatus.Completed,
+                        Status = "complete",
                         EventData = value.EventData != null ? JsonConvert.SerializeObject(value.EventData) : "",
                         Consumer = consumerName,
                         AccessRequestId = value.EventData.ContainsKey("accessRequestId") ? Convert.ToInt32(value.EventData["accessRequestId"]) : -1
@@ -111,7 +112,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, Notification>
 
                 //After successful operation, we can produce message for other service's consumption
                 // if its a non-tombstone account then we'll set the status to completed-pending-finalization
-                var ackStatus = value.DomainEvent.Equals("digitalevidence-bcps-usercreation-complete") ? "Completed-Pending-Case-Allocation" : ChesStatus.Completed;
+                var ackStatus = value.DomainEvent.Equals("digitalevidence-bcps-usercreation-complete") ? "Completed-Pending-Case-Allocation" : "complete";
                 await this.producer.ProduceAsync(this.configuration.KafkaCluster.AckTopicName, key: value.NotificationId.ToString()!, new NotificationAckModel
                 {
                     PartId = partId,
@@ -135,7 +136,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, Notification>
             return Task.FromException(new NotificationException(string.Join(",", ex.Message)));
         }
 
-        return Task.FromException(new NotificationException());
+        return Task.CompletedTask;
     }
     private async Task<Guid?> SendConfirmationEmailAsync(Notification model)
     {

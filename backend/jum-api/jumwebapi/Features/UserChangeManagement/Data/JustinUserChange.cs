@@ -13,6 +13,7 @@ public class JustinUserChange : BaseAuditable
     public Instant EventTime { get; set; }
     public string EventType { get; set; } = string.Empty;
 
+    
     public Instant Completed { get; set; }
 
     [InverseProperty("JustinUserChange")]

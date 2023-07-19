@@ -103,7 +103,7 @@ public class JustinUserChangeManagementClient : BaseClient, IJustinUserChangeMan
         Log.Information($"Flagging event complete {eventId}");
 
         var successFlag = successful ? "T" : "F";
-        var result = await this.PutAsyncForJUSTINNonesense<VoidResultConverter>($"eventStatus?event_message_id={eventId}&is_success={successFlag}");
+        var result = await this.PutAsync($"eventStatus?event_message_id={eventId}&is_success={successFlag}");
 
         if ( result.IsSuccess)
         {

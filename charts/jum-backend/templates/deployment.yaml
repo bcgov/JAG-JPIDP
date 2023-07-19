@@ -51,22 +51,23 @@ spec:
               value: /opt/kafka/certificates/client-ca.crt
             - name: KafkaCluster__SslKeyLocation
               value: /opt/kafka/certificates/client.key
-            - name: DB_HOST
-              value: jum-database
-            - name: SA_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: jum-db-jum-database-secret
-                  key: sapassword
-            - name: SA_USER
-              value: sa
-            - name: DATABASE
-              value: JumDB
             - name: ConnectionStrings__JumDatabase
               valueFrom:
                 configMapKeyRef:
                   name: jum-api-database
                   key: CONNECTION_STRINGS_JUM
+            - name: database-password
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "notification.fullname" . }}-database
+                  key: database-password
+            - name: database-username
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "notification.fullname" . }}-database
+                  key: database-username
+            - name: DATABASE_NAME
+              value: notification
             - name: KafkaCluster__BootstrapServers
               valueFrom:
                 secretKeyRef:

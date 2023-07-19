@@ -82,6 +82,10 @@ public class BaseClient
     /// <param name="data"></param>
     protected async Task<IDomainResult> PutAsync(string url, object? data = null) => await this.SendCoreAsync(HttpMethod.Put, url, data == null ? null : this.CreateStringContent(data), default);
 
+
+    protected async Task<IDomainResult<T>> PutAsync<T>(string url, object? data = null) => await this.SendCoreAsync<T>(HttpMethod.Put, url, data == null ? null : this.CreateStringContent(data), default);
+
+
     /// <summary>
     /// Sends an HTTP message to the API; returning:
     ///  a) a Success result, or

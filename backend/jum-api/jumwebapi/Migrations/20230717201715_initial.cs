@@ -1,11 +1,13 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using NodaTime;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace jumwebapi.Data.Migrations
+namespace jumwebapi.Migrations
 {
-    public partial class InitialCreate : Migration
+    public partial class initial : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -13,8 +15,8 @@ namespace jumwebapi.Data.Migrations
                 name: "CountryLookup",
                 columns: table => new
                 {
-                    Code = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Code = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -26,12 +28,12 @@ namespace jumwebapi.Data.Migrations
                 columns: table => new
                 {
                     AgencyId = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    AgencyCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Created = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Modified = table.Column<DateTime>(type: "datetime2", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    AgencyCode = table.Column<string>(type: "text", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: false),
+                    Created = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
+                    Modified = table.Column<Instant>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -43,17 +45,17 @@ namespace jumwebapi.Data.Migrations
                 columns: table => new
                 {
                     IdentityProviderId = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    InternalId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Keycloak_idp_alias = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ProviderId = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    TokenUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    AuthUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Created = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Modified = table.Column<DateTime>(type: "datetime2", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    InternalId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Keycloak_idp_alias = table.Column<string>(type: "text", nullable: false),
+                    ProviderId = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    TokenUrl = table.Column<string>(type: "text", nullable: false),
+                    AuthUrl = table.Column<string>(type: "text", nullable: false),
+                    Created = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
+                    Modified = table.Column<Instant>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -65,13 +67,13 @@ namespace jumwebapi.Data.Migrations
                 columns: table => new
                 {
                     RoleId = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    IsPublic = table.Column<bool>(type: "bit", nullable: false),
-                    IsDisabled = table.Column<bool>(type: "bit", nullable: false),
-                    Created = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Modified = table.Column<DateTime>(type: "datetime2", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    IsPublic = table.Column<bool>(type: "boolean", nullable: false),
+                    IsDisabled = table.Column<bool>(type: "boolean", nullable: false),
+                    Created = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
+                    Modified = table.Column<Instant>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -79,11 +81,29 @@ namespace jumwebapi.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "JustinUserChange",
+                columns: table => new
+                {
+                    EventMessageId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PartId = table.Column<string>(type: "text", nullable: false),
+                    EventTime = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
+                    EventType = table.Column<string>(type: "text", nullable: false),
+                    Completed = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
+                    Created = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
+                    Modified = table.Column<Instant>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_JustinUserChange", x => x.EventMessageId);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "PartyTypeLookup",
                 columns: table => new
                 {
-                    Code = table.Column<int>(type: "int", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Code = table.Column<int>(type: "integer", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -91,30 +111,12 @@ namespace jumwebapi.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Players",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ShirtNo = table.Column<int>(type: "int", nullable: false),
-                    Apperance = table.Column<int>(type: "int", nullable: false),
-                    Goals = table.Column<int>(type: "int", nullable: false),
-                    Created = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Modified = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Players", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Province",
                 columns: table => new
                 {
-                    Code = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    CountryCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Code = table.Column<string>(type: "text", nullable: false),
+                    CountryCode = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -126,9 +128,9 @@ namespace jumwebapi.Data.Migrations
                 columns: table => new
                 {
                     AgencyAssignmentId = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: false),
                     AgencyId = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
@@ -143,16 +145,41 @@ namespace jumwebapi.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "JustinUserChangeTarget",
+                columns: table => new
+                {
+                    ChangeTargetId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ServiceName = table.Column<string>(type: "text", nullable: false),
+                    ChangeStatus = table.Column<string>(type: "text", nullable: false),
+                    ErrorDetails = table.Column<string>(type: "text", nullable: false),
+                    CompletedTime = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
+                    JustinUserChangeId = table.Column<int>(type: "integer", nullable: false),
+                    Created = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
+                    Modified = table.Column<Instant>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_JustinUserChangeTarget", x => x.ChangeTargetId);
+                    table.ForeignKey(
+                        name: "FK_JustinUserChangeTarget_JustinUserChange_JustinUserChangeId",
+                        column: x => x.JustinUserChangeId,
+                        principalTable: "JustinUserChange",
+                        principalColumn: "EventMessageId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "JustinAddress",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    CountryCode = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ProvinceCode = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Street = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    City = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Postal = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    CountryCode = table.Column<string>(type: "text", nullable: false),
+                    ProvinceCode = table.Column<string>(type: "text", nullable: false),
+                    Street = table.Column<string>(type: "text", nullable: false),
+                    City = table.Column<string>(type: "text", nullable: false),
+                    Postal = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -176,21 +203,22 @@ namespace jumwebapi.Data.Migrations
                 columns: table => new
                 {
                     PersonId = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Surname = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    FirstName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    MiddleNames = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    NameSuffix = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    PreferredName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    BirthDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Phone = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Comment = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
-                    AddressComment = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
-                    IsDisabled = table.Column<bool>(type: "bit", nullable: false),
-                    AddressId = table.Column<int>(type: "int", nullable: true),
-                    Created = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Modified = table.Column<DateTime>(type: "datetime2", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Surname = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    FirstName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    MiddleNames = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    NameSuffix = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    PreferredName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    BirthDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Gender = table.Column<string>(type: "text", nullable: true),
+                    Email = table.Column<string>(type: "text", nullable: false),
+                    Phone = table.Column<string>(type: "text", nullable: false),
+                    Comment = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    AddressComment = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    IsDisabled = table.Column<bool>(type: "boolean", nullable: false),
+                    AddressId = table.Column<int>(type: "integer", nullable: true),
+                    Created = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
+                    Modified = table.Column<Instant>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -207,17 +235,17 @@ namespace jumwebapi.Data.Migrations
                 columns: table => new
                 {
                     UserId = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserName = table.Column<string>(type: "text", nullable: false),
                     ParticipantId = table.Column<long>(type: "bigint", nullable: false),
-                    DigitalIdentifier = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    DigitalIdentifier = table.Column<Guid>(type: "uuid", nullable: true),
                     AgencyId = table.Column<long>(type: "bigint", nullable: false),
                     PersonId = table.Column<long>(type: "bigint", nullable: false),
-                    IsDisabled = table.Column<bool>(type: "bit", nullable: false),
+                    IsDisabled = table.Column<bool>(type: "boolean", nullable: false),
                     IdentityProviderId = table.Column<long>(type: "bigint", nullable: true),
-                    PartyTypeCode = table.Column<int>(type: "int", nullable: true),
-                    Created = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Modified = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    PartyTypeCode = table.Column<int>(type: "integer", nullable: true),
+                    Created = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
+                    Modified = table.Column<Instant>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -250,10 +278,12 @@ namespace jumwebapi.Data.Migrations
                 columns: table => new
                 {
                     UserRoleId = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     UserId = table.Column<long>(type: "bigint", nullable: false),
                     RoleId = table.Column<long>(type: "bigint", nullable: false),
-                    IsDisabled = table.Column<bool>(type: "bit", nullable: true)
+                    IsDisabled = table.Column<bool>(type: "boolean", nullable: true),
+                    Created = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
+                    Modified = table.Column<Instant>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -280,16 +310,28 @@ namespace jumwebapi.Data.Migrations
                 });
 
             migrationBuilder.InsertData(
+                table: "JustinAgency",
+                columns: new[] { "AgencyId", "AgencyCode", "Created", "Description", "Modified", "Name" },
+                values: new object[,]
+                {
+                    { 1L, "SPD", NodaTime.Instant.FromUnixTimeTicks(0L), "", NodaTime.Instant.FromUnixTimeTicks(0L), "Sannich Police Department" },
+                    { 2L, "VICPD", NodaTime.Instant.FromUnixTimeTicks(0L), "", NodaTime.Instant.FromUnixTimeTicks(0L), "Victoria Police Department" },
+                    { 3L, "DPD", NodaTime.Instant.FromUnixTimeTicks(0L), "", NodaTime.Instant.FromUnixTimeTicks(0L), "Delta Police Department" },
+                    { 4L, "VPD", NodaTime.Instant.FromUnixTimeTicks(0L), "", NodaTime.Instant.FromUnixTimeTicks(0L), "Vancouver Police Department" },
+                    { 5L, "RCMP", NodaTime.Instant.FromUnixTimeTicks(0L), "", NodaTime.Instant.FromUnixTimeTicks(0L), "Royal Canada Mount Police" }
+                });
+
+            migrationBuilder.InsertData(
                 table: "JustinRole",
                 columns: new[] { "RoleId", "Created", "Description", "IsDisabled", "IsPublic", "Modified", "Name" },
                 values: new object[,]
                 {
-                    { 1L, new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Super Users", false, false, new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Administrator" },
-                    { 2L, new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "BCPS Users", false, false, new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "BCPS" },
-                    { 3L, new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Defence Users", false, false, new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Defence Council" },
-                    { 4L, new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Police Users", false, false, new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Police" },
-                    { 5L, new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Accused Users", false, false, new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Accused" },
-                    { 6L, new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "OutofCustody Users", false, false, new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "OutofCustody" }
+                    { 1L, NodaTime.Instant.FromUnixTimeTicks(0L), "Super Users", false, false, NodaTime.Instant.FromUnixTimeTicks(0L), "Administrator" },
+                    { 2L, NodaTime.Instant.FromUnixTimeTicks(0L), "BCPS Users", false, false, NodaTime.Instant.FromUnixTimeTicks(0L), "BCPS" },
+                    { 3L, NodaTime.Instant.FromUnixTimeTicks(0L), "Defence Users", false, false, NodaTime.Instant.FromUnixTimeTicks(0L), "Defence Council" },
+                    { 4L, NodaTime.Instant.FromUnixTimeTicks(0L), "Police Users", false, false, NodaTime.Instant.FromUnixTimeTicks(0L), "Police" },
+                    { 5L, NodaTime.Instant.FromUnixTimeTicks(0L), "Accused Users", false, false, NodaTime.Instant.FromUnixTimeTicks(0L), "Accused" },
+                    { 6L, NodaTime.Instant.FromUnixTimeTicks(0L), "OutofCustody Users", false, false, NodaTime.Instant.FromUnixTimeTicks(0L), "OutofCustody" }
                 });
 
             migrationBuilder.InsertData(
@@ -337,14 +379,7 @@ namespace jumwebapi.Data.Migrations
                     { "MI", "US", "Michigan" },
                     { "MN", "US", "Minnesota" },
                     { "MO", "US", "Missouri" },
-                    { "MP", "US", "Northern Mariana Islands" }
-                });
-
-            migrationBuilder.InsertData(
-                table: "Province",
-                columns: new[] { "Code", "CountryCode", "Name" },
-                values: new object[,]
-                {
+                    { "MP", "US", "Northern Mariana Islands" },
                     { "MS", "US", "Mississippi" },
                     { "MT", "US", "Montana" },
                     { "NB", "CA", "New Brunswick" },
@@ -434,6 +469,17 @@ namespace jumwebapi.Data.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_JustinUser_UserName",
+                table: "JustinUser",
+                column: "UserName",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_JustinUserChangeTarget_JustinUserChangeId",
+                table: "JustinUserChangeTarget",
+                column: "JustinUserChangeId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_JustinUserRole_RoleId",
                 table: "JustinUserRole",
                 column: "RoleId");
@@ -450,10 +496,13 @@ namespace jumwebapi.Data.Migrations
                 name: "JustinAgencyAssignment");
 
             migrationBuilder.DropTable(
+                name: "JustinUserChangeTarget");
+
+            migrationBuilder.DropTable(
                 name: "JustinUserRole");
 
             migrationBuilder.DropTable(
-                name: "Players");
+                name: "JustinUserChange");
 
             migrationBuilder.DropTable(
                 name: "JustinRole");

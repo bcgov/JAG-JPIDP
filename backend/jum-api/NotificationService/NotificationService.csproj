@@ -12,25 +12,10 @@
      <InvariantGlobalization>false</InvariantGlobalization>
    </PropertyGroup>
 
-   <ItemGroup>
-     <None Remove="Templates\digitalevidence-bcps-usercreation-complete.yaml" />
-     <None Remove="Templates\digitalevidence-bcps-usercreation-failure.yaml" />
-     <None Remove="Templates\digitalevidence-bcps-usercreation-request.yaml" />
-     <None Remove="Templates\digitalevidence-bcps-usercreation-retry.yaml" />
-     <None Remove="Templates\digitalevidence-sa-usercreation-complete.yaml" />
-   </ItemGroup>
-
-   <ItemGroup>
-     <Content Include="Templates\digitalevidence-bcps-usercreation-retry.yaml" />
-     <Content Include="Templates\digitalevidence-bcps-usercreation-failure.yaml" />
-     <Content Include="Templates\digitalevidence-sa-usercreation-complete.yaml" />
-     <Content Include="Templates\digitalevidence-bcps-usercreation-complete.yaml" />
-     <Content Include="Templates\digitalevidence-bcps-usercreation-request.yaml" />
-   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="6.0.1" />
     <PackageReference Include="Asp.Versioning.Mvc" Version="6.0.0" />
-    <PackageReference Include="AspNetCore.HealthChecks.SqlServer" Version="6.0.2" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="11.0.0" />
     <PackageReference Include="Confluent.Kafka" Version="1.9.3" />
     <PackageReference Include="DomainResult.Common" Version="3.0.0" />
@@ -49,7 +34,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.8" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.3" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime" Version="6.0.3" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="6.0.8" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="6.0.8" />

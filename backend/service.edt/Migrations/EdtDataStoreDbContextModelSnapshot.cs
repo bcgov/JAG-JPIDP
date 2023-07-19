@@ -2,13 +2,14 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using NodaTime;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using edt.service.Data;
 
 #nullable disable
 
-namespace edt.service.Data.Migrations
+namespace edt.service.Migrations
 {
     [DbContext(typeof(EdtDataStoreDbContext))]
     partial class EdtDataStoreDbContextModelSnapshot : ModelSnapshot
@@ -19,60 +20,60 @@ namespace edt.service.Data.Migrations
             modelBuilder
                 .HasDefaultSchema("edt")
                 .HasAnnotation("ProductVersion", "6.0.8")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder, 1L, 1);
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("edt.service.ServiceEvents.UserAccountCreation.Models.EmailLog", b =>
                 {
-                    b.Property<int>("CaseId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CaseId"), 1L, 1);
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Body")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Cc")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("datetime2");
+                    b.Property<Instant>("Created")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("DateSent")
-                        .HasColumnType("datetime2");
+                    b.Property<Instant?>("DateSent")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LatestStatus")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("Modified")
-                        .HasColumnType("datetime2");
+                    b.Property<Instant>("Modified")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("MsgId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uuid");
 
                     b.Property<string>("SendType")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("SentTo")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("StatusMessage")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Subject")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int>("UpdateCount")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    b.HasKey("CaseId");
+                    b.HasKey("Id");
 
                     b.ToTable("EmailLog", "edt");
                 });
@@ -80,22 +81,22 @@ namespace edt.service.Data.Migrations
             modelBuilder.Entity("edt.service.ServiceEvents.UserAccountCreation.Models.FailedEventLog", b =>
                 {
                     b.Property<string>("EventId")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.Property<string>("ConsumerGroupId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("ConsumerId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("datetime2");
+                    b.Property<Instant>("Created")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime>("Modified")
-                        .HasColumnType("datetime2");
+                    b.Property<Instant>("Modified")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Producer")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("EventId");
 
@@ -105,10 +106,10 @@ namespace edt.service.Data.Migrations
             modelBuilder.Entity("edt.service.ServiceEvents.UserAccountCreation.Models.IdempotentConsumer", b =>
                 {
                     b.Property<string>("MessageId")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Consumer")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.HasKey("MessageId", "Consumer");
 
@@ -117,22 +118,29 @@ namespace edt.service.Data.Migrations
 
             modelBuilder.Entity("edt.service.ServiceEvents.UserAccountCreation.Models.NotificationAckModel", b =>
                 {
-                    b.Property<string>("NotificationId")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<Guid>("NotificationId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("EmailAddress")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
+
+                    b.Property<int>("AccessRequestId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Consumer")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
-                    b.Property<long>("PartId")
-                        .HasColumnType("bigint");
+                    b.Property<string>("PartId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
+
+                    b.Property<int>("Subject")
+                        .HasColumnType("integer");
 
                     b.HasKey("NotificationId", "EmailAddress");
 

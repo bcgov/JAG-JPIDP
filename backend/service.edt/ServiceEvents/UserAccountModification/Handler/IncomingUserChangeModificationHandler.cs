@@ -55,7 +55,7 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
         }
         else
         {
-            return this.HandleBCPSUserChange(consumerName, key, incomingUserModification);
+            return await this.HandleBCPSUserChange(consumerName, key, incomingUserModification);
         }
 
         return Task.CompletedTask;
@@ -93,7 +93,7 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
         {
 
             domainEvent = "digitalevidence-bcps-userupdate-deactivated";
-            Serilog.Log.Information($"Deactiviating account for {incomingUserModification.Key}");
+            Serilog.Log.Information($"Deactivating account for {incomingUserModification.Key}");
 
             var disabledOk = await this.edtClient.DisableAccount(incomingUserModification.Key);
 
@@ -113,9 +113,8 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
         else
         {
 
-            if (incomingUserModification.SingleChangeTypes.ContainsKey(ChangeType.ACTIVATION))
+            if (incomingUserModification.IsAccountActivated())
             {
-                // must be an activation request
                 var responseOk = await this.edtClient.EnableAccount(incomingUserModification.Key);
                 Serilog.Log.Information($"Account for participant {incomingUserModification.Key} has been activated");
                 userModificationEvent.eventType = UserModificationEvent.UserEvent.Enable;
@@ -155,11 +154,7 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
 
                 var changesMade = await this.edtClient.UpdateUserAssignedGroups(incomingUserModification.Key, newRegions, removedRegions);
 
-                // if user we deactivated then re-activate
-                if (userInfo.IsActive == false)
-                {
-                    // TODO - do we re-activate in this case?
-                }
+               
             }
         }
 
