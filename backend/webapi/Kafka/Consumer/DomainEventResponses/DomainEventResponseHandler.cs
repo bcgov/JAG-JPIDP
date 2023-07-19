@@ -280,7 +280,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
         {
             // get last modified time
             var duration = accessRequest.Modified - value.EventTime;
-            Serilog.Log.Error($"Duration {duration.TotalMinutes} for JUSTIN to fully provision account for request {accessRequest.Id}");
+            Serilog.Log.Information($"Duration {duration.TotalMinutes} for JUSTIN to fully provision account for request {accessRequest.Id}");
 
 
             JUSTINAccessCompletionHistogram.Observe(duration.Minutes);
@@ -311,7 +311,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
                 var published = await this.producer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopicName, messageKey, new Notification
                 {
                     DomainEvent = "digitalevidence-bcps-usercreation-fully-provisioned",
-                    To = accessRequest.Party!.Jpdid,
+                    To = accessRequest.Party!.Email,
                     EventData = eventData
                 });
 
