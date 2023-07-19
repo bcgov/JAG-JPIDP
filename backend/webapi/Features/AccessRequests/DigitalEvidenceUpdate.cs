@@ -371,6 +371,7 @@ public class DigitalEvidenceUpdate
                 Serilog.Log.Information($"User {party.Id} has no granted roles in JUSTIN - disabling account");
                 userChangeModel.BooleanChangeTypes.Add(ChangeType.ACTIVATION, new BooleanChangeType(true, false));
             }
+            var allRegions = await this.GetAllCrownRegions();
 
             // see if regions has changed
             if (justinUserInfo.assignedAgencies.Count > 0)
@@ -391,10 +392,17 @@ public class DigitalEvidenceUpdate
                 // get all regions (e.g. Van Isl, Interior) from the list of assigned regions in JUSTIN
                 var assignedJUSTINRegions = await this.GetCrownRegions(justinAgencies);
                 // get all known regions
-                var allRegions = await this.GetAllCrownRegions();
 
                 // get the regions assigned in keycloak that are valid regions (could be additional groups added that are unrelated)
                 var keycloakRegions = allRegions.Intersect(keycloakGroups).ToList();
+
+                // no current regions assigned
+                if (keycloakRegions.Count == 0)
+                {
+                    Serilog.Log.Information($"User account {justinUserInfo.partUserId} will be re-activated if disabled");
+                    userChangeModel.BooleanChangeTypes.Add(ChangeType.ACTIVATION, new BooleanChangeType(false, true));
+
+                }
 
                 // find the differences
                 var unwantedRegions = keycloakRegions.Except(assignedJUSTINRegions).ToList();
@@ -414,6 +422,15 @@ public class DigitalEvidenceUpdate
 
                 Serilog.Log.Information($"User {party.Id} has no granted agencies in JUSTIN - disabling account");
                 userChangeModel.BooleanChangeTypes.Add(ChangeType.ACTIVATION, new BooleanChangeType(true, false));
+                // see what regions were removed (if any)
+                var groups = await this.keycloakClient.GetUserGroups(party.UserId);
+                var keycloakGroups = groups.Select(group => group.Name).ToList();
+                var keycloakRegions = allRegions.Intersect(keycloakGroups).ToList();
+                if ( keycloakRegions.Count > 0)
+                {
+                    userChangeModel.ListChangeTypes.Add(ChangeType.REGIONS, new ListChangeType(keycloakRegions, Enumerable.Empty<string>()));
+                }
+
             }
 
             return userChangeModel;

@@ -83,7 +83,6 @@ public class JustinUserChangeService : IJustinUserChangeService
                         if (details != null)
                         {
 
-
                             // store the entry in the Db
                             var dbChangeEvent = new JustinUserChange
                             {
