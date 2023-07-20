@@ -165,7 +165,7 @@ public partial class ProfileStatus
                     var familyName = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("family_name"));
                     var givenName = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("given_name"));
 
-                    if ( BCServicesCardLastName.Value != familyName.Value || BCServicesCardFirstName.Value != givenName.Value)
+                    if ( familyName == null || givenName == null || BCServicesCardLastName == null || BCServicesCardLastName.Value != familyName.Value || BCServicesCardFirstName == null || BCServicesCardFirstName.Value != givenName.Value)
                     {
                         this.Alerts.Add(Alert.PersonVerificationError);
                         this.StatusCode = StatusCode.Error;
