@@ -91,7 +91,7 @@ public class Demographics
             var party = await this.context.Parties.Include(party => party.OrgainizationDetail).Include( org => org.OrgainizationDetail.Organization)
                 .SingleAsync(party => party.Id == command.Id);
 
-            var currentEmail = party.Email;
+            var currentEmail = party.Email ?? "";
 
             party.PreferredFirstName = command.PreferredFirstName;
             party.PreferredMiddleName = command.PreferredMiddleName;
@@ -121,6 +121,7 @@ public class Demographics
                         UserID = party.UserId.ToString()
 
                     };
+
                     changeModel.SingleChangeTypes.Add(ChangeType.EMAIL, new SingleChangeType(currentEmail, command.Email));
 
                     // log change
