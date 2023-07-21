@@ -117,37 +117,21 @@ public class DigitalEvidence
                     var digitalEvidence = await this.SubmitDigitalEvidenceRequest(command); //save all trx at once for production(remove this and handle using idempotent)
                     var key = Guid.NewGuid().ToString();
 
-                    var exportedEvent = this.AddOutbox(command, digitalEvidence, dto);
+                   // var exportedEvent = this.AddOutbox(command, digitalEvidence, dto);
 
                     var published = await this.PublishAccessRequest(command, dto, digitalEvidence);
 
-                    // removed - no longer sending 2 emails - request and complete - just complete or error will go now
+                    if ( published.Status == PersistenceStatus.Persisted)
+                    {
+                        await this.context.SaveChangesAsync();
+                        await trx.CommitAsync();
+                    }
+                    else
+                    {
+                        this.logger.LogDigitalEvidenceAccessTrxFailed($"Failed to publish access request to topic {digitalEvidence} - rolling back transaction");
 
-                    //if (published != null && digitalEvidence != null && !command.OrganizationType.Equals(nameof(OrganizationCode.SubmittingAgency), StringComparison.Ordinal))
-                    //{
-                    //    var domainEvent = command.OrganizationType.Equals("LawSociety", StringComparison.Ordinal) ? "digitalevidence-bclaw-usercreation-request" : "digitalevidence-bcps-usercreation-request";
-                    //    Serilog.Log.Logger.Information($"Sending {domainEvent}  message for {command.ParticipantId} to {dto.Email}");
-
-                    //    var eventData = new Dictionary<string, string>
-                    //{
-                    //    { "FirstName", dto.FirstName! },
-                    //    { "AccessRequestId", "" + digitalEvidence.Id },
-                    //    { "ParticipantId", command.ParticipantId! },
-                    //    { "PartyId", "" + command.PartyId! }
-                    //};
-
-                    //    await this.kafkaNotificationProducer.ProduceAsync(this.config.KafkaCluster.NotificationTopicName, key: key, new Notification
-                    //    {
-                    //        To = dto.Email,
-                    //        DomainEvent = domainEvent,
-                    //        EventData = eventData,
-                    //    });
-
-                    //}
-
-                    await this.context.SaveChangesAsync();
-                    await trx.CommitAsync();
-
+                        await trx.RollbackAsync();
+                    }
 
                 }
                 catch (Exception ex)
@@ -310,7 +294,7 @@ public static partial class DigitalEvidenceLoggingExtensions
 {
     [LoggerMessage(1, LogLevel.Warning, "Digital Evidence Access Request denied due to the Party Record not meeting all prerequisites.")]
     public static partial void LogDigitalEvidenceAccessRequestDenied(this ILogger logger);
-    [LoggerMessage(2, LogLevel.Warning, "Digital Evidence Access Request Transaction failed due to the Party Record not meeting all prerequisites.")]
-    public static partial void LogDigitalEvidenceAccessTrxFailed(this ILogger logger, string ex);
+    [LoggerMessage(2, LogLevel.Warning, "Digital Evidence Access Request Transaction failed due to the error {error}.")]
+    public static partial void LogDigitalEvidenceAccessTrxFailed(this ILogger logger, string error);
 
 }
