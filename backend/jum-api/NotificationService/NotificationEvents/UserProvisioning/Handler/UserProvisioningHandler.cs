@@ -43,7 +43,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, Notification>
 
         Serilog.Log.Information($"Checking if message {key} has already been processed by {consumerName}");
 
-        if (await this.context.HasBeenProcessed(key, consumerName))
+        if (await this.context.HasBeenProcessed(key))
         {
             Serilog.Log.Information($"Message {key} has already been processed");
             duplicateConsumeCount.Inc();
@@ -138,9 +138,6 @@ public class UserProvisioningHandler : IKafkaHandler<string, Notification>
 
         return Task.CompletedTask;
     }
-    private async Task<Guid?> SendConfirmationEmailAsync(Notification model)
-    {
-      return await emailService.SendAsync(model);
-    }
+    private async Task<Guid?> SendConfirmationEmailAsync(Notification model) => await this.emailService.SendAsync(model);
 }
 
