@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using NodaTime;
 using NotificationService.Features.DataGeneration.Model;
 using NotificationService.NotificationEvents.UserProvisioning.Models;
@@ -83,8 +83,5 @@ public class NotificationDbContext : DbContext
         });
         await SaveChangesAsync();
     }
-    public async Task<bool> HasBeenProcessed(string messageId, string consumer)
-    {
-        return await IdempotentConsumers.AnyAsync(x => x.MessageId == messageId && x.Consumer == consumer);
-    }
+    public async Task<bool> HasBeenProcessed(string messageId) => await this.IdempotentConsumers.AnyAsync(x => x.MessageId == messageId);
 }

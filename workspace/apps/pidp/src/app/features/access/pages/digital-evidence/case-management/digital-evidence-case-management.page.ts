@@ -204,6 +204,8 @@ export class DigitalEvidenceCaseManagementPage
     this.isFindDisabled =
       this.formState.caseName.value &&
       this.formState.caseName?.value.length < 6;
+    if (this.formState.caseName.value)
+      this.formState.caseName.setValue(this.formState.caseName.value.trim());
     return this.isFindDisabled;
   }
 

@@ -58,15 +58,21 @@
   <ng-container>
     <ui-page-section *ngIf="!userIsLawyer">
       <ui-page-section-subheader heading="Digital Evidence and Disclosure Management System">
-        <ng-container uiPageSectionSubheaderDesc>
+        <ng-container uiPageSectionSubheaderDesc *ngIf="!userInAgency()">
           Check that the information below is correct, then click Request Access. If the information needs updating,
           please
           contact
           <a uiAnchor scheme="mailto" [attr.href]="digitalEvidenceSupportEmail"></a>.
 
-          <div class="submitting-agency mat-elevation-z4" *ngIf="userInAgency()">
-            As a submitting agency, you will be able to request access to the appropriate cases.
-            Once the BCPS DEMS access request is complete, you will be able to log in to BCPS DEMS.
+
+        </ng-container>
+        <ng-container uiPageSectionSubheaderDesc *ngIf="userInAgency()">
+          <div *ngIf="userInAgency()">
+            Click on <b>Request Access</b> to submit your request to have access to the DEMS system.
+            <br />
+            As a submitting agency user, you will be able to request access to cases for the purposes of uploading
+            digital evidence once your
+            onboarding is complete.<br />
           </div>
         </ng-container>
       </ui-page-section-subheader>
