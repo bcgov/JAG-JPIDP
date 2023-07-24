@@ -51,7 +51,7 @@ public static class ConsumerSetup
 
         var consumerConfig = new ConsumerConfig(clientConfig)
         {
-            GroupId = config.KafkaCluster.ConsumerGroupId + "_" + Dns.GetHostName(),
+            GroupId = config.KafkaCluster.ConsumerGroupId,
             EnableAutoCommit = true,
             ClientId = Dns.GetHostName(),
             AutoOffsetReset = AutoOffsetReset.Earliest,
