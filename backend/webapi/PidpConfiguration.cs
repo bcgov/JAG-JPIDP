@@ -114,8 +114,8 @@ public class PidpConfiguration
         public string CaseAccessRequestTopicName { get; set; } = string.Empty;
         public string PersonCreationTopic { get; set; } = string.Empty;
         public string DisclosureUserCreationTopic { get; set; } = string.Empty;
-        public string DisclosureUserModificationTopic { get; set;} = string.Empty;
-        public string ProcessResponseTopic { get; set;} = string.Empty;
+        public string DisclosureUserModificationTopic { get; set; } = string.Empty;
+        public string ProcessResponseTopic { get; set; } = string.Empty;
         public string UserAccountChangeTopicName { get; set; } = string.Empty;
         public string NotificationTopicName { get; set; } = string.Empty;
         public string UserAccountChangeNotificationTopicName { get; set; } = string.Empty;
@@ -127,9 +127,11 @@ public class PidpConfiguration
         public string SslCaLocation { get; set; } = string.Empty;
         public string SslCertificateLocation { get; set; } = string.Empty;
         public string SslKeyLocation { get; set; } = string.Empty;
-        public string CourtLocationAccessRequestTopic { get; set;  } = string.Empty;
+        public string CourtLocationAccessRequestTopic { get; set; } = string.Empty;
         public string Scope { get; set; } = "openid";
         public string ConsumerGroupId { get; set; } = "dems-notification-ack";
+        public string KafkaAdminClientId { get; set;} = string.Empty;
+        public string KafkaAdminClientSecret { get; set;} = string.Empty; 
 
     }
     public class JumClientConfiguration

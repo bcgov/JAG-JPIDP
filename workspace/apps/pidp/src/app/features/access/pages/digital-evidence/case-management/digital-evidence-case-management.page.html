@@ -17,7 +17,7 @@
 
       <mat-form-field class="w-60">
         <mat-label>File #</mat-label>
-        <input matInput formControlName="caseName" (input)="checkCaseInput()"
+        <input matInput formControlName="caseName" (input)="checkCaseInput()" maxlength="15"
           matTooltip="Enter the agency file number you wish to have access to and click Find" placeholder="yy-nnnnnnn"
           tabindex="2" />
       </mat-form-field>
@@ -102,8 +102,8 @@
         <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
-            You do not have access to any cases currently.<br />
-            Please request access.
+            You do not currently have access to any cases.<br />
+            Find your case by agency file number and then request access.
           </td>
         </tr>
         <tr *matRowDef="let row; columns: displayedColumns" mat-row></tr>

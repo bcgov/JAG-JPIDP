@@ -189,6 +189,16 @@ spec:
                 secretKeyRef:
                   name: pidp-court-access
                   key: pollSeconds
+            - name: SplunkConfig__CollectorToken
+              valueFrom: 
+                secretKeyRef:
+                  name: splunk-config
+                  key: SplunkConfig__CollectorToken
+            - name: SplunkConfig__Host
+              valueFrom: 
+                secretKeyRef:
+                  name: splunk-config
+                  key: SplunkConfig__Host
           volumeMounts:
             - name: kafka-truststore
               mountPath: "/opt/kafka/certificates"
