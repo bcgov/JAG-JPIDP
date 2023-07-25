@@ -111,16 +111,6 @@ spec:
                 secretKeyRef:
                   name: kafkaconfig-edt
                   key: KafkaCluster__BootstrapServers
-            - name: KafkaCluster__SaslOauthbearerProducerClientId
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-edt
-                  key: KafkaCluster__ProducerClientId
-            - name: KafkaCluster__SaslOauthbearerConsumerClientId
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-edt
-                  key: KafkaCluster__ConsumerClientId
             - name: KafkaCluster__ConsumerTopicName
               valueFrom:
                 secretKeyRef:
@@ -151,7 +141,6 @@ spec:
                 secretKeyRef:
                   name: kafkaconfig-edt
                   key: KafkaCluster__SaslOauthbearerConsumerClientId
-
             - name: KafkaCluster__UserModificationTopicName
               valueFrom:
                 secretKeyRef:
