@@ -2,12 +2,13 @@ import { Router } from '@angular/router';
 
 import { Observable } from 'rxjs';
 
-import { OrganizationCode } from '@bcgov/shared/data-access';
 import { AlertType } from '@bcgov/shared/ui';
 
 import { OrganizationInfoRoutes } from '@app/features/organization-info/organization-info.routes';
 import { ShellRoutes } from '@app/features/shell/shell.routes';
 
+import { BasePortalSection } from '../../base-portal-section';
+import { AlertCode } from '../../enums/alert-code.enum';
 import { StatusCode } from '../../enums/status-code.enum';
 import { ProfileStatus } from '../../models/profile-status.model';
 import { PortalSectionAction } from '../portal-section-action.model';
@@ -16,18 +17,24 @@ import { PortalSectionProperty } from '../portal-section-property.model';
 import { IPortalSection } from '../portal-section.model';
 import { PartyOrganizationDetailsSection } from './organization-details-section.model';
 
-export class OrganizationDetailsPortalSection implements IPortalSection {
+export class OrganizationDetailsPortalSection
+  extends BasePortalSection
+  implements IPortalSection
+{
   public readonly key: PortalSectionKey;
   public heading: string;
   public description: string;
+  public order: number;
 
   public constructor(
     private profileStatus: ProfileStatus,
     private router: Router
   ) {
+    super();
     this.key = 'organizationDetails';
     this.heading = 'Organization Details';
-    this.description = 'Provide details about your organization.';
+    this.description = this.getDescription();
+    this.order = this.GetOrder(profileStatus.status.organizationDetails);
   }
 
   public get hint(): string {
@@ -35,7 +42,7 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
       this.getStatusCode()
     )
       ? ''
-      : '2 min to complete';
+      : '';
   }
 
   /**
@@ -44,8 +51,6 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
    */
   public get properties(): PortalSectionProperty[] {
     const statusCode = this.getStatusCode();
-    const demographicsStatusCode =
-      this.profileStatus.status.demographics.statusCode;
     const {
       employeeIdentifier,
       orgName,
@@ -78,7 +83,10 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
         ]
       : [];
 
-    if (!this.profileStatus.status.organizationDetails?.submittingAgency) {
+    if (
+      !this.profileStatus.status.organizationDetails?.submittingAgency &&
+      !this.profileStatus.status.organizationDetails.lawSociety
+    ) {
       response.push({
         key: 'status',
         value:
@@ -86,8 +94,14 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
           this.profileStatus.status.organizationDetails?.statusCode ===
             StatusCode.COMPLETED
             ? 'Verified'
-            : 'Not Verified',
+            : 'Not Verified - Update to provide your JUSTIN user info in order to request access to systems',
         label: 'JUSTIN User Status:',
+      });
+    } else if (this.profileStatus.status.organizationDetails.lawSociety) {
+      response.push({
+        key: 'organizationName',
+        value: this.profileStatus.status.organizationDetails?.orgName,
+        label: 'Organization:',
       });
     } else {
       response.push({
@@ -106,42 +120,67 @@ export class OrganizationDetailsPortalSection implements IPortalSection {
     return response;
   }
   public get action(): PortalSectionAction {
-    const demographicsStatusCode =
-      this.profileStatus.status.demographics.statusCode;
-
     return {
       label:
         this.profileStatus.status.organizationDetails?.statusCode ===
-        StatusCode.LOCKED_COMPLETE
+          StatusCode.LOCKEDCOMPLETE ||
+        this.profileStatus.status.organizationDetails?.statusCode ===
+          StatusCode.COMPLETED
           ? ''
-          : 'Update',
+          : 'Manage',
       route: OrganizationInfoRoutes.routePath(
         OrganizationInfoRoutes.ORGANIZATION_DETAILS
       ),
       disabled:
         this.profileStatus.status.organizationDetails?.statusCode ===
-          StatusCode.LOCKED_COMPLETE ||
-        demographicsStatusCode !== StatusCode.COMPLETED,
+        StatusCode.LOCKEDCOMPLETE,
     };
+  }
+
+  public getDescription(): string {
+    return this.profileStatus.status.organizationDetails?.statusCode ===
+      StatusCode.LOCKEDCOMPLETE ||
+      this.profileStatus.status.organizationDetails?.statusCode ===
+        StatusCode.COMPLETED
+      ? 'Your oragnization information is completed and validated'
+      : 'Please provide details about your organization in order to proceed to the next steps';
   }
 
   public get statusType(): AlertType {
     const statusCode = this.getStatusCode();
     return statusCode === StatusCode.ERROR
       ? 'danger'
-      : statusCode === StatusCode.LOCKED_COMPLETE
-      ? 'success'
+      : statusCode === StatusCode.LOCKEDCOMPLETE
+      ? 'completed'
       : statusCode === StatusCode.COMPLETED
-      ? 'success'
+      ? 'completed'
       : 'warn';
   }
 
   public get status(): string {
     const statusCode = this.getStatusCode();
-    return statusCode === StatusCode.LOCKED_COMPLETE
+    let message = '';
+    this.profileStatus.alerts.forEach((altr) => {
+      switch (altr) {
+        case AlertCode.JUM_VALIDATION_ERROR: {
+          message += 'Invalid JUSTIN Details Entered';
+          break;
+        }
+        case AlertCode.LAWYER_STATUS_ERROR: {
+          message += 'Lawyer credentials invalid';
+          break;
+        }
+        case AlertCode.PERSON_VERIFICATION_ERROR: {
+          message += 'Identification validation failed';
+          break;
+        }
+      }
+    });
+    return statusCode === StatusCode.COMPLETED ||
+      statusCode === StatusCode.LOCKEDCOMPLETE
       ? 'Completed'
-      : StatusCode.COMPLETED
-      ? 'Completed'
+      : statusCode === StatusCode.ERROR
+      ? message
       : 'Incomplete';
   }
 

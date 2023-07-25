@@ -5,6 +5,7 @@ export enum IdentityProvider {
   BCPS = 'adfscert',
   ADFS = 'ADFS',
   OIDC = 'oidc',
+  VERIFIED_CREDENTIALS = 'verified',
   AZUREIDIR = 'oidcazure',
   SUBMITTING_AGENCY = 'submitting_agency',
 }

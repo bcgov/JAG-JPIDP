@@ -41,7 +41,7 @@ export class SaEformsPortalSection implements IPortalSection {
     return {
       label: statusCode === StatusCode.COMPLETED ? 'View' : 'Request',
       route: AccessRoutes.routePath(AccessRoutes.SPECIAL_AUTH_EFORMS),
-      disabled: statusCode === StatusCode.NOT_AVAILABLE,
+      disabled: statusCode === StatusCode.LOCKED,
     };
   }
 
@@ -53,7 +53,7 @@ export class SaEformsPortalSection implements IPortalSection {
     const { statusCode, incorrectLicenceType } = this.getSectionStatus();
 
     switch (statusCode) {
-      case StatusCode.AVAILABLE:
+      case StatusCode.INCOMPLETE:
         return 'You are eligible to use Special Authority eForms';
       case StatusCode.COMPLETED:
         return 'Completed';

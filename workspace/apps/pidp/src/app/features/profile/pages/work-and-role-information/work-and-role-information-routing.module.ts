@@ -11,7 +11,7 @@ const routes: Routes = [
     component: WorkAndRoleInformationPage,
     canDeactivate: [CanDeactivateFormGuard],
     data: {
-      title: 'Provider Identity Portal',
+      title: 'Digital Identity Access Management',
       routes: {
         root: '../../',
       },

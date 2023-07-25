@@ -170,6 +170,11 @@ spec:
                 secretKeyRef:
                   name: kafkaconfig-casemgmt
                   key: KafkaCluster__SaslOauthbearerTokenEndpointUrl
+            - name: KafkaCluster__CourtLocationAccessRequestTopic
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-casemgmt
+                  key: KafkaCluster__CourtLocationAccessRequestTopic
             - name: ApplicationUrl
               value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"
             - name: EdtClient__Url
@@ -202,6 +207,16 @@ spec:
                 secretKeyRef:
                   name: telemetry-pidp
                   key: Telemetry__AzureConnectionString
+            - name: SplunkConfig__CollectorToken
+              valueFrom: 
+                secretKeyRef:
+                  name: splunk-config
+                  key: SplunkConfig__CollectorToken
+            - name: SplunkConfig__Host
+              valueFrom: 
+                secretKeyRef:
+                  name: splunk-config
+                  key: SplunkConfig__Host
           volumeMounts:
           - name: truststore
             mountPath: "/opt/kafka/certificates"

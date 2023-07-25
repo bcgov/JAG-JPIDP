@@ -7,7 +7,12 @@ public class NotificationServiceConfiguration
     public KafkaClusterConfiguration KafkaCluster { get; set; } = new();
     public ConnectionStringConfiguration ConnectionStrings { get; set; } = new();
     public ChesClientConfiguration ChesClient { get; set; } = new();
-
+    public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
+    public class SplunkConfiguration
+    {
+        public string Host { get; set; } = string.Empty;
+        public string CollectorToken { get; set; } = string.Empty;
+    }
     public class KafkaClusterConfiguration
     {
 
@@ -17,7 +22,7 @@ public class NotificationServiceConfiguration
         public string BootstrapServers { get; set; } = string.Empty;
         public string TopicName { get; set; } = string.Empty;
         public string AckTopicName { get; set; } = string.Empty;
-        public string NotificationTopic { get; set; } = string.Empty;   
+        public string NotificationTopic { get; set; } = string.Empty;
         public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientId { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientSecret { get; set; } = string.Empty;
@@ -31,9 +36,13 @@ public class NotificationServiceConfiguration
 
 
     }
+
+
+
+
     public class ConnectionStringConfiguration
     {
-        public string JumDatabase { get; set; } = string.Empty;
+        public string NotificationDatabase { get; set; } = string.Empty;
     }
     public class ChesClientConfiguration
     {

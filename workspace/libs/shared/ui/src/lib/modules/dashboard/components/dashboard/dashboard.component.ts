@@ -41,6 +41,9 @@ export class DashboardComponent implements OnInit {
    * Username for the authenticated user.
    */
   @Input() public username?: string;
+  @Input() public organization?: string;
+
+  @Input() public email?: string;
   /**
    * @description
    * List of dashboard details used to populate the side navigation

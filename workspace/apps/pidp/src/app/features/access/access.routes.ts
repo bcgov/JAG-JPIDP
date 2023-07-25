@@ -10,6 +10,7 @@ export class AccessRoutes {
   public static DIGITAL_EVIDENCE = 'digital-evidence';
   public static DIGITAL_EVIDENCE_CASE_MANAGEMENT =
     'digital-evidence-case-management';
+  public static DIGITAL_EVIDENCE_COUNSEL = 'digital-evidence-counsel';
 
   public static UCI = 'uci';
   public static MS_TEAMS = 'ms-teams';

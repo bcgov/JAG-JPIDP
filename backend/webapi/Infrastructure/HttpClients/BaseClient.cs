@@ -82,6 +82,10 @@ public class BaseClient
     /// <param name="data"></param>
     protected async Task<IDomainResult> PutAsync(string url, object? data = null) => await this.SendCoreAsync(HttpMethod.Put, url, data == null ? null : this.CreateStringContent(data), default);
 
+
+    protected async Task<IDomainResult<T>> PutAsync<T>(string url, object? data = null) => await this.SendCoreAsync<T>(HttpMethod.Put, url, data == null ? null : this.CreateStringContent(data), default);
+
+
     /// <summary>
     /// Sends an HTTP message to the API; returning:
     ///  a) a Success result, or
@@ -134,7 +138,7 @@ public class BaseClient
                     ? await response.Content.ReadAsStringAsync(cancellationToken)
                     : "";
 
-                this.Logger.LogNonSuccessStatusCode(response.StatusCode, responseMessage);
+                this.Logger.LogNonSuccessStatusCodeWithURL(response.StatusCode, responseMessage, url);
                 return DomainResult.Failed<T>(response.StatusCode == HttpStatusCode.NotFound
                     ? $"The URL {url} was not found"
                     : "Did not receive a successful status code");
@@ -209,7 +213,7 @@ public class BaseClient
                     ? await response.Content.ReadAsStringAsync(cancellationToken)
                     : "";
 
-                this.Logger.LogNonSuccessStatusCode(response.StatusCode, responseMessage);
+                this.Logger.LogNonSuccessStatusCodeWithURL(response.StatusCode, responseMessage, url);
                 return DomainResult.Failed<T>(response.StatusCode == HttpStatusCode.NotFound
                     ? $"The URL {url} was not found"
                     : "Did not receive a successful status code");
@@ -238,7 +242,7 @@ public class BaseClient
         catch (HttpRequestException exception)
         {
             this.Logger.LogBaseClientException(exception);
-            return DomainResult.Failed<T>("HttpRequestException during call to API");
+            return DomainResult.Failed<T>($"HttpRequestException during call to API {exception.Message}");
         }
         catch (TimeoutException exception)
         {
@@ -273,4 +277,7 @@ public static partial class BaseClientLoggingExtensions
 
     [LoggerMessage(3, LogLevel.Error, "Unhandled exception when calling the API.")]
     public static partial void LogBaseClientException(this ILogger logger, Exception e);
+
+    [LoggerMessage(4, LogLevel.Error, "Received non-success status code {statusCode} with message: {responseMessage}. [{url}]")]
+    public static partial void LogNonSuccessStatusCodeWithURL(this ILogger logger, HttpStatusCode statusCode, string responseMessage, string url);
 }

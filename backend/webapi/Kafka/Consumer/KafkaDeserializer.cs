@@ -3,6 +3,11 @@ namespace Pidp.Kafka.Consumer;
 using System.Text;
 using Confluent.Kafka;
 using Newtonsoft.Json;
+using NodaTime.Text;
+using NodaTime;
+using NodaTime.Extensions;
+using System.Globalization;
+using System;
 
 internal sealed class KafkaDeserializer<T> : IDeserializer<T>
 {
@@ -20,6 +25,60 @@ internal sealed class KafkaDeserializer<T> : IDeserializer<T>
 
         var dataJson = Encoding.UTF8.GetString(data);
 
-        return JsonConvert.DeserializeObject<T>(dataJson);
+        var settings = new JsonSerializerSettings
+        {
+            Converters = new List<JsonConverter> { new InstantConverter() }
+        };
+
+        return JsonConvert.DeserializeObject<T>(dataJson, settings);
+    }
+}
+
+public class InstantConverter : JsonConverter
+{
+    public override bool CanConvert(Type objectType)
+    {
+        return objectType == typeof(Instant);
+    }
+
+    public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+    {
+        if (reader.TokenType == JsonToken.String)
+        {
+            var instantString = (string)reader.Value;
+
+            try
+            {
+                return InstantPattern.ExtendedIso.Parse(instantString).Value;
+            }
+            catch (UnparsableValueException ex)
+            {
+
+                Serilog.Log.Warning($"Failed to parse instant value {instantString} {ex.Message}");
+                // try to parse as regular date
+
+                var dateTime = DateTime.ParseExact(instantString, "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal);
+                var localTime = TimeZoneInfo.ConvertTimeToUtc(dateTime, TimeZoneInfo.Local);
+                var instant = Instant.FromDateTimeUtc(DateTime.SpecifyKind(localTime, DateTimeKind.Utc));
+                return instant;
+
+
+            }
+        }
+        else if (reader.TokenType == JsonToken.Date)
+        {
+            var dateTime = (DateTime)reader.Value;
+            var instant = Instant.FromDateTimeUtc(dateTime.ToUniversalTime());
+            return instant;
+        }
+
+        throw new JsonSerializationException($"Unexpected token type '{reader.TokenType}' when parsing Instant.");
+    }
+
+    public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+    {
+        var instant = (Instant)value;
+        var instantString = InstantPattern.ExtendedIso.Format(instant);
+        writer.WriteValue(instantString);
     }
 }

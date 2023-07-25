@@ -23,6 +23,7 @@ fullnameOverride: ""
 
 settings:
   environmentName: dev
+  edtURL: https://dems.dev.jag.gov.bc.ca
   keycloak:
     url: https://sso-dev-5b7aa5-dev.apps.silver.devops.gov.bc.ca/auth
     realm: "DEMSPOC"

@@ -28,8 +28,8 @@ using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using FluentValidation.AspNetCore;
 using NodaTime.Serialization.SystemTextJson;
 using edt.casemanagement.ServiceEvents.CaseManagement.Handler;
-using edt.casemanagement.HttpClients.Services;
 using edt.casemanagement.Data;
+using Microsoft.Extensions.Hosting;
 using static edt.casemanagement.EdtServiceConfiguration;
 
 public class Startup
@@ -108,6 +108,7 @@ public class Startup
           .AddAutoMapper(typeof(Startup))
           .AddKafkaConsumer(config)
           .AddHttpClients(config)
+
           // .AddScoped<IEdtAuthorizationService, IEdtAuthorizationService>() // add to control authorization to endpoints beyond having a valid jwt
 
           .AddSingleton<IClock>(SystemClock.Instance)
@@ -152,7 +153,7 @@ public class Startup
 
         services.AddSwaggerGen(options =>
         {
-            options.SwaggerDoc("v1", new OpenApiInfo { Title = "Notification Service API", Version = "v1" });
+            options.SwaggerDoc("v1", new OpenApiInfo { Title = "Case Management Service API", Version = "v1" });
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 Description = "Standard Authorization header using the Bearer scheme. Example: \"bearer {token}\"",
@@ -241,7 +242,7 @@ public class Startup
         //app.UseMiddleware<ExceptionHandlingMiddleware>();
         app.UseExceptionHandler("/error");
         app.UseSwagger();
-        app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.json", "Notification Service API"));
+        app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.json", "Case Management Service API"));
 
         app.UseSerilogRequestLogging(options => options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
         {

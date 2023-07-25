@@ -32,7 +32,7 @@ public class KafkaProducer<TKey, TValue> : KafkaOauthTokenRefreshHandler, IDispo
     public KafkaProducer(ProducerConfig config) => this.producer = new ProducerBuilder<TKey, TValue>(config).SetOAuthBearerTokenRefreshHandler(OauthTokenRefreshCallback).SetValueSerializer(new KafkaSerializer<TValue>()).Build();
     public async Task ProduceAsyncDeprecated(string topic, TKey key, TValue value) => await this.producer.ProduceAsync(topic, new Message<TKey, TValue> { Key = key, Value = value });
 
-    public async Task ProduceAsync(string topic, TKey key, TValue value)
+    public async Task<DeliveryResult<TKey, TValue>> ProduceAsync(string topic, TKey key, TValue value)
     {
         var message = new Message<TKey, TValue> { Key = key, Value = value };
         var activity = Diagnostics.Producer.Start(topic, message);
@@ -42,8 +42,9 @@ public class KafkaProducer<TKey, TValue> : KafkaOauthTokenRefreshHandler, IDispo
             currentActivity?.SetTag("kafka.topic", topic);
             currentActivity?.SetTag("kafka.key", key);
 
-            await this.producer.ProduceAsync(topic, message);
-        } finally
+            return await this.producer.ProduceAsync(topic, message);
+        }
+        finally
         {
             activity?.Stop();
         }

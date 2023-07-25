@@ -9,6 +9,7 @@ import { Role } from '@app/shared/enums/roles.enum';
 import { StatusCode } from '../enums/status-code.enum';
 import { ProfileStatus } from '../models/profile-status.model';
 import { DigitalEvidenceCaseManagementPortalSection } from './access/digital-evidence-case-management-section.class';
+import { DigitalEvidenceCounselPortalSection } from './access/digital-evidence-counsel-portal-section.class';
 import { DigitalEvidencePortalSection } from './access/digital-evidence-portal-section.class';
 import { DriverFitnessPortalSection } from './access/driver-fitness-portal-section.class';
 import { HcimAccountTransferPortalSection } from './access/hcim-account-transfer-portal-section.class';
@@ -18,10 +19,8 @@ import { SaEformsPortalSection } from './access/sa-eforms-portal-section.class';
 import { SitePrivacySecurityPortalSection } from './access/site-privacy-security-checklist-portal-section.class';
 import { UciPortalSection } from './access/uci-portal-section.class';
 import { AdministratorPortalSection } from './admin/admin-panel-portal-section.class';
-import { SignedAcceptedDocumentsPortalSection } from './history/signed-accepted-documents-portal-section.class';
 import { TransactionsPortalSection } from './history/transactions-portal-section.class';
 import { AdministratorInfoPortalSection } from './organization/administrator-information-portal-section';
-import { EndorsementsPortalSection } from './organization/endorsements-portal-section.class';
 import { FacilityDetailsPortalSection } from './organization/facility-details-portal-section.class';
 import { OrganizationDetailsPortalSection } from './organization/organization-details-portal-section.class';
 import { PortalSectionStatusKey } from './portal-section-status-key.type';
@@ -49,7 +48,7 @@ export const portalStateGroupKeys = [
  * @description
  * Union of keys generated from the tuple.
  */
-export type PortalStateGroupKey = typeof portalStateGroupKeys[number];
+export type PortalStateGroupKey = (typeof portalStateGroupKeys)[number];
 
 export type PortalState = Record<PortalStateGroupKey, IPortalSection[]> | null;
 
@@ -192,6 +191,13 @@ export class PortalStateBuilder {
         ]
       ),
       ...ArrayUtils.insertResultIf<IPortalSection>(
+        this.permissionsService.hasGroup([Group.BSPS]) ||
+          this.insertSection('digitalEvidenceCounsel', profileStatus),
+        () => [
+          new DigitalEvidenceCounselPortalSection(profileStatus, this.router),
+        ]
+      ),
+      ...ArrayUtils.insertResultIf<IPortalSection>(
         // TODO remove permissions when ready for production
         this.permissionsService.hasRole([Role.FEATURE_PIDP_DEMO]) ||
           this.insertSection('msTeams', profileStatus),
@@ -216,10 +222,7 @@ export class PortalStateBuilder {
   }
 
   private createHistoryGroup(): IPortalSection[] {
-    return [
-      new SignedAcceptedDocumentsPortalSection(this.router),
-      new TransactionsPortalSection(this.router),
-    ];
+    return [new TransactionsPortalSection(this.router)];
   }
 
   private insertSection(

@@ -12,7 +12,7 @@ const routes: Routes = [
     canActivate: [AuthorizationRedirectGuard],
     component: LoginPage,
     data: {
-      title: 'Provider Identity Portal',
+      title: 'Digital Identity Access Management',
       idpHint: IdentityProvider.BCSC,
     },
   },
@@ -21,7 +21,7 @@ const routes: Routes = [
     canActivate: [AuthorizationRedirectGuard],
     component: LoginPage,
     data: {
-      title: 'Provider Identity Portal',
+      title: 'Digital Identity Access Management',
       idpHint: IdentityProvider.IDIR,
       routes: {
         auth: AuthRoutes.routePath(AuthRoutes.ADMIN_LOGIN),

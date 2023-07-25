@@ -1,0 +1,27 @@
+<ui-page-section>
+
+  <ng-container>
+    <table mat-table [dataSource]="dataSource" class="full-width">
+      <ng-container matColumnDef="internalId">
+        <th *matHeaderCellDef mat-header-cell>Internal Id</th>
+        <td *matCellDef="let idp" mat-cell>{{ idp.internalId }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="providerId">
+        <th *matHeaderCellDef mat-header-cell>Type</th>
+        <td *matCellDef="let idp" mat-cell>{{ idp.providerId }}</td>
+      </ng-container>
+      <ng-container matColumnDef="alias">
+        <th *matHeaderCellDef mat-header-cell>Alias</th>
+        <td *matCellDef="let idp" mat-cell>{{ idp.alias }}</td>
+      </ng-container>
+      <ng-container matColumnDef="enabled">
+        <th *matHeaderCellDef mat-header-cell>Enabled</th>
+        <td *matCellDef="let idp" mat-cell>{{ idp.enabled }}</td>
+      </ng-container>
+
+      <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
+      <tr *matRowDef="let row; columns: displayedColumns" mat-row></tr>
+    </table>
+  </ng-container>
+</ui-page-section>

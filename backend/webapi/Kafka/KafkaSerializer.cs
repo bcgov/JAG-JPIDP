@@ -3,6 +3,7 @@ namespace Pidp.Kafka;
 using System.Text;
 using Confluent.Kafka;
 using Newtonsoft.Json;
+using Pidp.Helpers.Serializers;
 
 internal sealed class KafkaSerializer<T> : ISerializer<T>
 {
@@ -18,7 +19,13 @@ internal sealed class KafkaSerializer<T> : ISerializer<T>
             throw new NotSupportedException("Not Supported.");
         }
 
-        var json = JsonConvert.SerializeObject(data);
+        var options = new JsonSerializerSettings
+        {
+            NullValueHandling = NullValueHandling.Ignore,
+            ContractResolver = ShouldSerializeContractResolver.Instance
+        };
+
+        var json = JsonConvert.SerializeObject(data, options);
 
         return Encoding.UTF8.GetBytes(json);
     }

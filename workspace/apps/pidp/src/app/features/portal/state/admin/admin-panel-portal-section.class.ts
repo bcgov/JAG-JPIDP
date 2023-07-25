@@ -5,7 +5,6 @@ import { Observable } from 'rxjs';
 import { AlertType } from '@bcgov/shared/ui';
 
 import { ShellRoutes } from '@app/features/shell/shell.routes';
-import { TrainingRoutes } from '@app/features/training/training.routes';
 
 import { AdminRoutes } from '../../../admin/admin.routes';
 import { StatusCode } from '../../enums/status-code.enum';
@@ -25,11 +24,11 @@ export class AdministratorPortalSection implements IPortalSection {
   ) {
     this.key = 'administrationPanel';
     this.heading = 'Administration Panel';
-    this.description = 'Manage Users, Review, Approve or Deny Access Requests.';
+    this.description = 'Manage Users, Requests and Services';
   }
 
   public get hint(): string {
-    return '15 min to complete';
+    return '';
   }
 
   /**
@@ -42,7 +41,9 @@ export class AdministratorPortalSection implements IPortalSection {
     return {
       label: 'View',
       route: AdminRoutes.routePath(AdminRoutes.PARTIES),
-      disabled: demographicsStatusCode !== StatusCode.COMPLETED,
+      disabled:
+        demographicsStatusCode !== StatusCode.COMPLETED &&
+        demographicsStatusCode !== StatusCode.LOCKEDCOMPLETE,
     };
   }
 

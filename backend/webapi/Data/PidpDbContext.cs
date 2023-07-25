@@ -4,7 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using NodaTime;
 
 using Pidp.Models;
+using Pidp.Models.Lookups;
 using Pidp.Models.OutBoxEvent;
+using Pidp.Models.ProcessFlow;
+using static Pidp.Models.Lookups.CourtLocation;
 
 public class PidpDbContext : DbContext
 {
@@ -15,15 +18,20 @@ public class PidpDbContext : DbContext
     public DbSet<AccessRequest> AccessRequests { get; set; } = default!;
     public DbSet<ClientLog> ClientLogs { get; set; } = default!;
     public DbSet<EmailLog> EmailLogs { get; set; } = default!;
+
     public DbSet<EndorsementRelationship> EndorsementRelationships { get; set; } = default!;
     public DbSet<EndorsementRequest> EndorsementRequests { get; set; } = default!;
     public DbSet<Endorsement> Endorsements { get; set; } = default!;
     public DbSet<Facility> Facilities { get; set; } = default!;
+    public DbSet<FutureUserChangeEvent> FutureUserChangeEvents { get; set; } = default!;
+
     public DbSet<HcimAccountTransfer> HcimAccountTransfers { get; set; } = default!;
     public DbSet<HcimEnrolment> HcimEnrolments { get; set; } = default!;
     public DbSet<DigitalEvidence> DigitalEvidences { get; set; } = default!;
+    public DbSet<DigitalEvidenceDisclosure> DigitalEvidenceDisclosures { get; set; } = default!;
+    public DbSet<DigitalEvidenceDefence> DigitalEvidenceDefences { get; set; } = default!;
 
-   public DbSet<PartyLicenceDeclaration> PartyLicenceDeclarations { get; set; } = default!;
+    public DbSet<PartyLicenceDeclaration> PartyLicenceDeclarations { get; set; } = default!;
     public DbSet<Party> Parties { get; set; } = default!;
     public DbSet<ExportedEvent> ExportedEvents { get; set; } = default!;
     public DbSet<IdempotentConsumer> IdempotentConsumers { get; set; } = default!;
@@ -33,6 +41,15 @@ public class PidpDbContext : DbContext
     public DbSet<CorrectionServiceDetail> CorrectionServiceDetails { get; set; } = default!;
     public DbSet<SubmittingAgencyRequest> SubmittingAgencyRequests { get; set; } = default!;
     public DbSet<AgencyRequestAttachment> AgencyRequestAttachments { get; set; } = default!;
+    public DbSet<CourtLocationAccessRequest> CourtLocationAccessRequests { get; set; } = default!;
+    public DbSet<CourtLocation> CourtLocations { get; set; } = default!;
+    public DbSet<Organization> Organizations { get; set; } = default!;
+    public DbSet<SubmittingAgency> SubmittingAgencies { get; set; } = default!;
+
+    public DbSet<UserAccountChange> UserAccountChanges { get; set; } = default!;
+    public DbSet<ProcessFlow> ProcessFlows { get; set; } = default!;
+    public DbSet<DomainEventProcessStatus> DomainEventProcessStatus { get; set; } = default!;
+
     public override int SaveChanges()
     {
         this.ApplyAudits();
@@ -46,6 +63,8 @@ public class PidpDbContext : DbContext
 
         return await base.SaveChangesAsync(cancellationToken);
     }
+
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -61,9 +80,11 @@ public class PidpDbContext : DbContext
 
         modelBuilder.Entity<ExportedEvent>()
             .ToTable("OutBoxedExportedEvent");
-        //.HasKey(x => new { x.EventId, x.AggregateId });
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(PidpDbContext).Assembly);
+
+
+   
     }
 
     public async Task IdempotentConsumer(string messageId, string consumer)
@@ -102,6 +123,12 @@ public class PidpDbContext : DbContext
     }
 
     // Uncomment for SQL logging
-    // protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    //     => optionsBuilder.LogTo(Console.WriteLine);
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        if (Environment.GetEnvironmentVariable("LOG_SQL") != null && "true".Equals(Environment.GetEnvironmentVariable("LOG_SQL")))
+        {
+            optionsBuilder.LogTo(Console.WriteLine);
+        }
+
+    }
 }

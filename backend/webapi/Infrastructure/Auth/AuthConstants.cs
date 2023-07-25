@@ -15,6 +15,12 @@ public static class Claims
     public const string ResourceAccess = "resource_access";
     public const string Subject = "sub";
     public const string Roles = "roles";
+    public const string BcPersonFamilyName = "BCPerID_last_name";
+    public const string BcPersonGivenName = "BCPerID_first_name";
+    public const string MembershipStatusCode = "membership_status_code";
+
+    public const string VerifiedCredPresentedRequestId = "pres_req_conf_id";
+
 }
 
 public static class DefaultRoles
@@ -29,8 +35,8 @@ public static class ClaimValues
     public const string Phsa = "phsa";
     public const string Bcps = "adfscert";
     public const string Adfs = "adfs"; // test
-    public const string VicPd = "vicpd";
-    public const string SubmittingAgency = "subgenc";
+    public const string SubmittingAgency = "SUBMITTING_AGENCY";
+    public const string VerifiedCredentials = "verified";
 
 }
 
@@ -39,6 +45,7 @@ public static class Policies
     public const string BcscAuthentication = "bcsc-authentication-policy";
     public const string IdirAuthentication = "idir-authentication-policy";
     public const string AnyPartyIdentityProvider = "party-idp-policy";
+    public const string VerifiedCredentialsProvider = "verified-credentials-authentication-policy";
     public const string SubAgencyIdentityProvider = "subgency-idp-policy";
     public const string UserOwnsResource = "user-owns-resource-policy";
     public const string AllDemsIdentityProvider = "dems-idp-policy";
@@ -57,6 +64,15 @@ public static class Roles
     // PIdP Role Placeholders
     public const string Admin = "ADMIN";
     public const string User = "USER";
+    // represents agencies that need upload access (e.g. police)
     public const string SubmittingAgency = "SUBMITTING_AGENCY";
     public const string SubmittingAgencyClient = "SUBMITTING_AGENCY_CLIENT";
+    // clients lawyer
+    public const string DefenceCounsel = "DEFENCE_COUNSEL";
+    // legal aid appointed counsel
+    public const string DutyCounsel = "DUTY_COUNSEL";
+
+    public const string DisclosureAdmin = "DISCLOSURE_ADMIN";
+
+
 }

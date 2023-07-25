@@ -24,6 +24,8 @@ public enum AccessTypeCode
     HcimEnrolment,
     DriverFitness,
     DigitalEvidence,
+    DigitalEvidenceCaseManagement,
+    DigitalEvidenceDisclosure,
     Uci,
     MSTeams
 }

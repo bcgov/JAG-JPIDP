@@ -37,6 +37,15 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Prometheus;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Serilog.Core;
+using Pidp.Features.CourtLocations;
+using Quartz;
+using Quartz.Impl;
+using static Quartz.Logging.OperationName;
+using Pidp.Features.CourtLocations.Jobs;
+using Pidp.Models.Lookups;
+using static Pidp.Models.Lookups.CourtLocation;
+using Microsoft.Extensions.DependencyInjection;
 
 public class Startup
 {
@@ -57,8 +66,8 @@ public class Startup
     {
         var config = this.InitializeConfiguration(services);
 
-        var assemblyVersion = Assembly.GetExecutingAssembly()
-    .GetName().Version?.ToString() ?? "0.0.0";
+        var assemblyVersion = Assembly.GetExecutingAssembly()    .GetName().Version?.ToString() ?? "0.0.0";
+        var knownProxies = Configuration.GetSection("KnownProxies").Value;
 
 
         if (!string.IsNullOrEmpty(config.Telemetry.CollectorUrl))
@@ -112,7 +121,9 @@ public class Startup
         .AddKeycloakAuth(config)
         .AddScoped<IEmailService, EmailService>()
         .AddScoped<IPidpAuthorizationService, PidpAuthorizationService>()
-        .AddSingleton<IClock>(SystemClock.Instance);
+
+        .AddSingleton<IClock>(SystemClock.Instance)
+        .AddScoped<Infrastructure.HttpClients.Jum.JumClient>();
 
         services.AddSingleton<ProblemDetailsFactory, JpidpProblemDetailsFactory>();
 
@@ -145,6 +156,8 @@ public class Startup
 
         services.AddScoped<IUserTypeService, UserTypeService>();
         services.AddScoped<IOrgUnitService, OrgUnitService>();
+        services.AddScoped<ICourtAccessService, CourtAccessService>();
+
 
 
         services.AddHealthChecks()
@@ -179,6 +192,8 @@ public class Startup
             try
             {
                 dbContext.Database.Migrate();
+                LoadCourts(dbContext);
+
             }
             catch (Exception ex)
             {
@@ -187,10 +202,66 @@ public class Startup
             }
         }
 
+        var permitIDIRDemsAccess = Environment.GetEnvironmentVariable("PERMIT_IDIR_DEMS_ACCESS");
+        if (permitIDIRDemsAccess != null && permitIDIRDemsAccess.Equals("true", StringComparison.OrdinalIgnoreCase))
+        {
+            Log.Logger.Warning("*** PERMIT_IDIR_DEMS_ACCESS=true - access to DEMS services for IDIR users is enabled - this is intended for NON production use only ***");
+        }
+
+        var permitIDIRCaseMgmtAccess = Environment.GetEnvironmentVariable("PERMIT_IDIR_CASE_MANAGEMENT");
+        if (permitIDIRCaseMgmtAccess != null && permitIDIRCaseMgmtAccess.Equals("true", StringComparison.OrdinalIgnoreCase))
+        {
+            Log.Logger.Warning("*** PERMIT_IDIR_CASE_MANAGEMENT=true - access to case management for IDIR users is enabled - this is intended for NON production use only ***");
+        }
+
+
+        services.AddQuartz(q =>
+        {
+            Log.Information("Starting scheduler..");
+            q.SchedulerId = "Court-Access-Core";
+            q.SchedulerName = "DIAM Scheduler";
+            q.UseMicrosoftDependencyInjectionJobFactory();
+            q.UseSimpleTypeLoader();
+            q.UseInMemoryStore();
+            q.UseDefaultThreadPool(tp =>
+            {
+                tp.MaxConcurrency = 5;
+            });
+
+            q.ScheduleJob<CourtAccessScheduledJob>(trigger => trigger
+              .WithIdentity("Court access trigger")
+              .StartNow()
+              .WithDailyTimeIntervalSchedule(x => x.WithInterval(config.CourtAccess.PollSeconds, IntervalUnit.Second))
+              .WithDescription("Court access scheduled event")
+          );
+        });
+
+
+        services.AddQuartzServer(options =>
+        {
+            options.WaitForJobsToComplete = true;
+        });
+
+
         Log.Logger.Information("Startup configuration complete");
 
 
 
+    }
+
+    public void LoadCourts(PidpDbContext context)
+    {
+        var generator = new CourtLocationDataGenerator();
+        foreach (var location in generator.Generate())
+        {
+            var existingLocation = context.CourtLocations.Where(loc => loc.Code == location.Code).FirstOrDefault();
+            if (existingLocation == null)
+            {
+                Log.Information($"Adding court location {location.Name}");
+                context.CourtLocations.Add(location);
+            }
+            context.SaveChanges();
+        }
     }
 
     private PidpConfiguration InitializeConfiguration(IServiceCollection services)
@@ -245,7 +316,12 @@ public class Startup
         app.UseRouting();
         app.UseCors("CorsPolicy");
         app.UseMetricServer();
-        app.UseHttpMetrics();
+        app.UseHttpMetrics(options =>
+        {
+            // This will preserve only the first digit of the status code.
+            // For example: 200, 201, 203 -> 2xx
+            options.ReduceStatusCodeCardinality();
+        });
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseEndpoints(endpoints =>

@@ -5,11 +5,14 @@ using Confluent.Kafka;
 using edt.service.HttpClients.Services.EdtCore;
 using edt.service.Kafka.Interfaces;
 using edt.service.ServiceEvents;
+using edt.service.ServiceEvents.DefenceParticipantCreation;
 using edt.service.ServiceEvents.UserAccountCreation;
 using edt.service.ServiceEvents.UserAccountCreation.ConsumerRetry;
 using edt.service.ServiceEvents.UserAccountCreation.Handler;
+using edt.service.ServiceEvents.UserAccountModification;
+using edt.service.ServiceEvents.UserAccountModification.Handler;
+using edt.service.ServiceEvents.UserAccountModification.Models;
 using EdtService.Extensions;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 public static class ConsumerSetup
 {
@@ -30,10 +33,11 @@ public static class ConsumerSetup
             SaslOauthbearerTokenEndpointUrl = config.KafkaCluster.SaslOauthbearerTokenEndpointUrl,
             SaslOauthbearerMethod = SaslOauthbearerMethod.Oidc,
             SocketKeepaliveEnable = true,
+            ConnectionsMaxIdleMs = 2147483647,
+            TopicMetadataRefreshIntervalMs = 10000,
             SaslOauthbearerScope = config.KafkaCluster.Scope,
             SslEndpointIdentificationAlgorithm = SslEndpointIdentificationAlgorithm.Https,
             SslCaLocation = config.KafkaCluster.SslCaLocation,
-            ConnectionsMaxIdleMs = 600000,
             SslCertificateLocation = config.KafkaCluster.SslCertificateLocation,
             SslKeyLocation = config.KafkaCluster.SslKeyLocation
         };
@@ -77,7 +81,7 @@ public static class ConsumerSetup
             AutoOffsetReset = AutoOffsetReset.Earliest,
             ClientId = Dns.GetHostName(),
             EnableAutoOffsetStore = false,
-            AutoCommitIntervalMs = 4000,
+            MaxPollIntervalMs = 60000,
             BootstrapServers = config.KafkaCluster.BootstrapServers,
             SaslOauthbearerClientId = config.KafkaCluster.SaslOauthbearerConsumerClientId,
             SaslOauthbearerClientSecret = config.KafkaCluster.SaslOauthbearerConsumerClientSecret,
@@ -88,12 +92,18 @@ public static class ConsumerSetup
         services.AddSingleton(producerConfig);
 
         services.AddSingleton(typeof(IKafkaProducer<,>), typeof(KafkaProducer<,>));
-
+        services.AddScoped<IKafkaHandler<string, IncomingUserModification>, IncomingUserChangeModificationHandler>();
 
         services.AddScoped<IKafkaHandler<string, EdtUserProvisioningModel>, UserProvisioningHandler>();
+        services.AddScoped<IKafkaHandler<string, EdtPersonProvisioningModel>, DefenceParticipantHandler>();
+
         services.AddSingleton(typeof(IKafkaConsumer<,>), typeof(KafkaConsumer<,>));
 
         services.AddHostedService<EdtServiceConsumer>();
+        services.AddHostedService<EdtPersonCreationConsumer>();
+
+        services.AddHostedService<EdtUserModificationServiceConsumer>();
+
         services.AddHostedService<ConsumerRetryService>();
         return services;
     }

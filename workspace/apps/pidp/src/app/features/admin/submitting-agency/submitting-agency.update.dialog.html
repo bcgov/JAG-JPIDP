@@ -1,0 +1,35 @@
+<h1 mat-dialog-title>{{data.name}}</h1>
+<div mat-dialog-content>
+  <div class="form-field-container">
+
+    <mat-form-field class="full-width">
+      <input placeholder="IDP Hint" [(ngModel)]="data.idpHint" matInput>
+    </mat-form-field>
+  </div>
+  <div class="form-field-container">
+    <mat-form-field class="full-width">
+
+
+      <input placeholder="Certificate Expiry" (dateInput)="updateExpiry($event)" (dateChange)="updateExpiry($event)"
+        [(ngModel)]="data.clientCertExpiry" name="picker" matInput [matDatepicker]="picker">
+
+      <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-datepicker #picker startView="year"></mat-datepicker>
+    </mat-form-field>
+  </div>
+
+  <div class="form-field-container">
+
+    <mat-form-field class="full-width">
+      <mat-select placeholder="Level of assurance" [(ngModel)]="levelOfAssurance" (selectionChange)="updateLOA($event)">
+        <mat-option value="1">Low</mat-option>
+        <mat-option value="2">Medium</mat-option>
+        <mat-option value="3">High</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+</div>
+<div mat-dialog-actions>
+  <button mat-button (click)="onNoClick()">Cancel</button>
+  <button mat-button [mat-dialog-close]="data" cdkFocusInitial>Ok</button>
+</div>

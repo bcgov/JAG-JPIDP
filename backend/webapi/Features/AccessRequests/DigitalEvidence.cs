@@ -1,8 +1,6 @@
 namespace Pidp.Features.AccessRequests;
 
 using System.Diagnostics;
-using System.Diagnostics.Metrics;
-using System.Globalization;
 using DomainResults.Common;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -15,13 +13,10 @@ using Pidp.Kafka.Interfaces;
 using Pidp.Models;
 using Pidp.Models.Lookups;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using Azure.Core.Serialization;
 using Newtonsoft.Json;
-using System.Security.Cryptography;
 using Pidp.Features.Parties;
 using Pidp.Features.Organization.OrgUnitService;
+using Confluent.Kafka;
 
 public class DigitalEvidence
 {
@@ -65,6 +60,7 @@ public class DigitalEvidence
         private readonly IKafkaProducer<string, EdtUserProvisioning> kafkaProducer;
         private readonly IKafkaProducer<string, Notification> kafkaNotificationProducer;
         private readonly string SUBMITTING_AGENCY = "SubmittingAgency";
+        private readonly string LAW_SOCIETY = "LawSociety";
 
 
         public CommandHandler(
@@ -111,47 +107,31 @@ public class DigitalEvidence
 
                 if (!await this.UpdateKeycloakUser(dto.UserId, command.AssignedRegions, command.ParticipantId))
                 {
-
                     return DomainResult.Failed();
                 }
 
                 using var trx = this.context.Database.BeginTransaction();
-
                 try
                 {
+
                     var digitalEvidence = await this.SubmitDigitalEvidenceRequest(command); //save all trx at once for production(remove this and handle using idempotent)
-                    string? key = Guid.NewGuid().ToString();
-                    // no email notifications for submitting agencies currently
-                    if (digitalEvidence != null && !command.OrganizationType.Equals(nameof(OrganizationCode.SubmittingAgency), StringComparison.Ordinal))
+                    var key = Guid.NewGuid().ToString();
+
+                   // var exportedEvent = this.AddOutbox(command, digitalEvidence, dto);
+
+                    var published = await this.PublishAccessRequest(command, dto, digitalEvidence);
+
+                    if ( published.Status == PersistenceStatus.Persisted)
                     {
-                        Serilog.Log.Logger.Information("Sending submission message for {0} to {1}", command.ParticipantId, dto.Email);
-
-                        var eventData = new Dictionary<string, string>
-                    {
-                        { "FirstName", dto.FirstName! },
-                        { "AccessRequestId", "" + digitalEvidence.Id },
-                        { "ParticipantId", command.ParticipantId! },
-                        { "PartyId", "" + command.PartyId! }
-                    };
-
-                        await this.kafkaNotificationProducer.ProduceAsync(this.config.KafkaCluster.NotificationTopicName, key: key, new Notification
-                        {
-                            To = dto.Email,
-                            DomainEvent = "digitalevidence-bcps-usercreation-request",
-                            EventData = eventData,
-                        });
-
+                        await this.context.SaveChangesAsync();
+                        await trx.CommitAsync();
                     }
+                    else
+                    {
+                        this.logger.LogDigitalEvidenceAccessTrxFailed($"Failed to publish access request to topic {digitalEvidence} - rolling back transaction");
 
-                    //publish accessRequest Event (Sending Events to the Outbox)
-
-                    var exportedEvent = this.AddOutbox(command, digitalEvidence, dto);
-
-                    await this.PublishAccessRequest(command, dto, digitalEvidence);
-
-                    await this.context.SaveChangesAsync();
-                    await trx.CommitAsync();
-
+                        await trx.RollbackAsync();
+                    }
 
                 }
                 catch (Exception ex)
@@ -185,13 +165,13 @@ public class DigitalEvidence
                 .SingleAsync();
         }
 
-        private async Task PublishAccessRequest(Command command, PartyDto dto, Models.DigitalEvidence digitalEvidence)
+        private async Task<DeliveryResult<string, EdtUserProvisioning>> PublishAccessRequest(Command command, PartyDto dto, Models.DigitalEvidence digitalEvidence)
         {
             var taskId = Guid.NewGuid().ToString();
             Serilog.Log.Logger.Information("Adding message to topic {0} {1} {2}", this.config.KafkaCluster.ProducerTopicName, command.ParticipantId, taskId);
             var regions = new List<AssignedRegion>();
 
-            if (!digitalEvidence.OrganizationType.Equals(this.SUBMITTING_AGENCY, StringComparison.Ordinal))
+            if (!digitalEvidence.OrganizationType.Equals(this.SUBMITTING_AGENCY, StringComparison.Ordinal) && !digitalEvidence.OrganizationType.Equals(this.LAW_SOCIETY, StringComparison.Ordinal))
             {
                 // get the assigned regions again - this prevents sending requests with an altered list of regions
                 var query = new CrownRegionQuery.Query(command.PartyId, Convert.ToDecimal(command.ParticipantId));
@@ -206,8 +186,10 @@ public class DigitalEvidence
                 var result = handler.HandleAsync(query);
             }
 
+            var systemType = digitalEvidence.OrganizationType.Equals(this.LAW_SOCIETY, StringComparison.Ordinal) ? AccessTypeCode.DigitalEvidenceDisclosure.ToString() : AccessTypeCode.DigitalEvidence.ToString();
+
             // use UUIDs for topic keys
-            await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.ProducerTopicName, taskId, new EdtUserProvisioning
+            var delivered = await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.ProducerTopicName, taskId, new EdtUserProvisioning
             {
                 Key = $"{command.ParticipantId}",
                 UserName = dto.Jpdid,
@@ -216,11 +198,14 @@ public class DigitalEvidence
                 FullName = $"{dto.FirstName} {dto.LastName}",
                 AccountType = "Saml",
                 Role = "User",
+                SystemName = systemType,
                 AssignedRegions = regions,
                 AccessRequestId = digitalEvidence.Id,
                 OrganizationType = digitalEvidence.OrganizationType,
                 OrganizationName = digitalEvidence.OrganizationName,
             });
+
+            return delivered;
         }
 
         private List<AssignedRegion?>? ConvertOrgUnitRegions(IEnumerable<OrgUnitModel?> orgUnits)
@@ -243,7 +228,7 @@ public class DigitalEvidence
         private async Task<Models.DigitalEvidence> SubmitDigitalEvidenceRequest(Command command)
         {
 
-            var digitalEvident = new Models.DigitalEvidence
+            var digitalEvidence = new Models.DigitalEvidence
             {
                 PartyId = command.PartyId,
                 Status = AccessRequestStatus.Pending,
@@ -254,10 +239,10 @@ public class DigitalEvidence
                 RequestedOn = this.clock.GetCurrentInstant(),
                 AssignedRegions = command.AssignedRegions
             };
-            this.context.DigitalEvidences.Add(digitalEvident);
+            this.context.DigitalEvidences.Add(digitalEvidence);
 
             await this.context.SaveChangesAsync();
-            return digitalEvident;
+            return digitalEvidence;
         }
         private Task<Models.OutBoxEvent.ExportedEvent> AddOutbox(Command command, Models.DigitalEvidence digitalEvidence, PartyDto dto)
         {
@@ -309,7 +294,7 @@ public static partial class DigitalEvidenceLoggingExtensions
 {
     [LoggerMessage(1, LogLevel.Warning, "Digital Evidence Access Request denied due to the Party Record not meeting all prerequisites.")]
     public static partial void LogDigitalEvidenceAccessRequestDenied(this ILogger logger);
-    [LoggerMessage(2, LogLevel.Warning, "Digital Evidence Access Request Transaction failed due to the Party Record not meeting all prerequisites.")]
-    public static partial void LogDigitalEvidenceAccessTrxFailed(this ILogger logger, string ex);
+    [LoggerMessage(2, LogLevel.Warning, "Digital Evidence Access Request Transaction failed due to the error {error}.")]
+    public static partial void LogDigitalEvidenceAccessTrxFailed(this ILogger logger, string error);
 
 }

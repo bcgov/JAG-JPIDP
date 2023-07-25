@@ -7,6 +7,7 @@ export interface EnvironmentConfig {
   authEndpoint: string;
   authRealm: string;
   environmentName: environmentName;
+  demsImportURL: string;
   applicationUrl: string;
   keycloakConfig: KeycloakOptions;
 }

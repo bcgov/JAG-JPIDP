@@ -50,8 +50,6 @@ spec:
 
 
           env:
-            - name: DB_HOST
-              value: jum-database
             - name: Seq__Url
               valueFrom:
                 secretKeyRef:
@@ -63,28 +61,20 @@ spec:
               value: /opt/kafka/certificates/client-ca.crt
             - name: KafkaCluster__SslKeyLocation
               value: /opt/kafka/certificates/client.key
-            - name: KafkaCluster__SaslOauthbearerProducerClientId
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-edt
-                  key: KafkaCluster__ProducerClientId
-            - name: KafkaCluster__SaslOauthbearerConsumerClientId
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-edt
-                  key: KafkaCluster__ConsumerClientId
             - name: KafkaCluster__ConsumerGroupId
               value: {{ include "edt-service.fullname" . }}-consumer-group
-            - name: DB_PASSWORD
+            - name: database-password
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "edt-service.fullname" . }}-jum-database
-                  key: DB_PASSWORD
-            - name: DB_USER
+                  name: {{ include "edt-service.fullname" . }}-database
+                  key: database-password
+            - name: database-username
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "edt-service.fullname" . }}-jum-database
-                  key: DB_USER
+                  name: {{ include "edt-service.fullname" . }}-database
+                  key: database-username
+            - name: DATABASE_NAME
+              value: notification
             - name: USER_CREATION_PLAINTEXT_TOPIC
               value: digitalevidence-usercreation-plain-topic
             - name: DATABASE_NAME
@@ -94,8 +84,8 @@ spec:
             - name: ConnectionStrings__EdtDataStore
               valueFrom:
                 configMapKeyRef:
-                  name: jum-api-database
-                  key: CONNECTION_STRINGS_JUM         
+                  name: edt-api-database
+                  key: CONNECTION_STRINGS_DB    
             - name: SchemaRegistry__Url
               valueFrom:
                 secretKeyRef:
@@ -161,6 +151,7 @@ spec:
                 secretKeyRef:
                   name: kafkaconfig-edt
                   key: KafkaCluster__SaslOauthbearerConsumerClientId
+
             - name: KafkaCluster__UserModificationTopicName
               valueFrom:
                 secretKeyRef:
@@ -182,6 +173,21 @@ spec:
                 secretKeyRef:
                   name: kafkaconfig-edt
                   key: KafkaCluster__SaslOauthbearerTokenEndpointUrl
+            - name: KafkaCluster__IncomingUserChangeTopic
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-edt
+                  key: KafkaCluster__IncomingUserChangeTopic
+            - name: KafkaCluster__ProcessResponseTopic
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-edt
+                  key: KafkaCluster__ProcessResponseTopic
+            - name: KafkaCluster__PersonCreationTopic
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-edt
+                  key: KafkaCluster__PersonCreationTopic
             - name: ApplicationUrl
               value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"
             - name: EdtClient__Url
@@ -214,6 +220,16 @@ spec:
                 secretKeyRef:
                   name: telemetry-pidp
                   key: Telemetry__AzureConnectionString
+            - name: SplunkConfig__CollectorToken
+              valueFrom: 
+                secretKeyRef:
+                  name: splunk-config
+                  key: SplunkConfig__CollectorToken
+            - name: SplunkConfig__Host
+              valueFrom: 
+                secretKeyRef:
+                  name: splunk-config
+                  key: SplunkConfig__Host
           volumeMounts:
           - name: truststore
             mountPath: "/opt/kafka/certificates"

@@ -10,6 +10,7 @@ public interface IEdtClient
     Task<Task> HandleCaseRequest(string key, SubAgencyDomainEvent accessRequest);
 
 
+
     Task<EdtUserDto?> GetUser(string userKey);
 
     /// <summary>
@@ -25,6 +26,13 @@ public interface IEdtClient
     /// <param name="caseNumber"></param>
     /// <returns></returns>
     Task<CaseModel> FindCase(string caseNumber);
+
+    /// <summary>
+    /// Get a case based on the case Id
+    /// </summary>
+    /// <param name="caseId"></param>
+    /// <returns></returns>
+    Task<CaseModel> GetCase(int caseId);
 
     /// <summary>
     /// Get the case Ids currently assigned to a user

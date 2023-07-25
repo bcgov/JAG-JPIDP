@@ -1,4 +1,5 @@
 <mat-card class="ui-card" [class]="class">
+  <span class='order-icon' [class]="class" *ngIf="order && order > 0">{{ order }}</span>
   <mat-card-header *ngIf="icon || heading" [class]="{
       'icon-only': icon && !heading,
       'title-only': !icon && heading

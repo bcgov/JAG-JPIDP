@@ -43,7 +43,7 @@ public class KafkaProducer<TKey, TValue> : IDisposable, IKafkaProducer<TKey, TVa
             currentActivity?.SetTag("kafka.key", key);
 
             var response = await this.producer.ProduceAsync(topic, message);
-            Log.Information($"Producer response {response}");
+            Log.Information($"Producer response status: {response.Status} partition: {response.Partition} topic:{response.Topic}");
             return response;
         }
         finally

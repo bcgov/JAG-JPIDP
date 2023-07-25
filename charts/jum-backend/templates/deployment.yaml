@@ -51,23 +51,24 @@ spec:
               value: /opt/kafka/certificates/client-ca.crt
             - name: KafkaCluster__SslKeyLocation
               value: /opt/kafka/certificates/client.key
-            - name: DB_HOST
-              value: jum-database
-            - name: SA_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: jum-db-jum-database-secret
-                  key: sapassword
-            - name: SA_USER
-              value: sa
-            - name: DATABASE
-              value: JumDB
             - name: ConnectionStrings__JumDatabase
               valueFrom:
                 configMapKeyRef:
                   name: jum-api-database
                   key: CONNECTION_STRINGS_JUM
-            - name: KafkaCluster__BoostrapServers
+            - name: database-password
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "notification.fullname" . }}-database
+                  key: database-password
+            - name: database-username
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "notification.fullname" . }}-database
+                  key: database-username
+            - name: DATABASE_NAME
+              value: notification
+            - name: KafkaCluster__BootstrapServers
               valueFrom:
                 secretKeyRef:
                   name: jum-kafka-config
@@ -77,7 +78,16 @@ spec:
                 secretKeyRef:
                   name: jum-kafka-config
                   key: KafkaCluster__TopicName
-
+            - name: KafkaCluster__UserChangeEventTopic
+              valueFrom:
+                secretKeyRef:
+                  name: jum-kafka-config
+                  key: KafkaCluster__UserChangeEventTopic
+            - name: KafkaCluster__UserChangeProcessedTopic
+              valueFrom:
+                secretKeyRef:
+                  name: jum-kafka-config
+                  key: KafkaCluster__UserChangeProcessedTopic
             - name: KafkaCluster__SaslOauthbearerTokenEndpointUrl
               valueFrom:
                 secretKeyRef:
@@ -93,7 +103,6 @@ spec:
                 secretKeyRef:
                   name: jum-kafka-config
                   key: KafkaCluster__SaslOauthbearerConsumerClientSecret
-
             - name: KafkaCluster__AckTopicName
               valueFrom:
                 secretKeyRef:
@@ -101,21 +110,51 @@ spec:
                   key: KafkaCluster__AckTopicName
             - name: ApplicationUrl
               value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"
+            - name: JustinAuthentication__BasicAuthUsername
+              valueFrom:
+                secretKeyRef:
+                  name: jum-api-config
+                  key: JustinAuthentication__BasicAuthUsername
+            - name: JustinAuthentication__BasicAuthPassword
+              valueFrom:
+                secretKeyRef:
+                  name: jum-api-config
+                  key: JustinAuthentication__BasicAuthPassword
+            - name: JustinChangeEventClient__Url
+              valueFrom:
+                secretKeyRef:
+                  name: jum-api-config
+                  key: JustinChangeEventClient__Url
+            - name: JustinChangeEventClient__PollRateSeconds
+              valueFrom:
+                secretKeyRef:
+                  name: jum-api-config
+                  key: JustinChangeEventClient__PollRateSeconds
             - name: JustinParticipantClient__Url
               valueFrom:
                 secretKeyRef:
                   name: jum-api-config
-                  key: url
-            - name: JustinParticipantClient__BasicAuthUsername
+                  key: JustinParticipantClient__Url
+            - name: KafkaCluster__SaslOauthbearerProducerClientId
               valueFrom:
                 secretKeyRef:
-                  name: jum-api-config
-                  key: JustinParticipantClient__BasicAuthUsername
-            - name: JustinParticipantClient__BasicAuthPassword
+                  name: jum-kafka-config
+                  key: KafkaCluster__SaslOauthbearerProducerClientId
+            - name: KafkaCluster__SaslOauthbearerProducerClientSecret
               valueFrom:
                 secretKeyRef:
-                  name: jum-api-config
-                  key: JustinParticipantClient__BasicAuthPassword
+                  name: jum-kafka-config
+                  key: KafkaCluster__SaslOauthbearerProducerClientSecret
+            - name: SplunkConfig__CollectorToken
+              valueFrom: 
+                secretKeyRef:
+                  name: splunk-config
+                  key: SplunkConfig__CollectorToken
+            - name: SplunkConfig__Host
+              valueFrom: 
+                secretKeyRef:
+                  name: splunk-config
+                  key: SplunkConfig__Host
           volumeMounts:
             - name: kafka-truststore
               mountPath: "/opt/kafka/certificates"

@@ -2,9 +2,9 @@
   <div class="row">
     <div class="col-12">
       <ui-alert *ngIf="completedProfile" type="success" icon="check_circle" iconType="outlined"
-        heading="You have completed your Provider Identity Profile">
+        heading="You have completed your Digital Identity Profile">
         <ng-container uiAlertContent>
-          Go to the Access to Systems section to view what systems you are
+          Go to the Applications Access section to view what systems you are
           eligible to enrol for.
         </ng-container>
         <ng-container uiAlertActions>
@@ -27,15 +27,14 @@
         <ui-scroll-target targetId="profile"></ui-scroll-target>
         <ui-page-section-subheader icon="assignment_ind" heading="Profile">
           <ng-container uiPageSectionSubheaderDesc>
-            Complete the information for each portion of your Provider Identity
-            Profile. This will allow the portal to identify the systems you may
-            request access for.
+            Complete the steps to verify yourself.
           </ng-container>
         </ui-page-section-subheader>
 
         <ui-card-summary *ngFor="let section of (state$ | async)?.profile" [heading]="section.heading"
-          [statusType]="section.statusType" [status]="section.status" [actionLabel]="section.action.label"
-          [actionDisabled]="section.action.disabled" (action)="onCardAction(section)">
+          [order]="section.order" [statusType]="section.statusType" [status]="section.status"
+          [actionLabel]="section.action.label" [order]="section.order" [actionDisabled]="section.action.disabled"
+          (action)="onCardAction(section)">
           <ng-container uiCardSummaryHint>{{ section.hint }}</ng-container>
           <ng-container uiCardSummaryContent>
             <app-profile-card-summary-content [properties]="section.properties">
@@ -55,8 +54,9 @@
         </ui-page-section-subheader>
 
         <ui-card-summary *ngFor="let section of (state$ | async)?.organization" [heading]="section.heading"
-          [statusType]="section.statusType" [status]="section.status" [actionLabel]="section.action.label"
-          [actionDisabled]="section.action.disabled" (action)="onCardAction(section)">
+          [statusType]="section.statusType" [status]="section.status" [order]="section.order"
+          [actionLabel]="section.action.label" [actionDisabled]="section.action.disabled"
+          (action)="onCardAction(section)">
           <ng-container uiCardSummaryHint>{{ section.hint }}</ng-container>
           <ng-container uiCardSummaryContent>
             <app-profile-card-summary-content [properties]="section.properties">
@@ -68,7 +68,7 @@
 
       <ui-page-section>
         <ui-scroll-target targetId="access"></ui-scroll-target>
-        <ui-page-section-subheader icon="assignment" heading="Access to Systems">
+        <ui-page-section-subheader icon="assignment" heading="Applications Access">
           <ng-container uiPageSectionSubheaderDesc>
             Complete your profile to gain access to the systems you are eligible
             for.
@@ -77,7 +77,7 @@
 
         <ui-card-summary *ngFor="let section of (state$ | async)?.access" [heading]="section.heading"
           [statusType]="section.statusType" [status]="section.status" [actionLabel]="section.action.label"
-          [actionDisabled]="section.action.disabled" (action)="onCardAction(section)">
+          [order]="section.order" [actionDisabled]="section.action.disabled" (action)="onCardAction(section)">
           <ng-container uiCardSummaryHint>{{ section.hint }}</ng-container>
           <ng-container uiCardSummaryContent>
             {{ section.description }}
@@ -89,13 +89,13 @@
         <ui-scroll-target targetId="admin"></ui-scroll-target>
         <ui-page-section-subheader icon="admin_panel_settings" heading="Admin Panel">
           <ng-container uiPageSectionSubheaderDesc>
-            Manage Access request for approval.
+            Manage Users and Access Requests.
           </ng-container>
         </ui-page-section-subheader>
 
         <ui-card-summary *ngFor="let section of (state$ | async)?.admin" [heading]="section.heading"
           [statusType]="section.statusType" [status]="section.status" [actionLabel]="section.action.label"
-          [actionDisabled]="section.action.disabled" (action)="onCardAction(section)">
+          [order]="section.order" [actionDisabled]="section.action.disabled" (action)="onCardAction(section)">
           <ng-container uiCardSummaryHint>{{ section.hint }}</ng-container>
           <ng-container uiCardSummaryContent>
             {{ section.description }}
@@ -114,7 +114,7 @@
         <ng-container *ngIf="(state$ | async)?.training?.length; else noTraining">
           <ui-card-summary *ngFor="let section of (state$ | async)?.training" [heading]="section.heading"
             [statusType]="section.statusType" [status]="section.status" [actionLabel]="section.action.label"
-            [actionDisabled]="section.action.disabled" (action)="onCardAction(section)">
+            [order]="section.order" [actionDisabled]="section.action.disabled" (action)="onCardAction(section)">
             <ng-container uiCardSummaryHint>{{ section.hint }}</ng-container>
             <ng-container uiCardSummaryContent>
               {{ section.description }}

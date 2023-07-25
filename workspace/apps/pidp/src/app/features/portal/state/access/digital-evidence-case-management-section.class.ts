@@ -7,6 +7,7 @@ import { AlertType } from '@bcgov/shared/ui';
 import { AccessRoutes } from '@app/features/access/access.routes';
 import { ShellRoutes } from '@app/features/shell/shell.routes';
 
+import { BasePortalSection } from '../../base-portal-section';
 import { StatusCode } from '../../enums/status-code.enum';
 import { ProfileStatus } from '../../models/profile-status.model';
 import { PortalSectionAction } from '../portal-section-action.model';
@@ -14,19 +15,25 @@ import { PortalSectionKey } from '../portal-section-key.type';
 import { IPortalSection } from '../portal-section.model';
 
 export class DigitalEvidenceCaseManagementPortalSection
+  extends BasePortalSection
   implements IPortalSection
 {
   public readonly key: PortalSectionKey;
   public heading: string;
   public description: string;
+  public order: number;
 
   public constructor(
     private profileStatus: ProfileStatus,
     private router: Router
   ) {
+    super();
     this.key = 'digitalEvidenceCaseManagement';
-    this.heading = 'Digital Evidence and Disclosure Case Management System';
+    this.heading = 'Digital Evidence Case Access';
     this.description = `Manage access to your Digital Evidence Cases here.`;
+    this.order = this.GetOrder(
+      this.profileStatus.status.digitalEvidenceCaseManagement
+    );
   }
 
   public get action(): PortalSectionAction {
@@ -40,7 +47,7 @@ export class DigitalEvidenceCaseManagementPortalSection
     return {
       label:
         this.getStatusCode() === StatusCode.COMPLETED
-          ? 'View'
+          ? 'Manage'
           : this.getStatusCode() === StatusCode.PENDING
           ? 'View'
           : 'Request',
@@ -50,15 +57,15 @@ export class DigitalEvidenceCaseManagementPortalSection
       disabled: !(
         digitalEvidenceStatusCode === StatusCode.COMPLETED &&
         (demographicsStatusCode === StatusCode.COMPLETED ||
-          demographicsStatusCode === StatusCode.LOCKED_COMPLETE) &&
+          demographicsStatusCode === StatusCode.LOCKEDCOMPLETE) &&
         (organizationStatusCode === StatusCode.COMPLETED ||
-          organizationStatusCode === StatusCode.LOCKED_COMPLETE)
+          organizationStatusCode === StatusCode.LOCKEDCOMPLETE)
       ),
     };
   }
 
   public get hint(): string {
-    return '5 min to complete';
+    return '';
   }
 
   public get status(): string {
@@ -70,11 +77,11 @@ export class DigitalEvidenceCaseManagementPortalSection
   }
 
   public get statusType(): AlertType {
-    return this.getStatusCode() === StatusCode.AVAILABLE
-      ? 'success'
-      : this.getStatusCode() === StatusCode.PENDING
-      ? 'info'
-      : 'warn';
+    const digitalEvidenceStatusCode =
+      this.profileStatus.status.digitalEvidence.statusCode;
+    return digitalEvidenceStatusCode === StatusCode.COMPLETED
+      ? 'completed'
+      : 'greyed';
   }
 
   public performAction(): void | Observable<void> {

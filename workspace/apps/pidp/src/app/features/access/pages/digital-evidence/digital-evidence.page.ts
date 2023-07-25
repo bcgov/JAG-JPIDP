@@ -1,27 +1,11 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
-import { Component, Inject, Input, OnInit } from '@angular/core';
-import {
-  FormArray,
-  FormBuilder,
-  FormControl,
-  FormGroup,
-  Validators,
-} from '@angular/forms';
+import { AfterViewChecked, Component, Inject, OnInit } from '@angular/core';
+import { FormBuilder, FormControl, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import {
-  EMPTY,
-  Observable,
-  catchError,
-  first,
-  map,
-  noop,
-  of,
-  take,
-  tap,
-} from 'rxjs';
+import { EMPTY, Observable, catchError, map, noop, of, tap } from 'rxjs';
 
 import { APP_CONFIG, AppConfig } from '@app/app.config';
 import { AbstractFormPage } from '@app/core/classes/abstract-form-page.class';
@@ -32,13 +16,13 @@ import { IdentityProvider } from '@app/features/auth/enums/identity-provider.enu
 import { AccessTokenService } from '@app/features/auth/services/access-token.service';
 import { AuthorizedUserService } from '@app/features/auth/services/authorized-user.service';
 import { StatusCode } from '@app/features/portal/enums/status-code.enum';
-import { ProfileStatus } from '@app/features/portal/models/profile-status.model';
 
 import { FormUtilsService } from '@core/services/form-utils.service';
 
 import { PartyUserTypeResource } from '../../../../features/admin/shared/usertype-resource.service';
 import { OrganizationUserType } from '../../../../features/admin/shared/usertype-service.model';
 import { BcpsAuthResourceService } from './auth/bcps-auth-resource.service';
+import { DigitalEvidenceCase } from './case-management/digital-evidence-case.model';
 import { AssignedRegion } from './digital-evidence-account.model';
 import { DigitalEvidenceFormState } from './digital-evidence-form-state';
 import { DigitalEvidenceResource } from './digital-evidence-resource.service';
@@ -63,7 +47,7 @@ export class DigitalEvidencePage
   public assignedRegions: AssignedRegion[] = [];
   public digitalEvidenceUrl: string;
   public dataSource: MatTableDataSource<AssignedRegion>;
-
+  public defenceValidationMessage: string;
   public identityProvider$: Observable<IdentityProvider>;
   //public userType$: Observable<OrganizationUserType[]>;
   public IdentityProvider = IdentityProvider;
@@ -72,9 +56,11 @@ export class DigitalEvidencePage
   public pending: boolean | null;
   public policeAgency: Observable<string>;
   public result: string;
+  public userIsBCPS?: boolean;
+  public userIsLawyer?: boolean;
+  public folioId?: number;
   public accessRequestFailed: boolean;
   public digitalEvidenceSupportEmail: string;
-  //@Input() public form!: FormGroup;
   public formControlNames: string[];
   public selectedOption = 0;
   public displayedColumns: string[] = ['regionName', 'assignedAgency'];
@@ -107,17 +93,20 @@ export class DigitalEvidencePage
     this.digitalEvidenceUrl = digitalEvidenceUrl;
     this.organizationType = new OrganizationUserType();
     const partyId = this.partyService.partyId;
+    this.userIsBCPS = false;
+    this.userIsLawyer = false;
     this.dataSource = new MatTableDataSource();
-
-    //this.userType$ = this.usertype.getUserType(partyId);
     this.identityProvider$ = this.authorizedUserService.identityProvider$;
     this.result = '';
+    this.defenceValidationMessage = '';
     this.policeAgency = accessTokenService
       .decodeToken()
       .pipe(map((token) => token?.identity_provider ?? ''));
 
     accessTokenService.decodeToken().subscribe((n) => {
-      this.result = n.identity_provider;
+      if (n !== null) {
+        this.result = n.identity_provider;
+      }
     });
     this.usertype.getUserType(partyId).subscribe((data: any) => {
       this.organizationType.organizationType = data['organizationType'];
@@ -141,6 +130,10 @@ export class DigitalEvidencePage
         // todo - remove IDIR
         if (idp === IdentityProvider.BCPS || idp === IdentityProvider.IDIR) {
           // if BCPS then get the crown-regions
+          this.formState.DefenceUniqueId.setValidators([]);
+          this.formState.DefenceUniqueId.clearValidators();
+
+          this.userIsBCPS = true;
           this.userOrgunit
             .getUserOrgUnit(
               partyId,
@@ -150,6 +143,9 @@ export class DigitalEvidencePage
               this.assignedRegions = data;
               this.formState.AssignedRegions.patchValue(this.assignedRegions);
             });
+        }
+        if (idp === IdentityProvider.VERIFIED_CREDENTIALS) {
+          this.userIsLawyer = true;
         }
       });
     });
@@ -166,6 +162,7 @@ export class DigitalEvidencePage
       'OrganizationType',
       'OrganizationName',
       'AssignedRegions',
+      'DefenceUniqueId',
       'ParticipantId',
     ];
   }
@@ -206,55 +203,21 @@ export class DigitalEvidencePage
     return this.organizationType.isSubmittingAgency;
   }
 
-  // public get userType(): FormControl {
-  //   return this.form.get('userType') as FormControl;
-  // }
   public onChange(data: number): void {
-    //const element = event.currentTarget as HTMLInputElement;
-    //const value = element.value;
-
     this.selectedOption = data;
-    // this.formState.pidNumber.clearValidators();
-    // this.formState.pidNumber.reset();
-    // this.formState.agency.clearValidators();
-    // this.formState.agency.reset();
-    // //this.formState.userType.clearValidators();
-    // this.formState.ikeyCertCode.clearValidators();
-    // this.formState.ikeyCertCode.reset();
-    // if (this.selectedOption == 1) {
-    //   this.formState.ikeyCertCode.setValidators([Validators.required]);
-    //   console.log(this.formState.ikeyCertCode.value);
-    //   //this.formState.pidNumber = this.formState.ikeyCertCode;
-    //   console.log(this.formState.pidNumber.value);
-    // }
-    // if (this.selectedOption == 2) {
-    //   this.formState.pidNumber.setValidators([Validators.required]);
-    // }
-    // if (this.selectedOption == 3) {
-    //   //let result: string;
-    //   //this.policeAgency.subscribe((val) => (result = val));
-    //   //this.policeAgency.pipe(first()).subscribe((n) => (this.result = n));
-    //   const index = this.agencies.findIndex((p) => p.name == this.result);
-    //   this.formState.agency.patchValue(index);
-    //   this.formState.agency.setValidators([Validators.required]);
-    // }
   }
-  // public OnSubmit(): void {
-  //   console.log('Form Submitted');
-  //   console.log(this.form.value);
-  // }
+
   public onRequestAccess(): void {
-    if (this.selectedOption == 1) {
+    if (this.userIsLawyer) {
       this.resource
-        .requestAccess(
+        .requestDefenceCounselAccess(
           this.partyService.partyId,
           this.formState.OrganizationType.value,
           this.formState.OrganizationName.value,
-          this.formState.ParticipantId.value,
-          this.formState.AssignedRegions?.value || []
+          this.formState.ParticipantId.value
         )
         .pipe(
-          tap(() => (this.completed = true)),
+          tap(() => (this.pending = true)),
           catchError((error: HttpErrorResponse) => {
             if (error.status === HttpStatusCode.NotFound) {
               this.navigateToRoot();
@@ -265,36 +228,52 @@ export class DigitalEvidencePage
         )
         .subscribe();
     } else {
-      this.resource
-        .requestAccess(
-          this.partyService.partyId,
-          this.formState.OrganizationType.value,
-          this.formState.OrganizationName.value,
-          this.formState.ParticipantId.value,
-          this.formState.AssignedRegions?.value || []
-        )
-        .pipe(
-          tap(() => (this.completed = true)),
-          catchError((error: HttpErrorResponse) => {
-            if (error.status === HttpStatusCode.NotFound) {
-              this.navigateToRoot();
-            }
-            this.accessRequestFailed = true;
-            return of(noop());
-          })
-        )
-        .subscribe();
+      if (this.selectedOption == 1) {
+        this.resource
+          .requestAccess(
+            this.partyService.partyId,
+            this.formState.OrganizationType.value,
+            this.formState.OrganizationName.value,
+            this.formState.ParticipantId.value,
+            this.formState.AssignedRegions?.value || []
+          )
+          .pipe(
+            tap(() => (this.pending = true)),
+            catchError((error: HttpErrorResponse) => {
+              if (error.status === HttpStatusCode.NotFound) {
+                this.navigateToRoot();
+              }
+              this.accessRequestFailed = true;
+              return of(noop());
+            })
+          )
+          .subscribe();
+      } else {
+        this.resource
+          .requestAccess(
+            this.partyService.partyId,
+            this.formState.OrganizationType.value,
+            this.formState.OrganizationName.value,
+            this.formState.ParticipantId.value,
+            this.formState.AssignedRegions?.value || []
+          )
+          .pipe(
+            tap(() => (this.pending = true)),
+            catchError((error: HttpErrorResponse) => {
+              if (error.status === HttpStatusCode.NotFound) {
+                this.navigateToRoot();
+              }
+              this.accessRequestFailed = true;
+              return of(noop());
+            })
+          )
+          .subscribe();
+      }
     }
   }
 
   public ngOnInit(): void {
     const partyId = this.partyService.partyId;
-
-    // this.form = new FormGroup({
-    //   userType: new FormControl('', [Validators.required]),
-    //   ikeyCertCode: new FormControl('', [Validators.required]),
-    //   pidNumber: new FormControl('', [Validators.required]),
-    // });
 
     if (!partyId) {
       this.logger.error('No party ID was provided');
@@ -304,6 +283,60 @@ export class DigitalEvidencePage
     if (this.completed === null) {
       this.logger.error('No status code was provided');
       return this.navigateToRoot();
+    }
+
+    // dynamically add form validators
+    this.identityProvider$.subscribe((idp) => {
+      if (idp === IdentityProvider.VERIFIED_CREDENTIALS) {
+        this.formState.DefenceUniqueId.setValidators([
+          Validators.pattern('^[A-Za-z]{2,3}-[0-9]{6}$'),
+          Validators.required,
+        ]);
+        this.formState.DefenceUniqueIdValid.setValidators([
+          Validators.required,
+        ]);
+      }
+      if (idp === IdentityProvider.BCPS) {
+        this.formState.AssignedRegions.setValidators([Validators.required]);
+      }
+    });
+  }
+
+  public validateDefenceId(): void {
+    const partyId = this.partyService.partyId;
+
+    this.resource
+      .validateDefenceId(partyId, this.formState.DefenceUniqueId.value)
+      .pipe(
+        tap((response: DigitalEvidenceCase) => {
+          this.formState.DefenceUniqueIdValid.patchValue(response.id);
+          this.formState.DefenceUniqueId.disable();
+          this.folioId = response.id;
+          this.defenceValidationMessage =
+            'ID Validated - you may now request access';
+        }),
+        catchError((error: HttpErrorResponse) => {
+          this.formState.DefenceUniqueId.patchValue('');
+          this.defenceValidationMessage =
+            'Invalid ID entered - please correct and validate again';
+
+          if (error.status === HttpStatusCode.NotFound) {
+            this.navigateToRoot();
+          }
+          return of(noop());
+        })
+      )
+      .subscribe();
+  }
+
+  public onUniqueIdInput(): void {
+    if (
+      this.formState.DefenceUniqueId.value &&
+      this.formState.DefenceUniqueId.value.length === 3
+    ) {
+      this.formState.DefenceUniqueId.patchValue(
+        this.formState.DefenceUniqueId.value + '-'
+      );
     }
   }
 

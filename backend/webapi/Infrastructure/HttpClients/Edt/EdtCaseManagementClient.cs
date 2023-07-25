@@ -26,4 +26,21 @@ public class EdtCaseManagementClient : BaseClient, IEdtCaseManagementClient
 
 
     }
+
+    public async Task<DigitalEvidenceCaseModel?> GetCase(int caseId)
+    {
+        Serilog.Log.Information("Case requested by id {0}", caseId);
+
+        var result = await this.GetAsync<DigitalEvidenceCaseModel>($"case/id/{caseId}");
+
+        if (!result.IsSuccess)
+        {
+            return null;
+        }
+
+
+        return result.Value;
+
+
+    }
 }

@@ -1,3 +1,6 @@
+
+namespace jumwebapi.Kafka.Producer;
+
 using System.Globalization;
 using Confluent.Kafka;
 using IdentityModel.Client;
@@ -5,26 +8,32 @@ using jumwebapi.Infrastructure.Auth;
 using jumwebapi.Kafka.Producer.Interfaces;
 using Serilog;
 
-namespace jumwebapi.Kafka.Producer;
+
 public class KafkaProducer<TKey, TValue> : IDisposable, IKafkaProducer<TKey, TValue> where TValue : class
 {
-    private readonly IProducer<TKey, TValue> _producer;
+    private readonly IProducer<TKey, TValue> producer;
     private const string SUBJECT_CLAIM = "sub";
     private const string EXPIRY_CLAIM = "exp";
 
 
-    public KafkaProducer(ProducerConfig config)
+    public KafkaProducer(ProducerConfig config) => this.producer = new ProducerBuilder<TKey, TValue>(config).SetOAuthBearerTokenRefreshHandler(this.OauthTokenRefreshCallback).SetValueSerializer(new KafkaSerializer<TValue>()).Build();
+    public async Task<DeliveryResult<TKey, TValue>> ProduceAsync(string topic, TKey key, TValue value)
     {
-        _producer = new ProducerBuilder<TKey, TValue>(config).SetOAuthBearerTokenRefreshHandler(OauthTokenRefreshCallback).SetValueSerializer(new KafkaSerializer<TValue>()).Build();
+        var message = new Message<TKey, TValue> { Key = key, Value = value };
+
+        var response = await this.producer.ProduceAsync(topic, message);
+        Log.Information($"Producer response {topic} {response.Status} Partition: {response.Partition.Value}");
+        return response;
+
     }
-    public async Task ProduceAsync(string topic, TKey key, TValue value)
-    {
-        await _producer.ProduceAsync(topic, new Message<TKey, TValue> { Key = key, Value = value });
-    }
+
+
     public void Dispose()
     {
-        _producer.Flush();
-        _producer.Dispose();
+        this.producer.Flush();
+        this.producer.Dispose();
+        GC.SuppressFinalize(this);
+
     }
 
     private async void OauthTokenRefreshCallback(IClient client, string config)
@@ -32,7 +41,7 @@ public class KafkaProducer<TKey, TValue> : IDisposable, IKafkaProducer<TKey, TVa
         try
         {
 
-            var settingsFile = jumwebapiConfiguration.IsDevelopment() ? "appsettings.Development.json" : "appsettings.json";
+            var settingsFile = JumWebApiConfiguration.IsDevelopment() ? "appsettings.Development.json" : "appsettings.json";
 
 
             var clusterConfig = new ConfigurationBuilder()
@@ -47,7 +56,7 @@ public class KafkaProducer<TKey, TValue> : IDisposable, IKafkaProducer<TKey, TVa
             clientId ??= clusterConfig.GetValue<string>("KafkaCluster:SaslOauthbearerProducerClientId");
             tokenEndpoint ??= clusterConfig.GetValue<string>("KafkaCluster:SaslOauthbearerTokenEndpointUrl");
 
-            Log.Logger.Information("JUM Kafka Producer getting token {0} {1} {2}", tokenEndpoint, clientId, clientSecret);
+            Log.Logger.Debug("JUM Kafka Producer getting token {0} {1} {2}", tokenEndpoint, clientId, clientSecret);
             var accessTokenClient = new HttpClient();
             var accessToken = await accessTokenClient.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
             {
@@ -60,7 +69,7 @@ public class KafkaProducer<TKey, TValue> : IDisposable, IKafkaProducer<TKey, TVa
             var tokenDate = DateTimeOffset.FromUnixTimeSeconds(tokenTicks);
             var subject = GetTokenSubject(accessToken.AccessToken);
             var ms = tokenDate.ToUnixTimeMilliseconds();
-            Log.Logger.Information("Producer got token {0}", ms);
+            Log.Logger.Debug("Producer got token {0}", ms);
 
             client.OAuthBearerSetToken(accessToken.AccessToken, ms, subject);
         }

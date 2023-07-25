@@ -13,10 +13,13 @@ using Pidp.Infrastructure.HttpClients.Ldap;
 using Pidp.Infrastructure.HttpClients.Mail;
 using Pidp.Infrastructure.HttpClients.Plr;
 using Pidp.Kafka.Consumer;
-using Pidp.Kafka.Consumer.Handler;
-using Pidp.Kafka.Consumer.Model;
+using Pidp.Kafka.Consumer.DomainEventResponses;
+using Pidp.Kafka.Consumer.JustinUserChanges;
+using Pidp.Kafka.Consumer.Notifications;
+using Pidp.Kafka.Consumer.Responses;
 using Pidp.Kafka.Interfaces;
 using Pidp.Kafka.Producer;
+using Pidp.Models;
 
 public static class HttpClientSetup
 {
@@ -36,7 +39,14 @@ public static class HttpClientSetup
 
         services.AddHttpClientWithBaseAddress<ILdapClient, LdapClient>(config.LdapClient.Url);
         services.AddHttpClientWithBaseAddress<IEdtCaseManagementClient, EdtCaseManagementClient>(config.EdtCaseManagementClient.Url);
-        services.AddHttpClientWithBaseAddress<IJumClient, JumClient>(config.JumClient.Url);
+        services.AddHttpClientWithBaseAddress<IEdtDisclosureClient, EdtDisclosureClient>(config.EdtDisclosureClient.Url);
+
+        services.AddHttpClientWithBaseAddress<IJumClient, JumClient>(config.JumClient.Url).WithBearerToken(new KeycloakAdministrationClientCredentials
+        {
+            Address = config.Keycloak.TokenUrl,
+            ClientId = config.Keycloak.AdministrationClientId,
+            ClientSecret = config.Keycloak.AdministrationClientSecret
+        });
 
 
         services.AddHttpClientWithBaseAddress<IKeycloakAdministrationClient, KeycloakAdministrationClient>(config.Keycloak.AdministrationUrl)
@@ -95,19 +105,25 @@ public static class HttpClientSetup
             SaslOauthbearerClientSecret = config.KafkaCluster.SaslOauthbearerConsumerClientSecret,
             EnableAutoOffsetStore = false,
             ClientId = Dns.GetHostName(),
+            SessionTimeoutMs = 60000,
             BootstrapServers = config.KafkaCluster.BootstrapServers,
             SaslMechanism = SaslMechanism.OAuthBearer,
             SecurityProtocol = SecurityProtocol.SaslSsl,
-            HeartbeatIntervalMs = 60000
+            HeartbeatIntervalMs = 20000
         };
 
         services.AddSingleton(consumerConfig);
         services.AddSingleton(producerConfig);
-        services.AddTransient(typeof(IKafkaProducer<,>), typeof(KafkaProducer<,>));
+        services.AddSingleton(typeof(IKafkaProducer<,>), typeof(KafkaProducer<,>));
 
         services.AddScoped<IKafkaHandler<string, NotificationAckModel>, NotificationAckHandler>();
         services.AddSingleton(typeof(IKafkaConsumer<,>), typeof(KafkaConsumer<,>));
         services.AddHostedService<NotificationAckService>();
+        services.AddScoped<IKafkaHandler<string, JustinUserChangeEvent>, JustinUserChangeHandler>();
+        services.AddScoped<IKafkaHandler<string, GenericProcessStatusResponse>, DomainEventResponseHandler>();
+
+        services.AddHostedService<JustinUserChangeService>();
+        services.AddHostedService<DomainEventResponseService>();
 
         services.AddHostedService<DecomissionCaseAccessService>();
 

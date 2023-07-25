@@ -15,6 +15,24 @@ $theme-typography: mat.define-typography-config();
   padding-right: 1.75rem;
   padding-bottom: 1.5rem;
 
+  .order-icon {
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    position: absolute;
+    left: -20px;
+    top: -18px;
+    border: 4px solid;
+    text-align: center;
+    background-color: white;
+    border-color: inherit;
+    font-weight: bold;
+
+    &.success {
+      border-style: double;
+    }
+  }
+
   .mat-card-header {
     // mobile version
     // flex-direction: column;
@@ -139,7 +157,8 @@ $theme-typography: mat.define-typography-config();
 
 // Generate reuseable classes based on different
 // types of alerts
-$types: success, info, warn, danger, muted;
+$types: success, info, warn, danger, muted, greyed, completed, available,
+  pending;
 
 /**
  * @description

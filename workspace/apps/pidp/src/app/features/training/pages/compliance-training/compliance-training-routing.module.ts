@@ -8,7 +8,7 @@ const routes: Routes = [
     path: '',
     component: ComplianceTrainingPage,
     data: {
-      title: 'Provider Identity Portal',
+      title: 'Digital Identity Access Management',
       routes: {
         root: '../../',
       },

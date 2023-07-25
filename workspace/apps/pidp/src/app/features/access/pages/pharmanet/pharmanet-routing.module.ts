@@ -11,21 +11,21 @@ const routes: Routes = [
     path: PharmanetRoutes.SELF_DECLARATION,
     component: SelfDeclarationPage,
     data: {
-      title: 'Provider Identity Portal',
+      title: 'Digital Identity Access Management',
     },
   },
   {
     path: PharmanetRoutes.TERMS_OF_ACCESS,
     component: TermsOfAccessPage,
     data: {
-      title: 'Provider Identity Portal',
+      title: 'Digital Identity Access Management',
     },
   },
   {
     path: PharmanetRoutes.NEXT_STEPS,
     component: NextStepsPage,
     data: {
-      title: 'Provider Identity Portal',
+      title: 'Digital Identity Access Management',
     },
   },
   {

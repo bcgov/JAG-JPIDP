@@ -1,6 +1,7 @@
 namespace Pidp;
 
 using Pidp.Infrastructure.Auth;
+using Serilog;
 
 public class PidpConfiguration
 {
@@ -22,8 +23,13 @@ public class PidpConfiguration
     public JumClientConfiguration JumClient { get; set; } = new();
     public EdtClientConfiguration EdtClient { get; set; } = new EdtClientConfiguration();
     public EdtCaseManagementClientConfiguration EdtCaseManagementClient { get; set; } = new EdtCaseManagementClientConfiguration();
+    public EdtClientConfiguration EdtDisclosureClient { get; set; } = new EdtClientConfiguration();
 
+    public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
+    public CourtAccessConfiguration CourtAccess { get; set; } = new();
+    public VerifiableCredentialsConfiguration VerifiableCredentials { get; set; } = new VerifiableCredentialsConfiguration();
     public TelemeteryConfiguration Telemetry { get; set; } = new TelemeteryConfiguration();
+
 
     // ------- Configuration Objects -------
 
@@ -36,6 +42,13 @@ public class PidpConfiguration
     {
         public DecomissionCaseAccessService DecomissionCaseAccessService { get; set; } = new DecomissionCaseAccessService();
     }
+
+    public class SplunkConfiguration
+    {
+        public string Host { get; set; } = string.Empty;
+        public string CollectorToken { get; set; } = string.Empty;
+    }
+
     public class DecomissionCaseAccessService
     {
         public int PeriodicTimer { get; set; }
@@ -46,12 +59,23 @@ public class PidpConfiguration
         public string PidpDatabase { get; set; } = string.Empty;
     }
 
+    public class VerifiableCredentialsConfiguration
+    {
+        public string PresentedRequestId { get; set; } = string.Empty;
+        public string RequiredStatusCode { get; set; } = string.Empty;
+    }
+
     public class TelemeteryConfiguration
     {
         public string CollectorUrl { get; set; } = string.Empty;
         public string AzureConnectionString { get; set; } = string.Empty;
         public bool LogToConsole { get; set; }
 
+    }
+
+    public class CourtAccessConfiguration
+    {
+        public int PollSeconds { get; set; } = 600;
     }
 
     public class ChesClientConfiguration
@@ -85,9 +109,16 @@ public class PidpConfiguration
         public string ClientSecret { get; set; } = string.Empty;
         public string BootstrapServers { get; set; } = string.Empty;
         public string ConsumerTopicName { get; set; } = string.Empty;
+        public string IncomingChangeEventTopic { get; set; } = string.Empty;
         public string ProducerTopicName { get; set; } = string.Empty;
         public string CaseAccessRequestTopicName { get; set; } = string.Empty;
+        public string PersonCreationTopic { get; set; } = string.Empty;
+        public string DisclosureUserCreationTopic { get; set; } = string.Empty;
+        public string DisclosureUserModificationTopic { get; set; } = string.Empty;
+        public string ProcessResponseTopic { get; set; } = string.Empty;
+        public string UserAccountChangeTopicName { get; set; } = string.Empty;
         public string NotificationTopicName { get; set; } = string.Empty;
+        public string UserAccountChangeNotificationTopicName { get; set; } = string.Empty;
         public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientId { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientSecret { get; set; } = string.Empty;
@@ -96,8 +127,11 @@ public class PidpConfiguration
         public string SslCaLocation { get; set; } = string.Empty;
         public string SslCertificateLocation { get; set; } = string.Empty;
         public string SslKeyLocation { get; set; } = string.Empty;
+        public string CourtLocationAccessRequestTopic { get; set; } = string.Empty;
         public string Scope { get; set; } = "openid";
         public string ConsumerGroupId { get; set; } = "dems-notification-ack";
+        public string KafkaAdminClientId { get; set;} = string.Empty;
+        public string KafkaAdminClientSecret { get; set;} = string.Empty; 
 
     }
     public class JumClientConfiguration

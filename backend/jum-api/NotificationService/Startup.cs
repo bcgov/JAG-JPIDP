@@ -38,15 +38,22 @@ public class Startup
             //options.AddPolicy("Administrator", policy => policy.Requirements.Add(new RealmAccessRoleRequirement("administrator")));
         });
 
+        //services.AddDbContext<NotificationDbContext>(options => options
+        //    .UseSqlServer(config.ConnectionStrings.JumDatabase, sql => sql.UseNodaTime())
+        //    .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
+
+
         services.AddDbContext<NotificationDbContext>(options => options
-            .UseSqlServer(config.ConnectionStrings.JumDatabase, sql => sql.UseNodaTime())
+            .UseNpgsql(config.ConnectionStrings.NotificationDatabase, npg => npg.UseNodaTime())
             .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
 
-
+        //services.AddHealthChecks()
+        //        .AddCheck("liveliness", () => HealthCheckResult.Healthy())
+        //        .AddSqlServer(config.ConnectionStrings.JumDatabase, tags: new[] { "services" }).ForwardToPrometheus();
 
         services.AddHealthChecks()
-                .AddCheck("liveliness", () => HealthCheckResult.Healthy())
-                .AddSqlServer(config.ConnectionStrings.JumDatabase, tags: new[] { "services" }).ForwardToPrometheus();
+        .AddCheck("liveliness", () => HealthCheckResult.Healthy())
+        .AddNpgSql(config.ConnectionStrings.NotificationDatabase, tags: new[] { "services" }).ForwardToPrometheus();
 
         services.AddControllers();
         services.AddHttpClient();

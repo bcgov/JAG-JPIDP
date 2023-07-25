@@ -25,6 +25,7 @@ public class Index
         public List<LawSociety> LawSocieties { get; set; } = new();
         public List<CrownRegion> CrownRegions { get; set; } = new();
         public List<SubmittingAgency> SubmittingAgencies { get; set; } = new();
+
     }
 
     public class QueryHandler : IQueryHandler<Query, Model>
@@ -61,7 +62,6 @@ public class Index
                     .ToListAsync(),
                 SubmittingAgencies = await this.context.Set<SubmittingAgency>()
                     .ToListAsync()
-
             };
         }
     }

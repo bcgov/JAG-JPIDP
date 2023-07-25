@@ -1,5 +1,7 @@
 namespace Pidp.Infrastructure.HttpClients.Keycloak;
 
+using global::Keycloak.Net.Models.RealmsAdmin;
+
 public interface IKeycloakAdministrationClient
 {
     /// <summary>
@@ -21,14 +23,14 @@ public interface IKeycloakAdministrationClient
 
     /// <summary>
     /// Gets the Keycloak Client representation by ClientId.
-    /// Returns null if unccessful.
+    /// Returns null if unsuccessful.
     /// </summary>
     /// <param name="clientId"></param>
     Task<Client?> GetClient(string clientId);
 
     /// <summary>
     /// Gets the Keycloak Client Role representation by name.
-    /// Returns null if unccessful or if no roles of that name exist on the client.
+    /// Returns null if unsuccessful or if no roles of that name exist on the client.
     /// </summary>
     /// <param name="clientId"></param>
     /// <param name="roleName"></param>
@@ -36,14 +38,14 @@ public interface IKeycloakAdministrationClient
 
     /// <summary>
     /// Gets the Keycloak Role representation by name.
-    /// Returns null if unccessful.
+    /// Returns null if unsuccessful.
     /// </summary>
     /// <param name="roleName"></param>
     Task<Role?> GetRealmRole(string roleName);
 
     /// <summary>
     /// Gets the Keycloak User Representation for the user.
-    /// Returns null if unccessful.
+    /// Returns null if unsuccessful.
     /// </summary>
     /// <param name="userId"></param>
     Task<UserRepresentation?> GetUser(Guid userId);
@@ -72,4 +74,22 @@ public interface IKeycloakAdministrationClient
     /// <param name="updateAction"></param>
     Task<bool> UpdateUser(Guid userId, Action<UserRepresentation> updateAction);
     Task<bool> AddGrouptoUser(Guid userId, string groupName);
+
+
+    Task<bool> RemoveUserFromGroup(Guid userId, string groupName);
+
+    Task<List<Group>> GetUserGroups(Guid userId);
+
+    Task<List<Role>?> GetUserClientRoles(Guid userId, Guid clientId);
+
+    Task<Realm> GetRealm(string name);
+
+    Task<IdentityProvider> GetIdentityProvider(string name);
+
+    /// <summary>
+    /// Get Identity providers within realm
+    /// </summary>
+    /// <returns></returns>
+    Task<IEnumerable<IdentityProvider>> GetIdentityProviders();
+
 }

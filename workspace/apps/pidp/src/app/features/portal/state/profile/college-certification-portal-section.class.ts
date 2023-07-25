@@ -68,7 +68,7 @@ export class CollegeCertificationPortalSection implements IPortalSection {
           ? ProfileRoutes.COLLEGE_LICENCE_INFO
           : ProfileRoutes.COLLEGE_LICENCE_DECLARATION
       ),
-      disabled: statusCode === StatusCode.NOT_AVAILABLE,
+      disabled: statusCode === StatusCode.LOCKED,
     };
   }
 

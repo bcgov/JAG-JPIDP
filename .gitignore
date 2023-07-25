@@ -371,3 +371,4 @@ FodyWeavers.xsd
 # Dev settings
 **/appsettings.Development.json
 **/launchSettings.json
+/backend/jum-api/jumwebapi/appsettings.Development.json~Stashed changes

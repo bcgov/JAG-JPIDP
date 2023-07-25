@@ -1,12 +1,27 @@
 namespace Pidp.Features.Parties;
 
 using NodaTime;
+using Pidp.Extensions;
 using Pidp.Models;
 using Pidp.Models.Lookups;
 using Serilog;
 
 public partial class ProfileStatus
 {
+
+    public static bool PermitIDIRCaseManagement()
+    {
+        var permitIDIRCaseMgmt = Environment.GetEnvironmentVariable("PERMIT_IDIR_CASE_MANAGEMENT");
+        if (permitIDIRCaseMgmt != null && permitIDIRCaseMgmt.Equals("true", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     public partial class Model
     {
         public class AccessAdministrator : ProfileSection
@@ -18,7 +33,7 @@ public partial class ProfileStatus
 
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
-                if (!(profile.UserIsPhsa || profile.UserIsBcServicesCard))
+                if (!(profile.UserIsBcServicesCard))
                 {
                     this.StatusCode = StatusCode.Hidden;
                     return;
@@ -99,8 +114,12 @@ public partial class ProfileStatus
                 this.Phone = profile.Phone;
             }
 
-            // submitting ageny user details are locked
-            protected override void SetAlertsAndStatus(ProfileStatusDto profile) => this.StatusCode = profile.DemographicsEntered || profile.SubmittingAgency != null ? ( profile.SubmittingAgency != null ) ? StatusCode.Locked_Complete : StatusCode.Complete : StatusCode.Incomplete;
+            // submitting agency user details are locked
+            protected override void SetAlertsAndStatus(ProfileStatusDto profile)
+            {
+                this.StatusCode = profile.DemographicsEntered || profile.SubmittingAgency != null ?
+                    (profile.SubmittingAgency != null || profile.UserIsBcps) ? StatusCode.LockedComplete : StatusCode.Complete : StatusCode.Incomplete;
+            }
         }
 
         public class OrganizationDetails : ProfileSection
@@ -111,6 +130,7 @@ public partial class ProfileStatus
             public JusticeSectorCode? JusticeSectorCode { get; set; }
             public CorrectionServiceCode? CorrectionServiceCode { get; set; }
             public SubmittingAgency? SubmittingAgency { get; set; }
+            public bool LawSociety { get; set; }
             public string? EmployeeIdentifier { get; set; }
             public string? orgName { get; set; }
             public string? CorrectionService { get; set; }
@@ -124,22 +144,52 @@ public partial class ProfileStatus
                 this.SubmittingAgency = profile.SubmittingAgency;
                 this.orgName = profile.OrgName;
                 this.CorrectionService = profile.CorrectionService;
+                this.LawSociety = profile.UserIsInLawSociety;
             }
 
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
-                // LJW - remove access to Idir for BCPS - re-enable for testing if necessary
-                Log.Logger.Information("*** IDIR Currently permits BCPS access for testing ***");
-                if (!(profile.UserIsPhsa || profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsIdir || profile.UserIsVicPd))
+                if (!(profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsInSubmittingAgency || profile.UserIsInLawSociety))
                 {
                     this.StatusCode = StatusCode.Hidden;
                     return;
                 }
 
                 // user is from an authenticated agency - no need to enter organization details or view/change them
+                if (profile.UserIsInLawSociety)
+                {
+
+                    var hasError = false;
+                    var BCServicesCardLastName = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("BCPerID_last_name"));
+                    var BCServicesCardFirstName = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("BCPerID_first_name"));
+                    var familyName = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("family_name"));
+                    var givenName = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("given_name"));
+
+                    if ( familyName == null || givenName == null || BCServicesCardLastName == null || BCServicesCardLastName.Value != familyName.Value || BCServicesCardFirstName == null || BCServicesCardFirstName.Value != givenName.Value)
+                    {
+                        this.Alerts.Add(Alert.PersonVerificationError);
+                        this.StatusCode = StatusCode.Error;
+                    }
+
+                    var standing = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("membership_status_code"));
+                    if (standing == null || standing.Value != "PRAC")
+                    {
+                        this.Alerts.Add(Alert.LawyerStatusError);
+                        this.StatusCode = StatusCode.Error;
+                    }
+                    else
+                    {
+                        // check user info is valid
+                        this.StatusCode = StatusCode.LockedComplete;
+                    }
+
+                    return;
+
+                }
+
                 if (profile.UserIsInSubmittingAgency)
                 {
-                    this.StatusCode = StatusCode.Locked_Complete;
+                    this.StatusCode = StatusCode.LockedComplete;
                     return;
                 }
 
@@ -154,12 +204,16 @@ public partial class ProfileStatus
                     return;
                 }
 
-                if (!profile.IsJumUser && !profile.UserIsInSubmittingAgency)
+
+                if (!profile.IsJumUser && !profile.UserIsInSubmittingAgency && profile.OrganizationDetailEntered)
                 {
                     this.Alerts.Add(Alert.JumValidationError);
                     this.StatusCode = StatusCode.Error;
                     return;
                 }
+
+
+
 
                 this.StatusCode = StatusCode.Complete;
             }
@@ -173,10 +227,41 @@ public partial class ProfileStatus
 
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
-                if (!(profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsIdir || profile.UserIsInSubmittingAgency))
+                if (!(profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsInSubmittingAgency || profile.UserIsInLawSociety))
                 {
                     this.StatusCode = StatusCode.Hidden;
                     return;
+                }
+
+                // if a lawyer then they'll have two access requests pending (disclosure and core)
+                if (profile.UserIsInLawSociety)
+                {
+                    var requests = profile.AccessRequestStatus.Distinct().ToList();
+                    this.StatusCode = StatusCode.Available;
+                    if (requests != null && requests.Count > 1)
+                    {
+                        foreach (var request in requests)
+                        {
+                            // if any request is errored then this is an error status
+                            if (request.Equals(StatusCode.Error.ToString(), StringComparison.Ordinal))
+                            {
+                                Log.Information($"One or more events resulted in an error for {profile.User.GetUserId()}");
+                                this.StatusCode = StatusCode.Error;
+                                return;
+                            }
+                            if (request.Equals(StatusCode.Pending.ToString(), StringComparison.Ordinal))
+                            {
+                                this.StatusCode = StatusCode.Pending;
+                                return;
+                            }
+                        }
+                    }
+                    else if (requests != null && requests.Count > 0)
+                    {
+                        this.StatusCode = Enum.Parse<StatusCode>(requests.First());
+                    }
+                    return;
+
                 }
 
                 if (profile.AccessRequestStatus.Contains(AccessRequestStatus.Pending))
@@ -191,16 +276,22 @@ public partial class ProfileStatus
                     return;
                 }
 
-                if (!profile.DemographicsEntered
-                    || !profile.CollegeCertificationEntered
-                    || !profile.OrganizationDetailEntered
-                    || !profile.PlrStanding.HasGoodStanding)
+                if (!profile.IsJumUser && !profile.UserIsInSubmittingAgency && !profile.UserIsInLawSociety && profile.OrganizationDetailEntered)
                 {
-                    this.StatusCode = StatusCode.Locked;
+                    // cannot continue as prior step is incomplete
+                    this.StatusCode = StatusCode.PriorStepRequired;
                     return;
                 }
 
-                this.StatusCode = StatusCode.Incomplete;
+                if (!profile.UserIsInLawSociety && !profile.UserIsInSubmittingAgency && !profile.DemographicsEntered
+                    || !profile.OrganizationDetailEntered
+                    )
+                {
+                    this.StatusCode = StatusCode.PriorStepRequired;
+                    return;
+                }
+
+                this.StatusCode = StatusCode.Available;
             }
         }
         public class SubmittingAgencyCaseManagement : ProfileSection
@@ -211,25 +302,48 @@ public partial class ProfileStatus
 
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
-                if (!profile.UserIsVicPd)
+                if (!profile.UserIsInSubmittingAgency)
                 {
                     this.StatusCode = StatusCode.Hidden;
                     return;
                 }
 
-                //if (profile.AccessRequestStatus.Contains(AccessRequestStatus.Pending))
-                //{
-                //    this.StatusCode = StatusCode.Pending;
-                //    return;
-                //}
-
                 if (!profile.DemographicsEntered
-                    || !profile.CollegeCertificationEntered
                     || !profile.CompletedEnrolments.Contains(AccessTypeCode.DigitalEvidence)
                     || !profile.OrganizationDetailEntered
                     || !profile.PlrStanding.HasGoodStanding)
                 {
                     this.StatusCode = StatusCode.Locked;
+                    return;
+                }
+            }
+        }
+
+        public class DefenseAndDutyCounsel : ProfileSection
+        {
+            internal override string SectionName => "digitalEvidenceCounsel";
+
+            public DefenseAndDutyCounsel(ProfileStatusDto profile) : base(profile) { }
+
+            protected override void SetAlertsAndStatus(ProfileStatusDto profile)
+            {
+
+                if (profile.UserIsDutyCounsel)
+                {
+                    if (profile.CompletedEnrolments.Contains(AccessTypeCode.DigitalEvidence))
+                    {
+                        this.StatusCode = StatusCode.Available;
+                        return;
+                    }
+                    else
+                    {
+                        this.StatusCode = StatusCode.PriorStepRequired;
+                        return;
+                    }
+                }
+                else
+                {
+                    this.StatusCode = StatusCode.Hidden;
                     return;
                 }
             }
@@ -243,9 +357,22 @@ public partial class ProfileStatus
 
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
-                // todo - this should be for SubmittingAgencies only
+                // special testing case where IDIR users could view case management and request access as an SA
+                if (profile.UserIsIdirCaseManagement)
+                {
+                    if (profile.CompletedEnrolments.Contains(AccessTypeCode.DigitalEvidence))
+                    {
+                        this.StatusCode = StatusCode.Complete;
+                        return;
+                    }
+                    else
+                    {
+                        this.StatusCode = StatusCode.Locked;
+                        return;
+                    }
+                }
 
-                if (!( profile.UserIsInSubmittingAgency || profile.UserIsIdir))
+                if (!profile.UserIsInSubmittingAgency)
                 {
                     this.StatusCode = StatusCode.Hidden;
                     return;
@@ -259,7 +386,6 @@ public partial class ProfileStatus
                 }
 
                 if (!profile.DemographicsEntered
-                    || !profile.CollegeCertificationEntered
                     || !profile.OrganizationDetailEntered
                     || !profile.PlrStanding.HasGoodStanding)
                 {
@@ -412,7 +538,7 @@ public partial class ProfileStatus
 
             public SAEforms(ProfileStatusDto profile) : base(profile)
             {
-                this.IncorrectLicenceType = profile.PlrStanding.HasGoodStanding
+                this.IncorrectLicenceType = profile.PlrStanding == null || profile.PlrStanding.HasGoodStanding
                     && !profile.PlrStanding
                         .Excluding(AccessRequests.SAEforms.ExcludedIdentifierTypes)
                         .HasGoodStanding;
@@ -476,4 +602,6 @@ public partial class ProfileStatus
             }
         }
     }
+
+
 }

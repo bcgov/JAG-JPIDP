@@ -1,0 +1,12 @@
+@use 'palette' as palette;
+
+table.mat-table {
+  width: 100%;
+  td.centered-column {
+    text-align: center;
+  }
+}
+mat-icon.warning-icon {
+  font-size: 16px;
+  color: darkorange;
+}

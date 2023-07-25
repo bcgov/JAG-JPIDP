@@ -33,6 +33,8 @@ export class DashboardHeaderComponent {
    * Username displayed in the dashboard header.
    */
   @Input() public username?: string;
+
+  @Input() public email?: string;
   /**
    * @description
    * Event emission of mobile menu action.
