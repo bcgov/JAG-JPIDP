@@ -3,17 +3,14 @@ namespace edt.service.Kafka;
 using System.Net;
 using Confluent.Kafka;
 using edt.casemanagement;
-using edt.casemanagement.HttpClients.Services.EdtCore;
 using edt.casemanagement.Kafka;
 using edt.casemanagement.Kafka.Interfaces;
 using edt.casemanagement.ServiceEvents;
 using edt.casemanagement.ServiceEvents.CaseManagement;
 using edt.casemanagement.ServiceEvents.CaseManagement.Handler;
 using edt.casemanagement.ServiceEvents.CaseManagement.Models;
-using edt.casemanagement.ServiceEvents.CaseManagement.Models;
 
 using EdtService.Extensions;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 public static class ConsumerSetup
 {

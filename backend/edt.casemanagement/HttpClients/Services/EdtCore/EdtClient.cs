@@ -4,6 +4,7 @@ using System.Diagnostics.Metrics;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using AutoMapper;
+using Common.Models.EDT;
 using DomainResults.Common;
 using edt.casemanagement.Exceptions;
 using edt.casemanagement.Features.Cases;
@@ -76,7 +77,7 @@ public class EdtClient : BaseClient, IEdtClient
     /// <exception cref="EdtServiceException"></exception>
     public async Task<string> GetVersion()
     {
-        var result = await this.GetAsync<EdtVersion?>($"api/v1/version");
+        var result = await this.GetAsync<Common.Models.EDT.EdtVersion?>($"api/v1/version");
 
         if (!result.IsSuccess)
         {

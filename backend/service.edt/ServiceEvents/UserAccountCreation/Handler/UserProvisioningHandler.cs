@@ -90,7 +90,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
 
             if (result.successful)
             {
-                //add to tell message has been proccessed by consumer
+                //add to tell message has been processed by consumer
                 await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
 
                 await this.context.SaveChangesAsync();
@@ -207,6 +207,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
 
                 }
             }
+            
         }
         catch (Exception ex)
         {

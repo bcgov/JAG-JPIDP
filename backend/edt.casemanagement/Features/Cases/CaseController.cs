@@ -1,4 +1,6 @@
 namespace edt.casemanagement.Features.Cases;
+
+using Common.Models.EDT;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Prometheus;

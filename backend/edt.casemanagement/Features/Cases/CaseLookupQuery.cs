@@ -1,5 +1,6 @@
 namespace edt.casemanagement.Features.Cases;
 
+using Common.Models.EDT;
 using edt.casemanagement.HttpClients.Services.EdtCore;
 using MediatR;
 

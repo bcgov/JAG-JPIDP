@@ -1,4 +1,4 @@
-namespace edt.service.Kafka.Model;
+namespace DIAM.Common.Models;
 
 using Newtonsoft.Json;
 

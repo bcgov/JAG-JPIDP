@@ -1,16 +1,19 @@
-namespace edt.service.ServiceEvents;
+namespace Common.Kafka;
 
+using Common.Configuration;
+using Common.Constants;
+using Common.Constants.Telemetry;
+using Common.Kafka.Serializer;
 using Confluent.Kafka;
-using edt.service.Infrastructure.Telemetry;
-using edt.service.Kafka.Interfaces;
-using EdtService.Kafka;
+
 using IdentityModel.Client;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Context.Propagation;
 using Serilog;
 using System.Diagnostics;
 using System.Globalization;
 
-public class KafkaProducer<TKey, TValue> : KafkaOauthTokenRefreshHandler, IDisposable, IKafkaProducer<TKey, TValue> where TValue : class
+public class KafkaProducer<TKey, TValue> : IDisposable, IKafkaProducer<TKey, TValue> where TValue : class
 {
     private readonly IProducer<TKey, TValue> producer;
     private const string EXPIRY_CLAIM = "exp";
@@ -40,7 +43,9 @@ public class KafkaProducer<TKey, TValue> : KafkaOauthTokenRefreshHandler, IDispo
             currentActivity?.SetTag("kafka.topic", topic);
             currentActivity?.SetTag("kafka.key", key);
 
-            return await this.producer.ProduceAsync(topic, message);
+            var response = await this.producer.ProduceAsync(topic, message);
+            Log.Information($"Producer response status: {response.Status} partition: {response.Partition} topic:{response.Topic}");
+            return response;
         }
         finally
         {
@@ -60,7 +65,7 @@ public class KafkaProducer<TKey, TValue> : KafkaOauthTokenRefreshHandler, IDispo
         try
         {
 
-            var settingsFile = EdtServiceConfiguration.IsDevelopment() ? "appsettings.Development.json" : "appsettings.json";
+            var settingsFile = BaseKafkafiguration.IsDevelopment() ? "appsettings.Development.json" : "appsettings.json";
 
 
             var clusterConfig = new ConfigurationBuilder()
@@ -75,7 +80,7 @@ public class KafkaProducer<TKey, TValue> : KafkaOauthTokenRefreshHandler, IDispo
             clientId ??= clusterConfig.GetValue<string>("KafkaCluster:SaslOauthbearerProducerClientId");
             tokenEndpoint ??= clusterConfig.GetValue<string>("KafkaCluster:SaslOauthbearerTokenEndpointUrl");
 
-            Log.Logger.Information("Pidp Kafka Producer getting token {0} {1}", tokenEndpoint, clientId);
+            Log.Logger.Debug("Pidp Kafka Producer getting token {0} {1}", tokenEndpoint, clientId);
             var accessTokenClient = new HttpClient();
 
             Log.Logger.Debug("Producer getting token {0}", tokenEndpoint);
@@ -93,7 +98,7 @@ public class KafkaProducer<TKey, TValue> : KafkaOauthTokenRefreshHandler, IDispo
             var tokenDate = DateTimeOffset.FromUnixTimeSeconds(tokenTicks);
             var timeSpan = new DateTime() - tokenDate;
             var ms = tokenDate.ToUnixTimeMilliseconds();
-            Log.Logger.Information("Producer got token {0}", ms);
+            Log.Logger.Debug("Producer got token {0}", ms);
 
             client.OAuthBearerSetToken(accessToken.AccessToken, ms, subject);
         }

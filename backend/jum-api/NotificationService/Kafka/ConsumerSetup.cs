@@ -59,6 +59,7 @@ public static class ConsumerSetup
             SaslOauthbearerClientSecret = config.KafkaCluster.SaslOauthbearerConsumerClientSecret,
             EnableAutoOffsetStore = false,
             AutoCommitIntervalMs = 4000,
+            MaxPollIntervalMs = 600000,
             BootstrapServers = config.KafkaCluster.BootstrapServers,
             SaslMechanism = SaslMechanism.OAuthBearer,
             SecurityProtocol = SecurityProtocol.SaslSsl

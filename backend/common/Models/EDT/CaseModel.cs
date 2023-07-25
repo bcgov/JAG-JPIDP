@@ -1,24 +1,24 @@
-namespace edt.casemanagement.Features.Cases;
+namespace Common.Models.EDT;
 
-public class CaseModelx
+public class CaseModel
 {
 
     public string Name { get; set; } = string.Empty;
     public int Id { get; set; }
 
-    public string Status { get; set; }
+    public string Status { get; set; } = string.Empty;
     public string Key { get; set; } = string.Empty;
 
     public string Description { get; set; } = string.Empty;
 
-    public List<Fieldx> Fields { get; set; }
+    public List<Field>? Fields { get; set; }
 
 }
-public class Fieldx
+public class Field
 
 {
     public int Id { get; set; }
-    public string Name { get; set; }
-    public object Value { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public object Value { get; set; } = string.Empty;
     public bool Display { get; set; } = true;
 }

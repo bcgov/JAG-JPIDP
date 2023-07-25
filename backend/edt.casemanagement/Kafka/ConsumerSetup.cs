@@ -8,7 +8,6 @@ using edt.casemanagement.ServiceEvents.CaseManagement;
 using edt.casemanagement.ServiceEvents.CaseManagement.Handler;
 using edt.casemanagement.ServiceEvents.CaseManagement.Models;
 using EdtService.Extensions;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 public static class ConsumerSetup
 {

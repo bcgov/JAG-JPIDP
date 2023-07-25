@@ -5,8 +5,6 @@ using edt.casemanagement.Infrastructure.Telemetry;
 using edt.casemanagement.Kafka.Interfaces;
 using EdtService.Kafka;
 using IdentityModel.Client;
-using Microsoft.Identity.Client;
-using OpenTelemetry;
 using OpenTelemetry.Context.Propagation;
 using Serilog;
 using System.Diagnostics;
