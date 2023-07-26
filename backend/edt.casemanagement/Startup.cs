@@ -227,8 +227,7 @@ public class Startup
         this.Configuration.Bind(config);
         services.AddSingleton(config);
 
-        Log.Logger.Information("### EDT Case Management Service Version:{0} ###", Assembly.GetExecutingAssembly().GetName().Version);
-        Log.Logger.Debug("### Edt Service Configuration:{0} ###", System.Text.Json.JsonSerializer.Serialize(config));
+        Log.Logger.Information($"### EDT Case Management Version:{Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion} ###");
 
         return config;
     }
