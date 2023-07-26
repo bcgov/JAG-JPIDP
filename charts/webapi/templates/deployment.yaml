@@ -47,6 +47,11 @@ spec:
           env:
             - name: PlrClient__Url
               value: http://{{ $release }}-plr-intake:8080/api
+            - name: EDTDisclosureClient__Url
+              valueFrom:
+                secretKeyRef:
+                  name: pidp-edt-disclosure-api
+                  key: url
             - name: EdtCaseManagementClient__Url
               valueFrom:
                 secretKeyRef:
@@ -110,11 +115,6 @@ spec:
                 secretKeyRef:
                   name: kafkaconfig-jpidp
                   key: KafkaCluster__ConsumerClientId
-            - name: KafkaCluster__NotificationTopicName
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-jpidp
-                  key: KafkaCluster__NotificationTopicName
             - name: KafkaCluster__CaseAccessRequestTopicName
               valueFrom:
                 secretKeyRef:
@@ -130,7 +130,7 @@ spec:
                 secretKeyRef:
                   name: kafkaconfig-jpidp
                   key: KafkaCluster__ProducerTopicName
-    
+ 
             - name: KafkaCluster__SaslOauthbearerConsumerClientSecret
               valueFrom:
                 secretKeyRef:
@@ -162,6 +162,16 @@ spec:
                 secretKeyRef:
                   name: kafkaconfig-jpidp
                   key: KafkaCluster__CourtLocationAccessRequestTopic
+            - name: KafkaCluster__DisclosureUserCreationTopic
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-jpidp
+                  key: KafkaCluster__DisclosureUserCreationTopic
+            - name: KafkaCluster__PersonCreationTopic
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-jpidp
+                  key: KafkaCluster__PersonCreationTopic
             - name: Telemetry__CollectorUrl
               valueFrom: 
                 secretKeyRef:
@@ -179,6 +189,16 @@ spec:
                 secretKeyRef:
                   name: pidp-court-access
                   key: pollSeconds
+            - name: SplunkConfig__CollectorToken
+              valueFrom: 
+                secretKeyRef:
+                  name: splunk-config
+                  key: SplunkConfig__CollectorToken
+            - name: SplunkConfig__Host
+              valueFrom: 
+                secretKeyRef:
+                  name: splunk-config
+                  key: SplunkConfig__Host
           volumeMounts:
             - name: kafka-truststore
               mountPath: "/opt/kafka/certificates"

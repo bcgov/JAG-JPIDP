@@ -42,7 +42,7 @@ export class GetSupportComponent implements OnInit {
   private setupSupport(): void {
     this.providedSupport = [
       {
-        name: 'Provider Identity Portal',
+        name: 'Digital Identity Access Management Application',
         email: this.config.emails.providerIdentitySupport,
       },
       // {

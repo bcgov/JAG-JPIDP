@@ -1,0 +1,36 @@
+@use 'palette' as palette;
+
+.full-width {
+  width: 100%;
+}
+
+.form-field-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+mat-icon {
+  color: #999;
+  padding-top: 0.5rem;
+
+  &.active {
+    color: palette.theme-palette(green);
+  }
+
+  &.inactive {
+    color: palette.theme-palette(red);
+  }
+}
+
+.valid {
+  color: palette.theme-palette(green);
+}
+
+.invalid {
+  color: palette.theme-palette(red);
+}
+
+.mat-row:hover {
+  background-color: wheat;
+}

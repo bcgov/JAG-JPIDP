@@ -82,21 +82,35 @@ spec:
                 secretKeyRef:
                   name: jum-kafka-config-notification
                   key: KafkaCluster__NotificationTopic
-            - name: DB_HOST
-              value: jum-database
-            - name: SA_PASSWORD
-              value:
-            - name: SA_USER
-              value: admin
-            - name: DATABASE
-              value: JumDB
-            - name: ConnectionStrings__JumDatabase
+            - name: database-password
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "notification.fullname" . }}-database
+                  key: database-password
+            - name: database-username
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "notification.fullname" . }}-database
+                  key: database-username
+            - name: DATABASE_NAME
+              value: notification
+            - name: ConnectionStrings__NotificationDatabase
               valueFrom:
                 configMapKeyRef:
-                  name: jum-api-database
-                  key: CONNECTION_STRINGS_JUM
+                  name: notification-api-database
+                  key: CONNECTION_STRINGS_DB    
             - name: ApplicationUrl
               value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"
+            - name: SplunkConfig__CollectorToken
+              valueFrom: 
+                secretKeyRef:
+                  name: splunk-config
+                  key: SplunkConfig__CollectorToken
+            - name: SplunkConfig__Host
+              valueFrom: 
+                secretKeyRef:
+                  name: splunk-config
+                  key: SplunkConfig__Host
           volumeMounts:
             - name: kafka-truststore
               mountPath: "/opt/kafka/certificates"

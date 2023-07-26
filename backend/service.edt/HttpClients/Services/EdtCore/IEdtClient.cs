@@ -1,11 +1,15 @@
 namespace edt.service.HttpClients.Services.EdtCore;
 
 using edt.service.Kafka.Model;
+using edt.service.ServiceEvents.UserAccountModification.Models;
 
 public interface IEdtClient
 {
     Task<UserModificationEvent> CreateUser(EdtUserProvisioningModel accessRequest);
     Task<UserModificationEvent> UpdateUser(EdtUserProvisioningModel accessRequest, EdtUserDto previousRequest, bool fromTombstone);
+    Task<UserModificationEvent> CreatePerson(EdtPersonProvisioningModel accessRequest);
+    Task<UserModificationEvent> ModifyPerson(EdtPersonProvisioningModel accessRequest, EdtPersonDto currentUser);
+    Task<UserModificationEvent> ModifyPerson(IncomingUserModification modificationInfo);
 
     Task<UserModificationEvent> UpdateUserDetails(EdtUserDto userDetails);
 
@@ -13,6 +17,7 @@ public interface IEdtClient
     Task<int> GetOuGroupId(string regionName);
 
     Task<EdtUserDto?> GetUser(string userKey);
+    Task<EdtPersonDto?> GetPerson(string userKey);
 
     /// <summary>
     /// Get the version of EDT (also acts as a simple ping test)

@@ -32,6 +32,7 @@ export const environment: AppEnvironment = {
   authRealm: 'DEMSDEV',
   environmentName: EnvironmentName.LOCAL,
   applicationUrl: 'http://localhost:4200',
+  demsImportURL: 'https://dems.dev.jag.gov.bc.ca/Edt.aspx#/import/',
   emails: {
     providerIdentitySupport: 'jpsprovideridentityportal@gov.bc.ca',
     specialAuthorityEformsSupport: specialAuthorityEformsSupportEmail,

@@ -90,6 +90,12 @@ public class CourtAccessRequest
                         // see if existing request falls within new request timeframe
                         foreach (var req in existingRequests)
                         {
+                            if (req.RequestStatus is CourtLocationAccessStatus.Error or CourtLocationAccessStatus.Deleted)
+                            {
+                                // ignore errored or deleted so they can be re-added
+                                continue;
+                            }
+
                             if (command.ValidFrom == req.ValidFrom && command.ValidUntil == req.ValidUntil)
                             {
                                 Serilog.Log.Information($"Duplicate request - {req.RequestId} ignoring");
@@ -115,14 +121,20 @@ public class CourtAccessRequest
                         }
 
                         // if request is for today then we'll want to send an event immediately
-
+                        var newRequest = false;
                         if (courtLocationRequest != null)
                         {
                             Serilog.Log.Information($"Updating request {courtLocationRequest.RequestId}");
+                            // request has been moved to today from a future date
+                            if (command.ValidFrom.DayOfYear == today.DayOfYear && courtLocationRequest.RequestStatus == CourtLocationAccessStatus.SubmittedFuture )
+                            {
+                                courtLocationRequest.RequestStatus = CourtLocationAccessStatus.Submitted;
+                                newRequest = true;
+                            }
                         }
                         else
                         {
-
+                            newRequest = true;
                             courtLocationRequest = await this.courtAccessService.CreateCourtLocationRequest(command, location);
                             var duration = courtLocationRequest.ValidUntil - courtLocationRequest.ValidFrom;
 
@@ -131,19 +143,23 @@ public class CourtAccessRequest
 
                         }
 
-                        await this.context.SaveChangesAsync();
-                        await trx.CommitAsync();
 
-                        if (command.ValidFrom.DayOfYear == today.DayOfYear)
+
+                        if (command.ValidFrom.DayOfYear == today.DayOfYear && newRequest)
                         {
                             Serilog.Log.Information($"Request {courtLocationRequest.RequestId} is for today - adding to event topic");
                             var response = this.courtAccessService.CreateAddCourtAccessDomainEvent(courtLocationRequest);
 
                         }
+
+                        await this.context.SaveChangesAsync();
+                        await trx.CommitAsync();
                     }
                     else
                     {
                         this.logger.LogInvalidCourtLocationRequest(dto.Jpdid, command.CourtLocation.Code, "Unknown location code");
+                        await trx.RollbackAsync();
+
                     }
 
 
@@ -168,7 +184,7 @@ public class CourtAccessRequest
                 .Where(party => party.Id == command.PartyId)
                 .Select(party => new PartyDto
                 {
-                    AlreadyEnroled = party.AccessRequests.Any(request => request.AccessTypeCode == AccessTypeCode.DigitalEvidence),
+                    AlreadyEnroled = party.AccessRequests.Any(request => request.AccessTypeCode == AccessTypeCode.DigitalEvidence || request.AccessTypeCode == AccessTypeCode.DigitalEvidenceDefence),
                     Cpn = party.Cpn,
                     Jpdid = party.Jpdid,
                     UserId = party.UserId,

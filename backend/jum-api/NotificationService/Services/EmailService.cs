@@ -1,11 +1,7 @@
 namespace NotificationService.Services;
 
-using Azure;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 using NodaTime;
-using NodaTime.Extensions;
 using NotificationService.Data;
 using NotificationService.Exceptions;
 using NotificationService.HttpClients.Mail;
@@ -13,10 +9,7 @@ using NotificationService.Models;
 using NotificationService.NotificationEvents.UserProvisioning.Models;
 using Prometheus;
 using Serilog;
-using System.Collections.Generic;
 using System.Linq.Expressions;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
 
 public class EmailService : IEmailService
 {
@@ -63,6 +56,7 @@ public class EmailService : IEmailService
     public async Task<Guid?> SendAsync(Notification notification)
     {
 
+
         var domainEventEMail = await this.ConvertNotificationToDomainEventEmail(notification);
 
         if (!NotificationServiceConfiguration.IsProduction())
@@ -81,6 +75,17 @@ public class EmailService : IEmailService
              */
             var emailLogId = await this.CreateEmailLog(domainEventEMail, SendType.Ches, notification.NotificationId);
             Log.Information($"EmailLog entry [{emailLogId}] created for [{notification.NotificationId}]");
+
+
+            var fakeEmailSendStr = Environment.GetEnvironmentVariable("EMAIL_NO_SEND_MODE");
+            if (fakeEmailSendStr != null && fakeEmailSendStr.Equals("true", StringComparison.OrdinalIgnoreCase))
+            {
+                Log.Logger.Warning("*** EMAIL_NO_SEND_MODE=true - emails will not actually be sent ***");
+                var fakeMsgId = Guid.NewGuid();
+                await this.UpdateEmailLogSentResponseId(notification.NotificationId, fakeMsgId);
+
+                return fakeMsgId;
+            }
 
             try
             {
@@ -113,7 +118,7 @@ public class EmailService : IEmailService
         // Fall back to SMTP client
         //await this.CreateEmailLog(email, SendType.Smtp);
         //await this.smtpEmailClient.SendAsync(email);
-        return Guid.Empty;
+        return notification.NotificationId;
     }
 
     private async Task<DomainEventEmail> ConvertNotificationToDomainEventEmail(Notification notification)
@@ -169,7 +174,7 @@ public class EmailService : IEmailService
         if (emailLogs != null)
         {
             emailLogs.SentResponseId = responseId;
-            emailLogs.LatestStatus = ChesStatus.Sent;
+            emailLogs.LatestStatus = ChesStatus.Accepted;
             emailLogs.DateSent = this.clock.GetCurrentInstant();
         }
 
@@ -195,7 +200,7 @@ public class EmailService : IEmailService
         Expression<Func<EmailLog, bool>> predicate = log =>
             log.SendType == SendType.Ches
             && log.NotificationId != null
-            && log.LatestStatus != ChesStatus.Completed;
+            && log.LatestStatus != ChesStatus.Complete;
 
         var totalCount = await this.context.EmailLogs
             .Where(predicate)

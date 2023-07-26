@@ -5,9 +5,14 @@ using AutoMapper.QueryableExtensions;
 using FluentValidation;
 using HybridModelBinding;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json.Serialization;
 
 using Pidp.Data;
+using Pidp.Infrastructure.HttpClients.Keycloak;
+using Pidp.Kafka.Interfaces;
+using Pidp.Models;
+using Newtonsoft.Json;
+
+using Pidp.Helpers.Serializers;
 
 public class Demographics
 {
@@ -41,7 +46,7 @@ public class Demographics
         {
             this.RuleFor(x => x.Id).GreaterThan(0);
             this.RuleFor(x => x.Email).NotEmpty().EmailAddress(); // TODO Custom email validation?
-            this.RuleFor(x => x.Phone).NotEmpty();
+           // this.RuleFor(x => x.Phone).NotEmpty();
         }
     }
 
@@ -68,13 +73,25 @@ public class Demographics
     public class CommandHandler : ICommandHandler<Command>
     {
         private readonly PidpDbContext context;
+        private readonly PidpConfiguration configuration;
+        private readonly IKeycloakAdministrationClient administrationClient;
+        private readonly IKafkaProducer<string, UserChangeModel> producer;
 
-        public CommandHandler(PidpDbContext context) => this.context = context;
+
+        public CommandHandler(PidpDbContext context, IKafkaProducer<string, UserChangeModel> producer, PidpConfiguration configuration, IKeycloakAdministrationClient administrationClient) {
+            this.context = context;
+            this.administrationClient = administrationClient;
+            this.producer = producer;
+            this.configuration = configuration;
+
+        }
 
         public async Task HandleAsync(Command command)
         {
-            var party = await this.context.Parties
+            var party = await this.context.Parties.Include(party => party.OrgainizationDetail).Include( org => org.OrgainizationDetail.Organization)
                 .SingleAsync(party => party.Id == command.Id);
+
+            var currentEmail = party.Email ?? "";
 
             party.PreferredFirstName = command.PreferredFirstName;
             party.PreferredMiddleName = command.PreferredMiddleName;
@@ -83,6 +100,69 @@ public class Demographics
             party.Phone = command.Phone;
 
             await this.context.SaveChangesAsync();
+
+            // if user has access requests then we'll send a status update too
+            var accessRequests = this.context.AccessRequests.Where(req => req.Party == party).Any();
+
+            if (currentEmail != command.Email)
+            {
+                Serilog.Log.Information($"Updating {party.Id} email to {command.Email} from {currentEmail}");
+                var messageId = Guid.NewGuid().ToString();
+           
+                var userInfo = await this.administrationClient.GetUser(party.UserId);
+                if (userInfo != null)
+                {
+                    var changeModel = new UserChangeModel
+                    {
+                        ChangeDateTime = DateTime.Now,
+                        Key = party.Jpdid,
+                        Organization = party.OrgainizationDetail?.Organization.Name,
+                        IdpType = party.OrgainizationDetail.Organization.IdpHint,
+                        UserID = party.UserId.ToString()
+
+                    };
+
+                    changeModel.SingleChangeTypes.Add(ChangeType.EMAIL, new SingleChangeType(currentEmail, command.Email));
+
+                    // log change
+                    var changeEntry = this.context.UserAccountChanges.Add(new UserAccountChange
+                    {
+                        Party = party,
+                        ChangeData = JsonConvert.SerializeObject(changeModel, new JsonSerializerSettings
+                        {
+                            ContractResolver = ShouldSerializeContractResolver.Instance
+                        }),
+                        Reason = "User initiated change",
+                        TraceId = messageId,
+                        Status = "Pending"
+
+                    });
+
+                    await this.context.SaveChangesAsync();
+                    changeModel.ChangeId = changeEntry.Entity.Id;
+                    userInfo.Email = command.Email;
+                    await this.administrationClient.UpdateUser(party.UserId, userInfo);
+
+                    if (accessRequests)
+                    {
+                        // publish change event
+                        var publishCoreResponse = await this.producer.ProduceAsync(this.configuration.KafkaCluster.UserAccountChangeTopicName, messageId, changeModel);
+                        if (publishCoreResponse.Status == Confluent.Kafka.PersistenceStatus.NotPersisted)
+                        {
+                            Serilog.Log.Warning("Failed to send update request for user modification to core");
+                        }
+                        var publishDisclosureResponse = await this.producer.ProduceAsync(this.configuration.KafkaCluster.DisclosureUserModificationTopic, messageId, changeModel);
+                        if (publishDisclosureResponse.Status == Confluent.Kafka.PersistenceStatus.NotPersisted)
+                        {
+                            Serilog.Log.Warning("Failed to send update request for user modification to disclosure");
+                        }
+                    }
+                }
+                else
+                {
+                    Serilog.Log.Error($"No user was found in Keycloak for UID {party.UserId} ID: {party.Id}");
+                }
+            }
         }
     }
 }

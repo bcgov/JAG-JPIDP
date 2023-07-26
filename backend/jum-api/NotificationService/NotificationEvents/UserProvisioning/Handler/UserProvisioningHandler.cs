@@ -34,7 +34,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, Notification>
     }
     public async Task<Task> HandleAsync(string consumerName, string key, Notification value)
     {
-        //check wheather this message has been processed before
+        //check whether this message has been processed before
         Guid? sendResponseId = Guid.Empty;
         consumeCount.Inc();
 
@@ -43,7 +43,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, Notification>
 
         Serilog.Log.Information($"Checking if message {key} has already been processed by {consumerName}");
 
-        if (await this.context.HasBeenProcessed(key, consumerName))
+        if (await this.context.HasBeenProcessed(key))
         {
             Serilog.Log.Information($"Message {key} has already been processed");
             duplicateConsumeCount.Inc();
@@ -51,7 +51,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, Notification>
         }
 
         //check whether the message tag has already been processed via ches
-        if (await this.context.EmailLogs.AnyAsync(emailLog => emailLog.NotificationId == value.NotificationId && emailLog.LatestStatus == ChesStatus.Completed))
+        if (await this.context.EmailLogs.AnyAsync(emailLog => emailLog.NotificationId == value.NotificationId && emailLog.LatestStatus == ChesStatus.Complete))
         {
             return Task.CompletedTask;
         }
@@ -62,8 +62,9 @@ public class UserProvisioningHandler : IKafkaHandler<string, Notification>
             sendResponseId = await this.SendConfirmationEmailAsync(value);
         }
 
+        // email will be flagged as accepted once submitted to CHES
         var emailLogs = await this.context.EmailLogs
-             .Where(emailLog => emailLog.NotificationId.Equals(value.NotificationId) && emailLog.LatestStatus != ChesStatus.Completed)
+             .Where(emailLog => emailLog.NotificationId.Equals(value.NotificationId) && emailLog.LatestStatus == ChesStatus.Accepted)
              .ToListAsync();
 
         using var trx = this.context.Database.BeginTransaction();
@@ -82,29 +83,43 @@ public class UserProvisioningHandler : IKafkaHandler<string, Notification>
 
                 await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
 
-                //save notification ref in notification table database
-                await this.context.Notifications.AddAsync(new NotificationAckModel
+                var existingNotification = this.context.Notifications.Where(notification => notification.NotificationId == value.NotificationId).FirstOrDefault();
+
+                if (existingNotification != null)
                 {
-                    PartId = value.EventData.ContainsKey("partyId") ? value.EventData["partyId"] : "",
-                    NotificationId = value.NotificationId,
-                    DomainEvent = value.DomainEvent,
-                    EmailAddress = value.To!,
-                    Status = ChesStatus.Completed,
-                    EventData = value.EventData != null ? JsonConvert.SerializeObject(value.EventData) : "",
-                    Consumer = consumerName,
-                    AccessRequestId = value.EventData.ContainsKey("accessRequestId") ? Convert.ToInt32(value.EventData["accessRequestId"]) : -1
-                });
+                    Serilog.Log.Information($"Notification already exists for {value.NotificationId} - {value.To}");
+
+                }
+                else
+                {
+                    //save notification ref in notification table database
+                    await this.context.Notifications.AddAsync(new NotificationAckModel
+                    {
+                        PartId = value.EventData.ContainsKey("partyId") ? value.EventData["partyId"] : "",
+                        NotificationId = value.NotificationId,
+                        DomainEvent = value.DomainEvent,
+                        EmailAddress = value.To!,
+                        Status = "complete",
+                        EventData = value.EventData != null ? JsonConvert.SerializeObject(value.EventData) : "",
+                        Consumer = consumerName,
+                        AccessRequestId = value.EventData.ContainsKey("accessRequestId") ? Convert.ToInt32(value.EventData["accessRequestId"]) : -1
+                    });
+                }
 
                 await this.context.SaveChangesAsync();
 
-                //After successful operation, we can produce message for other service's consumption
+                var partId = value.EventData.ContainsKey("partId") ? value.EventData["partId"] : value.EventData.ContainsKey("partyId") ? value.EventData["partyId"] : "";
 
+                //After successful operation, we can produce message for other service's consumption
+                // if its a non-tombstone account then we'll set the status to completed-pending-finalization
+                var ackStatus = value.DomainEvent.Equals("digitalevidence-bcps-usercreation-complete") ? "Completed-Pending-Case-Allocation" : "complete";
                 await this.producer.ProduceAsync(this.configuration.KafkaCluster.AckTopicName, key: value.NotificationId.ToString()!, new NotificationAckModel
                 {
-                    PartId = !string.IsNullOrEmpty(value.EventData["partyId"]) ? value.EventData["partyId"] : "",
+                    PartId = partId,
                     NotificationId = value.NotificationId,
                     EmailAddress = value.To!,
-                    Status = ChesStatus.Completed,
+                    Status = ackStatus,
+                    DomainEvent = value.DomainEvent,
                     AccessRequestId = value.EventData.ContainsKey("accessRequestId") ? Convert.ToInt32(value.EventData["accessRequestId"]) : -1
                 });
 
@@ -121,11 +136,8 @@ public class UserProvisioningHandler : IKafkaHandler<string, Notification>
             return Task.FromException(new NotificationException(string.Join(",", ex.Message)));
         }
 
-        return Task.FromException(new NotificationException());
+        return Task.CompletedTask;
     }
-    private async Task<Guid?> SendConfirmationEmailAsync(Notification model)
-    {
-      return await emailService.SendAsync(model);
-    }
+    private async Task<Guid?> SendConfirmationEmailAsync(Notification model) => await this.emailService.SendAsync(model);
 }
 

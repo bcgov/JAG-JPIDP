@@ -32,7 +32,7 @@ public static class AgencyRequestStatus
 {
     public const string Accepted = "Accepted";
     public const string Cancelled = "Cancelled";
-    public const string Completed = "Completed";
+    public const string Complete = "Complete";
     public const string Failed = "Failed";
     public const string Pending = "Pending";
     public const string Queued = "In Progress";

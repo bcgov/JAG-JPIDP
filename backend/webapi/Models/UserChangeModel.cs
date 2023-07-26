@@ -7,7 +7,9 @@ public class UserChangeModel
 {
     public string UserID { get; set; } = string.Empty;
 
-    public int ChangeId { get; set; }   
+    public int ChangeId { get; set; }
+    public string Organization { get; set; } = string.Empty;
+    public string IdpType { get; set; } = string.Empty;
 
     public string Key { get; set; } = string.Empty;
     public DateTime ChangeDateTime { get; set; } = DateTime.Now;
@@ -18,6 +20,8 @@ public class UserChangeModel
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
     public Dictionary<ChangeType, BooleanChangeType> BooleanChangeTypes { get; set; } = new Dictionary<ChangeType, BooleanChangeType>();
     public bool IsAccountDeactivated() => this.BooleanChangeTypes.ContainsKey(ChangeType.ACTIVATION) && this.BooleanChangeTypes[ChangeType.ACTIVATION].Equals(false) || this.SingleChangeTypes.ContainsKey(ChangeType.EMAIL);
+
+    public bool ChangesDetected() => this.BooleanChangeTypes.Count > 0 || this.SingleChangeTypes.Count > 0 || this.ListChangeTypes.Count > 0;
 }
 
 public enum ChangeType

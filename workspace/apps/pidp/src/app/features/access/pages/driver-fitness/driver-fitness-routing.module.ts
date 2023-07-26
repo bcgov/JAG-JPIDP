@@ -12,7 +12,7 @@ const routes: Routes = [
       driverFitnessStatusCode: DriverFitnessResolver,
     },
     data: {
-      title: 'JPS Provider Identity Portal',
+      title: 'JPS Digital Identity Access Management',
       routes: {
         root: '../../',
       },

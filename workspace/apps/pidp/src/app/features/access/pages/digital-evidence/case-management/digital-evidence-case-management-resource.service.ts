@@ -51,6 +51,10 @@ export class DigitalEvidenceCaseManagementResource {
     });
   }
 
+  public getCaseInfo(caseID: number): Observable<DigitalEvidenceCase> {
+    return this.apiResource.get(`evidence-case-management/case/${caseID}`, {});
+  }
+
   public findCase(
     agencyCode: string,
     caseName: string

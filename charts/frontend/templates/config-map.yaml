@@ -18,8 +18,9 @@ data:
   environment.json: |-
     {
       "environmentName": "{{ .Values.settings.environmentName }}",
-      "apiEndpoint": "https://{{ $domain }}/api/v1",
-      "applicationUrl": "https://{{ $domain }}",
+      "apiEndpoint": "https://{{ .Values.global.vanityURL }}/api/v1",
+      "applicationUrl": "https://{{ .Values.global.vanityURL }}",
+      "demsImportURL": "{{ .Values.settings.edtURL }}/Edt.aspx#/import/",
       "keycloakConfig": {
         "config": {
           "url": "{{ .Values.settings.keycloak.url }}",

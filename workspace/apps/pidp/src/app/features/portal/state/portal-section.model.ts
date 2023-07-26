@@ -32,6 +32,11 @@ export interface IPortalSection {
    * Plain text paragraph summary of the card.
    */
   description: string;
+
+  /**
+   * Order in which processing is required
+   */
+  order?: number;
   /**
    * @description
    * List of properites that replace the

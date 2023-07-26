@@ -1,5 +1,7 @@
 namespace Pidp.Infrastructure.HttpClients.Keycloak;
 
+using global::Keycloak.Net.Models.RealmsAdmin;
+
 public interface IKeycloakAdministrationClient
 {
     /// <summary>
@@ -73,10 +75,21 @@ public interface IKeycloakAdministrationClient
     Task<bool> UpdateUser(Guid userId, Action<UserRepresentation> updateAction);
     Task<bool> AddGrouptoUser(Guid userId, string groupName);
 
+
     Task<bool> RemoveUserFromGroup(Guid userId, string groupName);
 
     Task<List<Group>> GetUserGroups(Guid userId);
 
     Task<List<Role>?> GetUserClientRoles(Guid userId, Guid clientId);
+
+    Task<Realm> GetRealm(string name);
+
+    Task<IdentityProvider> GetIdentityProvider(string name);
+
+    /// <summary>
+    /// Get Identity providers within realm
+    /// </summary>
+    /// <returns></returns>
+    Task<IEnumerable<IdentityProvider>> GetIdentityProviders();
 
 }

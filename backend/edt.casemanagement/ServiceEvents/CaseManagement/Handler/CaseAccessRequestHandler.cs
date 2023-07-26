@@ -99,7 +99,7 @@ public class CaseAccessRequestHandler : IKafkaHandler<string, SubAgencyDomainEve
 
                                 var producerResponse = await this.producer.ProduceAsync(this.configuration.KafkaCluster.AckTopicName, key: uniqueKey, new NotificationAckModel
                                 {
-                                    Status = "Completed",
+                                    Status = "Complete",
                                     AccessRequestId = caseEvent.RequestId,
                                     PartId = partId,
                                     EmailAddress = userInfo.Email,

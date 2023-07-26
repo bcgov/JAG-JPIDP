@@ -12,7 +12,7 @@ const routes: Routes = [
       uciStatusCode: UciResolver,
     },
     data: {
-      title: 'Provider Identity Portal',
+      title: 'Digital Identity Access Management',
       routes: {
         root: '../../',
       },

@@ -23,9 +23,11 @@ public class PidpConfiguration
     public JumClientConfiguration JumClient { get; set; } = new();
     public EdtClientConfiguration EdtClient { get; set; } = new EdtClientConfiguration();
     public EdtCaseManagementClientConfiguration EdtCaseManagementClient { get; set; } = new EdtCaseManagementClientConfiguration();
-    public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
-    public CourtAccessConfiguration CourtAccess { get; set; } = new();  
+    public EdtClientConfiguration EdtDisclosureClient { get; set; } = new EdtClientConfiguration();
 
+    public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
+    public CourtAccessConfiguration CourtAccess { get; set; } = new();
+    public VerifiableCredentialsConfiguration VerifiableCredentials { get; set; } = new VerifiableCredentialsConfiguration();
     public TelemeteryConfiguration Telemetry { get; set; } = new TelemeteryConfiguration();
 
 
@@ -55,6 +57,12 @@ public class PidpConfiguration
     public class ConnectionStringConfiguration
     {
         public string PidpDatabase { get; set; } = string.Empty;
+    }
+
+    public class VerifiableCredentialsConfiguration
+    {
+        public string PresentedRequestId { get; set; } = string.Empty;
+        public string RequiredStatusCode { get; set; } = string.Empty;
     }
 
     public class TelemeteryConfiguration
@@ -104,7 +112,10 @@ public class PidpConfiguration
         public string IncomingChangeEventTopic { get; set; } = string.Empty;
         public string ProducerTopicName { get; set; } = string.Empty;
         public string CaseAccessRequestTopicName { get; set; } = string.Empty;
-        public string ProcessResponseTopic { get; set;} = string.Empty;
+        public string PersonCreationTopic { get; set; } = string.Empty;
+        public string DisclosureUserCreationTopic { get; set; } = string.Empty;
+        public string DisclosureUserModificationTopic { get; set; } = string.Empty;
+        public string ProcessResponseTopic { get; set; } = string.Empty;
         public string UserAccountChangeTopicName { get; set; } = string.Empty;
         public string NotificationTopicName { get; set; } = string.Empty;
         public string UserAccountChangeNotificationTopicName { get; set; } = string.Empty;
@@ -116,9 +127,11 @@ public class PidpConfiguration
         public string SslCaLocation { get; set; } = string.Empty;
         public string SslCertificateLocation { get; set; } = string.Empty;
         public string SslKeyLocation { get; set; } = string.Empty;
-        public string CourtLocationAccessRequestTopic { get; set;  } = string.Empty;
+        public string CourtLocationAccessRequestTopic { get; set; } = string.Empty;
         public string Scope { get; set; } = "openid";
         public string ConsumerGroupId { get; set; } = "dems-notification-ack";
+        public string KafkaAdminClientId { get; set;} = string.Empty;
+        public string KafkaAdminClientSecret { get; set;} = string.Empty; 
 
     }
     public class JumClientConfiguration

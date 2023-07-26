@@ -1,7 +1,7 @@
 <ui-page [formGroup]="formState.form">
   <ui-page-header>{{ title }}</ui-page-header>
   <ui-page-section>
-    <ui-page-section-subheader icon="assignment" heading="Digital Evidence and Disclosure Duty Case Management">
+    <ui-page-section-subheader icon="assignment" heading="Digital Evidence and Disclosure Duty Case Access">
       <ng-container uiPageSectionSubheaderDesc>
         Request access to courts and cases for duration of duty.
       </ng-container>
@@ -18,7 +18,8 @@
               {{ location.name }}
             </mat-option>
           </mat-autocomplete>
-          <mat-icon matSuffix (click)="clearLocation()">delete_outline</mat-icon>
+          <mat-icon matSuffix (click)="clearLocation()" *ngIf="this.formState.courtLocation.valid"
+            matTooltip="Clear input">delete_outline</mat-icon>
         </mat-form-field>
       </div>
       <div class="row">
@@ -29,7 +30,7 @@
             <input matStartDate formControlName="dateFrom" placeholder="Start Date" (click)="picker.open()">
             <input matEndDate formControlName="dateTo" placeholder="End Date" (click)="picker.open()">
           </mat-date-range-input>
-          <mat-hint>DD MMM – DD MMM</mat-hint>
+          <mat-hint>DD MMM YYYY – DD MMM YYYY</mat-hint>
           <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
           <mat-date-range-picker #picker></mat-date-range-picker>
         </mat-form-field>
@@ -82,7 +83,8 @@
             <ng-container matColumnDef="requestStatus">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
               <td *matCellDef="let request" mat-cell>{{ request.requestStatus }}
-
+                <mat-icon class="warning-icon" matTooltip="{{request.details}}"
+                  *ngIf="request.requestStatus === 'Error'">error</mat-icon>
               </td>
             </ng-container>
             <ng-container matColumnDef="action">

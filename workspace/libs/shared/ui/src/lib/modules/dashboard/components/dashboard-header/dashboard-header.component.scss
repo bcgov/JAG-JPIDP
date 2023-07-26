@@ -15,9 +15,19 @@
     @include dashboard-header-theme(white, theme-palette(blue));
   }
 
+  .userinfo {
+    line-height: initial;
+  }
+
   .username {
     font-size: 0.8rem;
-    padding-top: 0.1rem;
+    float: right;
+    clear: right;
+  }
+  .email {
+    float: right;
+    clear: right;
+    font-size: 0.8rem;
   }
 
   .logout {

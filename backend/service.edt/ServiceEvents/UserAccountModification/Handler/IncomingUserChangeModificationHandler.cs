@@ -16,10 +16,6 @@ using NodaTime;
 public class IncomingUserChangeModificationHandler : IKafkaHandler<string, IncomingUserModification>
 {
     private readonly IKafkaProducer<string, Notification> producer;
-    private readonly IKafkaProducer<string, NotificationAckModel> ackProducer;
-
-    private readonly IKafkaProducer<string, EdtUserProvisioningModel> retryProducer;
-    private readonly IKafkaProducer<string, UserModificationEvent> userModificationProducer;
     private readonly IKafkaProducer<string, GenericProcessStatusResponse> responseProducer;
 
     private readonly EdtServiceConfiguration configuration;
@@ -31,24 +27,19 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
 
     public IncomingUserChangeModificationHandler(
         IKafkaProducer<string, Notification> producer,
-          IKafkaProducer<string, NotificationAckModel> ackProducer,
-                    IKafkaProducer<string, GenericProcessStatusResponse> responseProducer,
-
-    IKafkaProducer<string, UserModificationEvent> userModificationProducer,
+        IKafkaProducer<string, GenericProcessStatusResponse> responseProducer,
+        IKafkaProducer<string, UserModificationEvent> userModificationProducer,
         EdtServiceConfiguration configuration,
         IEdtClient edtClient,
         EdtDataStoreDbContext context,
         IKafkaProducer<string, EdtUserProvisioningModel> retryProducer, ILogger logger)
     {
         this.producer = producer;
-        this.ackProducer = ackProducer;
         this.responseProducer = responseProducer;
-        this.userModificationProducer = userModificationProducer;
         this.configuration = configuration;
         this.context = context;
         this.logger = logger;
         this.edtClient = edtClient;
-        this.retryProducer = retryProducer;
     }
 
     public async Task<Task> HandleAsync(string consumerName, string key, IncomingUserModification incomingUserModification)
@@ -56,6 +47,24 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
 
         Serilog.Log.Information($"Message {key} received on topic {consumerName} for {incomingUserModification.UserID} {incomingUserModification.Key}");
 
+
+        if (incomingUserModification.IdpType == "verified")
+        {
+            // we'll only permit email changes for verified credentials users (TBD how we handle name changes)
+            await this.edtClient.ModifyPerson(incomingUserModification);
+        }
+        else
+        {
+            return await this.HandleBCPSUserChange(consumerName, key, incomingUserModification);
+        }
+
+        return Task.CompletedTask;
+
+    }
+
+
+    private async Task<Task> HandleBCPSUserChange(string consumerName, string key, IncomingUserModification incomingUserModification)
+    {
         var userInfo = await this.edtClient.GetUser(incomingUserModification.Key);
 
         if (userInfo == null)
@@ -84,7 +93,7 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
         {
 
             domainEvent = "digitalevidence-bcps-userupdate-deactivated";
-            Serilog.Log.Information($"Deactiviating account for {incomingUserModification.Key}");
+            Serilog.Log.Information($"Deactivating account for {incomingUserModification.Key}");
 
             var disabledOk = await this.edtClient.DisableAccount(incomingUserModification.Key);
 
@@ -104,9 +113,8 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
         else
         {
 
-            if (incomingUserModification.SingleChangeTypes.ContainsKey(ChangeType.ACTIVATION))
+            if (incomingUserModification.IsAccountActivated())
             {
-                // must be an activation request
                 var responseOk = await this.edtClient.EnableAccount(incomingUserModification.Key);
                 Serilog.Log.Information($"Account for participant {incomingUserModification.Key} has been activated");
                 userModificationEvent.eventType = UserModificationEvent.UserEvent.Enable;
@@ -146,11 +154,7 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
 
                 var changesMade = await this.edtClient.UpdateUserAssignedGroups(incomingUserModification.Key, newRegions, removedRegions);
 
-                // if user we deactivated then re-activate
-                if (userInfo.IsActive == false)
-                {
-                    // TODO - do we re-activate in this case?
-                }
+               
             }
         }
 
@@ -180,10 +184,7 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
 
 
         return Task.CompletedTask;
-
-
     }
-
 
     public Task<Task> HandleRetryAsync(string consumerName, string key, IncomingUserModification value, int retryCount, string topicName)
     {

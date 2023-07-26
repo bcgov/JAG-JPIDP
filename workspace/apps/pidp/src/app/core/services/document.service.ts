@@ -36,7 +36,7 @@ export class DocumentService {
     this.documents = [
       {
         type: DocumentType.PIDP_COLLECTION_NOTICE,
-        title: 'PIdP Collection Notice',
+        title: 'DIAM Collection Notice',
       },
       {
         type: DocumentType.SA_EFORMS_COLLECTION_NOTICE,
@@ -132,7 +132,7 @@ export class DocumentService {
 
   public getPIdPCollectionNotice(): string {
     return `
-      The JPS Provider Identity Portal collects personal information for the purposes of verification and access
+      The Digital Identity Access Management Portal collects personal information for the purposes of verification and access
       to participating court systems. This is collected by the Ministry of Attorney General under sections 26(c) and
       27(1)(b) of the Freedom of Information and Protection of Privacy Act. Should you have any questions
       about the collection of this personal information, contact

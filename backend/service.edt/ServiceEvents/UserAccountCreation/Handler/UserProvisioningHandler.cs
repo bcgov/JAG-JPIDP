@@ -8,8 +8,7 @@ using edt.service.Kafka;
 using edt.service.Kafka.Interfaces;
 using edt.service.Kafka.Model;
 using edt.service.ServiceEvents.UserAccountCreation.Models;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using edt.service.ServiceEvents.UserAccountModification.Models;
 using Microsoft.Extensions.Logging;
 using Prometheus;
 using static edt.service.EdtServiceConfiguration;
@@ -31,13 +30,13 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
 
     public UserProvisioningHandler(
         IKafkaProducer<string, Notification> producer,
-          IKafkaProducer<string, NotificationAckModel> ackProducer,
-
-    IKafkaProducer<string, UserModificationEvent> userModificationProducer,
+        IKafkaProducer<string, NotificationAckModel> ackProducer,
+        IKafkaProducer<string, UserModificationEvent> userModificationProducer,
         EdtServiceConfiguration configuration,
         IEdtClient edtClient,
         EdtDataStoreDbContext context,
-        IKafkaProducer<string, EdtUserProvisioningModel> retryProducer, ILogger logger)
+        IKafkaProducer<string, EdtUserProvisioningModel> retryProducer,
+        ILogger logger)
     {
         this.producer = producer;
         this.ackProducer = ackProducer;
@@ -53,7 +52,9 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
     {
 
         // check this message is for us
-        if (!(accessRequestModel.SystemName.Equals("DEMS", StringComparison.Ordinal) || accessRequestModel.SystemName.Equals("DigitalEvidence", StringComparison.Ordinal) || accessRequestModel.SystemName.Equals("DigitalEvidenceCaseManagement", StringComparison.Ordinal)))
+        if (accessRequestModel.SystemName != null && !(accessRequestModel.SystemName.Equals("DEMS", StringComparison.Ordinal)
+            || accessRequestModel.SystemName.Equals("DigitalEvidence", StringComparison.Ordinal)
+            || accessRequestModel.SystemName.Equals("DigitalEvidenceCaseManagement", StringComparison.Ordinal)))
         {
             Serilog.Log.Logger.Information($"Ignoring message {key} for system {accessRequestModel.SystemName} as we only handle DEMS requests");
             return Task.CompletedTask;
@@ -75,7 +76,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
                 //await trx.RollbackAsync();
                 return Task.CompletedTask;
             }
-            ///check weather edt service api is available before making any http request
+            ///check whether edt service api is available before making any http request
             ///
             /// call version endpoint via get
             ///
@@ -94,6 +95,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
 
                 await this.context.SaveChangesAsync();
 
+                // submitting agency users(e.g. police) that have limited DEMS access
                 if (result.submittingAgencyUser)
                 {
                     Serilog.Log.Information($"User {result.partId} was for submitting agency - publishing event change only");
@@ -119,12 +121,14 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
                             EventData = eventData,
                         });
 
-
+                        // we'll flag it as completed-provisioning as the account is really not fully complete
+                        // at this stage. Once the ISL service sends us a message that the user also has all cases assigned then we'll send a final
+                        // email stating such to the user
                         await this.ackProducer.ProduceAsync(this.configuration.KafkaCluster.AckTopicName, key: key, new NotificationAckModel
                         {
                             Subject = NotificationSubject.AccessRequest,
                             AccessRequestId = accessRequestModel.AccessRequestId,
-                            Status = "Completed"
+                            Status = "Complete"
                         });
 
                         await trx.CommitAsync();
@@ -137,6 +141,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
                         await trx.RollbackAsync();
                     }
                 }
+                // non submitting agency users
                 else
                 {
 
@@ -160,6 +165,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
 
                         EventData = eventData,
                     });
+
 
                     if (string.IsNullOrEmpty(this.configuration.SchemaRegistry.Url))
                     {
@@ -466,7 +472,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
 
     }
 }
-public static partial class UserProvisioningHandlerLoggingExtensions
+public static partial class DefenceUserProvisioningHandlerLoggingExtensions
 {
     [LoggerMessage(1, LogLevel.Warning, "Cannot provisioned user with partId {partId} and request Id {accessrequestId}. Published event key {accessrequestId} of {fromTopic} record to {topic} topic for retrial")]
     public static partial void LogUserAccessPublishError(this ILogger logger, string? partId, string accessrequestId, string fromTopic, string topic);

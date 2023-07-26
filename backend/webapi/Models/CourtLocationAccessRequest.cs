@@ -24,12 +24,14 @@ public class CourtLocationAccessRequest : BaseAuditable
     public DateTime ValidFrom { get; set; }
     [Required]
     public DateTime ValidUntil { get; set; }
+    public string Details { get; set; } = string.Empty;
+
 }
 public static class CourtLocationAccessStatus
 {
     public const string Cancelled = "Cancelled";
-    public const string Completed = "Completed";
-    public const string Failed = "Failed";
+    public const string Complete = "Complete";
+    public const string Error = "Error";
     public const string Pending = "Pending";
     public const string Queued = "In Progress";
     public const string Submitted = "Submitted";

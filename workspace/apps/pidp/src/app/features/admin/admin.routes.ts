@@ -3,7 +3,9 @@ export class AdminRoutes {
 
   public static PARTIES = 'parties';
   public static PARTY = 'party';
-  public static IDP = "IDP";
+  public static IDP = 'IDP';
+  public static SUBMITTING_AGENCY: 'submitting-agency';
+  public static COURT_LOCATION: 'court-location';
 
   /**
    * @description

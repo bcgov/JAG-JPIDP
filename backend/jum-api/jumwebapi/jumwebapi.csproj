@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>b2b3aeca-3282-4224-bc2c-ae504c17e682</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -23,6 +24,8 @@
 
   <ItemGroup>
     <!-- <PackageReference Include="AspNetCore.HealthChecks.SqlServer" Version="6.0.2" /> -->
+    <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="6.0.1" />
+
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="11.0.0" />
     <PackageReference Include="Confluent.Kafka" Version="1.9.2" />
     <PackageReference Include="DomainResult" Version="2.0.0" />
@@ -48,6 +51,8 @@
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.7" />
     <!-- <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.7" /> -->
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.3" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime" Version="6.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.7">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

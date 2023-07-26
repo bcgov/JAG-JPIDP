@@ -37,8 +37,8 @@ export class AdminDashboardComponent implements IDashboard {
       .pipe(map((token) => token?.name ?? ''));
     this.headerConfig = { theme: 'dark', allowMobileToggle: false };
     this.brandConfig = {
-      imgSrc: '/assets/images/pidp-logo-white.svg',
-      imgAlt: 'Provider Identity Portal Logo',
+      imgSrc: '/assets/images/diam-logo-small.svg',
+      imgAlt: 'Digital Identity Access Management',
     };
     this.showMenuItemIcons = true;
     this.responsiveMenuItems = true;

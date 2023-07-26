@@ -2,6 +2,7 @@ namespace edt.disclosure.Data;
 
 using edt.disclosure.Models;
 using edt.disclosure.ServiceEvents.Models;
+using edt.disclosure.ServiceEvents.UserAccountCreation.Models;
 using Microsoft.EntityFrameworkCore;
 using NodaTime;
 
@@ -10,7 +11,7 @@ public class DisclosureDataStoreDbContext : DbContext
     private readonly IClock clock;
 
     public DisclosureDataStoreDbContext(DbContextOptions<DisclosureDataStoreDbContext> options, IClock clock) : base(options) => this.clock = clock;
-
+    public DbSet<IdempotentConsumer> IdempotentConsumers { get; set; } = default!;
     public DbSet<CourtLocationRequest> CourtLocationRequests { get; set; } = default!;
 
 
@@ -60,6 +61,19 @@ public class DisclosureDataStoreDbContext : DbContext
             }
         }
     }
+
+    public async Task IdempotentConsumer(string messageId, string consumer, Instant consumeDate)
+    {
+        await this.IdempotentConsumers.AddAsync(new IdempotentConsumer
+        {
+            MessageId = messageId,
+            Consumer = consumer,
+            ConsumeDate = consumeDate
+        });
+        await this.SaveChangesAsync();
+    }
+
+    public async Task<bool> HasBeenProcessed(string messageId, string consumer) => await this.IdempotentConsumers.AnyAsync(x => x.MessageId == messageId && x.Consumer == consumer);
 
 
 }

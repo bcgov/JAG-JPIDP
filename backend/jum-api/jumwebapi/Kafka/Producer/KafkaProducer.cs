@@ -22,7 +22,7 @@ public class KafkaProducer<TKey, TValue> : IDisposable, IKafkaProducer<TKey, TVa
         var message = new Message<TKey, TValue> { Key = key, Value = value };
 
         var response = await this.producer.ProduceAsync(topic, message);
-        Log.Information($"Producer response {response}");
+        Log.Information($"Producer response {topic} {response.Status} Partition: {response.Partition.Value}");
         return response;
 
     }

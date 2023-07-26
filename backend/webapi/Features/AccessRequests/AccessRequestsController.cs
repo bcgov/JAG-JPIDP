@@ -25,13 +25,6 @@ public class AccessRequestsController : PidpControllerBase
         => await this.AuthorizePartyBeforeHandleAsync(query.PartyId, handler, query)
             .ToActionResultOfT();
 
-    //[HttpGet("{requestId}/digital-evidence-case-manangement")]
-    //[Authorize(Policy = Policies.AdminAuthentication)]
-    //[ProducesResponseType(StatusCodes.Status200OK)]
-    //[ProducesResponseType(StatusCodes.Status400BadRequest)]
-    //public async Task<ActionResult<List<DigitalEvidenceSubAgency.Model>>> GetSubAgencyRequests([FromServices] IQueryHandler<DigitalEvidenceSubAgency.Query, List<DigitalEvidenceSubAgency.Model>> handler)
-    //=> await handler.HandleAsync(new DigitalEvidenceSubAgency.Query());
-
     [HttpPost("driver-fitness")]
     [Authorize(Policy = Policies.BcscAuthentication)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -49,94 +42,89 @@ public class AccessRequestsController : PidpControllerBase
                                                               [FromBody] DigitalEvidence.Command command)
     => await this.AuthorizePartyBeforeHandleAsync(command.PartyId, handler, command)
         .ToActionResult();
-    //    [HttpPost("digital-evidence-case-manangement")]
-    //    [Authorize(Policy = Policies.SubAgencyIdentityProvider)]
-    //    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    //    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    //    public async Task<IActionResult> CreateDigitalEvidenceSubAgencyEnrolment([FromServices] ICommandHandler<DigitalEvidenceSubAgency.Command, IDomainResult> handler,
-    //                                                          [FromBody] DigitalEvidenceSubAgency.Command command)
-    //=> await this.AuthorizePartyBeforeHandleAsync(command.PartyId, handler, command)
-    //    .ToActionResult();
-    //    [HttpPut("{requestId}/digital-evidence-case-manangement")]
-    //    [Authorize(Policy = Policies.SubAgencyIdentityProvider)]
-    //    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    //    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    //    public async Task<IActionResult> UpdateDigitalEvidenceSubAgencyEnrolment([FromServices] ICommandHandler<DigitalEvidenceSubAgency.Command, IDomainResult> handler,
-    //                                                      [FromBody] DigitalEvidenceSubAgency.Command command)
-    //=> await this.AuthorizePartyBeforeHandleAsync(command.PartyId, handler, command)
-    //.ToActionResult();
-    [HttpPost("hcim-account-transfer")]
-    [Authorize(Policy = Policies.AnyPartyIdentityProvider)]
+
+    [HttpPost("digital-evidence-defence")]
+    [Authorize(Policy = Policies.AllDemsIdentityProvider)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-    [ProducesResponseType(StatusCodes.Status423Locked)]
-    public async Task<IActionResult> CreateHcimAccountTransfer([FromServices] ICommandHandler<HcimAccountTransfer.Command, IDomainResult<HcimAccountTransfer.Model>> handler,
-                                                               [FromBody] HcimAccountTransfer.Command command)
-    {
-        var access = await this.AuthorizationService.CheckPartyAccessibility(command.PartyId, this.User);
-        if (!access.IsSuccess)
-        {
-            return access.ToActionResult();
-        }
+    public async Task<IActionResult> CreateDigitalEvidenceDefenceEnrolment([FromServices] ICommandHandler<DigitalEvidenceDefence.Command, IDomainResult> handler,
+                                                          [FromBody] DigitalEvidenceDefence.Command command)
+     => await this.AuthorizePartyBeforeHandleAsync(command.PartyId, handler, command)
+        .ToActionResult();
 
-        var result = await handler.HandleAsync(command);
-        if (!result.IsSuccess)
-        {
-            return result.ToActionResult();
-        }
 
-        this.Response.SafeAddHeader("No-Retry", "true");
+    //[HttpPost("hcim-account-transfer")]
+    //[Authorize(Policy = Policies.AnyPartyIdentityProvider)]
+    //[ProducesResponseType(StatusCodes.Status204NoContent)]
+    //[ProducesResponseType(StatusCodes.Status400BadRequest)]
+    //[ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+    //[ProducesResponseType(StatusCodes.Status423Locked)]
+    //public async Task<IActionResult> CreateHcimAccountTransfer([FromServices] ICommandHandler<HcimAccountTransfer.Command, IDomainResult<HcimAccountTransfer.Model>> handler,
+    //                                                           [FromBody] HcimAccountTransfer.Command command)
+    //{
+    //    var access = await this.AuthorizationService.CheckPartyAccessibility(command.PartyId, this.User);
+    //    if (!access.IsSuccess)
+    //    {
+    //        return access.ToActionResult();
+    //    }
 
-        switch (result.Value.AuthStatus)
-        {
-            case AuthorizationStatus.Authorized:
-                return this.NoContent();
-            case AuthorizationStatus.AccountLocked:
-                return this.StatusCode(StatusCodes.Status423Locked);
-            case AuthorizationStatus.AuthFailure:
-                this.Response.SafeAddHeader("Remaining-Attempts", result.Value.RemainingAttempts?.ToString(CultureInfo.InvariantCulture));
-                return this.UnprocessableEntity();
-            case AuthorizationStatus.Unauthorized:
-                return this.Forbid();
-            default:
-                throw new NotImplementedException();
-        }
-    }
+    //    var result = await handler.HandleAsync(command);
+    //    if (!result.IsSuccess)
+    //    {
+    //        return result.ToActionResult();
+    //    }
 
-    [HttpPost("hcim-enrolment")]
-    [Authorize(Policy = Policies.AnyPartyIdentityProvider)]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> CreateHcimEnrolment([FromServices] ICommandHandler<HcimEnrolment.Command, IDomainResult> handler,
-                                                         [FromBody] HcimEnrolment.Command command)
-        => await this.AuthorizePartyBeforeHandleAsync(command.PartyId, handler, command)
-            .ToActionResult();
+    //    this.Response.SafeAddHeader("No-Retry", "true");
 
-    [HttpPost("ms-teams")]
-    [Authorize(Policy = Policies.BcscAuthentication)]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> CreateMSTeamsEnrolment([FromServices] ICommandHandler<MSTeams.Command, IDomainResult> handler,
-                                                            [FromBody] MSTeams.Command command)
-        => await this.AuthorizePartyBeforeHandleAsync(command.PartyId, handler, command)
-            .ToActionResult();
+    //    switch (result.Value.AuthStatus)
+    //    {
+    //        case AuthorizationStatus.Authorized:
+    //            return this.NoContent();
+    //        case AuthorizationStatus.AccountLocked:
+    //            return this.StatusCode(StatusCodes.Status423Locked);
+    //        case AuthorizationStatus.AuthFailure:
+    //            this.Response.SafeAddHeader("Remaining-Attempts", result.Value.RemainingAttempts?.ToString(CultureInfo.InvariantCulture));
+    //            return this.UnprocessableEntity();
+    //        case AuthorizationStatus.Unauthorized:
+    //            return this.Forbid();
+    //        default:
+    //            throw new NotImplementedException();
+    //    }
+    //}
 
-    [HttpPost("sa-eforms")]
-    [Authorize(Policy = Policies.BcscAuthentication)]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> CreateSAEformsEnrolment([FromServices] ICommandHandler<SAEforms.Command, IDomainResult> handler,
-                                                             [FromBody] SAEforms.Command command)
-        => await this.AuthorizePartyBeforeHandleAsync(command.PartyId, handler, command)
-            .ToActionResult();
+    //[HttpPost("hcim-enrolment")]
+    //[Authorize(Policy = Policies.AnyPartyIdentityProvider)]
+    //[ProducesResponseType(StatusCodes.Status204NoContent)]
+    //[ProducesResponseType(StatusCodes.Status400BadRequest)]
+    //public async Task<IActionResult> CreateHcimEnrolment([FromServices] ICommandHandler<HcimEnrolment.Command, IDomainResult> handler,
+    //                                                     [FromBody] HcimEnrolment.Command command)
+    //    => await this.AuthorizePartyBeforeHandleAsync(command.PartyId, handler, command)
+    //        .ToActionResult();
 
-    [HttpPost("uci")]
-    [Authorize(Policy = Policies.BcscAuthentication)]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> CreateUciEnrolment([FromServices] ICommandHandler<Uci.Command, IDomainResult> handler,
-                                                        [FromBody] Uci.Command command)
-        => await this.AuthorizePartyBeforeHandleAsync(command.PartyId, handler, command)
-            .ToActionResult();
+    //[HttpPost("ms-teams")]
+    //[Authorize(Policy = Policies.BcscAuthentication)]
+    //[ProducesResponseType(StatusCodes.Status204NoContent)]
+    //[ProducesResponseType(StatusCodes.Status400BadRequest)]
+    //public async Task<IActionResult> CreateMSTeamsEnrolment([FromServices] ICommandHandler<MSTeams.Command, IDomainResult> handler,
+    //                                                        [FromBody] MSTeams.Command command)
+    //    => await this.AuthorizePartyBeforeHandleAsync(command.PartyId, handler, command)
+    //        .ToActionResult();
+
+    //[HttpPost("sa-eforms")]
+    //[Authorize(Policy = Policies.BcscAuthentication)]
+    //[ProducesResponseType(StatusCodes.Status204NoContent)]
+    //[ProducesResponseType(StatusCodes.Status400BadRequest)]
+    //public async Task<IActionResult> CreateSAEformsEnrolment([FromServices] ICommandHandler<SAEforms.Command, IDomainResult> handler,
+    //                                                         [FromBody] SAEforms.Command command)
+    //    => await this.AuthorizePartyBeforeHandleAsync(command.PartyId, handler, command)
+    //        .ToActionResult();
+
+    //[HttpPost("uci")]
+    //[Authorize(Policy = Policies.BcscAuthentication)]
+    //[ProducesResponseType(StatusCodes.Status204NoContent)]
+    //[ProducesResponseType(StatusCodes.Status400BadRequest)]
+    //public async Task<IActionResult> CreateUciEnrolment([FromServices] ICommandHandler<Uci.Command, IDomainResult> handler,
+    //                                                    [FromBody] Uci.Command command)
+    //    => await this.AuthorizePartyBeforeHandleAsync(command.PartyId, handler, command)
+    //        .ToActionResult();
 }

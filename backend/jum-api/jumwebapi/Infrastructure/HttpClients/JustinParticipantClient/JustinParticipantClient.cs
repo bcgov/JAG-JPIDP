@@ -23,7 +23,6 @@ public class JustinParticipantClient : BaseClient, IJustinParticipantClient
         if (participants.participant.participantDetails[0].assignedAgencies.Count == 0)
         {
             this.Logger.LogDisabledUserFound(username);
-            return null;
         }
         return participants.participant;
     }
@@ -45,7 +44,6 @@ public class JustinParticipantClient : BaseClient, IJustinParticipantClient
         if (participants.participant.participantDetails[0].assignedAgencies.Count == 0)
         {
             this.Logger.LogDisabledPartIdFound(partId);
-            return null;
         }
         return participants.participant;
     }

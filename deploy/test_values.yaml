@@ -74,6 +74,7 @@ frontend:
     pullPolicy: Always
   replicaCount: 1
   settings:
+    edtURL: https://dems.test.jag.gov.bc.ca
     environmentName: dev
     keycloak:
       url: https://test.common-sso.justice.gov.bc.ca/auth

@@ -16,7 +16,11 @@ export type AlertType =
   | 'warn'
   | 'danger'
   | 'muted'
+  | 'completed'
+  | 'greyed'
+  | 'pending'
   | 'primary'
+  | 'available'
   | 'secondary'
   | 'light';
 

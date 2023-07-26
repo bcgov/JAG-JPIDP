@@ -38,15 +38,22 @@ public class Startup
             //options.AddPolicy("Administrator", policy => policy.Requirements.Add(new RealmAccessRoleRequirement("administrator")));
         });
 
+        //services.AddDbContext<NotificationDbContext>(options => options
+        //    .UseSqlServer(config.ConnectionStrings.JumDatabase, sql => sql.UseNodaTime())
+        //    .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
+
+
         services.AddDbContext<NotificationDbContext>(options => options
-            .UseSqlServer(config.ConnectionStrings.JumDatabase, sql => sql.UseNodaTime())
+            .UseNpgsql(config.ConnectionStrings.NotificationDatabase, npg => npg.UseNodaTime())
             .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
 
-
+        //services.AddHealthChecks()
+        //        .AddCheck("liveliness", () => HealthCheckResult.Healthy())
+        //        .AddSqlServer(config.ConnectionStrings.JumDatabase, tags: new[] { "services" }).ForwardToPrometheus();
 
         services.AddHealthChecks()
-                .AddCheck("liveliness", () => HealthCheckResult.Healthy())
-                .AddSqlServer(config.ConnectionStrings.JumDatabase, tags: new[] { "services" }).ForwardToPrometheus();
+        .AddCheck("liveliness", () => HealthCheckResult.Healthy())
+        .AddNpgSql(config.ConnectionStrings.NotificationDatabase, tags: new[] { "services" }).ForwardToPrometheus();
 
         services.AddControllers();
         services.AddHttpClient();
@@ -118,8 +125,7 @@ public class Startup
         this.Configuration.Bind(config);
         services.AddSingleton(config);
 
-        Log.Logger.Information("### Notification Service Version:{0} ###", Assembly.GetExecutingAssembly().GetName().Version);
-        Log.Logger.Debug("### Notification Service Configuration:{0} ###", JsonSerializer.Serialize(config));
+        Log.Logger.Information($"### Notification Service Version:{Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion} ###");
 
         return config;
     }

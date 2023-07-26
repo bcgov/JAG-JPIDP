@@ -33,6 +33,7 @@ keycloak:
 frontend:
   replicaCount: 1
   settings:
+    edtURL: https://dems.jag.gov.bc.ca
     environmentName: prod
     keycloak:
       url: https://common-sso.justice.gov.bc.ca/auth

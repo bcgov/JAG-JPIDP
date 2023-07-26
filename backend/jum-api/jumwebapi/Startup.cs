@@ -84,9 +84,14 @@ public class Startup
             .AddHybridModelBinder();
         services.AddHttpClient();
 
+        //services.AddDbContext<JumDbContext>(options => options
+        //    .UseSqlServer(config.ConnectionStrings.JumDatabase, sql => sql.UseNodaTime())
+        //    .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
+
+
         services.AddDbContext<JumDbContext>(options => options
-            .UseSqlServer(config.ConnectionStrings.JumDatabase, sql => sql.UseNodaTime())
-            .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
+         .UseNpgsql(config.ConnectionStrings.JumDatabase, npg => npg.UseNodaTime())
+         .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
 
         services.AddMediatR(typeof(Startup).Assembly);
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
@@ -100,10 +105,13 @@ public class Startup
         services.AddScoped<IProxyRequestClient, ProxyRequestClient>();
         services.AddScoped<IdentityProviderDataSeeder>();
 
-
         services.AddHealthChecks()
-            .AddCheck("liveliness", () => HealthCheckResult.Healthy());
-          //  .AddSqlServer(config.ConnectionStrings.JumDatabase, tags: new[] { "services" });
+            .AddCheck("liveliness", () => HealthCheckResult.Healthy())
+            .AddNpgSql(config.ConnectionStrings.JumDatabase, tags: new[] { "services" }).ForwardToPrometheus();
+
+        //services.AddHealthChecks()
+        //    .AddCheck("liveliness", () => HealthCheckResult.Healthy());
+        //  //  .AddSqlServer(config.ConnectionStrings.JumDatabase, tags: new[] { "services" });
 
         services.AddApiVersioning(options =>
         {
@@ -173,8 +181,7 @@ public class Startup
         this.Configuration.Bind(config);
         services.AddSingleton(config);
 
-        Log.Logger.Information("### JUM Webapi Version:{0} ###", Assembly.GetExecutingAssembly().GetName().Version);
-        Log.Logger.Debug("### JUM Configuration:{0} ###", JsonSerializer.Serialize(config));
+        Log.Logger.Information($"### JUM API Version:{Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion} ###");
 
         return config;
     }
@@ -183,7 +190,7 @@ public class Startup
         if (env.IsDevelopment())
         {
             app.UseDeveloperExceptionPage();
-         
+
         }
         //app.UseMiddleware<ExceptionHandlingMiddleware>();
         app.UseExceptionHandler("/error");

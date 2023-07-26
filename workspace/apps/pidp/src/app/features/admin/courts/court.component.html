@@ -1,0 +1,46 @@
+<ui-page-section>
+  <div class="full-width">
+
+    <mat-slide-toggle [checked]="showEdtInfo" color="primary" (change)="toggleEdtInfo($event)">Show
+      DEMS Info</mat-slide-toggle>
+    <p></p>
+    <mat-slide-toggle [checked]="activeOnly" color="primary" (change)="toggleActiveOnly($event)">Active
+      Only</mat-slide-toggle>
+  </div>
+  <ng-container>
+    <table mat-table [dataSource]="dataSource" class="full-width">
+      <ng-container matColumnDef="name">
+        <th *matHeaderCellDef mat-header-cell>Name</th>
+        <td *matCellDef="let court" mat-cell>{{ court.name }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="code">
+        <th *matHeaderCellDef mat-header-cell>Code</th>
+        <td *matCellDef="let court" mat-cell>{{ court.code }}</td>
+      </ng-container>
+      <ng-container matColumnDef="active">
+        <th *matHeaderCellDef mat-header-cell>Enabled</th>
+        <td *matCellDef="let court" mat-cell><mat-icon [class]="
+                    court.active ? 'active' : 'inactive'
+                  ">
+            {{ court.active ? 'check_circle' : 'block' }}
+          </mat-icon></td>
+      </ng-container>
+      <ng-container matColumnDef="edtId">
+        <th *matHeaderCellDef mat-header-cell>Edt Id</th>
+        <td *matCellDef="let court" mat-cell>{{ court.edtId }}</td>
+      </ng-container>
+      <ng-container matColumnDef="key">
+        <th *matHeaderCellDef mat-header-cell>Edt Key</th>
+        <td *matCellDef="let court" mat-cell>{{ court.key }}</td>
+      </ng-container>
+      <ng-container matColumnDef="status">
+        <th *matHeaderCellDef mat-header-cell>Edt Status</th>
+        <td *matCellDef="let court" mat-cell>{{ court.status }}</td>
+      </ng-container>
+      <tr *matHeaderRowDef="getDisplayedColumns()" mat-header-row></tr>
+      <tr (click)="showUpdateDialog(row)" *matRowDef="let row; columns: getDisplayedColumns()" mat-row></tr>
+
+    </table>
+  </ng-container>
+</ui-page-section>

@@ -46,10 +46,12 @@ public class CourtAccessService : ICourtAccessService
 
                 var courtLocationDomainEvent = new CourtLocationDomainEvent
                 {
-                    CourtLocation = request.CourtLocation!.Code,
+                    CourtLocationKey = request.CourtLocation!.Code,
+                    CourtLocationName = request.CourtLocation!.Name,
                     PartyId = request.PartyId,
                     RequestedOn = request.RequestedOn,
                     UserId = accessRequestRecord.Party!.UserId,
+                    Username = accessRequestRecord.Party.Jpdid,
                     EventType = eventType,
                     RequestId = request.RequestId,
                     ValidFrom = request.ValidFrom,
@@ -60,6 +62,9 @@ public class CourtAccessService : ICourtAccessService
 
                 var messageKey = Guid.NewGuid();
                 accessRequestRecord.MessageId = messageKey;
+
+                // flag item as submitted or removal pending
+                accessRequestRecord.RequestStatus = eventType == CourtLocationEventType.Provisioning ? CourtLocationAccessStatus.Submitted : CourtLocationAccessStatus.RemovalPending;
 
                 var response = await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.CourtLocationAccessRequestTopic, messageKey.ToString(), courtLocationDomainEvent);
                 Serilog.Log.Information($"Sent {request.RequestId} to topic {this.config.KafkaCluster.CourtLocationAccessRequestTopic} Part: {response.Partition.Value} Key: {messageKey}");
@@ -127,18 +132,17 @@ public class CourtAccessService : ICourtAccessService
         {
             Serilog.Log.Information($"Deleting access to {request.RequestId}");
 
-            var accessRequest = this.context.CourtLocationAccessRequests.Include(req => req.Party).Where(req => req.RequestId == request.RequestId).FirstOrDefault();
+            var accessRequest = this.context.CourtLocationAccessRequests.Include(req => req.CourtLocation).Include(req => req.Party).Where(req => req.RequestId == request.RequestId).FirstOrDefault();
 
             if (accessRequest != null)
             {
-                accessRequest.RequestStatus = CourtLocationAccessStatus.Deleted;
-                accessRequest.DeletedOn = this.clock.GetCurrentInstant();
+                var submittedRemoval = await this.CreateRemoveCourtAccessDomainEvent(accessRequest);
                 await this.context.SaveChangesAsync();
             }
         }
         catch (Exception ex)
         {
-            Serilog.Log.Error($"Failed to set request {request.RequestId} to deleted");
+            Serilog.Log.Error($"Failed to set request {request.RequestId} to {CourtLocationAccessStatus.RemovalPending}");
         }
 
         return true;

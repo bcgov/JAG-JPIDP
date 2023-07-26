@@ -1,10 +1,10 @@
 <ui-page [formGroup]="formState.form">
   <ui-page-header>{{ title }}</ui-page-header>
   <ui-page-section>
-    <ui-page-section-subheader icon="assignment" heading="Digital Evidence and Disclosure Case Management">
+    <ui-page-section-subheader icon="assignment" heading="Digital Evidence Case Access">
       <ng-container uiPageSectionSubheaderDesc>
         Request access to individual cases in the Digital Evidence and Disclosure Management
-        System for the purpose of uploading documents.
+        System for the purpose of uploading digital evidence.
       </ng-container>
 
     </ui-page-section-subheader>
@@ -17,7 +17,7 @@
 
       <mat-form-field class="w-60">
         <mat-label>File #</mat-label>
-        <input matInput formControlName="caseName" (input)="checkCaseInput()"
+        <input matInput formControlName="caseName" (input)="checkCaseInput()" maxlength="15"
           matTooltip="Enter the agency file number you wish to have access to and click Find" placeholder="yy-nnnnnnn"
           tabindex="2" />
       </mat-form-field>
@@ -89,15 +89,21 @@
 
         <ng-container matColumnDef="caseAction">
           <th *matHeaderCellDef mat-header-cell>Action </th>
-          <td *matCellDef="let case" mat-cell class="centered-column"><i matTooltip="Remove access to this case"
-              *ngIf="case.requestStatus === 'Completed'"
-              (click)="onRemoveCase(case)"><mat-icon>delete_outline</mat-icon></i></td>
+
+          <td *matCellDef="let case" mat-cell class="centered-column"><i matTooltip="Show case info"
+              *ngIf="case.requestStatus === 'Complete'" (click)="getCaseData(case)"><mat-icon
+                class="me-2">info_outline</mat-icon></i>
+            <i matTooltip="Access to this case to upload evidence" *ngIf="case.requestStatus === 'Complete'"
+              (click)="onUploadToCase(case)"><mat-icon class="me-2">file_upload</mat-icon></i><i
+              matTooltip="Remove access to this case" *ngIf="case.requestStatus === 'Complete'"
+              (click)="onRemoveCase(case)"><mat-icon>delete_outline</mat-icon></i>
+          </td>
         </ng-container>
         <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
         <tr class="mat-row" *matNoDataRow>
           <td class="mat-cell" [attr.colspan]="displayedColumns.length">
-            You do not have access to any cases currently.<br />
-            Please request access.
+            You do not currently have access to any cases.<br />
+            Find your case by agency file number and then request access.
           </td>
         </tr>
         <tr *matRowDef="let row; columns: displayedColumns" mat-row></tr>

@@ -3,7 +3,6 @@ namespace edt.disclosure.ServiceEvents.Models;
 using NodaTime;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
-using System.Security.Policy;
 
 [Table(nameof(CourtLocationRequest))]
 public class CourtLocationRequest : BaseAuditable

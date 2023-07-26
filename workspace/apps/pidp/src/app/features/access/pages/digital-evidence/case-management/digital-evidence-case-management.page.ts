@@ -48,6 +48,7 @@ import { FormUtilsService } from '@core/services/form-utils.service';
 import { PartyUserTypeResource } from '../../../../../features/admin/shared/usertype-resource.service';
 import { OrganizationUserType } from '../../../../../features/admin/shared/usertype-service.model';
 import { DigitalEvidenceCaseManagementFormState } from './digital-evidence-case-management-form.state';
+import { DigitalEvidenceCaseManagementInfoDialogComponent } from './digital-evidence-case-management-info-dialog';
 import { DigitalEvidenceCaseManagementResource } from './digital-evidence-case-management-resource.service';
 import {
   CaseStatus,
@@ -91,6 +92,7 @@ export class DigitalEvidenceCaseManagementPage
   public refreshEnabled: boolean;
   public requestedCaseInactive: boolean;
   public hasCaseListingResults: boolean;
+  public caseTooltip: string;
   public refreshCount: number;
   //@Input() public form!: FormGroup;
   public formControlNames: string[];
@@ -132,6 +134,7 @@ export class DigitalEvidenceCaseManagementPage
     this.dataSource = new MatTableDataSource(this.caseListing);
     this.identityProvider$ = this.authorizedUserService.identityProvider$;
     this.result = '';
+    this.caseTooltip = 'test';
     this.policeAgency = accessTokenService
       .decodeToken()
       .pipe(map((token) => token?.identity_provider ?? ''));
@@ -183,10 +186,26 @@ export class DigitalEvidenceCaseManagementPage
     this.navigateToRoot();
   }
 
+  public getCaseData(row: DigitalEvidenceCaseRequest): void {
+    this.resource
+      .getCaseInfo(row.id)
+      .subscribe((response: DigitalEvidenceCase) => {
+        this.showInfoDialog(response);
+      });
+  }
+
+  public showInfoDialog(data: DigitalEvidenceCase): void {
+    this.dialog.open(DigitalEvidenceCaseManagementInfoDialogComponent, {
+      data: data,
+    });
+  }
+
   public checkCaseInput(): boolean {
     this.isFindDisabled =
       this.formState.caseName.value &&
       this.formState.caseName?.value.length < 6;
+    if (this.formState.caseName.value)
+      this.formState.caseName.setValue(this.formState.caseName.value.trim());
     return this.isFindDisabled;
   }
 
@@ -314,6 +333,28 @@ export class DigitalEvidenceCaseManagementPage
       this.requestedCase?.fields?.find((c) => c.id === fieldId)?.value ||
       'Not set'
     );
+  }
+
+  public onUploadToCase(evidenceCase: DigitalEvidenceCase): void {
+    const url = this.config.demsImportURL + evidenceCase.id;
+    this.openPopUp(url);
+  }
+
+  public openPopUp(urlToOpen: string): void {
+    const popup_window = window.open(
+      urlToOpen,
+      'aufWindow',
+      'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=yes, copyhistory=yes'
+    );
+    try {
+      popup_window?.focus();
+    } catch (e) {
+      this.toastService.openErrorToast(
+        'Popup blocked enabled - please add ' +
+          this.config.demsImportURL +
+          ' to your exception list'
+      );
+    }
   }
 
   public onRequestAccess(): void {

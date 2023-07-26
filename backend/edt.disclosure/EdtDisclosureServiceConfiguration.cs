@@ -16,10 +16,12 @@ public class EdtDisclosureServiceConfiguration
     public EdtDisclosureClientConfiguration EdtClient { get; set; } = new();
 
     public KeycloakConfiguration Keycloak { get; set; } = new();
+    public List<CustomDisplayField> CaseDisplayCustomFields { get; set; } = new();
 
     public SchemaRegistryConfiguration SchemaRegistry { get; set; } = new();
     public TelemeteryConfiguration Telemetry { get; set; } = new TelemeteryConfiguration();
     public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
+
 
     public class SplunkConfiguration
     {
@@ -42,8 +44,24 @@ public class EdtDisclosureServiceConfiguration
     {
         public string ApiKey { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
-    }
+        public string CaseGroup { get; set; } = "Counsel";
+        public string DefenceFolioTemplateName { get; set; } = string.Empty;
+        public int DefenceFolioTemplateId { get; set; } = -1;
+        public string DefenceCaseGroup { get; set; } = string.Empty;
+        public string CourtLocationKeyPrefix { get; set; } = "CH-";
+        public string CourtLocationGroup { get; set; } = string.Empty;
+        public int CourtLocationTemplateId { get; set; }
+        public bool CreateCourtLocations { get; set; }
 
+    }
+    public class CustomDisplayField
+    {
+        public int Id { get; set; }
+        public bool Display { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public int RelatedId { get; set; }
+        public bool RelatedValueEmpty { get; set; }
+    }
     public class ConnectionStringConfiguration
     {
         public string DisclosureDataStore { get; set; } = string.Empty;
@@ -79,8 +97,13 @@ public class EdtDisclosureServiceConfiguration
         public string CaseAccessResponseTopicName { get; set; } = string.Empty;
         public string CourtLocationAccessRequestTopic { get; set; } = string.Empty;
         public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;
-
+        public string CreateUserTopic { get; set; } = string.Empty;
         public string AckTopicName { get; set; } = string.Empty;
+        public string UserModificationTopicName { get; set; } = string.Empty;
+
+        public string NotificationTopic { get; set; } = string.Empty;
+        public string ProcessResponseTopic { get; set; } = string.Empty;
+
         public string SaslOauthbearerProducerClientId { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientSecret { get; set; } = string.Empty;
         public string SaslOauthbearerConsumerClientId { get; set; } = string.Empty;
@@ -89,8 +112,8 @@ public class EdtDisclosureServiceConfiguration
         public string SslCertificateLocation { get; set; } = string.Empty;
         public string SslKeyLocation { get; set; } = string.Empty;
         public string Scope { get; set; } = "openid";
-        public string ConsumerGroupId { get; set; } = "caseaccess-consumer-group";
-        public string RetryConsumerGroupId { get; set; } = "caseaccess-retry-consumer-group";
+        public string ConsumerGroupId { get; set; } = "disclosure-consumer-group";
+        public string RetryConsumerGroupId { get; set; } = "disclosure-retry-consumer-group";
 
 
     }

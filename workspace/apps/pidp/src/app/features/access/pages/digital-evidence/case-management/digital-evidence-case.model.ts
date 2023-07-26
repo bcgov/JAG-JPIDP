@@ -3,7 +3,7 @@ export enum CaseStatus {
   RemoveRequested = 'Remove Requested',
   Active = 'Active',
   Pending = 'Pending',
-  Completed = 'Completed',
+  Completed = 'Complete',
 }
 
 export interface Field {

@@ -6,8 +6,11 @@ import { Observable, catchError, of } from 'rxjs';
 import { NoContent, NoContentResponse } from '@bcgov/shared/data-access';
 
 import { ApiHttpClient } from '@app/core/resources/api-http-client.service';
+import { CourtLocation } from '@app/features/access/pages/digital-evidence/digital-evidence-counsel/digital-evidence-counsel-model';
 
+import { IdentityProvider } from '../../idp/idp.model';
 import { PartyModel } from '../../party/party.model';
+import { SubmittingAgency } from '../../submitting-agency/submitting-agency.model';
 
 export interface PartyList {
   id: number;
@@ -32,8 +35,54 @@ export class AdminResource {
     );
   }
 
+  public getCourtLocations(
+    includeEdtInfo: boolean,
+    activeOnly: boolean
+  ): Observable<CourtLocation[]> {
+    return this.apiResource
+      .get<CourtLocation[]>('/admin/court-location', {
+        params: {
+          activeOnly: activeOnly,
+          includeEdtDetails: includeEdtInfo,
+        },
+      })
+      .pipe(
+        catchError((_: HttpErrorResponse) => {
+          // TODO add logging and toast messaging around specific errors when the admin starts getting a bit of attention
+          return of([]);
+        })
+      );
+  }
+
+  public updateCourtLocation(
+    updateRecord: CourtLocation
+  ): Observable<CourtLocation> {
+    return this.apiResource.put(`admin/court-location`, updateRecord);
+  }
+
+  public getSubmittingAgencies(): Observable<SubmittingAgency[]> {
+    return this.apiResource
+      .get<SubmittingAgency[]>('/admin/submitting-agencies', {})
+      .pipe(
+        catchError((_: HttpErrorResponse) => {
+          // TODO add logging and toast messaging around specific errors when the admin starts getting a bit of attention
+          return of([]);
+        })
+      );
+  }
+
+  public updateSubmittingAgency(
+    updateRecord: SubmittingAgency
+  ): Observable<SubmittingAgency> {
+    return this.apiResource.put(`admin/submitting-agencies`, updateRecord);
+  }
+
   public getUserDetails(partyId: string): Observable<PartyModel> {
     return this.apiResource.get(`admin/party/${partyId}`, {});
+  }
+
+  public getIdentityProviders(): Observable<IdentityProvider[]> {
+    return this.apiResource.get(`admin/identity-provider`, {});
   }
 
   public resetAccessRequest(partyId: string): Observable<PartyModel> {
