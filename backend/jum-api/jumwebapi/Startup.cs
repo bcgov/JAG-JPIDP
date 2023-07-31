@@ -181,8 +181,7 @@ public class Startup
         this.Configuration.Bind(config);
         services.AddSingleton(config);
 
-        Log.Logger.Information("### JUM Webapi Version:{0} ###", Assembly.GetExecutingAssembly().GetName().Version);
-        Log.Logger.Debug("### JUM Configuration:{0} ###", JsonSerializer.Serialize(config));
+        Log.Logger.Information($"### JUM API Version:{Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion} ###");
 
         return config;
     }
