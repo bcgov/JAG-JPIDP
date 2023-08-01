@@ -4,8 +4,6 @@ using Microsoft.OpenApi.Models;
 using NodaTime;
 using Serilog;
 using System.Reflection;
-using System.Text.Json;
-using Asp.Versioning;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
 using NotificationService.Kafka;
 using NotificationService.HttpClients;
@@ -14,6 +12,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using NotificationService.Data;
 using Microsoft.EntityFrameworkCore;
 using Prometheus;
+using Microsoft.AspNetCore.Mvc.Versioning;
 
 public class Startup
 {

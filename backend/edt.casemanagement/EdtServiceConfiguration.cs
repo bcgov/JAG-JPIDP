@@ -83,10 +83,11 @@ public class EdtServiceConfiguration
 
     public class CustomDisplayField
     {
-        public int Id { get; set; }
+        public int? Id { get; set; }
         public bool Display { get; set; }
-
-        public int RelatedId { get; set; }
+        public string? Name { get; set; } = string.Empty;
+        public int? RelatedId { get; set; }
+        public string? RelatedName { get; set; } = string.Empty;
         public bool RelatedValueEmpty { get; set; }
     }
 

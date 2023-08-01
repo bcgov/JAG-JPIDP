@@ -26,6 +26,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
     private readonly ILogger logger;
     private readonly EdtDataStoreDbContext context;
     private static readonly Counter TombstoneConversions = Metrics.CreateCounter("edt_tombstone_conversions", "Number of tombstone accounts activated");
+    private static readonly Counter AccountErrorCounter = Metrics.CreateCounter("edt_user_account_errors", "Errors adding or updating accounts");
 
 
     public UserProvisioningHandler(
@@ -200,12 +201,21 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
                     else
                     {
                         Serilog.Log.Logger.Error("Failed to publish to user notification topic - rolling back transaction");
+                        AccountErrorCounter.Inc();
+
                         await trx.RollbackAsync();
                     }
 
                     return Task.FromResult(publishResultOk);
 
                 }
+            }
+            else
+            {
+                Serilog.Log.Error($"Add or update user request was not successful {accessRequestModel.UserName} {accessRequestModel.Id}");
+                AccountErrorCounter.Inc();
+                await trx.RollbackAsync();
+
             }
             
         }

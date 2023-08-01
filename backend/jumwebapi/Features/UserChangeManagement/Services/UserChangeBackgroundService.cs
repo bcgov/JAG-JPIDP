@@ -26,7 +26,7 @@ public class UserChangeBackgroundService : BackgroundService
 
     public UserChangeBackgroundService(IServiceProvider services, JumWebApiConfiguration config, [FromServices] IJustinUserChangeManagementClient justinClient, IServiceScopeFactory scopeFactory, ILogger<UserChangeBackgroundService> logger)
     {
-        Log.Information("*** Starting JUSTIN change event background service ***");
+        Log.Information($"*** Starting JUSTIN change event background service: poll {config.JustinChangeEventClient.PollRateSeconds}s ***");
         this.services = services;
         this.justinClient = justinClient;
         this.config = config;
@@ -78,7 +78,7 @@ public class UserChangeBackgroundService : BackgroundService
 
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
-        await this.semaphore.WaitAsync();
+        await this.semaphore.WaitAsync(cancellationToken);
         try
         {
             await base.StopAsync(cancellationToken);

@@ -1,15 +1,12 @@
-﻿using jumwebapi.Data;
+namespace jumwebapi.Features.Users.Commands;
+
 using jumwebapi.Data.ef;
-using jumwebapi.Extensions;
 using jumwebapi.Features.Roles.Models;
 using jumwebapi.Features.Users.Services;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
-using MapsterMapper;
 using jumwebapi.Features.Users.Models;
 using FluentValidation;
-
-namespace jumwebapi.Features.Users.Commands;
+using AutoMapper;
 
 public sealed record CreateUserCommand(
     string UserName,

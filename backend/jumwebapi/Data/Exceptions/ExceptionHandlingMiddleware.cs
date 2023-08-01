@@ -1,10 +1,10 @@
-﻿using FluentValidation;
+namespace jumwebapi.Data.Exceptions;
+using FluentValidation;
 using FluentValidation.Results;
 using SendGrid.Helpers.Errors.Model;
 using System.Text.Json;
 using ValidationException = FluentValidation.ValidationException;
 
-namespace jumwebapi.Data.Exceptions;
 internal sealed class ExceptionHandlingMiddleware : IMiddleware
 {
     private readonly ILogger<ExceptionHandlingMiddleware> _logger;

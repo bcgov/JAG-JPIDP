@@ -2,13 +2,13 @@
 # Disclosure Management service Dockerfile
 #------------------------------------------------------------------------------------
 
-FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:6.0-alpine AS base
 WORKDIR /app
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://*:8080
 ENV ASPNETCORE_ENVIRONMENT="Production"
 ENV \
-    DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false \
+    DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 \
     LC_ALL=en_US.UTF-8 \
     LANG=en_US.UTF-8
 

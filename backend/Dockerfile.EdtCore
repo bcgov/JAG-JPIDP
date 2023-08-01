@@ -34,4 +34,4 @@ RUN dotnet publish -r linux-musl-x64 "edt.service.csproj" -c Release -o /app/pub
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["./edt.service"]
+ENTRYPOINT ["dotnet", "edt.service.dll"]

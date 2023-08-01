@@ -1,12 +1,12 @@
-﻿global using Mapster;
+global using Mapster;
+
+
+namespace jumwebapi.Features.Users.Mapping;
 using jumwebapi.Core.Extension;
 using jumwebapi.Data.ef;
 using jumwebapi.Features.Users.Commands;
 using jumwebapi.Features.Users.Models;
 using System.Linq;
-
-
-namespace jumwebapi.Features.Users.Mapping;
 
 public class UserMap : IRegister
 {

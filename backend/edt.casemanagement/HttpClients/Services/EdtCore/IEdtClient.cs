@@ -10,7 +10,7 @@ public interface IEdtClient
 {
     Task<Task> HandleCaseRequest(string key, SubAgencyDomainEvent accessRequest);
 
-
+    Task<IEnumerable<CustomFieldDefinition>> GetCustomFields(string objectType);
 
     Task<EdtUserDto?> GetUser(string userKey);
 

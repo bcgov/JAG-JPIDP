@@ -18,6 +18,10 @@
     <span *ngIf="email && (usernameBreakpoint$ | async)" class="email">
       {{ email }}
     </span>
+
+    <span *ngIf="email && (usernameBreakpoint$ | async)" class="organization">
+      {{ organization }}
+    </span>
   </div>
 
   <span *ngIf="username" class="logout">

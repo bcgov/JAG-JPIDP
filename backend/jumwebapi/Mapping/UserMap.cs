@@ -1,8 +1,7 @@
-﻿using jumwebapi.Data.ef;
-using jumwebapi.Features.Users.Commands;
-using jumwebapi.Features.Users.Models;
-
 namespace jumwebapi.Mapping;
+
+using jumwebapi.Data.ef;
+using jumwebapi.Features.Users.Commands;
 
 public class UserMap: IRegister
 {

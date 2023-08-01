@@ -39,6 +39,8 @@ export class PortalPage implements OnInit {
    */
   public completedProfile: boolean;
 
+  public firstName: string;
+
   public Role = Role;
 
   public constructor(
@@ -52,6 +54,7 @@ export class PortalPage implements OnInit {
     this.state$ = this.portalService.state$;
     this.completedProfile = false;
     this.alerts = [];
+    this.firstName = '';
   }
 
   public onScrollToAnchor(): void {
@@ -74,6 +77,8 @@ export class PortalPage implements OnInit {
               this.portalService.updateState(profileStatus);
               this.completedProfile = this.portalService.completedProfile;
               this.alerts = this.portalService.alerts;
+              this.firstName =
+                profileStatus?.status.demographics.firstName || '';
             })
           )
         )
