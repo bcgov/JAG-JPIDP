@@ -54,6 +54,7 @@ public class DigitalEvidenceUpdate
         private readonly IOrgUnitService orgUnitService;
         private readonly IKafkaProducer<string, EdtUserProvisioning> kafkaProducer;
         private readonly IKafkaProducer<string, UserChangeModel> kafkaAccountChangeProducer;
+        private bool JUSTIN_EMAIL_CHANGE_DISABLED;
 
         private readonly IKafkaProducer<string, Notification> kafkaNotificationProducer;
 
@@ -83,6 +84,12 @@ public class DigitalEvidenceUpdate
             this.kafkaNotificationProducer = kafkaNotificationProducer;
             this.orgUnitService = orgUnitService;
             this.kafkaAccountChangeProducer = kafkaAccountChangeProducer;
+            this.JUSTIN_EMAIL_CHANGE_DISABLED = Environment.GetEnvironmentVariable("JUSTIN_EMAIL_CHANGE_DISABLED") != null && bool.Parse(Environment.GetEnvironmentVariable("JUSTIN_EMAIL_CHANGE_DISABLED"));
+
+            if (this.JUSTIN_EMAIL_CHANGE_DISABLED)
+            {
+                Serilog.Log.Warning("*** JUSTIN Email Account Check is disabled - email changes in JUSTIN wont trigger account changes ***");
+            }
         }
 
 
@@ -335,16 +342,19 @@ public class DigitalEvidenceUpdate
             };
 
             // see if email has changed - case insensitive
-            if (!string.IsNullOrEmpty(justinUserInfo.emailAddress))
+            if (!this.JUSTIN_EMAIL_CHANGE_DISABLED)
             {
-                if (string.IsNullOrEmpty(justinUserInfo.emailAddress))
+                if (!string.IsNullOrEmpty(justinUserInfo.emailAddress))
                 {
-                    Serilog.Log.Warning($"User {party.Id} email is null or empty in JUSTIN");
-                }
-                else if (!party.Email.Equals(justinUserInfo.emailAddress, StringComparison.OrdinalIgnoreCase))
-                {
-                    Serilog.Log.Information($"User {party.Id} email changed from {party.Email} to {justinUserInfo.emailAddress}");
-                    userChangeModel.SingleChangeTypes.Add(ChangeType.EMAIL, new SingleChangeType(party.Email, justinUserInfo.emailAddress));
+                    if (string.IsNullOrEmpty(justinUserInfo.emailAddress))
+                    {
+                        Serilog.Log.Warning($"User {party.Id} email is null or empty in JUSTIN");
+                    }
+                    else if (!party.Email.Equals(justinUserInfo.emailAddress, StringComparison.OrdinalIgnoreCase))
+                    {
+                        Serilog.Log.Information($"User {party.Id} email changed from {party.Email} to {justinUserInfo.emailAddress}");
+                        userChangeModel.SingleChangeTypes.Add(ChangeType.EMAIL, new SingleChangeType(party.Email, justinUserInfo.emailAddress));
+                    }
                 }
             }
 

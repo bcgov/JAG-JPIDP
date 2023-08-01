@@ -46,6 +46,8 @@ using Pidp.Features.CourtLocations.Jobs;
 using Pidp.Models.Lookups;
 using static Pidp.Models.Lookups.CourtLocation;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Authorization;
 
 public class Startup
 {
@@ -302,7 +304,7 @@ public class Startup
             );// "/error");
 
         app.UseSwagger();
-        app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.json", "PIdP Web API"));
+        app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.json", "DIAM Web API"));
 
         app.UseSerilogRequestLogging(options => options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
         {
@@ -327,8 +329,10 @@ public class Startup
         {
             endpoints.MapControllers();
             endpoints.MapMetrics();
-            endpoints.MapHealthChecks("/health/liveness").AllowAnonymous();
+            endpoints.MapHealthChecks("/health/liveness", new HealthCheckOptions { AllowCachingResponses = false }).WithMetadata(new AllowAnonymousAttribute());
+
         });
+        
 
 
 
