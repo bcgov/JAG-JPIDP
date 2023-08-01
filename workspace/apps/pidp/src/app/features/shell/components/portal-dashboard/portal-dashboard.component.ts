@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
 import { IsActiveMatchOptions } from '@angular/router';
 
-import { Observable, map } from 'rxjs';
+import { Observable, map, of } from 'rxjs';
 
 import {
   DashboardHeaderConfig,
@@ -12,8 +12,12 @@ import {
 import { ArrayUtils } from '@bcgov/shared/utils';
 
 import { APP_CONFIG, AppConfig } from '@app/app.config';
+import { PartyService } from '@app/core/party/party.service';
 import { AccessTokenService } from '@app/features/auth/services/access-token.service';
 import { AuthService } from '@app/features/auth/services/auth.service';
+import { OrganizationDetailsResource } from '@app/features/organization-info/pages/organization-details/organization-details-resource.service';
+import { ProfileStatus } from '@app/features/portal/models/profile-status.model';
+import { PortalResource } from '@app/features/portal/portal-resource.service';
 import { PortalRoutes } from '@app/features/portal/portal.routes';
 import { PermissionsService } from '@app/modules/permissions/permissions.service';
 import { Role } from '@app/shared/enums/roles.enum';
@@ -28,7 +32,7 @@ export class PortalDashboardComponent implements IDashboard {
   public logoutRedirectUrl: string;
   public username: Observable<string>;
   public email: Observable<string>;
-  public organization: string;
+  public organization?: Observable<string>;
 
   public headerConfig: DashboardHeaderConfig;
   public brandConfig: { imgSrc: string; imgAlt: string };
@@ -39,6 +43,10 @@ export class PortalDashboardComponent implements IDashboard {
   public constructor(
     @Inject(APP_CONFIG) private config: AppConfig,
     private authService: AuthService,
+    private partyService: PartyService,
+    private portalResource: PortalResource,
+
+    private resource: OrganizationDetailsResource,
     private permissionsService: PermissionsService,
     accessTokenService: AccessTokenService
   ) {
@@ -51,8 +59,6 @@ export class PortalDashboardComponent implements IDashboard {
       .decodeToken()
       .pipe(map((token) => token?.preferred_username ?? ''));
 
-    this.organization = 'test';
-
     this.headerConfig = { theme: 'dark', allowMobileToggle: true };
     this.brandConfig = {
       imgSrc: '/assets/images/diam-logo-small.svg',
@@ -61,6 +67,19 @@ export class PortalDashboardComponent implements IDashboard {
     this.showMenuItemIcons = true;
     this.responsiveMenuItems = false;
     this.menuItems = this.createMenuItems();
+    this.organization = this.getOrganization();
+  }
+
+  public getOrganization(): Observable<any> {
+    const response = this.portalResource
+      .getProfileStatus(this.partyService.partyId)
+      .pipe(
+        map((result: ProfileStatus | null) => {
+          return result?.status.organizationDetails.orgName; // return back same result.
+        })
+      );
+
+    return response;
   }
 
   public onLogout(): void {

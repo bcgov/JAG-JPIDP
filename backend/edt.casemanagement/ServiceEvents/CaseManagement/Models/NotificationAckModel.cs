@@ -1,8 +1,5 @@
 namespace edt.casemanagement.ServiceEvents.UserAccountCreation.Models;
 
-using System.ComponentModel.DataAnnotations;
-using NodaTime;
-
 public class NotificationAckModel
 {
     public string Status { get; set; } = string.Empty;

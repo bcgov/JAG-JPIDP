@@ -2,7 +2,6 @@ namespace Pidp.Features.Admin;
 
 using System.Threading.Tasks;
 using AutoMapper;
-using Azure.Identity;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Pidp.Data;

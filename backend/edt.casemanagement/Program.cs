@@ -2,7 +2,6 @@ namespace edt.service;
 
 using System.Reflection;
 using edt.casemanagement;
-using log4net;
 using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Json;

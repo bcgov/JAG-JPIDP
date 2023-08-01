@@ -1,0 +1,35 @@
+#------------------------------------------------------------------------------------
+# Disclosure Management service Dockerfile
+#------------------------------------------------------------------------------------
+
+FROM mcr.microsoft.com/dotnet/aspnet:6.0-alpine AS base
+WORKDIR /app
+EXPOSE 8080
+ENV ASPNETCORE_URLS=http://*:8080
+ENV ASPNETCORE_ENVIRONMENT="Production"
+ENV \
+    DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 \
+    LC_ALL=en_US.UTF-8 \
+    LANG=en_US.UTF-8
+
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+
+RUN dotnet tool install --tool-path /tools dotnet-trace
+RUN dotnet tool install --tool-path /tools dotnet-counters
+RUN dotnet tool install --tool-path /tools dotnet-dump
+
+WORKDIR /src
+COPY ["edt.disclosure/edt.disclosure.csproj", "edt.disclosure/"]
+COPY ["common/Common.csproj", "common/"]
+RUN dotnet restore -r linux-musl-x64 "edt.disclosure/edt.disclosure.csproj"
+COPY . .
+WORKDIR "/src/edt.disclosure"
+RUN dotnet build -r linux-musl-x64 "edt.disclosure.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish -r linux-musl-x64 "edt.disclosure.csproj" -c Release -o /app/publish
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "edt.disclosure.dll"]

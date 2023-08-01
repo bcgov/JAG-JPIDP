@@ -1,17 +1,13 @@
 namespace edt.casemanagement.HttpClients.Services.EdtCore;
-
-using System.Diagnostics.Metrics;
-using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using AutoMapper;
+using Common.Models.EDT;
 using DomainResults.Common;
 using edt.casemanagement.Exceptions;
 using edt.casemanagement.Features.Cases;
 using edt.casemanagement.Infrastructure.Telemetry;
 using edt.casemanagement.Models;
 using edt.casemanagement.ServiceEvents.CaseManagement.Models;
-using edt.casemanagement.ServiceEvents.UserAccountCreation.Models;
-using Microsoft.AspNetCore.Mvc;
 using Prometheus;
 using Serilog;
 
@@ -76,7 +72,7 @@ public class EdtClient : BaseClient, IEdtClient
     /// <exception cref="EdtServiceException"></exception>
     public async Task<string> GetVersion()
     {
-        var result = await this.GetAsync<EdtVersion?>($"api/v1/version");
+        var result = await this.GetAsync<Common.Models.EDT.EdtVersion?>($"api/v1/version");
 
         if (!result.IsSuccess)
         {
@@ -327,7 +323,20 @@ public class EdtClient : BaseClient, IEdtClient
         }
     }
 
+    public async Task<IEnumerable<CustomFieldDefinition>> GetCustomFields(string objectType)
+    {
+        Log.Information($"Getting all field info for type {objectType}");
 
+        var result = await this.GetAsync<IEnumerable<CustomFieldDefinition>?>($"api/v1/org-units/1/fields");
+
+        if (result.IsSuccess && result.Value != null)
+        {
+            return result.Value.Where(c => c.ObjectType == objectType);
+
+        }
+
+        return null;
+    }
 
 
     public async Task<Task> HandleCaseRequest(string userKey, SubAgencyDomainEvent accessRequest)
