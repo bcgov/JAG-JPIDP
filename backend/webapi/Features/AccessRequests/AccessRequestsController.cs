@@ -4,12 +4,8 @@ using DomainResults.Common;
 using DomainResults.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Globalization;
-
-using Pidp.Extensions;
 using Pidp.Infrastructure.Auth;
 using Pidp.Infrastructure.Services;
-using static Pidp.Infrastructure.HttpClients.Ldap.HcimAuthorizationStatus;
 
 [Route("api/[controller]")]
 public class AccessRequestsController : PidpControllerBase

@@ -35,6 +35,8 @@ export class DashboardHeaderComponent {
   @Input() public username?: string;
 
   @Input() public email?: string;
+
+  @Input() public organization?: string;
   /**
    * @description
    * Event emission of mobile menu action.
@@ -53,7 +55,7 @@ export class DashboardHeaderComponent {
     this.theme = 'dark';
     this.toggleMobileMenu = new EventEmitter<void>();
     this.logout = new EventEmitter<void>();
-
+    this.organization = 'test';
     this.mobileToggleBreakpoint$ = combineLatest([
       viewportService.isMobileBreakpoint$,
       viewportService.isTabletBreakpoint$,

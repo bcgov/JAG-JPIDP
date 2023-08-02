@@ -1,11 +1,11 @@
 namespace edt.casemanagement.Models;
 
-public class CaseUsersModel
+public class CaseUsersModelx
 {
-    public List<CaseUser> CaseUsers { get; set; }
+    public List<CaseUserx> CaseUsers { get; set; }
 }
 
-public class CaseUser
+public class CaseUserx
 {
     public int CaseId { get; set; }
     public string UserId { get; set; }

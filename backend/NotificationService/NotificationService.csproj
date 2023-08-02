@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>0932d320-0272-4127-af4d-01fae4f7c4c8</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <Version>1.0.2</Version>
+  </PropertyGroup>
+
+   <PropertyGroup>
+     <InvariantGlobalization>false</InvariantGlobalization>
+   </PropertyGroup>
+
+
+  <ItemGroup>
+    <ProjectReference Include="..\common\Common.csproj" />
+    <PackageReference Include="YamlDotNet" Version="13.0.2" />
+
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Controllers\" />
+    <Folder Include="Features\DataGeneration\Controllers\" />
+    <Folder Include="Features\TemplateGeneration\" />
+  </ItemGroup>
+
+</Project>

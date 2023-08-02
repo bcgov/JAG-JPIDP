@@ -199,6 +199,8 @@ spec:
                 secretKeyRef:
                   name: splunk-config
                   key: SplunkConfig__Host
+            - name: JUSTIN_EMAIL_CHANGE_DISABLED
+              value: "true"
           volumeMounts:
             - name: kafka-truststore
               mountPath: "/opt/kafka/certificates"

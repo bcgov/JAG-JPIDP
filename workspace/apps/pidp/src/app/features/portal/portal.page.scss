@@ -4,6 +4,11 @@ p.lead {
   margin-bottom: 3rem;
 }
 
+.greeting {
+  font-weight: bold;
+  font-size: 1.2em;
+}
+
 @include media-breakpoint-up(xl) {
   .row > div {
     max-width: 800px;

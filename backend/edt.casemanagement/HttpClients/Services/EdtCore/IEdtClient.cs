@@ -1,6 +1,7 @@
 namespace edt.casemanagement.HttpClients.Services.EdtCore;
 
 using System.Collections.Generic;
+using Common.Models.EDT;
 using edt.casemanagement.Features.Cases;
 using edt.casemanagement.Models;
 using edt.casemanagement.ServiceEvents.CaseManagement.Models;
@@ -9,7 +10,7 @@ public interface IEdtClient
 {
     Task<Task> HandleCaseRequest(string key, SubAgencyDomainEvent accessRequest);
 
-
+    Task<IEnumerable<CustomFieldDefinition>> GetCustomFields(string objectType);
 
     Task<EdtUserDto?> GetUser(string userKey);
 
