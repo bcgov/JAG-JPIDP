@@ -85,6 +85,15 @@ export class DigitalEvidencePortalSection
 
   public get status(): string {
     const statusCode = this.getStatusCode();
+    const demographicsStatusCode =
+      this.profileStatus.status.demographics.statusCode;
+    debugger;
+    if (
+      demographicsStatusCode === StatusCode.INCOMPLETE ||
+      demographicsStatusCode === StatusCode.AVAILABLE
+    ) {
+      return 'Complete prior step(s)';
+    }
     return statusCode === StatusCode.AVAILABLE ||
       this.getStatusCode() === StatusCode.INCOMPLETE
       ? 'Access Request Available'
