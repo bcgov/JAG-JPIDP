@@ -128,7 +128,8 @@
             <p>Provide your BCPS JUSTIN Username</p>
 
             <mat-form-field class="w-100">
-              <input matInput placeholder="JUSTIN Username" formControlName="employeeIdentifier" />
+              <input matInput placeholder="JUSTIN Username" formControlName="employeeIdentifier"
+                oninput="this.value = this.value.toUpperCase()" />
               <mat-error>Required</mat-error>
             </mat-form-field>
           </section>

@@ -20,4 +20,11 @@ export interface PortalSectionAction {
    * typically based on state.
    */
   disabled: boolean;
+
+  /**
+   * @description
+   * Whether the action is hidden
+   * typically based on state.
+   */
+  hidden?: boolean;
 }

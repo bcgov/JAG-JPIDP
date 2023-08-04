@@ -25,6 +25,8 @@ export class CardSummaryComponent {
   @Input() public status?: string;
   @Input() public actionLabel?: string;
   @Input() public actionDisabled?: boolean;
+  @Input() public panelHidden?: boolean;
+
   @Output() public action: EventEmitter<void>;
 
   public constructor() {

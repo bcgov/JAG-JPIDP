@@ -16,15 +16,17 @@ public class JustinUserChangeManagementClient : BaseClient, IJustinUserChangeMan
 
     public async Task<IEnumerable<JustinUserChangeEvent>> GetCurrentChangeEvents()
     {
-        Log.Information("Getting current JUSTIN user changes");
+        Log.Debug("Getting current JUSTIN user changes");
 
 
         var result = await this.PutAsyncForJUSTINNonesense<EventsResponse>($"newEventsBatch");
 
         if (result.IsSuccess)
         {
-            Log.Information($"Got {result.Value.Events.Count} change events");
-
+            if (result.Value.Events.Count > 0)
+            {
+                Log.Information($"Got {result.Value.Events.Count} change events");
+            }
             // convert the change events to something useful
             return this.ConvertEventResponse(result.Value);
         }

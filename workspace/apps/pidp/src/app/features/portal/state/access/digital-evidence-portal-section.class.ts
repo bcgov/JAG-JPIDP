@@ -29,7 +29,7 @@ export class DigitalEvidencePortalSection
   ) {
     super();
     this.key = 'digitalEvidence';
-    this.heading = 'Digital Evidence and Disclosure Management System';
+    this.heading = 'Digital Evidence and Disclosure Management System (DEMS)';
     this.description = this.getDescription();
     this.order = this.GetOrder(this.profileStatus.status.digitalEvidence);
   }
@@ -48,10 +48,12 @@ export class DigitalEvidencePortalSection
       this.profileStatus.status.organizationDetails.statusCode;
     const demographicsComplete =
       demographicsStatusCode === StatusCode.COMPLETED ||
-      demographicsStatusCode === StatusCode.LOCKEDCOMPLETE;
+      demographicsStatusCode === StatusCode.LOCKEDCOMPLETE ||
+      demographicsStatusCode === StatusCode.HIDDENCOMPLETE;
     const orgComplete =
       organizationStatusCode === StatusCode.COMPLETED ||
-      organizationStatusCode === StatusCode.LOCKEDCOMPLETE;
+      organizationStatusCode === StatusCode.LOCKEDCOMPLETE ||
+      organizationStatusCode === StatusCode.HIDDENCOMPLETE;
     return {
       label:
         this.getStatusCode() === StatusCode.COMPLETED
@@ -67,7 +69,7 @@ export class DigitalEvidencePortalSection
   public getDescription(): string {
     return this.getStatusCode() === StatusCode.COMPLETED
       ? 'Your enrolment is complete. You can view the terms of enrolment by clicking the View button'
-      : `Enrol here for access to Digital Evidence and Disclosure Management System application.`;
+      : 'Request access to enroll in DEMS.';
   }
 
   public get statusType(): AlertType {

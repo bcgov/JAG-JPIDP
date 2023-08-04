@@ -59,7 +59,7 @@
     <ui-page-section *ngIf="!userIsLawyer">
       <ui-page-section-subheader heading="Digital Evidence and Disclosure Management System">
         <ng-container uiPageSectionSubheaderDesc *ngIf="!userInAgency()">
-          Check that the information below is correct, then click Request Access. If the information needs updating,
+          Check that the information below is correct, then click Submit. If the information needs updating,
           please
           contact
           <a uiAnchor scheme="mailto" [attr.href]="digitalEvidenceSupportEmail"></a>.
@@ -68,7 +68,7 @@
         </ng-container>
         <ng-container uiPageSectionSubheaderDesc *ngIf="userInAgency()">
           <div *ngIf="userInAgency()">
-            Click on <b>Request Access</b> to submit your request to have access to the DEMS system.
+            Click on <b>Submit</b> to submit your request to have access to the DEMS system.
             <br />
             As a submitting agency user, you will be able to request access to cases for the purposes of uploading
             digital evidence once your
@@ -139,12 +139,12 @@
 
   <ui-page-footer [mode]="completed ? 'reverse' : 'normal'">
     <button mat-stroked-button uiPageFooterAction type="button" color="secondary" (click)="onBack()">
-      {{ completed || pending ? 'Back Home' : 'Cancel Back Home' }}
+      {{ completed || pending ? 'Back Home' : 'Cancel' }}
     </button>
 
     <button *ngIf="!(completed || pending)" mat-flat-button uiPageFooterAction type="button" color="primary"
       [disabled]="!formState.form.valid" (click)="onRequestAccess()">
-      Request Access
+      Submit
     </button>
   </ui-page-footer>
 </ui-page>
