@@ -8,10 +8,12 @@
     <ui-bc-gov-logo [theme]="theme"></ui-bc-gov-logo>
   </span>
 
-  <span class="heading">
+  <span class="heading flex-fill" *ngIf=" (usernameBreakpoint$ | async)">
     <h1>Digital Identity</h1>
-    <h2> Access Management</h2>
+    <h1> Access Management</h1>
   </span>
+
+
 
   <span class="flex-fill"></span>
 
