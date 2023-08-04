@@ -30,7 +30,7 @@ export class DigitalEvidenceCaseManagementPortalSection
     super();
     this.key = 'digitalEvidenceCaseManagement';
     this.heading = 'Digital Evidence Case Access';
-    this.description = `Manage access to your DEMS Digital Evidence Cases here.`;
+    this.description = `Manage access to your BCPS DEMS Cases here.`;
     this.order = this.GetOrder(
       this.profileStatus.status.digitalEvidenceCaseManagement
     );
