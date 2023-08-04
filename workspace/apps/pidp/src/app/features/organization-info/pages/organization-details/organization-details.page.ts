@@ -4,14 +4,15 @@ import { FormBuilder, FormControl, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 
+
+
 import { EMPTY, catchError, of, tap } from 'rxjs';
 
-import {
-  CorrectionServiceCode,
-  JusticeSectorCode,
-  NoContent,
-  OrganizationCode,
-} from '@bcgov/shared/data-access';
+
+
+import { CorrectionServiceCode, JusticeSectorCode, NoContent, OrganizationCode } from '@bcgov/shared/data-access';
+
+
 
 import { AbstractFormPage } from '@app/core/classes/abstract-form-page.class';
 import { PartyService } from '@app/core/party/party.service';
@@ -23,9 +24,12 @@ import { AuthorizedUserService } from '@app/features/auth/services/authorized-us
 import { LookupService } from '@app/modules/lookup/lookup.service';
 import { AgencyLookup, Lookup } from '@app/modules/lookup/lookup.types';
 
+
+
 import { OrganizationDetailsFormState } from './organization-details-form-state';
 import { OrganizationDetailsResource } from './organization-details-resource.service';
 import { OrganizationDetails } from './organization-details.model';
+
 
 @Component({
   selector: 'app-organization-details',
@@ -75,7 +79,6 @@ export class OrganizationDetailsPage
     this.correctionServices = this.lookupService.correctionServices;
     this.lawSocieties = this.lookupService.lawSocieties;
     this.authorizedUserService.identityProvider$.subscribe((val) => {
-
       if (val === IdentityProvider.BCPS) {
         this.organizations = this.lookupService.organizations
           .filter(
@@ -159,9 +162,18 @@ export class OrganizationDetailsPage
           if (model?.organizationCode === 0) {
             if (this.organizations.length === 1) {
               model.organizationCode = this.organizations[0].code;
+              this.formState.patchValue(model);
+
+              if (
+                model.organizationCode === 1 &&
+                this.justiceSectors.length === 1
+              ) {
+                this.formState.justiceSectorCode.patchValue(
+                  this.justiceSectors[0].code
+                );
+              }
             }
           }
-          this.formState.patchValue(model);
         }),
         catchError((error: HttpErrorResponse) => {
           if (error.status === HttpStatusCode.NotFound) {
@@ -172,6 +184,8 @@ export class OrganizationDetailsPage
       )
       .subscribe();
   }
+
+
 
   protected performSubmission(): NoContent {
     const partyId = this.partyService.partyId;

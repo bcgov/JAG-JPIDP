@@ -36,7 +36,7 @@ public class UserChangeBackgroundService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        this.logger.LogDebug($"UserChangeBackgroundService is starting");
+        this.logger.LogDebug($"UserChangeBackgroundService is starting - poll rate {this.config.JustinChangeEventClient.PollRateSeconds}s");
 
         var period = TimeSpan.FromSeconds(this.config.JustinChangeEventClient.PollRateSeconds);
         stoppingToken.Register(() => this.logger.LogDebug("UserChangeBackgroundService background task is stopping."));
@@ -51,7 +51,7 @@ public class UserChangeBackgroundService : BackgroundService
             try
             {
                 var userService = scope.ServiceProvider.GetRequiredService<JustinUserChangeService>();
-                Log.Information("Running background task...");
+                Log.Debug("Running background task...");
                 var changes = await this.justinClient.GetCurrentChangeEvents();
                 if (changes?.Count() > 0)
                 {

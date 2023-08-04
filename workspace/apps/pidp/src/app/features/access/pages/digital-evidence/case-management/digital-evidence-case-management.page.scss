@@ -40,6 +40,12 @@ mat-icon {
   cursor: pointer;
 }
 
+.legend {
+  font-size: 0.7em;
+  vertical-align: middle;
+  display: flex;
+}
+
 .mat-row:hover {
   background-color: palette.theme-palette(blue, lightest);
 }

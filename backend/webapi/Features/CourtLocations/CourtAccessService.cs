@@ -119,8 +119,11 @@ public class CourtAccessService : ICourtAccessService
     {
 
         var requests = this.context.CourtLocationAccessRequests.Include(req => req.Party).Include(req => req.CourtLocation).Where((req) => (req.MessageId == null && req.ValidFrom <= DateTime.Now && req.DeletedOn == null) || (req.MessageId != null && req.ValidUntil <= DateTime.Now && req.DeletedOn == null)).ToList();
-        Serilog.Log.Information($"Returning {requests.Count} requests");
 
+        if (requests.Count > 0)
+        {
+            Serilog.Log.Information($"Returning court location access {requests.Count} requests");
+        }
         return requests;
 
     }

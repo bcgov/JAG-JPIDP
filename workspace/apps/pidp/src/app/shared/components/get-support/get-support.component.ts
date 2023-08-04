@@ -49,10 +49,10 @@ export class GetSupportComponent implements OnInit {
       //   name: 'Digital Evidence Management System',
       //   email: this.config.emails.digitalEvidenceSupport,
       // },
-      {
-        name: 'Driver Medical Fitness Transformation Program',
-        email: this.config.emails.driverFitnessSupport,
-      },
+      // {
+      //   name: 'Driver Medical Fitness Transformation Program',
+      //   email: this.config.emails.driverFitnessSupport,
+      // },
       ...ArrayUtils.insertIf<SupportProps>(
         this.permissionsService.hasRole(Role.FEATURE_PIDP_DEMO),
         {

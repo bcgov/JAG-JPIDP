@@ -73,7 +73,7 @@ public class UserRepresentation
     public string? LastName { get; set; }
     public string? FirstName { get; set; }
 
-    public bool? Enabled { get; set; } = true; // enabled by default
+    public bool Enabled { get; set; } = true; // enabled by default
 
   //  public List<Group> Groups { get; set; } =  new List<Group>();
 
