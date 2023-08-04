@@ -121,8 +121,9 @@ export class PortalDashboardComponent implements IDashboard, OnInit {
   }
 
   public ngOnInit(): void {
-    this.organization = this.getOrganization();
     this.menuItems = this.createMenuItems();
+
+    this.organization = this.getOrganization();
     this.displayMenus = true;
   }
 

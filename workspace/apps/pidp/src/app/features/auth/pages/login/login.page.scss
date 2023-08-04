@@ -178,16 +178,16 @@
 
   img {
     @include media-breakpoint-up(sm) {
-      width: 88px;
+      width: 48px;
     }
     @include media-breakpoint-up(md) {
-      width: 66px;
+      width: 48px;
     }
     @include media-breakpoint-up(lg) {
-      width: 88px;
+      width: 96px;
     }
     @include media-breakpoint-up(xl) {
-      width: 190px;
+      width: 128px;
     }
     margin-bottom: 1.5rem;
     height: auto;

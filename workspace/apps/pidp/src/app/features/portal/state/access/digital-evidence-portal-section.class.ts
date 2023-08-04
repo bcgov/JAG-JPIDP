@@ -69,7 +69,7 @@ export class DigitalEvidencePortalSection
   public getDescription(): string {
     return this.getStatusCode() === StatusCode.COMPLETED
       ? 'Your enrolment is complete. You can view the terms of enrolment by clicking the View button'
-      : 'Request access to enroll in DEMS.';
+      : 'Request access to enroll in BCPS DEMS.';
   }
 
   public get statusType(): AlertType {
@@ -87,7 +87,6 @@ export class DigitalEvidencePortalSection
     const statusCode = this.getStatusCode();
     const demographicsStatusCode =
       this.profileStatus.status.demographics.statusCode;
-    debugger;
     if (
       demographicsStatusCode === StatusCode.INCOMPLETE ||
       demographicsStatusCode === StatusCode.AVAILABLE

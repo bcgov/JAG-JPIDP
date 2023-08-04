@@ -4,15 +4,14 @@ import { FormBuilder, FormControl, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 
-
-
 import { EMPTY, catchError, of, tap } from 'rxjs';
 
-
-
-import { CorrectionServiceCode, JusticeSectorCode, NoContent, OrganizationCode } from '@bcgov/shared/data-access';
-
-
+import {
+  CorrectionServiceCode,
+  JusticeSectorCode,
+  NoContent,
+  OrganizationCode,
+} from '@bcgov/shared/data-access';
 
 import { AbstractFormPage } from '@app/core/classes/abstract-form-page.class';
 import { PartyService } from '@app/core/party/party.service';
@@ -24,12 +23,9 @@ import { AuthorizedUserService } from '@app/features/auth/services/authorized-us
 import { LookupService } from '@app/modules/lookup/lookup.service';
 import { AgencyLookup, Lookup } from '@app/modules/lookup/lookup.types';
 
-
-
 import { OrganizationDetailsFormState } from './organization-details-form-state';
 import { OrganizationDetailsResource } from './organization-details-resource.service';
 import { OrganizationDetails } from './organization-details.model';
-
 
 @Component({
   selector: 'app-organization-details',
@@ -47,7 +43,7 @@ export class OrganizationDetailsPage
   public lawEnforcements: Lookup[];
   public justiceSectors: Lookup[];
   public submittingAgencies: AgencyLookup[];
-
+  public isPrePopulatedOrg: boolean;
   public correctionServices: Lookup[];
   public lawSocieties: Lookup[];
   public IdentityProvider = IdentityProvider;
@@ -69,6 +65,7 @@ export class OrganizationDetailsPage
 
     const routeData = this.route.snapshot.data;
     this.title = routeData.title;
+    this.isPrePopulatedOrg = false;
     this.formState = new OrganizationDetailsFormState(fb);
     this.submittingAgencies = this.lookupService.submittingAgencies.filter(
       (agency) => agency.idpHint?.length > 0
@@ -80,6 +77,7 @@ export class OrganizationDetailsPage
     this.lawSocieties = this.lookupService.lawSocieties;
     this.authorizedUserService.identityProvider$.subscribe((val) => {
       if (val === IdentityProvider.BCPS) {
+        this.isPrePopulatedOrg = true;
         this.organizations = this.lookupService.organizations
           .filter(
             (org: Lookup<OrganizationCode>) =>
@@ -122,6 +120,10 @@ export class OrganizationDetailsPage
 
   public onBack(): void {
     this.navigateToRoot();
+  }
+
+  public isPrePopulated(): boolean {
+    return this.isPrePopulatedOrg;
   }
 
   public onChange(data: number): void {
@@ -184,8 +186,6 @@ export class OrganizationDetailsPage
       )
       .subscribe();
   }
-
-
 
   protected performSubmission(): NoContent {
     const partyId = this.partyService.partyId;
