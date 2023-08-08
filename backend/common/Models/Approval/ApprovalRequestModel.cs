@@ -8,5 +8,5 @@ public class ApprovalRequestModel
     public string RequestType { get; set; } = string.Empty;
     public List<string>? Reasons { get; set; }
     public Instant Created { get; set; }
-
+    public string DIAMId { get; set; } = string.Empty;
 }

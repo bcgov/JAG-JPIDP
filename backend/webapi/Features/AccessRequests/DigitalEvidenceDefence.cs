@@ -71,7 +71,9 @@ public class DigitalEvidenceDefence
     PidpConfiguration config,
     IOrgUnitService orgUnitService,
     PidpDbContext context,
-    IKafkaProducer<string, EdtDisclosureUserProvisioning> kafkaProducer,
+        IKafkaProducer<string, EdtDisclosureUserProvisioning> kafkaProducer,
+
+    IKafkaProducer<string, ApprovalRequestModel> approvalKafkaProducer,
         IKafkaProducer<string, EdtPersonProvisioningModel> kafkaDefenceCoreProducer,
 
     IKafkaProducer<string, Notification> kafkaNotificationProducer)
@@ -81,6 +83,7 @@ public class DigitalEvidenceDefence
             this.logger = logger;
             this.context = context;
             this.kafkaProducer = kafkaProducer;
+            this.approvalKafkaProducer = approvalKafkaProducer;
             this.kafkaDefenceCoreProducer = kafkaDefenceCoreProducer;
             this.config = config;
             this.kafkaNotificationProducer = kafkaNotificationProducer;
@@ -142,6 +145,20 @@ public class DigitalEvidenceDefence
                         // create approval message
                         var deliveryResult = await this.PublishApprovalRequest(command, dto, userValidationErrors, new List<Models.AccessRequest> { defenceUser, disclosureUser });
 
+                        foreach (var result in deliveryResult)
+                        {
+                            if (result.Status == PersistenceStatus.Persisted)
+                            {
+                                Serilog.Log.Information($"Published {result.Key} to {result.Partition}");
+                            }
+                            else
+                            {
+                                Serilog.Log.Error($"Failed to publish {result.Key} to {result.Status}");
+
+                            }
+
+
+                        }
                     }
                     else
                     {
@@ -226,8 +243,8 @@ public class DigitalEvidenceDefence
 
             }
 
-            // not practising - shouldnt get this far but checking just in case?
-            if (memberShipStatus != null && !string.Join("", memberShipStatus).Equals("PRAC"))
+            // not practicing - shouldnt get this far but checking just in case!
+            if (memberShipStatus != null && !string.Join("", memberShipStatus).Equals("PRAC", StringComparison.Ordinal))
             {
                 Serilog.Log.Error($"User is not shown as currently practicing [{string.Join("", memberShipStatus)}] {keycloakUser}");
                 errors.Add($"User is not shown as currently practicing");
@@ -304,15 +321,14 @@ public class DigitalEvidenceDefence
                 var taskId = Guid.NewGuid().ToString();
                 Serilog.Log.Logger.Information("Adding message to approval topic {0} {1} {2}", this.config.KafkaCluster.ApprovalCreationTopic, command.ParticipantId, taskId);
 
-
-
                 // use UUIDs for topic keys
                 results.Add(await this.approvalKafkaProducer.ProduceAsync(this.config.KafkaCluster.ApprovalCreationTopic, taskId, new ApprovalRequestModel
                 {
                     AccessRequestId = request.Id,
                     Reasons = reasonList,
                     RequestType = request.AccessTypeCode.ToString(),
-                    Created = this.clock.GetCurrentInstant()
+                    Created = this.clock.GetCurrentInstant(),
+                    DIAMId = request.Party.Jpdid
 
                 }));
             }
