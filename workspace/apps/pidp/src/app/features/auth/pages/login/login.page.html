@@ -26,37 +26,28 @@
     </div>
     <div class="row">
       <div class="col-12 col-xl-auto">
-        <div class="header">
-          <div class="heading">
-            <img src="/assets/images/diam-logo.svg" alt="Digital Identity Access Management Portal Logo" />
-            <div>
-              <h1>Digital Identity</h1>
-              <h2> Access Management</h2>
-            </div>
-
-          </div>
-
-
-        </div>
-
-
 
         <div class="hide-on-large-viewports">
           <ng-container *ngTemplateOutlet="login"></ng-container>
         </div>
 
-        <!-- <div class="hide-on-small-viewports scroll">
-          <button mat-stroked-button color="primary" (click)="onScrollToAnchor()">
-            View available court systems
-          </button>
-        </div> -->
 
         <div class="tagline">
           <ui-page-section>
+            <div class="row flex align-items-center">
+              <div class="col-4">
+                <img src="/assets/images/diam-logo.svg" alt="Digital Identity Access Management Portal Logo" />
+              </div>
+              <div class="col-6 ">
+                <h1>
+                  Verify yourself and gain access to many applications.
+                </h1>
 
-            <h1>
-              Verify yourself and gain access to many applications.
-            </h1>
+              </div>
+
+
+
+            </div>
             <span>
               Pick your sign in method and login using your authorized security credentials. <br />Note: You may be
               redirected
@@ -65,30 +56,6 @@
           </ui-page-section>
 
         </div>
-
-
-        <!-- <div class="systems">
-          <ui-page-section>
-            <ui-scroll-target targetId="systems"></ui-scroll-target>
-            <ui-page-section-subheader icon="assignment" heading="Systems Available"></ui-page-section-subheader>
-
-            <ui-page-section>
-              <h3>Driver Medical Fitness Transformation Program</h3>
-              <p>
-                B.C. drivers can enrol for access to the Driver Medical Fitness
-                Application Portal.
-              </p>
-              <p>
-                You need to set up the
-                <a uiAnchor [attr.href]="bcscMobileSetupUrl">
-                  BC Services Card app
-                </a>
-                to enrol. You will use the app each time you access the DMFT
-                Drivers Portal.
-              </p>
-            </ui-page-section>
-          </ui-page-section>
-        </div> -->
         <div class="support">
           <app-get-support></app-get-support>
         </div>
@@ -103,31 +70,30 @@
 
   <ng-template #login>
     <div class="actions">
-      <div>Login through our trusted "partners"</div>
       <div>
         <small class="left">Members of the public</small>
         <button mat-stroked-button (click)="onLogin(IdentityProvider.OIDC)">
-          Login with BC Services Card
+          BC Services Card Login
         </button>
         <small class="center">
           Need an account?
           <a uiAnchor [attr.href]="bcscMobileSetupUrl">Set up</a>
         </small>
         <div class="divider"></div>
-        <small>Agencies and Government members</small>
+        <small>Government members and Agencies</small>
 
         <button mat-stroked-button (click)="onLogin(IdentityProvider.ADFS)">
-          BCPS
+          BCPS Login
         </button>
 
         <button mat-stroked-button (click)="onLogin(IdentityProvider.VERIFIED_CREDENTIALS)">
-          Verifiable Credentials
+          Verifiable Credentials Login
         </button>
 
         <br /><br />
         <mat-form-field class="agency-field">
-          <input type="text" placeholder="Agency" matInput aria-label="Agency name" [formControl]="selectedAgency"
-            [matAutocomplete]="auto" />
+          <input type="text" placeholder="Enter your agency name" matInput aria-label="Agency name"
+            [formControl]="selectedAgency" [matAutocomplete]="auto" />
           <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSelectionChanged($event)">
             <mat-option *ngFor="let agency of filteredAgencies | async" [value]="agency.name">
               {{ agency.name }}

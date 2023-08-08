@@ -16,6 +16,7 @@ export interface DashboardMenuItemOptions {
 export abstract class DashboardMenuItem {
   public label: string;
   public icon: string;
+  public hidden: boolean;
   public options: DashboardMenuItemOptions;
 
   public constructor(
@@ -26,6 +27,7 @@ export abstract class DashboardMenuItem {
     this.label = label;
     this.icon = icon;
     this.options = options;
+    this.hidden = false;
   }
 
   /**
@@ -68,6 +70,7 @@ export class DashboardRouteMenuItem
 
   public constructor(
     label: string,
+
     routeParams: {
       commands: RoutePath;
       extras?: NavigationExtras;

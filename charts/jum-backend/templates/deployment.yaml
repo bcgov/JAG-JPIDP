@@ -177,10 +177,10 @@ spec:
               path: /health/liveness
               port: http
               scheme: HTTP
-            timeoutSeconds: 5
+            timeoutSeconds: 10
             periodSeconds: 30
             successThreshold: 1
-            failureThreshold: 3
+            failureThreshold: 5
          # startupProbe:
         #    httpGet:
          #     path: /health/liveness

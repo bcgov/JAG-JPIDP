@@ -158,6 +158,19 @@ public class DigitalEvidenceUpdate
                                 if (changes.SingleChangeTypes.ContainsKey(ChangeType.EMAIL) || changes.IsAccountDeactivated())
                                 {
 
+                                    var notifyUser = true;
+                                    if (!keycloakUserInfo.Enabled)
+                                    {
+                                        Serilog.Log.Information($"Party {party.Id} account currently disabled in keycloak - notification will not be sent");
+                                        notifyUser = false;
+                                    }
+
+                                    if (changes.SingleChangeTypes.ContainsKey(ChangeType.EMAIL) && !string.IsNullOrEmpty(changes.SingleChangeTypes[ChangeType.EMAIL].To))
+                                    {
+                                        keycloakUserInfo.Email = changes.SingleChangeTypes[ChangeType.EMAIL].To;
+                                        party.Email = changes.SingleChangeTypes[ChangeType.EMAIL].To;
+                                    }
+
                                     // deactivate the account
                                     keycloakUserInfo!.Enabled = false;
                                     var deactivated = await this.UpdateKeycloakUser(party.UserId, keycloakUserInfo);
@@ -172,24 +185,26 @@ public class DigitalEvidenceUpdate
                                         this.logger.LogKeycloakAccountDisableFailure(party.UserId.ToString());
                                     }
 
-                                    // notify user of deactiviation
-                                    var eventType = changes.SingleChangeTypes.ContainsKey(ChangeType.EMAIL) ? "digitalevidence-bcps-userupdate-emailchanged" : "digitalevidence-bcps-userupdate-deactivated";
-                                    var email = changes.SingleChangeTypes.ContainsKey(ChangeType.EMAIL) ? changes.SingleChangeTypes[ChangeType.EMAIL].To : party.Email;
-
-                                    var eventData = new Dictionary<string, string>
-                                {
-                                    { "FirstName", party.FirstName! },
-                                    { "AccessRequestId", "" + digitalEvidence.Id }
-                                };
-
-                                    var produceNotificationResponse = await this.kafkaNotificationProducer.ProduceAsync(this.config.KafkaCluster.NotificationTopicName, Guid.NewGuid().ToString(), new Notification
+                                    if (notifyUser)
                                     {
-                                        To = email,
-                                        DomainEvent = eventType,
-                                        EventData = eventData,
-                                    });
+                                        // notify user of deactiviation
+                                        var eventType = changes.SingleChangeTypes.ContainsKey(ChangeType.EMAIL) ? "digitalevidence-bcps-userupdate-emailchanged" : "digitalevidence-bcps-userupdate-deactivated";
+                                        var email = changes.SingleChangeTypes.ContainsKey(ChangeType.EMAIL) ? changes.SingleChangeTypes[ChangeType.EMAIL].To : party.Email;
 
-                                    Serilog.Log.Information($"Change notification event for {party.Email} sent to {this.config.KafkaCluster.NotificationTopicName}");
+                                        var eventData = new Dictionary<string, string>  {
+                                        { "FirstName", party.FirstName! },
+                                        { "AccessRequestId", "" + digitalEvidence.Id }
+                                        };
+
+                                        var produceNotificationResponse = await this.kafkaNotificationProducer.ProduceAsync(this.config.KafkaCluster.NotificationTopicName, Guid.NewGuid().ToString(), new Notification
+                                        {
+                                            To = email,
+                                            DomainEvent = eventType,
+                                            EventData = eventData,
+                                        });
+
+                                        Serilog.Log.Information($"Change notification event for {party.Email} sent to {this.config.KafkaCluster.NotificationTopicName}");
+                                    }
                                 }
                                 else
                                 {
@@ -346,15 +361,22 @@ public class DigitalEvidenceUpdate
             {
                 if (!string.IsNullOrEmpty(justinUserInfo.emailAddress))
                 {
-                    if (string.IsNullOrEmpty(justinUserInfo.emailAddress))
+                    if (!string.IsNullOrEmpty(party.Email) && !party.Email.Equals(justinUserInfo.emailAddress, StringComparison.OrdinalIgnoreCase))
                     {
-                        Serilog.Log.Warning($"User {party.Id} email is null or empty in JUSTIN");
-                    }
-                    else if (!party.Email.Equals(justinUserInfo.emailAddress, StringComparison.OrdinalIgnoreCase))
-                    {
-                        Serilog.Log.Information($"User {party.Id} email changed from {party.Email} to {justinUserInfo.emailAddress}");
+                        Serilog.Log.Information($"User {party.Id} email changed from {party.Email} to {justinUserInfo.emailAddress} - users account will be disabled");
                         userChangeModel.SingleChangeTypes.Add(ChangeType.EMAIL, new SingleChangeType(party.Email, justinUserInfo.emailAddress));
                     }
+                    else if (string.IsNullOrEmpty(party.Email) && !string.IsNullOrEmpty(justinUserInfo.emailAddress))
+                    {
+                        Serilog.Log.Information($"User {party.Id} email was empty and is now {justinUserInfo.emailAddress} - users account will be enabled if disabled");
+                        userChangeModel.SingleChangeTypes.Add(ChangeType.EMAIL, new SingleChangeType(party.Email, justinUserInfo.emailAddress));
+                    }
+                }
+                else
+                {
+                    Serilog.Log.Information($"User {party.Id} email is empty in JUSTIN - account will be disabled");
+                    userChangeModel.SingleChangeTypes.Add(ChangeType.EMAIL, new SingleChangeType(party.Email, justinUserInfo.emailAddress));
+
                 }
             }
 
@@ -436,7 +458,7 @@ public class DigitalEvidenceUpdate
                 var groups = await this.keycloakClient.GetUserGroups(party.UserId);
                 var keycloakGroups = groups.Select(group => group.Name).ToList();
                 var keycloakRegions = allRegions.Intersect(keycloakGroups).ToList();
-                if ( keycloakRegions.Count > 0)
+                if (keycloakRegions.Count > 0)
                 {
                     userChangeModel.ListChangeTypes.Add(ChangeType.REGIONS, new ListChangeType(keycloakRegions, Enumerable.Empty<string>()));
                 }

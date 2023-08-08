@@ -1,5 +1,6 @@
 @import 'palette';
 @import 'material/material-variables';
+@import 'bootstrap/bootstrap-imports';
 
 @mixin dashboard-header-theme($bgColor, $color) {
   background-color: $bgColor;
@@ -28,6 +29,21 @@
     float: right;
     clear: right;
     font-size: 0.7rem;
+  }
+
+  .heading {
+    margin-left: 1.2em;
+    h1 {
+      @include media-breakpoint-down(sm) {
+        display: none;
+      }
+      @include media-breakpoint-down(md) {
+        font-size: 0.6em;
+      }
+      @include media-breakpoint-down(lg) {
+        font-size: 1em;
+      }
+    }
   }
 
   .organization {

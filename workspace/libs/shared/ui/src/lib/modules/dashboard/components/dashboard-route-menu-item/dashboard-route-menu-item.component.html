@@ -1,25 +1,15 @@
-<mat-list-item
-  routerLinkActive="ng-active"
-  [routerLink]="routeMenuItem.commands"
-  [routerLinkActiveOptions]="routeMenuItem.linkActiveOptions"
-  [fragment]="routeMenuItem.extras?.fragment"
-  [class]="routeMenuItem.getOptions()"
-  (click)="onRoute(routeMenuItem)">
-  <ng-container
-    *ngIf="{
+<mat-list-item routerLinkActive="ng-active" [routerLink]="routeMenuItem.commands"
+  [routerLinkActiveOptions]="routeMenuItem.linkActiveOptions" [fragment]="routeMenuItem.extras?.fragment"
+  [class]="routeMenuItem.getOptions()" [hidden]="routeMenuItem.hidden" (click)="onRoute(routeMenuItem)">
+  <ng-container *ngIf="{
       isDesktop: isDesktopAndUpBreakpoint$ | async
     } as breakpoint">
-    <mat-icon
-      *ngIf="showMenuItemIcons"
-      mat-list-icon
-      [class.center-sidenav-icon]="
+    <mat-icon *ngIf="showMenuItemIcons" mat-list-icon [class.center-sidenav-icon]="
         responsiveMenuItems && !breakpoint.isDesktop
       ">
       {{ routeMenuItem.icon }}
     </mat-icon>
-    <a
-      matLine
-      [class.extend-content-width]="
+    <a matLine [class.extend-content-width]="
         !responsiveMenuItems || breakpoint.isDesktop
       ">
       <span *ngIf="!responsiveMenuItems || breakpoint.isDesktop">

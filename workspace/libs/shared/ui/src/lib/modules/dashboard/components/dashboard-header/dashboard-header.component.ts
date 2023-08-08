@@ -55,7 +55,7 @@ export class DashboardHeaderComponent {
     this.theme = 'dark';
     this.toggleMobileMenu = new EventEmitter<void>();
     this.logout = new EventEmitter<void>();
-    this.organization = 'test';
+    this.organization = '';
     this.mobileToggleBreakpoint$ = combineLatest([
       viewportService.isMobileBreakpoint$,
       viewportService.isTabletBreakpoint$,

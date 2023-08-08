@@ -30,7 +30,7 @@ export class DigitalEvidenceCaseManagementPortalSection
     super();
     this.key = 'digitalEvidenceCaseManagement';
     this.heading = 'Digital Evidence Case Access';
-    this.description = `Manage access to your Digital Evidence Cases here.`;
+    this.description = `Manage access to your BCPS DEMS Cases here.`;
     this.order = this.GetOrder(
       this.profileStatus.status.digitalEvidenceCaseManagement
     );
@@ -57,9 +57,11 @@ export class DigitalEvidenceCaseManagementPortalSection
       disabled: !(
         digitalEvidenceStatusCode === StatusCode.COMPLETED &&
         (demographicsStatusCode === StatusCode.COMPLETED ||
-          demographicsStatusCode === StatusCode.LOCKEDCOMPLETE) &&
+          demographicsStatusCode === StatusCode.LOCKEDCOMPLETE ||
+          demographicsStatusCode === StatusCode.HIDDENCOMPLETE) &&
         (organizationStatusCode === StatusCode.COMPLETED ||
-          organizationStatusCode === StatusCode.LOCKEDCOMPLETE)
+          organizationStatusCode === StatusCode.LOCKEDCOMPLETE ||
+          organizationStatusCode === StatusCode.HIDDENCOMPLETE)
       ),
     };
   }

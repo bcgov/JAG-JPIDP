@@ -130,7 +130,7 @@ public class EmailService : IEmailService
 
         var template = await this.templateCache.GetEmailTemplate(notification.DomainEvent);
 
-        Log.Information("Got template {0}", template);
+        Log.Information("Using template {0}", notification.DomainEvent);
         return new DomainEventEmail
         {
             DomainEvent = notification.DomainEvent,

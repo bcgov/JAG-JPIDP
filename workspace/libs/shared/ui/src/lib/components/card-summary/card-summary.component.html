@@ -6,7 +6,7 @@
 </ng-container>
 
 <ng-template #card>
-  <ui-card [icon]="icon" [heading]="heading" [order]="order" [class]="statusType">
+  <ui-card [icon]="icon" [heading]="heading" [order]="order" [class]="statusType" [hidden]="panelHidden">
     <!-- Work around for ngProjectAs not passing directive reference when applied to ng-content -->
     <ng-container uiCardHint *ngIf="hasActions()">
       <ng-content select="[uiCardSummaryHint]"></ng-content>

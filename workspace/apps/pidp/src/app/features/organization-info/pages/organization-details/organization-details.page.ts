@@ -43,7 +43,7 @@ export class OrganizationDetailsPage
   public lawEnforcements: Lookup[];
   public justiceSectors: Lookup[];
   public submittingAgencies: AgencyLookup[];
-
+  public isPrePopulatedOrg: boolean;
   public correctionServices: Lookup[];
   public lawSocieties: Lookup[];
   public IdentityProvider = IdentityProvider;
@@ -65,6 +65,7 @@ export class OrganizationDetailsPage
 
     const routeData = this.route.snapshot.data;
     this.title = routeData.title;
+    this.isPrePopulatedOrg = false;
     this.formState = new OrganizationDetailsFormState(fb);
     this.submittingAgencies = this.lookupService.submittingAgencies.filter(
       (agency) => agency.idpHint?.length > 0
@@ -75,8 +76,8 @@ export class OrganizationDetailsPage
     this.correctionServices = this.lookupService.correctionServices;
     this.lawSocieties = this.lookupService.lawSocieties;
     this.authorizedUserService.identityProvider$.subscribe((val) => {
-
       if (val === IdentityProvider.BCPS) {
+        this.isPrePopulatedOrg = true;
         this.organizations = this.lookupService.organizations
           .filter(
             (org: Lookup<OrganizationCode>) =>
@@ -121,6 +122,10 @@ export class OrganizationDetailsPage
     this.navigateToRoot();
   }
 
+  public isPrePopulated(): boolean {
+    return this.isPrePopulatedOrg;
+  }
+
   public onChange(data: number): void {
     this.selectedOption = data;
 
@@ -159,9 +164,18 @@ export class OrganizationDetailsPage
           if (model?.organizationCode === 0) {
             if (this.organizations.length === 1) {
               model.organizationCode = this.organizations[0].code;
+              this.formState.patchValue(model);
+
+              if (
+                model.organizationCode === 1 &&
+                this.justiceSectors.length === 1
+              ) {
+                this.formState.justiceSectorCode.patchValue(
+                  this.justiceSectors[0].code
+                );
+              }
             }
           }
-          this.formState.patchValue(model);
         }),
         catchError((error: HttpErrorResponse) => {
           if (error.status === HttpStatusCode.NotFound) {

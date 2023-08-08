@@ -1,5 +1,5 @@
 <ui-page [form]="formState.form" (submitted)="onSubmit()">
-  <ui-page-header>{{ title }}</ui-page-header>
+  <!-- <ui-page-header>{{ title }}</ui-page-header> -->
 
   <ui-page-section>
     <ui-page-section-subheader icon="corporate_fare" heading="Organization Details">
@@ -11,13 +11,13 @@
     <ng-container [formGroup]="formState.form">
       <section>
         <ui-page-subheader>Organization Type</ui-page-subheader>
-        <p>Select your organization type.</p>
+        <p *ngIf="!isPrePopulated()">Select your organization type.</p>
         <!-- <span *ngIf="(identityProvider$ | async) === IdentityProvider.BCSC">
           This information comes from the BC Services Card.
         </span> -->
 
         <mat-form-field class="w-100">
-          <mat-select placeholder="Organization Type" formControlName="organizationCode"
+          <mat-select placeholder="Organization Type" formControlName="organizationCode" [disabled]="isPrePopulated()"
             (selectionChange)="onChange($event.value)"
             [value]="organizations.length === 1 ? organizations[0].code : null">
             <mat-option *ngFor="let organization of organizations" [value]="organization.code"
@@ -87,7 +87,8 @@
           <p>Select which correction service best describes you.</p>
 
           <mat-form-field class="w-100">
-            <mat-select placeholder="Corrections Service" formControlName="correctionServiceCode">
+            <mat-select placeholder="Corrections Service" formControlName="correctionServiceCode"
+              [disabled]="isPrePopulated()" [disabled]="isPrePopulated()">
               <mat-option *ngFor="let correctionService of correctionServices" [value]="correctionService.code">
                 {{ correctionService.name }}
               </mat-option>
@@ -110,10 +111,10 @@
       <ng-container *ngIf="formState.organizationCode.value === 1">
         <section>
           <ui-page-subheader>Justice Sector</ui-page-subheader>
-          <p>Select the JPSS department you work in.</p>
+          <p *ngIf="!isPrePopulated()">Select the department you work in.</p>
 
           <mat-form-field class="w-100">
-            <mat-select placeholder="Justice Sector" formControlName="justiceSectorCode">
+            <mat-select placeholder="Justice Sector" formControlName="justiceSectorCode" [disabled]="isPrePopulated()">
               <mat-option *ngFor="let justiceSector of justiceSectors" [value]="justiceSector.code">
                 {{ justiceSector.name }}
               </mat-option>
@@ -128,7 +129,8 @@
             <p>Provide your BCPS JUSTIN Username</p>
 
             <mat-form-field class="w-100">
-              <input matInput placeholder="JUSTIN Username" formControlName="employeeIdentifier" />
+              <input matInput placeholder="JUSTIN Username" formControlName="employeeIdentifier"
+                oninput="this.value = this.value.toUpperCase()" />
               <mat-error>Required</mat-error>
             </mat-form-field>
           </section>

@@ -118,7 +118,7 @@ public partial class ProfileStatus
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
                 this.StatusCode = profile.DemographicsEntered || profile.SubmittingAgency != null ?
-                    (profile.SubmittingAgency != null || profile.UserIsBcps) ? StatusCode.LockedComplete : StatusCode.Complete : StatusCode.Incomplete;
+                    (profile.SubmittingAgency != null || profile.UserIsBcps) ? StatusCode.HiddenComplete : StatusCode.Complete : StatusCode.Incomplete;
             }
         }
 
@@ -180,7 +180,7 @@ public partial class ProfileStatus
                     else
                     {
                         // check user info is valid
-                        this.StatusCode = StatusCode.LockedComplete;
+                        this.StatusCode = StatusCode.HiddenComplete;
                     }
 
                     return;
@@ -189,7 +189,7 @@ public partial class ProfileStatus
 
                 if (profile.UserIsInSubmittingAgency)
                 {
-                    this.StatusCode = StatusCode.LockedComplete;
+                    this.StatusCode = StatusCode.HiddenComplete;
                     return;
                 }
 
