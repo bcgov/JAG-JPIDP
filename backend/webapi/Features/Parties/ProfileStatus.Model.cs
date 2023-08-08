@@ -167,7 +167,7 @@ public partial class ProfileStatus
 
                     if ( familyName == null || givenName == null || BCServicesCardLastName == null || BCServicesCardLastName.Value != familyName.Value || BCServicesCardFirstName == null || BCServicesCardFirstName.Value != givenName.Value)
                     {
-                        this.Alerts.Add(Alert.PersonVerificationError);
+                        this.Alerts.Add(Alert.VerifiedCredentialMismatch);
                         this.StatusCode = StatusCode.Error;
                     }
 

@@ -69,7 +69,8 @@ public partial class ProfileStatus
             JumValidationError,
             PendingRequest,
             LawyerStatusError,
-            PersonVerificationError
+            PersonVerificationError,
+            VerifiedCredentialMismatch
         }
 
         public enum StatusCode
