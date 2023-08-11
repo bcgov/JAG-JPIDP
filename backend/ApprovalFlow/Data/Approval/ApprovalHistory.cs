@@ -1,4 +1,4 @@
-namespace ApprovalFlow.Features.Approval;
+namespace ApprovalFlow.Data.Approval;
 
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -13,8 +13,9 @@ public class ApprovalHistory : BaseAuditable
     public int Id { get; set; }
     public string DecisionNote { get; set; } = string.Empty;
     public string Approver { get; set; } = string.Empty;
-    public int AccessRequestId { get; set; }
-    public AccessRequest AccessRequest { get; set; }
+    public int RequestId { get; set; }
+    public Request AccessRequest { get; set; }
     public Instant? Deleted { get; set; }
-    public ApprovalStatus Status { get; set; }
+    public ApprovalStatus Status { get; set; } = ApprovalStatus.PENDING;
+
 }

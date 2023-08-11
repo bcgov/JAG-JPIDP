@@ -32,10 +32,13 @@ using Common.Constants.Telemetry;
 using ApprovalFlow.Telemetry;
 using DIAM.Common.Helpers.Transformers;
 using ApprovalFlow.Kafka;
+using Microsoft.Extensions.DependencyInjection;
+using ApprovalFlow.Auth;
 
 public class Startup
 {
     public IConfiguration Configuration { get; }
+    private readonly string _policyName = "CorsPolicy";
 
     public Startup(IConfiguration configuration)
     {
@@ -108,6 +111,7 @@ public class Startup
         services
           .AddAutoMapper(typeof(Startup))
           .AddKafkaConsumer(config)
+          .AddKeycloakAuth(config)
 
 
           .AddSingleton<IClock>(SystemClock.Instance);
@@ -122,6 +126,17 @@ public class Startup
         services.AddHealthChecks()
                 .AddCheck("liveliness", () => HealthCheckResult.Healthy())
                 .AddNpgSql(config.ConnectionStrings.ApprovalFlowDataStore, tags: new[] { "services" }).ForwardToPrometheus();
+
+        services.AddCors(opt =>
+        {
+            opt.AddPolicy(name: _policyName, builder =>
+            {
+                builder.AllowAnyOrigin()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            });
+        });
+
 
         services.AddControllers(options => options.Conventions.Add(new RouteTokenTransformerConvention(new KabobCaseParameterTransformer())))
              .AddFluentValidation(options => options.RegisterValidatorsFromAssemblyContaining<Startup>())
@@ -145,7 +160,8 @@ public class Startup
 
         services.AddSwaggerGen(options =>
         {
-            options.SwaggerDoc("v1", new OpenApiInfo { Title = "Disclosure Service API", Version = "v1" });
+            options.SwaggerDoc("v1", new OpenApiInfo { Title = "Approval Service API", Version = "v1" });
+            
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 Description = "Standard Authorization header using the Bearer scheme. Example: \"bearer {token}\"",
@@ -234,6 +250,7 @@ public class Startup
             //}
         });
         app.UseRouting();
+
         app.UseCors("CorsPolicy");
         app.UseAuthentication();
         app.UseAuthorization();

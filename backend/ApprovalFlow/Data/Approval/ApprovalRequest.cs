@@ -1,4 +1,4 @@
-namespace ApprovalFlow.Features.Approval;
+namespace ApprovalFlow.Data.Approval;
 
 using NodaTime;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -11,10 +11,12 @@ public class ApprovalRequest : BaseAuditable
     [Key]
     public int Id { get; set; }
     public string Reason { get; set; } = string.Empty;
+    [Required]
+    public string MessageKey { get; set; }
+    public string UserId { get; set; }
+    public string IdentityProvider { get; set; }
     public Instant? Approved { get; set; }
-    public Instant? Requested { get; set; }
-    public ICollection<ApprovalHistory> History { get; }
+    public Instant? Completed { get; set; }
+    public ICollection<Request> Requests { get; set; } = new List<Request>();
 
 }
-
-

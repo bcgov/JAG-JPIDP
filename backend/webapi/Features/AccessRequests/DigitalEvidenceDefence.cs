@@ -143,7 +143,7 @@ public class DigitalEvidenceDefence
                         defenceUser.Status = AccessRequestStatus.RequiresApproval;
 
                         // create approval message
-                        var deliveryResult = await this.PublishApprovalRequest(command, dto, userValidationErrors, new List<Models.AccessRequest> { defenceUser, disclosureUser });
+                        var deliveryResult = await this.PublishApprovalRequest(keycloakUser, command, dto, userValidationErrors, new List<Models.AccessRequest> { defenceUser, disclosureUser });
 
                         foreach (var result in deliveryResult)
                         {
@@ -185,11 +185,11 @@ public class DigitalEvidenceDefence
 
                     }
 
-                        await this.context.SaveChangesAsync();
-                        await trx.CommitAsync();
+                    await this.context.SaveChangesAsync();
+                    await trx.CommitAsync();
 
-                        return DomainResult.Success();
-                    
+                    return DomainResult.Success();
+
 
                 }
                 catch (Exception ex)
@@ -228,7 +228,7 @@ public class DigitalEvidenceDefence
 
             }
 
-            if (!string.Join(" ", BCFamilyName).Equals(keycloakUser.LastName,StringComparison.OrdinalIgnoreCase))
+            if (!string.Join(" ", BCFamilyName).Equals(keycloakUser.LastName, StringComparison.OrdinalIgnoreCase))
             {
                 Serilog.Log.Error($"User family name does not match between BCSC [{string.Join(" ", BCFamilyName)}] and BCLaw [{keycloakUser.LastName}] {keycloakUser}");
                 errors.Add($"User family name does not match between BCSC [{string.Join(" ", BCFamilyName)}] and BCLaw [{keycloakUser.LastName}]");
@@ -263,7 +263,7 @@ public class DigitalEvidenceDefence
                 Name = "PPID",
                 Value = command.ParticipantId
             };
-       
+
             // use UUIDs for topic keys
             var delivered = await this.kafkaDefenceCoreProducer.ProduceAsync(this.config.KafkaCluster.PersonCreationTopic, taskId, new EdtPersonProvisioningModel
             {
@@ -312,26 +312,56 @@ public class DigitalEvidenceDefence
             return delivered;
         }
 
-        private async Task<List<DeliveryResult<string, ApprovalRequestModel>>> PublishApprovalRequest(Command command, PartyDto dto,List<string> reasonList, List<Models.AccessRequest> accessRequests)
+        /// <summary>
+        /// Publish a request to the approval topic
+        /// </summary>
+        /// <param name="keycloakUser"></param>
+        /// <param name="command"></param>
+        /// <param name="dto"></param>
+        /// <param name="reasonList"></param>
+        /// <param name="accessRequests"></param>
+        /// <returns></returns>
+        /// <exception cref="AccessRequestException"></exception>
+        private async Task<List<DeliveryResult<string, ApprovalRequestModel>>> PublishApprovalRequest(UserRepresentation keycloakUser, Command command, PartyDto dto, List<string> reasonList, List<Models.AccessRequest> accessRequests)
         {
 
+            if (accessRequests == null || accessRequests.Count == 0)
+            {
+                throw new AccessRequestException("No access requests passed to PublishApprovalRequest()");
+            }
+
             var results = new List<DeliveryResult<string, ApprovalRequestModel>>();
+
+            var taskId = Guid.NewGuid().ToString();
+            var userId = dto?.Jpdid;
+            var identityProvider = keycloakUser.FederatedIdentities.FirstOrDefault()?.IdentityProvider;
+
+            if (userId == null || identityProvider == null)
+            {
+                throw new AccessRequestException($"Failed to determine userID or idp for user {dto.UserId}");
+            }
+            Serilog.Log.Logger.Information("Adding message to approval topic {0} {1} {2}", this.config.KafkaCluster.ApprovalCreationTopic, command.ParticipantId, taskId);
+
+            var requests = new List<ApprovalAccessRequest>();
             foreach (var request in accessRequests)
             {
-                var taskId = Guid.NewGuid().ToString();
-                Serilog.Log.Logger.Information("Adding message to approval topic {0} {1} {2}", this.config.KafkaCluster.ApprovalCreationTopic, command.ParticipantId, taskId);
-
-                // use UUIDs for topic keys
-                results.Add(await this.approvalKafkaProducer.ProduceAsync(this.config.KafkaCluster.ApprovalCreationTopic, taskId, new ApprovalRequestModel
+                requests.Add(new ApprovalAccessRequest
                 {
                     AccessRequestId = request.Id,
-                    Reasons = reasonList,
                     RequestType = request.AccessTypeCode.ToString(),
-                    Created = this.clock.GetCurrentInstant(),
-                    DIAMId = request.Party.Jpdid
-
-                }));
+                });
             }
+
+            // use UUIDs for topic keys
+            results.Add(await this.approvalKafkaProducer.ProduceAsync(this.config.KafkaCluster.ApprovalCreationTopic, taskId, new ApprovalRequestModel
+            {
+                AccessRequests = requests,
+                Reasons = reasonList,
+                Created = DateTime.Now,
+                UserId = userId,
+                IdentityProvider = identityProvider
+            }));
+
             return results;
         }
 

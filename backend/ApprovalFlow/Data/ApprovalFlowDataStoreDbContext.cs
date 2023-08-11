@@ -1,9 +1,10 @@
 namespace ApprovalFlow.Data;
 
-using ApprovalFlow.Features.Approval;
+using ApprovalFlow.Data.Approval;
 using ApprovalFlow.Models;
 using DIAM.Common.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NodaTime;
 
 public class ApprovalFlowDataStoreDbContext : DbContext
@@ -13,6 +14,8 @@ public class ApprovalFlowDataStoreDbContext : DbContext
     public ApprovalFlowDataStoreDbContext(DbContextOptions<ApprovalFlowDataStoreDbContext> options, IClock clock) : base(options) => this.clock = clock;
     public DbSet<IdempotentConsumer> IdempotentConsumers { get; set; } = default!;
     public DbSet<ApprovalRequest> ApprovalRequests { get; set; } = default!;
+    public DbSet<Request> Requests { get; set; } = default!;
+    public DbSet<ApprovalHistory> ApprovalHistories { get; set; } = default!;
 
 
 
@@ -32,15 +35,13 @@ public class ApprovalFlowDataStoreDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasDefaultSchema("approval");
+        modelBuilder.HasDefaultSchema("approvalflow");
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<ApprovalRequest>()
-        .HasMany(e => e.History)
-        .WithOne(e => e.ApprovalRequest)
-        .HasForeignKey(e => e.ApprovalRequestId)
-        .HasPrincipalKey(e => e.Id);
-
+        modelBuilder
+        .Entity<Request>()
+        .Property(d => d.ApprovalType)
+        .HasConversion(new EnumToStringConverter<ApprovalType>());
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApprovalFlowDataStoreDbContext).Assembly);
     }

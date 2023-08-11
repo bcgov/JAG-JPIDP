@@ -122,7 +122,6 @@ public class PidpDbContext : DbContext
         }
     }
 
-    // Uncomment for SQL logging
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (Environment.GetEnvironmentVariable("LOG_SQL") != null && "true".Equals(Environment.GetEnvironmentVariable("LOG_SQL")))

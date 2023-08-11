@@ -1,6 +1,9 @@
 namespace ApprovalFlow.Kafka;
 
 using System.Net;
+using ApprovalFlow.ServiceEvents.IncomingApproval;
+using Common.Kafka;
+using Common.Models.Approval;
 using Confluent.Kafka;
 using DIAM.Common.Helpers.Extensions;
 
@@ -72,20 +75,17 @@ public static class ConsumerSetup
         services.AddSingleton(consumerConfig);
         services.AddSingleton(producerConfig);
 
-        //services.AddSingleton(typeof(IKafkaProducer<,>), typeof(KafkaProducer<,>));
+        services.AddSingleton(typeof(IKafkaProducer<,>), typeof(KafkaProducer<,>));
 
 
-        //services.AddScoped<IKafkaHandler<string, SubAgencyDomainEvent>, CaseAccessRequestHandler>();
+        services.AddScoped<IKafkaHandler<string, ApprovalRequestModel>, IncomingApprovalHandler>();
 
-        //services.AddSingleton(typeof(IKafkaConsumer<,>), typeof(KafkaConsumer<,>));
+        services.AddSingleton(typeof(IKafkaConsumer<,>), typeof(KafkaConsumer<,>));
 
-        //services.AddHostedService<EdtServiceConsumer>();
+        services.AddHostedService<ApprovalConsumer>();
 
         return services;
     }
 
-    public static ProducerConfig GetProducerConfig()
-    {
-        return producerConfig;
-    }
+    public static ProducerConfig GetProducerConfig() => producerConfig;
 }
