@@ -22,7 +22,8 @@ export type AlertType =
   | 'primary'
   | 'available'
   | 'secondary'
-  | 'light';
+  | 'light'
+  | 'pending-approval';
 
 @Component({
   selector: 'ui-alert',
