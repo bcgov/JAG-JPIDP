@@ -6,6 +6,8 @@ public class ApprovalModel
 {
     public int Id { get; set; }
     public string Reason { get; set; } = string.Empty;
+    public string RequiredAccess { get; set; } = string.Empty;
+    public int NoOfApprovalsRequired { get; set; }
     public Instant? Approved { get; set; }
     public Instant? Deleted { get; set; }
     public Instant? Created { get; set; }

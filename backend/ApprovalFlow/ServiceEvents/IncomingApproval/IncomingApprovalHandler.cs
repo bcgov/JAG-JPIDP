@@ -1,6 +1,6 @@
 namespace ApprovalFlow.ServiceEvents.IncomingApproval;
 
-using System.Security.Cryptography;
+using System.Reflection.Metadata;
 using System.Threading.Tasks;
 using ApprovalFlow.Data;
 using ApprovalFlow.Data.Approval;
@@ -8,18 +8,22 @@ using ApprovalFlow.Exceptions;
 using Common.Kafka;
 using Common.Models.Approval;
 using Common.Models.Notification;
+using Confluent.Kafka;
 
 public class IncomingApprovalHandler : IKafkaHandler<string, ApprovalRequestModel>
 {
     private readonly ApprovalFlowDataStoreDbContext context;
     private readonly IKafkaProducer<string, Notification> producer;
+    private readonly ApprovalFlowConfiguration configuration;
 
     public IncomingApprovalHandler(
         ApprovalFlowDataStoreDbContext approvalFlowDataStoreDbContext,
+        ApprovalFlowConfiguration config,
           IKafkaProducer<string, Notification> producer
         )
     {
         this.context = approvalFlowDataStoreDbContext;
+        this.configuration = config;
         this.producer = producer;
     }
 
@@ -37,14 +41,15 @@ public class IncomingApprovalHandler : IKafkaHandler<string, ApprovalRequestMode
         }
         else
         {
-            // make sure we have some access requests
 
 
-            // create a new entry in the approval tables
+
             using var trx = this.context.Database.BeginTransaction();
 
             try
             {
+                // make sure we have some access requests
+
                 if (incomingRequest.AccessRequests.Count == 0)
                 {
                     throw new IncomingApprovalException($"No access requests in message {key} - request will be ignored");
@@ -56,12 +61,12 @@ public class IncomingApprovalHandler : IKafkaHandler<string, ApprovalRequestMode
 
                 Serilog.Log.Information($"Adding new approval request {key} {incomingRequest.UserId}");
 
-                var accessRequests = new List<Data.Approval.Request>();
+                var accessRequests = new List<Request>();
 
                 // add request info
                 foreach (var request in incomingRequest.AccessRequests)
                 {
-                    accessRequests.Add(new Data.Approval.Request
+                    accessRequests.Add(new Request
                     {
                         RequestType = request.RequestType,
                         RequestId = request.AccessRequestId,
@@ -72,16 +77,19 @@ public class IncomingApprovalHandler : IKafkaHandler<string, ApprovalRequestMode
                 var approvalRequest = new ApprovalRequest
                 {
                     MessageKey = key,
+                    RequiredAccess = incomingRequest.RequiredAccess,
                     UserId = incomingRequest.UserId,
                     IdentityProvider = incomingRequest.IdentityProvider,
                     Reason = string.Join(", ", incomingRequest.Reasons),
+                    NoOfApprovalsRequired = incomingRequest.NoOfApprovalsRequired > 0 ? incomingRequest.NoOfApprovalsRequired : 1,
                     Requests = accessRequests
                 };
 
                 // add the entry to the context
                 this.context.ApprovalRequests.Add(approvalRequest);
 
-                // save it
+                // create a new entry in the approval tables
+
                 var saved = await this.context.SaveChangesAsync();
 
                 if (saved > 0)
@@ -89,13 +97,72 @@ public class IncomingApprovalHandler : IKafkaHandler<string, ApprovalRequestMode
                     Serilog.Log.Information($"New approval request created for {key} {approvalRequest.Id}");
                     await trx.CommitAsync();
 
+                    var data = new Dictionary<string, string> {
+                            { "reasons", string.Join(",",incomingRequest.Reasons )},
+                            { "user", incomingRequest.UserId },
+                            { "firstName", incomingRequest.FirstName},
+                            { "idp", incomingRequest.IdentityProvider  }
+                        };
 
-                    // send a notification if enabled
+                    // send a notification if enabled to admin email address(es)
+                    if (!string.IsNullOrEmpty(incomingRequest.EMailAddress))
+                    {
+                        var notifyKey = Guid.NewGuid().ToString();
+                        var notified = await this.producer.ProduceAsync( this.configuration.KafkaCluster.NotificationTopic, notifyKey, new Notification
+                        {
+                            To = this.configuration.ApprovalConfig.NotifyEmail,
+                            DomainEvent = "digitalevidence-approvalrequest-created",
+                            Subject = this.configuration.ApprovalConfig.Subject,
+                            EventData = data
+                        });
+
+                        if (notified.Status == PersistenceStatus.Persisted)
+                        {
+                            Serilog.Log.Information($"Entry {notifyKey} was delivered {notified.Partition.Value} for {this.configuration.ApprovalConfig.NotifyEmail}");
+                        }
+                        else
+                        {
+                            Serilog.Log.Error($"There was an error delivering to {this.configuration.KafkaCluster.NotificationTopic} for message {notifyKey}");
+                        }
+                    }
+                    else
+                    {
+                        Serilog.Log.Information($"No email address was provided for {incomingRequest.UserId} [{approvalRequest.Id} - unable to send notification email");
+                    }
+
+
+                    if (!string.IsNullOrEmpty(incomingRequest.EMailAddress))
+                    {
+                        var messageKey = Guid.NewGuid().ToString();
+
+                        var domainEvent = approvalRequest.IdentityProvider == "verified" ? "digitalevidence-bclaw-approvalrequest-created" : "digitalevidence-bcsc-approvalrequest-created";
+
+                        var delivered = await this.producer.ProduceAsync( this.configuration.KafkaCluster.NotificationTopic, messageKey, new Notification
+                        {
+                            To = this.configuration.ApprovalConfig.NotifyEmail,
+                            DomainEvent = domainEvent,
+                            Subject = this.configuration.ApprovalConfig.Subject,
+                            EventData = data
+                        });
+
+                        if (delivered.Status == PersistenceStatus.Persisted)
+                        {
+                            Serilog.Log.Information($"Message {messageKey} was delivered {delivered.Partition.Value}");
+                        }
+                        else
+                        {
+                            Serilog.Log.Error($"There was an error delivering to {this.configuration.KafkaCluster.NotificationTopic} for message {messageKey}");
+                        }
+
+                    }
+
+
+
+
                 }
                 else
                 {
                     Serilog.Log.Error($"There was a problem saving request {key}");
-                    await trx.RollbackAsync();
                     return Task.FromException(new IncomingApprovalException($"Failed to store request {key} in Db"));
                 }
 
@@ -103,6 +170,7 @@ public class IncomingApprovalHandler : IKafkaHandler<string, ApprovalRequestMode
             }
             catch (Exception ex)
             {
+                Serilog.Log.Error($"Error during approval processing {ex.Message}");
                 await trx.RollbackAsync();
             }
 

@@ -254,6 +254,11 @@ public partial class ProfileStatus
                                 this.StatusCode = StatusCode.Pending;
                                 return;
                             }
+                            if ( request.Equals(StatusCode.RequiresApproval.ToString(), StringComparison.Ordinal))
+                            {
+                                this.StatusCode = StatusCode.RequiresApproval;
+                                return;
+                            }
                         }
                     }
                     else if (requests != null && requests.Count > 0)

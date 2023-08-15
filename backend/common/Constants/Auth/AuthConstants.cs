@@ -58,7 +58,7 @@ public static class Policies
 
 public static class Clients
 {
-    public const string PidpApi = "PIDP-SERVICE";
+    public const string AdminApi = "DIAM-BCPS-ADMIN";
 }
 
 public static class Roles
@@ -69,7 +69,9 @@ public static class Roles
     public const string SubmittingAgency = "SUBMITTING_AGENCY";
     public const string DefenceCounsel = "DEFENCE_COUNSEL";
     public const string DutyCounsel = "DUTY_COUNSEL";
-    public const string Approvals = "APPROVALS";
+    public const string Approver = "APPROVER";
+    public const string ApprovalViewer = "APPROVAL-VIEWER";
+
 
 
 }

@@ -25,7 +25,7 @@ public static class AuthenticationSetup
             options.Authority = config.Keycloak.RealmUrl;
             //options.Audience = Resources.PidpApi;
             options.RequireHttpsMetadata = false;
-            options.Audience = Clients.PidpApi;
+            options.Audience = Clients.AdminApi;
             options.MetadataAddress = config.Keycloak.WellKnownConfig;
             options.Events = new JwtBearerEvents
             {
@@ -43,9 +43,11 @@ public static class AuthenticationSetup
         .RequireAuthenticatedUser().RequireAssertion(context =>
         {
             var hasAdminRole = context.User.IsInRole(Roles.Admin);
-            var hasApprovalRole = context.User.IsInRole(Roles.Approvals);
-            var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider && (c.Value == ClaimValues.Idir));
-            return (hasAdminRole || hasApprovalRole) && hasClaim;
+            var hasApprovalRole = context.User.IsInRole(Roles.Approver);
+            var hasReadOnlyApprovalRole = context.User.IsInRole(Roles.ApprovalViewer);
+
+            var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider && (c.Value == ClaimValues.Idir || c.Value == ClaimValues.Adfs));
+            return (hasAdminRole || hasApprovalRole || hasReadOnlyApprovalRole) && hasClaim;
         }));
 
             options.AddPolicy(Policies.IdirAuthentication, policy => policy
@@ -128,7 +130,7 @@ public static class AuthenticationSetup
             && identity.IsAuthenticated)
         {
             // Flatten the Resource Access claim
-            identity.AddClaims(identity.GetResourceAccessRoles(Clients.PidpApi)
+            identity.AddClaims(identity.GetResourceAccessRoles(Clients.AdminApi)
                 .Select(role => new Claim(ClaimTypes.Role, role)));
         }
 

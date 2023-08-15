@@ -357,7 +357,10 @@ public class DigitalEvidenceDefence
             {
                 AccessRequests = requests,
                 Reasons = reasonList,
+                RequiredAccess = "Defence and Duty Counsel DEMS Disclosure Access",
                 Created = DateTime.Now,
+                FirstName = dto.FirstName,
+                EMailAddress = dto.Email,
                 UserId = userId,
                 IdentityProvider = identityProvider
             }));

@@ -24,6 +24,8 @@ namespace ApprovalFlow.Data.Migrations
                     MessageKey = table.Column<string>(type: "text", nullable: false),
                     UserId = table.Column<string>(type: "text", nullable: false),
                     IdentityProvider = table.Column<string>(type: "text", nullable: false),
+                    NoOfApprovalsRequired = table.Column<int>(type: "integer", nullable: false),
+                    RequiredAccess = table.Column<string>(type: "text", nullable: false),
                     Approved = table.Column<Instant>(type: "timestamp with time zone", nullable: true),
                     Completed = table.Column<Instant>(type: "timestamp with time zone", nullable: true),
                     Created = table.Column<Instant>(type: "timestamp with time zone", nullable: false),

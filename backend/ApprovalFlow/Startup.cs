@@ -239,7 +239,7 @@ public class Startup
         //app.UseMiddleware<ExceptionHandlingMiddleware>();
         app.UseExceptionHandler("/error");
         app.UseSwagger();
-        app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.json", "Disclosure Service API"));
+        app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.yaml", "Approval Service API"));
 
         app.UseSerilogRequestLogging(options => options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
         {

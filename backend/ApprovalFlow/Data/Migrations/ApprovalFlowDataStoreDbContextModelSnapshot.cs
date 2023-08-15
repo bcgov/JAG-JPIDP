@@ -90,7 +90,14 @@ namespace ApprovalFlow.Data.Migrations
                     b.Property<Instant>("Modified")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("NoOfApprovalsRequired")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("RequiredAccess")
                         .IsRequired()
                         .HasColumnType("text");
 

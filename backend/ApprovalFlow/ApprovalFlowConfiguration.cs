@@ -9,7 +9,7 @@ public class ApprovalFlowConfiguration
 
     public ConnectionStringConfiguration ConnectionStrings { get; set; } = new();
     public KafkaClusterConfiguration KafkaCluster { get; set; } = new();
-
+    public ApprovalConfiguration ApprovalConfig { get; set; } = new();
     public KeycloakConfiguration Keycloak { get; set; } = new();
 
     public SchemaRegistryConfiguration SchemaRegistry { get; set; } = new();
@@ -21,6 +21,12 @@ public class ApprovalFlowConfiguration
     {
         public string Host { get; set; } = string.Empty;
         public string CollectorToken { get; set; } = string.Empty;
+    }
+
+    public class ApprovalConfiguration
+    {
+        public string NotifyEmail { get; set; } = string.Empty;
+        public string Subject { get; set; } = string.Empty;
     }
 
     // ------- Configuration Objects -------
@@ -68,7 +74,7 @@ public class ApprovalFlowConfiguration
         public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;
         public string IncomingApprovalCreationTopic { get; set; } = string.Empty;
         public string ApprovalResponseTopic { get; set; } = string.Empty;
-
+        public string NotificationTopic { get;set; } = string.Empty;
 
         public string SaslOauthbearerProducerClientId { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientSecret { get; set; } = string.Empty;

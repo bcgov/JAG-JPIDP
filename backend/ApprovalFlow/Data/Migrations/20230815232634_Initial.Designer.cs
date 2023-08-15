@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ApprovalFlow.Data.Migrations
 {
     [DbContext(typeof(ApprovalFlowDataStoreDbContext))]
-    [Migration("20230809210657_Initial")]
+    [Migration("20230815232634_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -92,7 +92,14 @@ namespace ApprovalFlow.Data.Migrations
                     b.Property<Instant>("Modified")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("NoOfApprovalsRequired")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("RequiredAccess")
                         .IsRequired()
                         .HasColumnType("text");
 
