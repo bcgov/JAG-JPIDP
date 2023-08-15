@@ -62,13 +62,19 @@ export class DigitalEvidencePortalSection
           ? 'View'
           : 'Request',
       route: AccessRoutes.routePath(AccessRoutes.DIGITAL_EVIDENCE),
-      disabled: !(demographicsComplete && orgComplete),
+      disabled: !(
+        demographicsComplete &&
+        orgComplete &&
+        this.getStatusCode() !== StatusCode.REQUIRESAPPROVAL
+      ),
     };
   }
 
   public getDescription(): string {
     return this.getStatusCode() === StatusCode.COMPLETED
       ? 'Your enrolment is complete. You can view the terms of enrolment by clicking the View button'
+      : this.getStatusCode() === StatusCode.REQUIRESAPPROVAL
+      ? 'Your request is being reviewed - you will be emailed once a decision is made'
       : 'Request access to enroll in BCPS DEMS.';
   }
 
@@ -80,6 +86,8 @@ export class DigitalEvidencePortalSection
       ? 'available'
       : this.getStatusCode() === StatusCode.PENDING
       ? 'pending'
+      : this.getStatusCode() === StatusCode.REQUIRESAPPROVAL
+      ? 'pending-approval'
       : 'greyed';
   }
 
@@ -100,6 +108,8 @@ export class DigitalEvidencePortalSection
       ? 'Completed'
       : statusCode === StatusCode.PENDING
       ? 'Pending'
+      : statusCode === StatusCode.REQUIRESAPPROVAL
+      ? 'Pending Approval'
       : 'Incomplete';
   }
 

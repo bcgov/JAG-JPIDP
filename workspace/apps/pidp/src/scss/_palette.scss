@@ -79,6 +79,12 @@ $alerts: (
     borderColor: #d3d6d8,
     color: #000000,
   ),
+  pending-approval: (
+    backgroundColor: #e2e3e5,
+    backgroundColorSolid: #a2a2a2,
+    borderColor: #d3d6d8,
+    color: #000000,
+  ),
   warn: (
     backgroundColor: #fff3cd,
     backgroundColorSolid: theme-palette(yellow),
