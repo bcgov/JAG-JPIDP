@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using ApprovalFlow.Data;
 using ApprovalFlow.Data.Approval;
 using ApprovalFlow.Exceptions;
+using ApprovalFlow.Features.WebSockets;
 using Common.Kafka;
 using Common.Models.Approval;
 using Common.Models.Notification;
@@ -15,6 +16,7 @@ public class IncomingApprovalHandler : IKafkaHandler<string, ApprovalRequestMode
     private readonly ApprovalFlowDataStoreDbContext context;
     private readonly IKafkaProducer<string, Notification> producer;
     private readonly ApprovalFlowConfiguration configuration;
+    private readonly WebSocketService websocketService = WebSocketService.GetInstance();
 
     public IncomingApprovalHandler(
         ApprovalFlowDataStoreDbContext approvalFlowDataStoreDbContext,
@@ -96,6 +98,9 @@ public class IncomingApprovalHandler : IKafkaHandler<string, ApprovalRequestMode
                 {
                     Serilog.Log.Information($"New approval request created for {key} {approvalRequest.Id}");
                     await trx.CommitAsync();
+
+                    // broadcast to any listening clients
+                    this.websocketService.Broadcast($"New approval {approvalRequest.Id}");
 
                     var data = new Dictionary<string, string> {
                             { "reasons", string.Join(",",incomingRequest.Reasons )},

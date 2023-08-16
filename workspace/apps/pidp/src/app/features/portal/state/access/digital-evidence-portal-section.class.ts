@@ -60,12 +60,16 @@ export class DigitalEvidencePortalSection
           ? 'View'
           : this.getStatusCode() === StatusCode.PENDING
           ? 'View'
+          : this.getStatusCode() === StatusCode.APPROVED
+          ? 'Pending'
           : 'Request',
       route: AccessRoutes.routePath(AccessRoutes.DIGITAL_EVIDENCE),
       disabled: !(
         demographicsComplete &&
         orgComplete &&
-        this.getStatusCode() !== StatusCode.REQUIRESAPPROVAL
+        this.getStatusCode() !== StatusCode.REQUIRESAPPROVAL &&
+        this.getStatusCode() !== StatusCode.APPROVED &&
+        this.getStatusCode() !== StatusCode.DENIED
       ),
     };
   }
@@ -75,6 +79,10 @@ export class DigitalEvidencePortalSection
       ? 'Your enrolment is complete. You can view the terms of enrolment by clicking the View button'
       : this.getStatusCode() === StatusCode.REQUIRESAPPROVAL
       ? 'Your request is being reviewed - you will be emailed once a decision is made'
+      : this.getStatusCode() === StatusCode.APPROVED
+      ? 'Your request has been approved - your account should be available shortly'
+      : this.getStatusCode() === StatusCode.DENIED
+      ? 'Your request has been denied - please contact DEMS support for more information on how to resolve this'
       : 'Request access to enroll in BCPS DEMS.';
   }
 
@@ -88,6 +96,10 @@ export class DigitalEvidencePortalSection
       ? 'pending'
       : this.getStatusCode() === StatusCode.REQUIRESAPPROVAL
       ? 'pending-approval'
+      : this.getStatusCode() === StatusCode.APPROVED
+      ? 'greyed'
+      : this.getStatusCode() === StatusCode.DENIED
+      ? 'danger'
       : 'greyed';
   }
 
@@ -110,6 +122,8 @@ export class DigitalEvidencePortalSection
       ? 'Pending'
       : statusCode === StatusCode.REQUIRESAPPROVAL
       ? 'Pending Approval'
+      : statusCode === StatusCode.APPROVED
+      ? 'Approved - awaiting completion'
       : 'Incomplete';
   }
 

@@ -13,7 +13,7 @@ public class GetParticipantByUsername : IRequestHandler<GetParticipantByUsername
     private readonly IJustinParticipantClient _justinParticipantClient;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private static readonly Counter JumRequests = Metrics
-    .CreateCounter("jum_search_by_name_count", "Number of jum user searches by name");
+    .CreateCounter("jum_search_by_name_count_total", "Number of jum user searches by name"); // prometheus 8.0.1 breaks if counter doesnt end in total in some cases
     private static readonly Histogram JumRequestDuration = Metrics
     .CreateHistogram("jum_search_by_name_duration", "Histogram of jum searches by name.");
 

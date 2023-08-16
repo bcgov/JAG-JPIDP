@@ -1,9 +1,15 @@
 namespace Pidp.Kafka.Consumer.Responses;
 
 using System;
+using System.Runtime.InteropServices;
 using System.Security.Policy;
+using Common.Models.Approval;
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
 using NodaTime;
 using NodaTime.Extensions;
 using Pidp.Data;
@@ -60,6 +66,12 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
                 break;
             }
 
+            case "digitalevidence-approvalresponse-complete":
+            {
+                Serilog.Log.Information($"Handling {value.DomainEvent} for approval flow response {value.Id}");
+                await this.MarkApprovalFlowComplete(value);
+                break;
+            }
 
             case "digitalevidence-bcps-edt-userupdate-complete":
             case "digitalevidence-bcps-edt-userupdate-error":
@@ -111,7 +123,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
 
         Serilog.Log.Information($"Court location request {processResponse.Id} flagged as {processResponse.Status}");
         accessRequest.RequestStatus = processResponse.Status;
-        if ( processResponse.Status == CourtLocationAccessStatus.Deleted)
+        if (processResponse.Status == CourtLocationAccessStatus.Deleted)
         {
             accessRequest.DeletedOn = processResponse.EventTime;
         }
@@ -122,7 +134,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
         }
 
         var updated = await this.context.SaveChangesAsync();
-        if ( updated > 0)
+        if (updated > 0)
         {
             Serilog.Log.Information($"Process marked as complete for {accessRequest.RequestId}");
         }
@@ -321,9 +333,97 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
         }
     }
 
+    private async Task MarkApprovalFlowComplete(GenericProcessStatusResponse response)
+    {
+        try
+        {
+            var decisionNotes = "";
+            Party party = null;
+            var requestData = response.ResponseData["approvalModel"];
+            var originalRequest = JsonConvert.DeserializeObject<ApprovalModel>(requestData,
+                new JsonSerializerSettings
+                {
+                    MissingMemberHandling = MissingMemberHandling.Ignore,
+                    DateParseHandling = DateParseHandling.None
+
+                });
+
+            foreach (var request in originalRequest.Requests)
+            {
+                Serilog.Log.Information($"Marking request {request.RequestId} as {response.Status}");
+                var dbRequest = this.context.AccessRequests.AsSplitQuery().Include(req => req.Party).Where(req => req.Id == request.RequestId).FirstOrDefault();
+                if (dbRequest != null)
+                {
+                    dbRequest.Status = response.Status.ToString();
+                    dbRequest.Modified = response.EventTime;
+                    if (response.ErrorList != null && response.ErrorList.Count > 0)
+                    {
+                        Serilog.Log.Warning($"Approval Event {response.Id} came back with errors [{string.Join(",", response.ErrorList)}]");
+                    }
+                    else
+                    {
+                        if (response.Status == "Approved")
+                        {
+                            // publish the original event
+                            
+
+                        }
+                    }
+
+                    var lastHistory = request.History.LastOrDefault();
+                    if (lastHistory != null)
+                    {
+                        if (lastHistory.DecisionNote != decisionNotes)
+                        {
+                            decisionNotes += lastHistory.DecisionNote;
+                        }
+                    }
+
+                }
+
+                party = dbRequest.Party;
+            }
+            var changeCount = await this.context.SaveChangesAsync();
+            Serilog.Log.Information($"{changeCount} rows updated");
+
+            if (!string.IsNullOrEmpty(party.Email))
+            {
+                var msgKey = Guid.NewGuid().ToString();
+                Serilog.Log.Information($"Notifying user {party.Email} of decision for {originalRequest.Id}");
+                var delivered = await this.producer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopicName, msgKey, new Notification
+                {
+                    DomainEvent = originalRequest.Approved != null ? "digitalevidence-approvalrequest-approved" : "digitalevidence-approvalrequest-denied",
+                    To = party.Email,
+                    EventData = new Dictionary<string, string> {
+                        { "firstName",party.FirstName }
+                        ,{  "decisionNotes", decisionNotes                        }
+
+                    }
+                });
+
+                if ( delivered.Status == Confluent.Kafka.PersistenceStatus.Persisted)
+                {
+                    Serilog.Log.Information($"Message {msgKey} send to notification topic part {delivered.Partition.Value}");
+                }
+                else
+                {
+                    Serilog.Log.Error($"Failed to send message with key {msgKey} {delivered.Status}");
+
+                }
+            }
+
+
+        }
+        catch (Exception ex)
+        {
+            Serilog.Log.Error($"Failed to process {response.Id}: {ex.Message}");
+        }
+
+    }
+
     private async Task UpdateUserChangeStatus(GenericProcessStatusResponse value)
     {
-         var userChangeEntry = this.context.UserAccountChanges.Where(change => change.Id == value.Id).FirstOrDefault();
+        var userChangeEntry = this.context.UserAccountChanges.Where(change => change.Id == value.Id).FirstOrDefault();
 
         if (userChangeEntry == null)
         {

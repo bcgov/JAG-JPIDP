@@ -254,6 +254,7 @@ public class Startup
         app.UseCors("CorsPolicy");
         app.UseAuthentication();
         app.UseAuthorization();
+        app.UseWebSockets(); // websocket support for auto-ui updates
         app.UseEndpoints(endpoints =>
         {
             endpoints.MapControllers();

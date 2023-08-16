@@ -35,6 +35,8 @@ import axios from 'axios';
 import { onMounted, ref } from 'vue'
 
 import KeyCloakService from "../security/KeycloakService";
+import { useApprovalStore } from '@/stores/approvals';
+import { storeToRefs } from 'pinia';
 
 const username = ref();
 
@@ -45,6 +47,18 @@ function Logout() {
 
 onMounted(() => {
     username.value = KeyCloakService.GetUserName();
+      const approvalStore = useApprovalStore();
+    const { data } = storeToRefs(approvalStore);
+    const socket = new WebSocket("wss://localhost:7231/ws", KeyCloakService.GetToken());
+    socket.onopen = () => {
+        console.log("Socket connection established");
+    }
+    socket.onmessage = (message:MessageEvent) => {
+        data.value = message.data;
+    };
+    socket.onerror = () => {
+        console.error("Websocket error");
+    }
 })
 
 </script>

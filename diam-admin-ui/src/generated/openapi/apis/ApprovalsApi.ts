@@ -28,6 +28,10 @@ import {
     MicrosoftAspNetCoreMvcProblemDetailsToJSON,
 } from '../models';
 
+export interface ApiApprovalsPendingGetRequest {
+    pendingOnly?: boolean;
+}
+
 export interface ApiApprovalsResponsePostRequest {
     commonModelsApprovalApproveDenyInput?: CommonModelsApprovalApproveDenyInput;
 }
@@ -41,15 +45,16 @@ export interface ApiApprovalsResponsePostRequest {
 export interface ApprovalsApiInterface {
     /**
      * 
+     * @param {boolean} [pendingOnly] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ApprovalsApiInterface
      */
-    apiApprovalsPendingGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<CommonModelsApprovalApprovalModel>>>;
+    apiApprovalsPendingGetRaw(requestParameters: ApiApprovalsPendingGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<CommonModelsApprovalApprovalModel>>>;
 
     /**
      */
-    apiApprovalsPendingGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<CommonModelsApprovalApprovalModel>>;
+    apiApprovalsPendingGet(requestParameters: ApiApprovalsPendingGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<CommonModelsApprovalApprovalModel>>;
 
     /**
      * 
@@ -73,8 +78,12 @@ export class ApprovalsApi extends runtime.BaseAPI implements ApprovalsApiInterfa
 
     /**
      */
-    async apiApprovalsPendingGetRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<CommonModelsApprovalApprovalModel>>> {
+    async apiApprovalsPendingGetRaw(requestParameters: ApiApprovalsPendingGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<CommonModelsApprovalApprovalModel>>> {
         const queryParameters: any = {};
+
+        if (requestParameters.pendingOnly !== undefined) {
+            queryParameters['pendingOnly'] = requestParameters.pendingOnly;
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -94,8 +103,8 @@ export class ApprovalsApi extends runtime.BaseAPI implements ApprovalsApiInterfa
 
     /**
      */
-    async apiApprovalsPendingGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<CommonModelsApprovalApprovalModel>> {
-        const response = await this.apiApprovalsPendingGetRaw(initOverrides);
+    async apiApprovalsPendingGet(requestParameters: ApiApprovalsPendingGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<CommonModelsApprovalApprovalModel>> {
+        const response = await this.apiApprovalsPendingGetRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

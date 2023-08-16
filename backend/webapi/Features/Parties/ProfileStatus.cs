@@ -85,7 +85,9 @@ public partial class ProfileStatus
             HiddenComplete,   // not shown the in UI but completed
             LockedComplete,    // shown in the UI but not editable
             PriorStepRequired,
-            RequiresApproval
+            RequiresApproval,
+            Approved,
+            Denied
         }
     }
 

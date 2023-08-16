@@ -7,17 +7,31 @@ using FluentValidation;
 using MediatR;
 using NodaTime;
 using Microsoft.EntityFrameworkCore;
-
+using AutoMapper;
+using Microsoft.AspNetCore.Http;
+using Common.Kafka;
+using DIAM.Common.Models;
+using Newtonsoft.Json;
+using Serilog;
 
 public class ApprovalResponseCommand : IRequestHandler<ApproveDenyInput, ApprovalModel>
 {
     private readonly ApprovalFlowDataStoreDbContext dbContext;
     private readonly IClock clock;
+    private readonly IMapper mapper;
+    private readonly ApprovalFlowConfiguration configuration;
+    private readonly IKafkaProducer<string, GenericProcessStatusResponse> producer;
 
-    public ApprovalResponseCommand(ApprovalFlowDataStoreDbContext dbContext, IClock clock)
+    public ApprovalResponseCommand(ApprovalFlowDataStoreDbContext dbContext,
+        IClock clock,
+        IMapper mapper,
+        IKafkaProducer<string, GenericProcessStatusResponse> producer, ApprovalFlowConfiguration configuration)
     {
         this.dbContext = dbContext;
         this.clock = clock;
+        this.mapper = mapper;
+        this.producer = producer;
+        this.configuration = configuration;
     }
 
 
@@ -36,7 +50,7 @@ public class ApprovalResponseCommand : IRequestHandler<ApproveDenyInput, Approva
 
         var trx = this.dbContext.Database.BeginTransaction();
         // check request valid for approval
-        var approvalEntity = this.dbContext.ApprovalRequests.Include(req => req.Requests).ThenInclude(req => req.History).Where(req => req.Id == input.ApprovalRequestId).FirstOrDefault();
+        var approvalEntity = this.dbContext.ApprovalRequests.AsSplitQuery().Include(req => req.Requests).ThenInclude(req => req.History).Where(req => req.Id == input.ApprovalRequestId).FirstOrDefault();
 
         if (approvalEntity == null)
         {
@@ -47,6 +61,7 @@ public class ApprovalResponseCommand : IRequestHandler<ApproveDenyInput, Approva
         {
             approvalEntity.Approved = clock.GetCurrentInstant();
         }
+
 
 
         foreach (var request in approvalEntity.Requests)
@@ -63,14 +78,68 @@ public class ApprovalResponseCommand : IRequestHandler<ApproveDenyInput, Approva
             });
         }
 
+        approvalEntity.Completed = clock.GetCurrentInstant();
+
         var addedRows = await this.dbContext.SaveChangesAsync(cancellationToken);
         Serilog.Log.Information($"{addedRows} added for request {input.ApprovalRequestId}");
 
 
         await trx.CommitAsync(cancellationToken);
 
-        // determine what to do for notifications
+        // publish message for completion of approval
+        var allRequestsComplete = true;
+        foreach ( var request in  approvalEntity.Requests )
+        {
+            if ( request.History.Count != approvalEntity.NoOfApprovalsRequired )
+            {
+                allRequestsComplete = false;
+            }
+        }
 
-        return new ApprovalModel();
+        var responseData = this.mapper.Map<ApprovalModel>(approvalEntity);
+
+
+        if ( allRequestsComplete )
+        {
+            var msgId = Guid.NewGuid().ToString();
+            Log.Information($"Publishing approval response message {msgId} for {approvalEntity.Id}");
+
+
+
+            var responseDataJSON = JsonConvert.SerializeObject(responseData, new JsonSerializerSettings
+            {
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            });
+
+
+            var eventData = new Dictionary<string, string>
+            {
+                { "approved", "" + approvalEntity.Approved },
+                { "approvalModel", responseDataJSON }
+            };
+
+            var delivered = await this.producer.ProduceAsync(this.configuration.KafkaCluster.ApprovalResponseTopic, msgId, new GenericProcessStatusResponse
+            {
+                DomainEvent = "digitalevidence-approvalresponse-complete",
+                Status = approvalEntity.Approved != null ? "Approved" : "Denied",
+                Id = approvalEntity.Id,
+                PartId = approvalEntity.UserId,
+                ResponseData = eventData
+            });
+
+            if ( delivered.Status == Confluent.Kafka.PersistenceStatus.Persisted )
+            {
+                Log.Information($"Message {msgId} sent to partition {delivered.Partition.Value}");
+            }
+            else
+            {
+                Log.Error($"Message {msgId} failed to send {delivered.Status}");
+            }
+
+
+        }
+
+        return responseData;
+
     }
 }

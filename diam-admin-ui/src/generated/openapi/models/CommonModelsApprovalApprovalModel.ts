@@ -46,6 +46,12 @@ export interface CommonModelsApprovalApprovalModel {
     requiredAccess?: string | null;
     /**
      * 
+     * @type {number}
+     * @memberof CommonModelsApprovalApprovalModel
+     */
+    noOfApprovalsRequired?: number;
+    /**
+     * 
      * @type {object}
      * @memberof CommonModelsApprovalApprovalModel
      */
@@ -110,6 +116,7 @@ export function CommonModelsApprovalApprovalModelFromJSONTyped(json: any, ignore
         'id': !exists(json, 'id') ? undefined : json['id'],
         'reason': !exists(json, 'reason') ? undefined : json['reason'],
         'requiredAccess': !exists(json, 'requiredAccess') ? undefined : json['requiredAccess'],
+        'noOfApprovalsRequired': !exists(json, 'noOfApprovalsRequired') ? undefined : json['noOfApprovalsRequired'],
         'approved': !exists(json, 'approved') ? undefined : json['approved'],
         'deleted': !exists(json, 'deleted') ? undefined : json['deleted'],
         'created': !exists(json, 'created') ? undefined : json['created'],
@@ -132,6 +139,7 @@ export function CommonModelsApprovalApprovalModelToJSON(value?: CommonModelsAppr
         'id': value.id,
         'reason': value.reason,
         'requiredAccess': value.requiredAccess,
+        'noOfApprovalsRequired': value.noOfApprovalsRequired,
         'approved': value.approved,
         'deleted': value.deleted,
         'created': value.created,

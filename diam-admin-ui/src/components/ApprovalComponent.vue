@@ -43,11 +43,14 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <p>Approve the request for <b>{{ currentRequest.userId }}</b>?</p>
+            <p>Approve the request for <b>{{ currentRequest?.userId }}</b>?</p>
+            <input type="textarea" v-model="approvalNotes" name="approvalNotes" id="approvalNotes" class="form-control"
+              placeholder="">
+            <small id="denyId" class="text-muted">Optional approval notes</small>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-primary" @click="approveCurrentRequest">Approve Request</button>
+            <button type="button" class="btn btn-primary"  data-bs-dismiss="modal" @click="approveCurrentRequest">Approve Request</button>
           </div>
         </div>
       </div>
@@ -66,8 +69,8 @@
                 <div class="col">
                   <div class="mb-3">
                     <label for="" class="form-label">Inline Form</label>
-                    <input type="textarea" name="denyReason" id="denyReason" class="form-control" placeholder=""
-                      aria-describedby="denyId">
+                    <input type="textarea" name="denyReason" id="denyReason" v-model="denialNotes" class="form-control"
+                      placeholder="" aria-describedby="denyId">
                     <small id="denyId" class="text-muted">Reason for denial</small>
                   </div>
                 </div>
@@ -76,7 +79,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-primary">Submit</button>
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal" @click="denyCurrentRequest">Deny Request</button>
           </div>
         </div>
       </div>
@@ -86,7 +89,7 @@
 
 <script setup lang="ts">
 import KeyCloakService from "@/security/KeycloakService";
-import { computed, nextTick, onMounted, ref } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 import * as bootstrap from 'bootstrap';
 
 import { ApprovalsApi, Configuration, type CommonModelsApprovalApprovalModel } from "../generated/openapi/index";
@@ -94,7 +97,12 @@ import { format, parseISO } from "date-fns";
 import type { CommonModelsApprovalApproveDenyInput } from "@/generated/openapi/models/CommonModelsApprovalApproveDenyInput";
 import { ApprovalService } from "@/services/ApprovalService";
 import apiClient from "@/http-common";
+import { useApprovalStore } from "@/stores/approvals";
+import { storeToRefs } from "pinia";
 const approvalsPending = ref();
+const approvalNotes = ref('')
+const denialNotes = ref('')
+
 const currentRequest = ref<CommonModelsApprovalApprovalModel>();
 
 function getDateFormatted(dateIn: string) {
@@ -123,15 +131,27 @@ async function clickDeny(request: CommonModelsApprovalApprovalModel) {
   modal.show();
 }
 
-async function approveCurrentRequest() {
-
-  await api.approvalApi.apiApprovalsResponsePost({
+async function denyCurrentRequest() {
+    await api.approvalApi.apiApprovalsResponsePost({
     commonModelsApprovalApproveDenyInput: {
-      approved: true,
+      approved: false,
+      decisionNotes: approvalNotes.value,
       approvalRequestId: currentRequest.value?.id
     }
   }).then((response: CommonModelsApprovalApprovalModel) => {
-    console.log("Got response %o", response);
+    loadPending();
+  });
+}
+
+async function approveCurrentRequest() {
+  await api.approvalApi.apiApprovalsResponsePost({
+    commonModelsApprovalApproveDenyInput: {
+      approved: true,
+      decisionNotes: approvalNotes.value,
+      approvalRequestId: currentRequest.value?.id
+    }
+  }).then((response: CommonModelsApprovalApprovalModel) => {
+      loadPending();
   });
 
 }
@@ -141,12 +161,21 @@ const hasCurrentRequest = computed(() => currentRequest.value);
 
 const api = new ApprovalService();
 
-
-onMounted(() => {
-
-  api.approvalApi.apiApprovalsPendingGet().then((result: CommonModelsApprovalApprovalModel[]) => {
+async function loadPending() {
+  api.approvalApi.apiApprovalsPendingGet({
+    pendingOnly : true
+  }).then((result: CommonModelsApprovalApprovalModel[]) => {
     approvalsPending.value = result;
   });
+
+}
+
+onMounted(() => {
+  const approvalStore = useApprovalStore();
+  const { data } = storeToRefs(approvalStore);
+  watch(data, () => {
+      loadPending();
+  })
 
 });
 </script>

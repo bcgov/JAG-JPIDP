@@ -44,6 +44,6 @@ public class ApprovalsController : ControllerBase
         command.ApproverUserId = user;
         var response = this._mediator.Send(command).Result;
 
-        return null;
+        return response;
     }
 }
