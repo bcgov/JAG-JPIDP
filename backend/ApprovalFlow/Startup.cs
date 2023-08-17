@@ -4,36 +4,34 @@ namespace ApprovalFlow;
 
 using System.Reflection;
 using System.Text.Json;
-
+using ApprovalFlow.Auth;
+using ApprovalFlow.Data;
+using ApprovalFlow.Kafka;
+using ApprovalFlow.Telemetry;
+using Common.Constants.Telemetry;
+using DIAM.Common.Helpers.Transformers;
+using FluentValidation.AspNetCore;
+using MediatR;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using NodaTime;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
+using NodaTime.Serialization.SystemTextJson;
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Prometheus;
 using Serilog;
 using Swashbuckle.AspNetCore.Filters;
-using Azure.Monitor.OpenTelemetry.Exporter;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
-using Prometheus;
-using MediatR;
-using Microsoft.AspNetCore.Mvc.ApplicationModels;
-using FluentValidation.AspNetCore;
-using NodaTime.Serialization.SystemTextJson;
-using Microsoft.Extensions.Hosting;
-using ApprovalFlow.Data;
-using Common.Constants.Telemetry;
-using ApprovalFlow.Telemetry;
-using DIAM.Common.Helpers.Transformers;
-using ApprovalFlow.Kafka;
-using Microsoft.Extensions.DependencyInjection;
-using ApprovalFlow.Auth;
 
 public class Startup
 {
@@ -42,7 +40,7 @@ public class Startup
 
     public Startup(IConfiguration configuration)
     {
-        Configuration = configuration;
+        this.Configuration = configuration;
         StaticConfig = configuration;
     }
 
@@ -85,11 +83,7 @@ public class Startup
                    {
                        builder.AddConsoleExporter();
                    }
-                   if (config.Telemetry.AzureConnectionString != null)
-                   {
-                       Log.Information("*** Azure trace exporter enabled ***");
-                       builder.AddAzureMonitorTraceExporter(o => o.ConnectionString = config.Telemetry.AzureConnectionString);
-                   }
+
                    if (config.Telemetry.CollectorUrl != null)
                    {
                        builder.AddOtlpExporter(options =>
@@ -115,7 +109,7 @@ public class Startup
 
 
           .AddSingleton<IClock>(SystemClock.Instance);
-     //     .AddSingleton<Microsoft.Extensions.Logging.ILogger>(svc => svc.GetRequiredService<ILogger<CourtLocationAccessRequestHandler>>());
+        //     .AddSingleton<Microsoft.Extensions.Logging.ILogger>(svc => svc.GetRequiredService<ILogger<CourtLocationAccessRequestHandler>>());
 
         services.AddDbContext<ApprovalFlowDataStoreDbContext>(options => options
             .UseNpgsql(config.ConnectionStrings.ApprovalFlowDataStore, sql => sql.UseNodaTime())
@@ -129,7 +123,7 @@ public class Startup
 
         services.AddCors(opt =>
         {
-            opt.AddPolicy(name: _policyName, builder =>
+            opt.AddPolicy(name: this._policyName, builder =>
             {
                 builder.AllowAnyOrigin()
                     .AllowAnyHeader()
@@ -161,7 +155,7 @@ public class Startup
         services.AddSwaggerGen(options =>
         {
             options.SwaggerDoc("v1", new OpenApiInfo { Title = "Approval Service API", Version = "v1" });
-            
+
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 Description = "Standard Authorization header using the Bearer scheme. Example: \"bearer {token}\"",
