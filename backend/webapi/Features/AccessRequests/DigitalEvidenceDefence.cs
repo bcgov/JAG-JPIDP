@@ -18,6 +18,8 @@ using Microsoft.EntityFrameworkCore.Storage;
 using common.Constants.Auth;
 using Pidp.Exceptions;
 using Common.Models.Approval;
+using Newtonsoft.Json;
+using Quartz;
 
 /// <summary>
 /// Requests to access defence counsel services will generate objects in the disclosure portal and the DEMS core portals.
@@ -150,6 +152,16 @@ public class DigitalEvidenceDefence
                             if (result.Status == PersistenceStatus.Persisted)
                             {
                                 Serilog.Log.Information($"Published {result.Key} to {result.Partition}");
+
+                                // store the original requests for later
+                                if (await this.CreateDefenceDeferredPublishRequest(command, dto, defenceUser) && await this.CreateDisclosureDeferredPublishRequest(command, dto, disclosureUser))
+                                {
+                                    Serilog.Log.Information($"Stored requests for later use");
+                                }
+                                else
+                                {
+                                    Serilog.Log.Error($"Failed to store requests for later - we will need to reset this request");
+                                }
                             }
                             else
                             {
@@ -162,8 +174,6 @@ public class DigitalEvidenceDefence
                     }
                     else
                     {
-
-
 
                         // publish message for disclosure access
                         var publishedDisclosureRequest = await this.PublishDisclosureAccessRequest(command, dto, disclosureUser);
@@ -258,43 +268,18 @@ public class DigitalEvidenceDefence
             var taskId = Guid.NewGuid().ToString();
             Serilog.Log.Logger.Information("Adding message to topic {0} {1} {2}", this.config.KafkaCluster.PersonCreationTopic, command.ParticipantId, taskId);
 
-            var field = new EdtField
-            {
-                Name = "PPID",
-                Value = command.ParticipantId
-            };
-
             // use UUIDs for topic keys
-            var delivered = await this.kafkaDefenceCoreProducer.ProduceAsync(this.config.KafkaCluster.PersonCreationTopic, taskId, new EdtPersonProvisioningModel
-            {
-                Key = $"{command.ParticipantId}",
-                Address =
-                {
-                    Email = ( dto.Email != null ) ? dto.Email : "Not set"
-                },
-                Fields = new List<EdtField> { field },
-                FirstName = dto.FirstName,
-                LastName = dto.LastName,
-                Role = "Participant",
-                SystemName = AccessTypeCode.DigitalEvidenceDefence.ToString(),
-                AccessRequestId = digitalEvidenceDefence.Id,
-                OrganizationType = command.OrganizationType,
-                OrganizationName = command.OrganizationName,
-            });
+            var delivered = await this.kafkaDefenceCoreProducer.ProduceAsync(this.config.KafkaCluster.PersonCreationTopic, taskId, this.GetEdtPersonModel(command , dto, digitalEvidenceDefence));
 
             return delivered;
         }
 
-        private async Task<DeliveryResult<string, EdtDisclosureUserProvisioning>> PublishDisclosureAccessRequest(Command command, PartyDto dto, DigitalEvidenceDisclosure digitalEvidenceDisclosure)
+        private EdtDisclosureUserProvisioning GetDisclosureUserModel(Command command, PartyDto dto, DigitalEvidenceDisclosure digitalEvidenceDisclosure)
         {
-            var taskId = Guid.NewGuid().ToString();
-            Serilog.Log.Logger.Information("Adding message to topic {0} {1} {2}", this.config.KafkaCluster.DisclosureUserCreationTopic, command.ParticipantId, taskId);
-
             var systemType = digitalEvidenceDisclosure.OrganizationType.Equals(this.LAW_SOCIETY, StringComparison.Ordinal) ? AccessTypeCode.DigitalEvidenceDisclosure.ToString() : AccessTypeCode.DigitalEvidence.ToString();
 
 
-            // use UUIDs for topic keys
-            var delivered = await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.DisclosureUserCreationTopic, taskId, new EdtDisclosureUserProvisioning
+            return new EdtDisclosureUserProvisioning
             {
                 Key = $"{command.ParticipantId}",
                 UserName = dto.Jpdid,
@@ -307,7 +292,92 @@ public class DigitalEvidenceDefence
                 AccessRequestId = digitalEvidenceDisclosure.Id,
                 OrganizationType = command.OrganizationType,
                 OrganizationName = command.OrganizationName,
+            };
+        }
+
+        private EdtPersonProvisioningModel GetEdtPersonModel(Command command, PartyDto dto, Models.DigitalEvidenceDefence digitalEvidenceDefence)
+        {
+            var field = new EdtField
+            {
+                Name = "PPID",
+                Value = command.ParticipantId
+            };
+
+            return new EdtPersonProvisioningModel
+            {
+                Key = $"{command.ParticipantId}",
+                Address =
+                {
+                    Email = dto.Email ?? "Not set"
+                },
+                Fields = new List<EdtField> { field },
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
+                Role = "Participant",
+                SystemName = AccessTypeCode.DigitalEvidenceDefence.ToString(),
+                AccessRequestId = digitalEvidenceDefence.Id,
+                OrganizationType = command.OrganizationType,
+                OrganizationName = command.OrganizationName,
+            };
+        }
+
+        private async Task<bool> CreateDisclosureDeferredPublishRequest(Command command, PartyDto party, DigitalEvidenceDisclosure digitalEvidenceDisclosure)
+        {
+            Serilog.Log.Information($"Storing deferred request for publishing later if needed");
+
+            var payload = JsonConvert.SerializeObject(this.GetDisclosureUserModel(command, party, digitalEvidenceDisclosure));
+
+
+            this.context.DeferredEvents.Add(new Models.OutBoxEvent.DeferredEvent
+            {
+                EventType = "disclosure-user-creation",
+                DateOccurred = this.clock.GetCurrentInstant(),
+                RequestId = digitalEvidenceDisclosure.Id,
+                Reason = "Approval Required",
+                EventPayload = payload
             });
+
+            var addedRows = await this.context.SaveChangesAsync();
+
+
+            return addedRows > 0;
+        }
+
+        private async Task<bool> CreateDefenceDeferredPublishRequest(Command command, PartyDto party, Pidp.Models.DigitalEvidenceDefence digitalEvidenceDefence)
+        {
+            Serilog.Log.Information($"Storing deferred request for publishing later if needed");
+
+            var payload = JsonConvert.SerializeObject(this.GetEdtPersonModel(command, party, digitalEvidenceDefence));
+
+            this.context.DeferredEvents.Add(new Models.OutBoxEvent.DeferredEvent
+            {
+                EventType = "defence-person-creation",
+                DateOccurred = this.clock.GetCurrentInstant(),
+                RequestId = digitalEvidenceDefence.Id,
+                Reason = "Approval Required",
+                EventPayload = payload
+            });
+
+            var addedRows = await this.context.SaveChangesAsync();
+
+
+            return addedRows > 0;
+        }
+
+        private async Task<DeliveryResult<string, EdtDisclosureUserProvisioning>> PublishDisclosureAccessRequest(Command command, PartyDto dto, DigitalEvidenceDisclosure digitalEvidenceDisclosure)
+        {
+            var taskId = Guid.NewGuid().ToString();
+            Serilog.Log.Logger.Information("Adding message to topic {0} {1} {2}", this.config.KafkaCluster.DisclosureUserCreationTopic, command.ParticipantId, taskId);
+
+            var systemType = digitalEvidenceDisclosure.OrganizationType.Equals(this.LAW_SOCIETY, StringComparison.Ordinal)
+                ? AccessTypeCode.DigitalEvidenceDisclosure.ToString()
+                : AccessTypeCode.DigitalEvidence.ToString();
+
+
+            // use UUIDs for topic keys
+            var delivered = await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.DisclosureUserCreationTopic,
+                taskId,
+                this.GetDisclosureUserModel(command, dto, digitalEvidenceDisclosure));
 
             return delivered;
         }

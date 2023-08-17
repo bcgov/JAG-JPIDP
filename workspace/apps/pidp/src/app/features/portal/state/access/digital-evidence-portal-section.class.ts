@@ -82,7 +82,7 @@ export class DigitalEvidencePortalSection
       : this.getStatusCode() === StatusCode.APPROVED
       ? 'Your request has been approved - your account should be available shortly'
       : this.getStatusCode() === StatusCode.DENIED
-      ? 'Your request has been denied - please contact DEMS support for more information on how to resolve this'
+      ? 'Your request has been denied - please contact DEMS support for more information on why the request was denied.'
       : 'Request access to enroll in BCPS DEMS.';
   }
 
@@ -124,6 +124,8 @@ export class DigitalEvidencePortalSection
       ? 'Pending Approval'
       : statusCode === StatusCode.APPROVED
       ? 'Approved - awaiting completion'
+      : statusCode === StatusCode.DENIED
+      ? 'Request reviewed and denied'
       : 'Incomplete';
   }
 

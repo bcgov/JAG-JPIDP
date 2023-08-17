@@ -49,6 +49,7 @@ public class PidpDbContext : DbContext
     public DbSet<UserAccountChange> UserAccountChanges { get; set; } = default!;
     public DbSet<ProcessFlow> ProcessFlows { get; set; } = default!;
     public DbSet<DomainEventProcessStatus> DomainEventProcessStatus { get; set; } = default!;
+    public DbSet<DeferredEvent> DeferredEvents { get; set; } = default!;
 
     public override int SaveChanges()
     {
