@@ -20,7 +20,7 @@ namespace Pidp.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "6.0.2")
+                .HasAnnotation("ProductVersion", "6.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -4380,6 +4380,40 @@ namespace Pidp.Data.Migrations
                             IdpHint = "",
                             Name = "ZZzVancouver Police Department"
                         });
+                });
+
+            modelBuilder.Entity("Pidp.Models.OutBoxEvent.DeferredEvent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<Instant>("DateOccurred")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Instant?>("DeferUntil")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EventPayload")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("RequestId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DeferredEvent");
                 });
 
             modelBuilder.Entity("Pidp.Models.OutBoxEvent.ExportedEvent", b =>

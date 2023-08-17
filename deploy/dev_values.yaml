@@ -62,6 +62,10 @@ edt-disclosure:
   migrations:
     enabled: false
 
+approvalflow:
+  migrations:
+    enabled: false
+
 jum-backend:
   route:
     enabled: false

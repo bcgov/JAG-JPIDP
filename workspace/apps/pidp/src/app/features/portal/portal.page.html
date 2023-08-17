@@ -1,6 +1,6 @@
 <ui-page mode="large">
   <div class="row">
-    <div class="col-12">
+    <!-- <div class="col-12">
       <ui-alert *ngIf="completedProfile" type="success" icon="check_circle" iconType="outlined"
         heading="You have completed your Digital Identity Profile">
         <ng-container uiAlertContent>
@@ -15,11 +15,11 @@
           </span>
         </ng-container>
       </ui-alert>
-    </div>
+    </div> -->
     <div class="col-12">
       <ng-container *ngFor="let alert of alerts">
-        <ui-alert type="info" icon="error_outline" iconType="outlined" [heading]="alert.heading">
-          <ng-container uiAlertContent> {{ alert.content }} </ng-container>
+        <ui-alert type="warn" icon="error_outline" iconType="outlined" [heading]="alert.heading">
+          <ng-container uiAlertContent>{{ alert.content }} </ng-container>
         </ui-alert>
       </ng-container>
       <ui-page-section>

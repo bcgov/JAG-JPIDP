@@ -294,6 +294,7 @@ public class Startup
         {
             endpoints.MapControllers();
             endpoints.MapMetrics();
+           
             endpoints.MapHealthChecks("/health/liveness").AllowAnonymous();
         });
 

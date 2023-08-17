@@ -48,6 +48,9 @@ dependencies:
   - name: edt-disclosure
     repository: "file://../edt-disclosure"
     version: "0.1.0"
+  - name: approvalflow
+    repository: "file://../approvalflow"
+    version: "0.1.0"
   - name: plr-intake
     repository: "file://../plr-intake"
     version: "0.1.2"

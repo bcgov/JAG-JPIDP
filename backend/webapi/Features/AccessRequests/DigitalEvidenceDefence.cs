@@ -15,6 +15,11 @@ using OpenTelemetry.Trace;
 using Pidp.Models.Lookups;
 using Confluent.Kafka;
 using Microsoft.EntityFrameworkCore.Storage;
+using common.Constants.Auth;
+using Pidp.Exceptions;
+using Common.Models.Approval;
+using Newtonsoft.Json;
+using Quartz;
 
 /// <summary>
 /// Requests to access defence counsel services will generate objects in the disclosure portal and the DEMS core portals.
@@ -51,6 +56,8 @@ public class DigitalEvidenceDefence
         private readonly PidpDbContext context;
         private readonly IOrgUnitService orgUnitService;
         private readonly IKafkaProducer<string, EdtDisclosureUserProvisioning> kafkaProducer;
+        private readonly IKafkaProducer<string, ApprovalRequestModel> approvalKafkaProducer;
+
         private readonly IKafkaProducer<string, EdtPersonProvisioningModel> kafkaDefenceCoreProducer;
 
         private readonly IKafkaProducer<string, Notification> kafkaNotificationProducer;
@@ -66,7 +73,9 @@ public class DigitalEvidenceDefence
     PidpConfiguration config,
     IOrgUnitService orgUnitService,
     PidpDbContext context,
-    IKafkaProducer<string, EdtDisclosureUserProvisioning> kafkaProducer,
+        IKafkaProducer<string, EdtDisclosureUserProvisioning> kafkaProducer,
+
+    IKafkaProducer<string, ApprovalRequestModel> approvalKafkaProducer,
         IKafkaProducer<string, EdtPersonProvisioningModel> kafkaDefenceCoreProducer,
 
     IKafkaProducer<string, Notification> kafkaNotificationProducer)
@@ -76,6 +85,7 @@ public class DigitalEvidenceDefence
             this.logger = logger;
             this.context = context;
             this.kafkaProducer = kafkaProducer;
+            this.approvalKafkaProducer = approvalKafkaProducer;
             this.kafkaDefenceCoreProducer = kafkaDefenceCoreProducer;
             this.config = config;
             this.kafkaNotificationProducer = kafkaNotificationProducer;
@@ -105,38 +115,91 @@ public class DigitalEvidenceDefence
                     {
                         Serilog.Log.Logger.Warning($"DigitalEvidence Request denied for user {command.PartyId} Enrolled {dto.AlreadyEnroled}, Email {dto.Email}");
                         this.logger.LogDigitalEvidenceDisclosureAccessRequestDenied();
+                        await trx.RollbackAsync();
+
                         return DomainResult.Failed();
                     }
+
+                    // get the user details from keycloak and check they are valid - otherwise will require an approval step
+                    var keycloakUser = await this.keycloakClient.GetUser(dto.UserId);
+
+                    if (keycloakUser == null)
+                    {
+                        await trx.RollbackAsync();
+
+                        throw new AccessRequestException($"No keycloak user found with id {dto.UserId}");
+                    }
+
+                    var userValidationErrors = IsKeycloakUserValid(keycloakUser);
 
                     // create db entry for disclosure access
                     var disclosureUser = await this.SubmitDigitalEvidenceDisclosureRequest(command);
                     // create entry for defence (core) access
                     var defenceUser = await this.SubmitDigitalEvidenceDefenceRequest(command);
 
-                    // publish message for disclosure access
-                    var publishedDisclosureRequest = await this.PublishDisclosureAccessRequest(command, dto, disclosureUser);
-
-                    // publish message for disclosure access
-                    var publishedDefenceRequest = await this.PublishDefenceAccessRequest(command, dto, defenceUser);
-
-                    if (publishedDisclosureRequest.Status == PersistenceStatus.NotPersisted)
+                    if (userValidationErrors.Count > 0)
                     {
-                        Serilog.Log.Error($"Failed to publish defence disclosure request for Defence Counsel user {defenceUser.Id}");
-                        disclosureUser.Status = "Error";
-                    }
+                        Serilog.Log.Warning($"User {keycloakUser} has errors {string.Join(",", userValidationErrors)}");
+                        Serilog.Log.Information("User request will need to go through approval flows");
+                        disclosureUser.Status = AccessRequestStatus.RequiresApproval;
+                        defenceUser.Status = AccessRequestStatus.RequiresApproval;
 
-                    if (publishedDefenceRequest.Status == PersistenceStatus.NotPersisted)
+                        // create approval message
+                        var deliveryResult = await this.PublishApprovalRequest(keycloakUser, command, dto, userValidationErrors, new List<Models.AccessRequest> { defenceUser, disclosureUser });
+
+                        foreach (var result in deliveryResult)
+                        {
+                            if (result.Status == PersistenceStatus.Persisted)
+                            {
+                                Serilog.Log.Information($"Published {result.Key} to {result.Partition}");
+
+                                // store the original requests for later
+                                if (await this.CreateDefenceDeferredPublishRequest(command, dto, defenceUser) && await this.CreateDisclosureDeferredPublishRequest(command, dto, disclosureUser))
+                                {
+                                    Serilog.Log.Information($"Stored requests for later use");
+                                }
+                                else
+                                {
+                                    Serilog.Log.Error($"Failed to store requests for later - we will need to reset this request");
+                                }
+                            }
+                            else
+                            {
+                                Serilog.Log.Error($"Failed to publish {result.Key} to {result.Status}");
+
+                            }
+
+
+                        }
+                    }
+                    else
                     {
-                        Serilog.Log.Error($"Failed to publish defence request for Defence Counsel user {defenceUser.Id}");
-                        defenceUser.Status = "Error";
+
+                        // publish message for disclosure access
+                        var publishedDisclosureRequest = await this.PublishDisclosureAccessRequest(command, dto, disclosureUser);
+
+                        // publish message for disclosure access
+                        var publishedDefenceRequest = await this.PublishDefenceAccessRequest(command, dto, defenceUser);
+
+                        if (publishedDisclosureRequest.Status == PersistenceStatus.NotPersisted)
+                        {
+                            Serilog.Log.Error($"Failed to publish defence disclosure request for Defence Counsel user {defenceUser.Id}");
+                            disclosureUser.Status = "Error";
+                        }
+
+                        if (publishedDefenceRequest.Status == PersistenceStatus.NotPersisted)
+                        {
+                            Serilog.Log.Error($"Failed to publish defence request for Defence Counsel user {defenceUser.Id}");
+                            defenceUser.Status = "Error";
+                        }
+
                     }
-
-
 
                     await this.context.SaveChangesAsync();
                     await trx.CommitAsync();
 
                     return DomainResult.Success();
+
 
                 }
                 catch (Exception ex)
@@ -149,48 +212,74 @@ public class DigitalEvidenceDefence
             }
         }
 
+        /// <summary>
+        /// Check if the names match on the user credentials and the user is still a practicing member
+        /// </summary>
+        /// <param name="keycloakUser"></param>
+        /// <returns></returns>
+        private static List<string> IsKeycloakUserValid(UserRepresentation keycloakUser)
+        {
+            var hasFamilyName = keycloakUser.Attributes.TryGetValue(Claims.BcPersonFamilyName, out var BCFamilyName);
+            var hasFirstName = keycloakUser.Attributes.TryGetValue(Claims.BcPersonGivenName, out var BCFirstName);
+            var hasMemberStatus = keycloakUser.Attributes.TryGetValue(Claims.MembershipStatusCode, out var memberShipStatus);
+            var errors = new List<string>();
+
+            if (!hasFamilyName || !hasFirstName)
+            {
+                Serilog.Log.Error($"No BC First or Family name found in claims {keycloakUser}");
+                errors.Add("No BC First or Family name found in claims");
+            }
+
+            if (!hasMemberStatus)
+            {
+                Serilog.Log.Error($"No member status found for user {keycloakUser}");
+                errors.Add("No member status found for user");
+
+
+            }
+
+            if (!string.Join(" ", BCFamilyName).Equals(keycloakUser.LastName, StringComparison.OrdinalIgnoreCase))
+            {
+                Serilog.Log.Error($"User family name does not match between BCSC [{string.Join(" ", BCFamilyName)}] and BCLaw [{keycloakUser.LastName}] {keycloakUser}");
+                errors.Add($"User family name does not match between BCSC [{string.Join(" ", BCFamilyName)}] and BCLaw [{keycloakUser.LastName}]");
+
+            }
+
+
+            if (!string.Join(" ", BCFirstName).Equals(keycloakUser.FirstName, StringComparison.OrdinalIgnoreCase))
+            {
+                Serilog.Log.Error($"User first name does not match between BCSC [{string.Join(" ", BCFirstName)}] and BCLaw [{keycloakUser.FirstName}] {keycloakUser}");
+                errors.Add($"User first name does not match between BCSC [{string.Join(" ", BCFirstName)}] and BCLaw [{keycloakUser.FirstName}]");
+
+            }
+
+            // not practicing - shouldnt get this far but checking just in case!
+            if (memberShipStatus != null && !string.Join("", memberShipStatus).Equals("PRAC", StringComparison.Ordinal))
+            {
+                Serilog.Log.Error($"User is not shown as currently practicing [{string.Join("", memberShipStatus)}] {keycloakUser}");
+                errors.Add($"User is not shown as currently practicing");
+            }
+
+            return errors;
+        }
+
         private async Task<DeliveryResult<string, EdtPersonProvisioningModel>> PublishDefenceAccessRequest(Command command, PartyDto dto, Models.DigitalEvidenceDefence digitalEvidenceDefence)
         {
             var taskId = Guid.NewGuid().ToString();
             Serilog.Log.Logger.Information("Adding message to topic {0} {1} {2}", this.config.KafkaCluster.PersonCreationTopic, command.ParticipantId, taskId);
 
-            var field = new EdtField
-            {
-                Name = "PPID",
-                Value = command.ParticipantId
-            };
-       
             // use UUIDs for topic keys
-            var delivered = await this.kafkaDefenceCoreProducer.ProduceAsync(this.config.KafkaCluster.PersonCreationTopic, taskId, new EdtPersonProvisioningModel
-            {
-                Key = $"{command.ParticipantId}",
-                Address =
-                {
-                    Email = ( dto.Email != null ) ? dto.Email : "Not set"
-                },
-                Fields = new List<EdtField> { field },
-                FirstName = dto.FirstName,
-                LastName = dto.LastName,
-                Role = "Participant",
-                SystemName = AccessTypeCode.DigitalEvidenceDefence.ToString(),
-                AccessRequestId = digitalEvidenceDefence.Id,
-                OrganizationType = command.OrganizationType,
-                OrganizationName = command.OrganizationName,
-            });
+            var delivered = await this.kafkaDefenceCoreProducer.ProduceAsync(this.config.KafkaCluster.PersonCreationTopic, taskId, this.GetEdtPersonModel(command , dto, digitalEvidenceDefence));
 
             return delivered;
         }
 
-        private async Task<DeliveryResult<string, EdtDisclosureUserProvisioning>> PublishDisclosureAccessRequest(Command command, PartyDto dto, DigitalEvidenceDisclosure digitalEvidenceDisclosure)
+        private EdtDisclosureUserProvisioning GetDisclosureUserModel(Command command, PartyDto dto, DigitalEvidenceDisclosure digitalEvidenceDisclosure)
         {
-            var taskId = Guid.NewGuid().ToString();
-            Serilog.Log.Logger.Information("Adding message to topic {0} {1} {2}", this.config.KafkaCluster.DisclosureUserCreationTopic, command.ParticipantId, taskId);
-
             var systemType = digitalEvidenceDisclosure.OrganizationType.Equals(this.LAW_SOCIETY, StringComparison.Ordinal) ? AccessTypeCode.DigitalEvidenceDisclosure.ToString() : AccessTypeCode.DigitalEvidence.ToString();
 
 
-            // use UUIDs for topic keys
-            var delivered = await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.DisclosureUserCreationTopic, taskId, new EdtDisclosureUserProvisioning
+            return new EdtDisclosureUserProvisioning
             {
                 Key = $"{command.ParticipantId}",
                 UserName = dto.Jpdid,
@@ -203,9 +292,150 @@ public class DigitalEvidenceDefence
                 AccessRequestId = digitalEvidenceDisclosure.Id,
                 OrganizationType = command.OrganizationType,
                 OrganizationName = command.OrganizationName,
+            };
+        }
+
+        private EdtPersonProvisioningModel GetEdtPersonModel(Command command, PartyDto dto, Models.DigitalEvidenceDefence digitalEvidenceDefence)
+        {
+            var field = new EdtField
+            {
+                Name = "PPID",
+                Value = command.ParticipantId
+            };
+
+            return new EdtPersonProvisioningModel
+            {
+                Key = $"{command.ParticipantId}",
+                Address =
+                {
+                    Email = dto.Email ?? "Not set"
+                },
+                Fields = new List<EdtField> { field },
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
+                Role = "Participant",
+                SystemName = AccessTypeCode.DigitalEvidenceDefence.ToString(),
+                AccessRequestId = digitalEvidenceDefence.Id,
+                OrganizationType = command.OrganizationType,
+                OrganizationName = command.OrganizationName,
+            };
+        }
+
+        private async Task<bool> CreateDisclosureDeferredPublishRequest(Command command, PartyDto party, DigitalEvidenceDisclosure digitalEvidenceDisclosure)
+        {
+            Serilog.Log.Information($"Storing deferred request for publishing later if needed");
+
+            var payload = JsonConvert.SerializeObject(this.GetDisclosureUserModel(command, party, digitalEvidenceDisclosure));
+
+
+            this.context.DeferredEvents.Add(new Models.OutBoxEvent.DeferredEvent
+            {
+                EventType = "disclosure-user-creation",
+                DateOccurred = this.clock.GetCurrentInstant(),
+                RequestId = digitalEvidenceDisclosure.Id,
+                Reason = "Approval Required",
+                EventPayload = payload
             });
 
+            var addedRows = await this.context.SaveChangesAsync();
+
+
+            return addedRows > 0;
+        }
+
+        private async Task<bool> CreateDefenceDeferredPublishRequest(Command command, PartyDto party, Pidp.Models.DigitalEvidenceDefence digitalEvidenceDefence)
+        {
+            Serilog.Log.Information($"Storing deferred request for publishing later if needed");
+
+            var payload = JsonConvert.SerializeObject(this.GetEdtPersonModel(command, party, digitalEvidenceDefence));
+
+            this.context.DeferredEvents.Add(new Models.OutBoxEvent.DeferredEvent
+            {
+                EventType = "defence-person-creation",
+                DateOccurred = this.clock.GetCurrentInstant(),
+                RequestId = digitalEvidenceDefence.Id,
+                Reason = "Approval Required",
+                EventPayload = payload
+            });
+
+            var addedRows = await this.context.SaveChangesAsync();
+
+
+            return addedRows > 0;
+        }
+
+        private async Task<DeliveryResult<string, EdtDisclosureUserProvisioning>> PublishDisclosureAccessRequest(Command command, PartyDto dto, DigitalEvidenceDisclosure digitalEvidenceDisclosure)
+        {
+            var taskId = Guid.NewGuid().ToString();
+            Serilog.Log.Logger.Information("Adding message to topic {0} {1} {2}", this.config.KafkaCluster.DisclosureUserCreationTopic, command.ParticipantId, taskId);
+
+            var systemType = digitalEvidenceDisclosure.OrganizationType.Equals(this.LAW_SOCIETY, StringComparison.Ordinal)
+                ? AccessTypeCode.DigitalEvidenceDisclosure.ToString()
+                : AccessTypeCode.DigitalEvidence.ToString();
+
+
+            // use UUIDs for topic keys
+            var delivered = await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.DisclosureUserCreationTopic,
+                taskId,
+                this.GetDisclosureUserModel(command, dto, digitalEvidenceDisclosure));
+
             return delivered;
+        }
+
+        /// <summary>
+        /// Publish a request to the approval topic
+        /// </summary>
+        /// <param name="keycloakUser"></param>
+        /// <param name="command"></param>
+        /// <param name="dto"></param>
+        /// <param name="reasonList"></param>
+        /// <param name="accessRequests"></param>
+        /// <returns></returns>
+        /// <exception cref="AccessRequestException"></exception>
+        private async Task<List<DeliveryResult<string, ApprovalRequestModel>>> PublishApprovalRequest(UserRepresentation keycloakUser, Command command, PartyDto dto, List<string> reasonList, List<Models.AccessRequest> accessRequests)
+        {
+
+            if (accessRequests == null || accessRequests.Count == 0)
+            {
+                throw new AccessRequestException("No access requests passed to PublishApprovalRequest()");
+            }
+
+            var results = new List<DeliveryResult<string, ApprovalRequestModel>>();
+
+            var taskId = Guid.NewGuid().ToString();
+            var userId = dto?.Jpdid;
+            var identityProvider = keycloakUser.FederatedIdentities.FirstOrDefault()?.IdentityProvider;
+
+            if (userId == null || identityProvider == null)
+            {
+                throw new AccessRequestException($"Failed to determine userID or idp for user {dto.UserId}");
+            }
+            Serilog.Log.Logger.Information("Adding message to approval topic {0} {1} {2}", this.config.KafkaCluster.ApprovalCreationTopic, command.ParticipantId, taskId);
+
+            var requests = new List<ApprovalAccessRequest>();
+            foreach (var request in accessRequests)
+            {
+                requests.Add(new ApprovalAccessRequest
+                {
+                    AccessRequestId = request.Id,
+                    RequestType = request.AccessTypeCode.ToString(),
+                });
+            }
+
+            // use UUIDs for topic keys
+            results.Add(await this.approvalKafkaProducer.ProduceAsync(this.config.KafkaCluster.ApprovalCreationTopic, taskId, new ApprovalRequestModel
+            {
+                AccessRequests = requests,
+                Reasons = reasonList,
+                RequiredAccess = "Defence and Duty Counsel DEMS Disclosure Access",
+                Created = DateTime.Now,
+                FirstName = dto.FirstName,
+                EMailAddress = dto.Email,
+                UserId = userId,
+                IdentityProvider = identityProvider
+            }));
+
+            return results;
         }
 
         private async Task<Models.DigitalEvidenceDefence> SubmitDigitalEvidenceDefenceRequest(Command command)

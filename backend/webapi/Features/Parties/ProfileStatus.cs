@@ -69,7 +69,8 @@ public partial class ProfileStatus
             JumValidationError,
             PendingRequest,
             LawyerStatusError,
-            PersonVerificationError
+            PersonVerificationError,
+            VerifiedCredentialMismatch
         }
 
         public enum StatusCode
@@ -83,7 +84,10 @@ public partial class ProfileStatus
             Pending,
             HiddenComplete,   // not shown the in UI but completed
             LockedComplete,    // shown in the UI but not editable
-            PriorStepRequired
+            PriorStepRequired,
+            RequiresApproval,
+            Approved,
+            Denied
         }
     }
 

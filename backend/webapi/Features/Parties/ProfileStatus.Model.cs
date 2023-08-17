@@ -167,7 +167,7 @@ public partial class ProfileStatus
 
                     if ( familyName == null || givenName == null || BCServicesCardLastName == null || BCServicesCardLastName.Value != familyName.Value || BCServicesCardFirstName == null || BCServicesCardFirstName.Value != givenName.Value)
                     {
-                        this.Alerts.Add(Alert.PersonVerificationError);
+                        this.Alerts.Add(Alert.VerifiedCredentialMismatch);
                         this.StatusCode = StatusCode.Error;
                     }
 
@@ -252,6 +252,11 @@ public partial class ProfileStatus
                             if (request.Equals(StatusCode.Pending.ToString(), StringComparison.Ordinal))
                             {
                                 this.StatusCode = StatusCode.Pending;
+                                return;
+                            }
+                            if ( request.Equals(StatusCode.RequiresApproval.ToString(), StringComparison.Ordinal))
+                            {
+                                this.StatusCode = StatusCode.RequiresApproval;
                                 return;
                             }
                         }

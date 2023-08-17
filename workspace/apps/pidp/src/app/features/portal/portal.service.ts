@@ -129,6 +129,13 @@ export class PortalService {
             heading: 'Personal information validation error!',
             content: 'Your personal information does not appear to be correct',
           };
+        case AlertCode.VERIFIED_CREDENTIAL_MISMATCH: {
+          return {
+            heading: 'Verifiable credential validation error',
+            content:
+              'Your provided credentials cannot be verified completely, this is typically due to a name mismatch between the provided credentials. You may request access to applications but they will be held, pending approval.',
+          };
+        }
       }
     });
   }
