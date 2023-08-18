@@ -89,7 +89,7 @@ import KeyCloakService from "@/security/KeycloakService";
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import * as bootstrap from 'bootstrap';
 
-import { ApprovalsApi, Configuration, type CommonModelsApprovalApprovalModel } from "../generated/openapi/index";
+import { ApprovalsApi, Configuration, type CommonModelsApprovalApprovalModel } from "../../generated/openapi/index";
 import { format, parseISO } from "date-fns";
 import type { CommonModelsApprovalApproveDenyInput } from "@/generated/openapi/models/CommonModelsApprovalApproveDenyInput";
 import { ApprovalService } from "@/services/ApprovalService";
