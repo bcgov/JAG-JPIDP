@@ -4,14 +4,12 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using jumwebapi.Core.Extension;
 using jumwebapi.Data;
-using jumwebapi.Features.Participants.Models;
 using jumwebapi.Features.Participants.Queries;
 using jumwebapi.Features.UserChangeManagement.Data;
 using jumwebapi.Infrastructure.Auth;
 using jumwebapi.Kafka.Producer.Interfaces;
 using jumwebapi.Models;
 using MediatR;
-using Microsoft.IdentityModel.Tokens;
 using NodaTime;
 using Prometheus;
 using Serilog;
@@ -23,7 +21,7 @@ public class JustinUserChangeService : IJustinUserChangeService
     private readonly IKafkaProducer<string, JustinUserChangeEvent> changeEventProducer;
     private readonly JumWebApiConfiguration config;
     private IMediator mediator;
-    private static readonly Counter UserUpdateCounter = Metrics.CreateCounter("justin_user_updates", "Number of user updates from JUSTIN");
+    private static readonly Counter UserUpdateCounter = Metrics.CreateCounter("justin_user_update_total", "Number of user updates from JUSTIN");
 
 
     public JustinUserChangeService() { }

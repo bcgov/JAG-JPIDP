@@ -1,53 +1,47 @@
 namespace Pidp;
 
-using FluentValidation.AspNetCore;
-using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
-using Microsoft.AspNetCore.Mvc.ApplicationModels;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
-using NodaTime;
-using NodaTime.Serialization.SystemTextJson;
-using Serilog;
-using Swashbuckle.AspNetCore.Filters;
 using System.Reflection;
 using System.Text.Json;
-
+using Azure.Monitor.OpenTelemetry.Exporter;
+using FluentValidation.AspNetCore;
+using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.OpenApi.Models;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using NodaTime;
+using NodaTime.Serialization.SystemTextJson;
+using OpenTelemetry;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Pidp.Data;
 using Pidp.Extensions;
 using Pidp.Features;
+using Pidp.Features.CourtLocations;
+using Pidp.Features.CourtLocations.Jobs;
+using Pidp.Features.Organization.OrgUnitService;
+using Pidp.Features.Organization.UserTypeService;
+using Pidp.Helpers.Middleware;
 using Pidp.Infrastructure;
 using Pidp.Infrastructure.Auth;
 using Pidp.Infrastructure.HttpClients;
 using Pidp.Infrastructure.Services;
-using Pidp.Helpers.Middleware;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Pidp.Features.Organization.UserTypeService;
-using Pidp.Features.Organization.OrgUnitService;
-using Microsoft.Extensions.Configuration;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
-using OpenTelemetry;
-using System.Diagnostics;
-using OpenTelemetry.Exporter;
-using OpenTelemetry.Logs;
-using OpenTelemetry.Metrics;
 using Pidp.Infrastructure.Telemetry;
-using Azure.Monitor.OpenTelemetry.Exporter;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using Prometheus;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Serilog.Core;
-using Pidp.Features.CourtLocations;
 using Quartz;
-using Quartz.Impl;
-using static Quartz.Logging.OperationName;
-using Pidp.Features.CourtLocations.Jobs;
-using Pidp.Models.Lookups;
+using Serilog;
+using Swashbuckle.AspNetCore.Filters;
 using static Pidp.Models.Lookups.CourtLocation;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.AspNetCore.Authorization;
 
 public class Startup
 {
@@ -68,8 +62,8 @@ public class Startup
     {
         var config = this.InitializeConfiguration(services);
 
-        var assemblyVersion = Assembly.GetExecutingAssembly()    .GetName().Version?.ToString() ?? "0.0.0";
-        var knownProxies = Configuration.GetSection("KnownProxies").Value;
+        var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.0.0";
+        var knownProxies = this.Configuration.GetSection("KnownProxies").Value;
 
 
         if (!string.IsNullOrEmpty(config.Telemetry.CollectorUrl))
@@ -194,7 +188,7 @@ public class Startup
             try
             {
                 dbContext.Database.Migrate();
-                LoadCourts(dbContext);
+                this.LoadCourts(dbContext);
 
             }
             catch (Exception ex)
@@ -304,7 +298,7 @@ public class Startup
             );// "/error");
 
         app.UseSwagger();
-        app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.json", "DIAM Web API"));
+        app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.yaml", "DIAM Web API"));
 
         app.UseSerilogRequestLogging(options => options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
         {
@@ -332,7 +326,7 @@ public class Startup
             endpoints.MapHealthChecks("/health/liveness", new HealthCheckOptions { AllowCachingResponses = false }).WithMetadata(new AllowAnonymousAttribute());
 
         });
-        
+
 
 
 

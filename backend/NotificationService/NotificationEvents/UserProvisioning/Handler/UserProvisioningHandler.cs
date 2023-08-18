@@ -1,14 +1,11 @@
 namespace NotificationService.NotificationEvents.UserProvisioning.Handler;
 
-using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using NotificationService.Data;
 using NotificationService.Exceptions;
 using NotificationService.HttpClients.Mail;
 using NotificationService.Kafka.Interfaces;
-using NotificationService.Models;
 using NotificationService.NotificationEvents.UserProvisioning.Models;
 using NotificationService.Services;
 using Prometheus;
@@ -21,8 +18,8 @@ public class UserProvisioningHandler : IKafkaHandler<string, Notification>
     private readonly NotificationDbContext context;
     private readonly IChesClient chesClient;
 
-    private static readonly Counter consumeCount = Metrics.CreateCounter("jum_notify_consume_count", "Number of notification messages consumed");
-    private static readonly Counter duplicateConsumeCount = Metrics.CreateCounter("jum_notify_dup_consume_count", "Number of duplicated notification messages consumed");
+    private static readonly Counter consumeCount = Metrics.CreateCounter("jum_notify_consume_count_total", "Number of notification messages consumed");
+    private static readonly Counter duplicateConsumeCount = Metrics.CreateCounter("jum_notify_dup_consume_count_total", "Number of duplicated notification messages consumed");
 
     public UserProvisioningHandler(NotificationServiceConfiguration configuration, IKafkaProducer<string, NotificationAckModel> producer, IEmailService emailService, NotificationDbContext context, IChesClient chesClient)
     {

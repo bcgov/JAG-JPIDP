@@ -11,8 +11,20 @@ import "./scss/custom.scss";
 
 import "bootstrap";
  import "bootstrap/dist/js/bootstrap.bundle.min.js";
-import { ApprovalsApi, Configuration } from './generated/openapi';
+import type { EnvironmentConfig } from './environments/environment-config.model';
 
+ fetch('/assets/environment.json')
+   .then((response) => response.json())
+  .then((configMap: EnvironmentConfig) => {
+    if (configMap) {
+        console.log("Using config from environment.json")
+    }
+
+  })
+  .catch((err) => {
+    console.warn('Config error - revert to local %o', err);
+
+  });
 
 const renderApp = () => {
     	const pinia = createPinia()
