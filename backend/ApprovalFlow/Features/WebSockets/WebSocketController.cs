@@ -1,13 +1,9 @@
 namespace ApprovalFlow.Features.WebSockets;
 
 using System.Net.WebSockets;
-using System.Text;
-using common.Constants.Auth;
+using Common.Models.WebSocket;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Routing;
-using Polly;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 [ApiController]
 [Route("[controller]")]
@@ -19,16 +15,13 @@ public class WebSocketController : ControllerBase
     [HttpGet("/ws")]
     public async Task Get()
     {
-        if (HttpContext.WebSockets.IsWebSocketRequest)
+        if (this.HttpContext.WebSockets.IsWebSocketRequest)
         {
-            string protocol = HttpContext.WebSockets.WebSocketRequestedProtocols[0];
+            var protocol = this.HttpContext.WebSockets.WebSocketRequestedProtocols[0];
 
-            using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync(protocol);
-            var message = "Hello World!";
-            _websocketService.AddConnection(webSocket);
-            var bytes = Encoding.UTF8.GetBytes(message);
-            var arraySegment = new ArraySegment<byte>(bytes, 0, bytes.Length);
-            await webSocket.SendAsync(arraySegment,
+            using var webSocket = await this.HttpContext.WebSockets.AcceptWebSocketAsync(protocol);
+            this._websocketService.AddConnection(webSocket);
+            await webSocket.SendAsync(WSMessage.GetMessage(MessageType.Broadcast, "Connected", null),
                                 WebSocketMessageType.Text,
                                 true,
                                 CancellationToken.None);
@@ -36,7 +29,7 @@ public class WebSocketController : ControllerBase
         }
         else
         {
-            HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+            this.HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
         }
     }
 

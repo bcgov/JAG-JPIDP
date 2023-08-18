@@ -1,12 +1,12 @@
 <template>
-  <div class="main container-fluid">
+  <div>
     <div v-if="!hasApprovalsPending">
       <h2>Congrats you're all caught up</h2>
     </div>
     <div v-if="hasApprovalsPending">
-
+      <h5>The following approval(s) need attention:</h5>
       <div
-        class="aligns-items-center justify-content-center text-center w-50 position-absolute top-50 start-50 translate-middle">
+        class="aligns-items-center  text-center w-100 ">
 
         <div v-for="pending in approvalsPending" :key="pending.id">
           <div class="card text-center" title="test">
@@ -24,9 +24,7 @@
               </div>
 
               <div class="mt-3">
-
                 <button type="button" class="btn btn-warning me-5" @click="clickDeny(pending)">Deny</button>
-
                 <button type="button" class="btn btn-primary" @click="approve(pending)">Approve</button>
               </div>
             </div>
@@ -68,7 +66,6 @@
               <form class="d-flex">
                 <div class="col">
                   <div class="mb-3">
-                    <label for="" class="form-label">Inline Form</label>
                     <input type="textarea" name="denyReason" id="denyReason" v-model="denialNotes" class="form-control"
                       placeholder="" aria-describedby="denyId">
                     <small id="denyId" class="text-muted">Reason for denial</small>
@@ -162,6 +159,9 @@ const hasCurrentRequest = computed(() => currentRequest.value);
 const api = new ApprovalService();
 
 async function loadPending() {
+    const approvalStore = useApprovalStore();
+  approvalStore.incrementRefresh();
+
   api.approvalApi.apiApprovalsPendingGet({
     pendingOnly : true
   }).then((result: CommonModelsApprovalApprovalModel[]) => {
@@ -173,6 +173,7 @@ async function loadPending() {
 onMounted(() => {
   const approvalStore = useApprovalStore();
   const { data } = storeToRefs(approvalStore);
+  loadPending();
   watch(data, () => {
       loadPending();
   })

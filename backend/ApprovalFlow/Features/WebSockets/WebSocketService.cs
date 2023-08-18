@@ -1,7 +1,7 @@
 namespace ApprovalFlow.Features.WebSockets;
 
 using System.Net.WebSockets;
-using System.Text;
+using Common.Models.WebSocket;
 
 public class WebSocketService
 {
@@ -16,17 +16,15 @@ public class WebSocketService
     public void AddConnection(WebSocket ws) => this.connections.Add(ws);
 
 
-    public async Task Broadcast(string message)
+    public async Task Broadcast(WSMessage message)
     {
-        var bytes = Encoding.UTF8.GetBytes(message);
 
         foreach (var connection in this.connections)
         {
             if (connection != null && connection.State == WebSocketState.Open)
             {
                 Serilog.Log.Information($"Broadcast to {connection}");
-                var arraySegment = new ArraySegment<byte>(bytes, 0, bytes.Length);
-                await connection.SendAsync(arraySegment, WebSocketMessageType.Text, true, CancellationToken.None);
+                await connection.SendAsync(message.GetMessageSegment(), WebSocketMessageType.Text, true, CancellationToken.None);
             }
         }
     }
