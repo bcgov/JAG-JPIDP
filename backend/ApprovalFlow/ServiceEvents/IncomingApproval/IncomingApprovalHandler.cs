@@ -1,6 +1,5 @@
 namespace ApprovalFlow.ServiceEvents.IncomingApproval;
 
-using System.Reflection.Metadata;
 using System.Threading.Tasks;
 using ApprovalFlow.Data;
 using ApprovalFlow.Data.Approval;
@@ -100,7 +99,7 @@ public class IncomingApprovalHandler : IKafkaHandler<string, ApprovalRequestMode
                     await trx.CommitAsync();
 
                     // broadcast to any listening clients
-                    this.websocketService.Broadcast($"New approval {approvalRequest.Id}");
+                    this.websocketService.Broadcast(new Common.Models.WebSocket.WSMessage(Common.Models.WebSocket.MessageType.Approval, $"New approval required for {incomingRequest.UserId}", null));
 
                     var data = new Dictionary<string, string> {
                             { "reasons", string.Join(",",incomingRequest.Reasons )},
@@ -113,7 +112,7 @@ public class IncomingApprovalHandler : IKafkaHandler<string, ApprovalRequestMode
                     if (!string.IsNullOrEmpty(incomingRequest.EMailAddress))
                     {
                         var notifyKey = Guid.NewGuid().ToString();
-                        var notified = await this.producer.ProduceAsync( this.configuration.KafkaCluster.NotificationTopic, notifyKey, new Notification
+                        var notified = await this.producer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopic, notifyKey, new Notification
                         {
                             To = this.configuration.ApprovalConfig.NotifyEmail,
                             DomainEvent = "digitalevidence-approvalrequest-created",
@@ -142,7 +141,7 @@ public class IncomingApprovalHandler : IKafkaHandler<string, ApprovalRequestMode
 
                         var domainEvent = approvalRequest.IdentityProvider == "verified" ? "digitalevidence-bclaw-approvalrequest-created" : "digitalevidence-bcsc-approvalrequest-created";
 
-                        var delivered = await this.producer.ProduceAsync( this.configuration.KafkaCluster.NotificationTopic, messageKey, new Notification
+                        var delivered = await this.producer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopic, messageKey, new Notification
                         {
                             To = this.configuration.ApprovalConfig.NotifyEmail,
                             DomainEvent = domainEvent,

@@ -12,7 +12,7 @@ public class CourtLocationRequestsByPartyQuery
     private static readonly Histogram PartyLocationRequestDuration =
         Metrics.CreateHistogram("pidp_court_access_request_list_duration", "Histogram of court location lookups by party.");
     private static readonly Counter PartyLocationRequestCount = Metrics
-    .CreateCounter("pidp_court_access_request_count", "Count of court location lookups by party.");
+    .CreateCounter("pidp_court_access_request_count_total", "Count of court location lookups by party.");
 
     public class QueryValidator : AbstractValidator<Query>
     {

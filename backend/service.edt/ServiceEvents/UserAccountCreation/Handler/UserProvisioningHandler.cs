@@ -8,7 +8,6 @@ using edt.service.Kafka;
 using edt.service.Kafka.Interfaces;
 using edt.service.Kafka.Model;
 using edt.service.ServiceEvents.UserAccountCreation.Models;
-using edt.service.ServiceEvents.UserAccountModification.Models;
 using Microsoft.Extensions.Logging;
 using Prometheus;
 using static edt.service.EdtServiceConfiguration;
@@ -25,8 +24,8 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
     private readonly IEdtClient edtClient;
     private readonly ILogger logger;
     private readonly EdtDataStoreDbContext context;
-    private static readonly Counter TombstoneConversions = Metrics.CreateCounter("edt_tombstone_conversions", "Number of tombstone accounts activated");
-    private static readonly Counter AccountErrorCounter = Metrics.CreateCounter("edt_user_account_errors", "Errors adding or updating accounts");
+    private static readonly Counter TombstoneConversions = Metrics.CreateCounter("edt_tombstone_conversion_total", "Number of tombstone accounts activated");
+    private static readonly Counter AccountErrorCounter = Metrics.CreateCounter("edt_user_account_error_total", "Errors adding or updating accounts");
 
 
     public UserProvisioningHandler(
@@ -217,7 +216,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
                 await trx.RollbackAsync();
 
             }
-            
+
         }
         catch (Exception ex)
         {

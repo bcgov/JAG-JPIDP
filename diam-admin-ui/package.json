@@ -18,6 +18,7 @@
     "@openapitools/openapi-generator-cli": "^2.7.0",
     "@popperjs/core": "^2.11.8",
     "bootstrap": "^5.3.1",
+    "bootstrap-icons": "^1.10.5",
     "date-fns": "^2.30.0",
     "keycloak-js": "^19.0.1",
     "openapi-fetch": "^0.7.2",

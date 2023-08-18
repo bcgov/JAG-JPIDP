@@ -1,9 +1,12 @@
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import axios from "axios"
 
 export const useApprovalStore = defineStore('approvals', () => {
   const data = ref([])
+  const refreshCount = ref(0);
 
-  return { data }
+   function incrementRefresh() {
+    refreshCount.value++
+  }
+  return { data, refreshCount, incrementRefresh }
 })

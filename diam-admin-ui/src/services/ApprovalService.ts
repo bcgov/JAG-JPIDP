@@ -1,13 +1,12 @@
 import KeyCloakService from "@/security/KeycloakService";
-import { ApprovalsApi, Configuration, type CommonModelsApprovalApprovalModel } from "../generated/openapi/index";
-import { useApprovalStore } from "@/stores/approvals";
-import { storeToRefs } from "pinia";
+import { ApprovalsApi, Configuration } from "../generated/openapi/index";
+import { environment } from "@/environments/environment";
 
 export class ApprovalService 
 {
 
     configuration = new Configuration({
-      basePath: "https://localhost:7231",
+      basePath: environment.approvalUrl,
       accessToken: KeyCloakService.GetToken(),
       headers: { Authorization: "bearer " + KeyCloakService.GetToken() },
     });

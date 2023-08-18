@@ -1,7 +1,4 @@
 namespace edt.disclosure.HttpClients.Services.EdtDisclosure;
-
-using System.Dynamic;
-using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using AutoMapper;
 
@@ -14,9 +11,6 @@ using edt.disclosure.ServiceEvents.CourtLocation.Models;
 using edt.disclosure.ServiceEvents.Models;
 using edt.disclosure.ServiceEvents.UserAccountCreation.Models;
 using edt.disclosure.ServiceEvents.UserAccountModification.Models;
-using Google.Protobuf.WellKnownTypes;
-using MediatR;
-using Microsoft.AspNetCore.Connections.Features;
 using Prometheus;
 using Serilog;
 
@@ -27,11 +21,11 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
     private readonly EdtDisclosureServiceConfiguration configuration;
     private const string CounselGroup = "Counsel";
     private static readonly Counter ProcessedJobCount = Metrics
-        .CreateCounter("disclosure_case_searches", "Number of disclosure case search requests.");
+        .CreateCounter("disclosure_case_search_total", "Number of disclosure case search requests.");
     private static readonly Histogram AccountCreationDuration = Metrics.CreateHistogram("edt_disclosure_account_creation_duration", "Histogram of edt disclosure account creations.");
     private static readonly Histogram AccountUpdateDuration = Metrics.CreateHistogram("edt_disclosure_account_update_duration", "Histogram of edt disclosure account updates.");
     private static readonly Counter CaseAddRequest = Metrics
-    .CreateCounter("disclosure_case_additions", "Number of disclosure cases added.");
+    .CreateCounter("disclosure_case_addition_total", "Number of disclosure cases added.");
 
     public EdtDisclosureClient(
         HttpClient httpClient, OtelMetrics meters, EdtDisclosureServiceConfiguration edtServiceConfiguration,
@@ -106,7 +100,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             // get the id of the case
             courtLocation = await this.FindLocationCase(this.configuration.EdtClient.CourtLocationKeyPrefix + accessRequest.CourtLocationKey);
         }
-        catch ( ResourceNotFoundException ex)
+        catch (ResourceNotFoundException ex)
         {
             if (this.configuration.EdtClient.CreateCourtLocations)
             {
@@ -183,7 +177,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         else
         {
             var cases = caseSearch?.Value;
-   
+
             if (cases?.Count() == 0)
             {
                 throw new ResourceNotFoundException("Case", caseName);
@@ -370,7 +364,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
 
             // check the user exists
-            EdtUserDto? currentUser = await this.GetUser(changeEvent.Key);
+            var currentUser = await this.GetUser(changeEvent.Key);
             if (currentUser == null)
             {
                 throw new EdtDisclosureServiceException($"No user found in disclosure with key {changeEvent.Key}");
@@ -404,7 +398,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
                             Log.Warning($"Ignoring change event {changeType.Key} for {changeEvent.UserID} ({changeType.Value.To})");
                             break;
                         }
-                  
+
                     }
 
                 }
@@ -434,7 +428,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
             var result = await this.PutAsync($"api/v1/users", currentUser);
 
-            if ( !result.IsSuccess)
+            if (!result.IsSuccess)
             {
                 userModificationResponse.successful = false;
                 userModificationResponse.Errors.AddRange(result.Errors);

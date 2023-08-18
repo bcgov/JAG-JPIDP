@@ -14,7 +14,6 @@ using Pidp.Infrastructure.HttpClients.Keycloak;
 using Pidp.Kafka.Consumer.JustinUserChanges;
 using Pidp.Kafka.Interfaces;
 using Pidp.Models;
-using Pidp.Models.Lookups;
 using Prometheus;
 
 /// <summary>
@@ -58,9 +57,9 @@ public class DigitalEvidenceUpdate
 
         private readonly IKafkaProducer<string, Notification> kafkaNotificationProducer;
 
-        private static readonly Counter UserUpdateCounter = Metrics.CreateCounter("diam_user_updates", "Number of user updates");
-        private static readonly Counter UserUpdateFailureCounter = Metrics.CreateCounter("diam_user_update_failure", "Number of user update failures");
-        private static readonly Counter UserDeactivationCounter = Metrics.CreateCounter("diam_user_account_deactivation", "Number of user deactivations");
+        private static readonly Counter UserUpdateCounter = Metrics.CreateCounter("diam_user_update_total", "Number of user updates");
+        private static readonly Counter UserUpdateFailureCounter = Metrics.CreateCounter("diam_user_update_failure_total", "Number of user update failures");
+        private static readonly Counter UserDeactivationCounter = Metrics.CreateCounter("diam_user_account_deactivation_total", "Number of user deactivations");
 
         public CommandHandler(
             IClock clock,
@@ -473,7 +472,7 @@ public class DigitalEvidenceUpdate
             var query = new Lookups.Index.Query();
             var handler = new Lookups.Index.QueryHandler(this.context);
 
-            List<CrownRegion>? regions = handler.HandleAsync(query).Result.CrownRegions;
+            var regions = handler.HandleAsync(query).Result.CrownRegions;
 
             var assignedCrownRegions = regions.Where(region => AssignedAgencies.Any(x => region.CrownLocation.Equals(x, StringComparison.OrdinalIgnoreCase)));
 
@@ -489,7 +488,7 @@ public class DigitalEvidenceUpdate
             var query = new Lookups.Index.Query();
             var handler = new Lookups.Index.QueryHandler(this.context);
 
-            List<CrownRegion>? regions = handler.HandleAsync(query).Result.CrownRegions;
+            var regions = handler.HandleAsync(query).Result.CrownRegions;
             var distinctRegions = regions.Select(region => region.RegionName).Distinct().ToList();
 
             return distinctRegions;
