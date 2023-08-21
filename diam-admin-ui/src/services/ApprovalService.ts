@@ -1,12 +1,11 @@
 import KeyCloakService from "@/security/KeycloakService";
 import { ApprovalsApi, Configuration } from "../generated/openapi/index";
-import { environment } from "@/environments/environment";
 
 export class ApprovalService 
 {
 
     configuration = new Configuration({
-      basePath: environment.approvalUrl,
+      basePath: import.meta.env.VITE_APPROVAL_URL,
       accessToken: KeyCloakService.GetToken(),
       headers: { Authorization: "bearer " + KeyCloakService.GetToken() },
     });

@@ -4,7 +4,7 @@
         <table class="table table-striped table-hover caption-top ">
             <caption>Approval History</caption>
 
-            <thead class="table-dark">
+            <thead class="table-light">
                 <th>Created</th>
                 <th>User</th>
                 <th>Approved</th>
@@ -27,8 +27,7 @@
 </template>
 
 <script setup lang="ts">
-import KeyCloakService from "@/security/KeycloakService";
-import { computed, nextTick, onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import * as bootstrap from 'bootstrap';
 
 import { ApprovalsApi, Configuration, type CommonModelsApprovalApprovalModel } from "../../generated/openapi/index";
