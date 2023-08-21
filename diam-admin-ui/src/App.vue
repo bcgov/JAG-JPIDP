@@ -11,7 +11,7 @@ import SideBar from './components/SideBar.vue';
   <div class="container-fluid d-flex h-100">
     <div class="row">
       <div class="col-1  ps-0" style="min-width:180px;">
-        <SideBar />
+        <SideBar></SideBar>
       </div>
       <div class="col pt-5 h-100">
         <RouterView></RouterView>
