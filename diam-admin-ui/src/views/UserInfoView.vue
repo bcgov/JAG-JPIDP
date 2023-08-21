@@ -4,10 +4,10 @@
   </div>
 </template>
 
-<script type="ts" setup>
+<script lang="ts" setup>
 
 function loadUsers() {
-
+  console.log("Need to load users here");
 }
 </script>
 
