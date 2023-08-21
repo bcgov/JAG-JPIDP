@@ -82,8 +82,8 @@ function connect() {
         }, 1000);
     }
     socket.onmessage = (message: MessageEvent) => {
-        const toastLiveExample = document.getElementById("liveToast");
-        const toast = new bootstrap.Toast(toastLiveExample);
+        const toastElem = document.getElementById("liveToast")!;
+        const toast = new bootstrap.Toast(toastElem);
         const messageData: string[] = message.data.split("|");
         const messageType = messageData[0];
         switch (messageType) {
