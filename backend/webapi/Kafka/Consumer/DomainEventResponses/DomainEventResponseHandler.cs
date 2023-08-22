@@ -283,7 +283,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
 
         if (accessRequest == null)
         {
-            Serilog.Log.Error($"No access request found with id {value.Id} for account update");
+            Serilog.Log.Error($"No access request found with party id {value.PartId} for account update");
         }
         else
         {
