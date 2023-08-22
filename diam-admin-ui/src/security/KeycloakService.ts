@@ -1,7 +1,6 @@
 import Keycloak from "keycloak-js";
 
 const keycloakInstance = new Keycloak();
-
 interface CallbackOneParam<T1 = void, T2 = void> {
   (param1: T1): T2;
 }
@@ -14,7 +13,10 @@ const Login = (onAuthenticatedCallback: CallbackOneParam) => {
   keycloakInstance
     .init({ onLoad: "login-required" })
     .then(function (authenticated) {
-      const roles = keycloakInstance.resourceAccess?.['DIAM-BCPS-ADMIN'].roles;
+      debugger;
+
+      const client = import.meta.env.VITE_KEYCLOAK_CLIENT;
+      const roles = keycloakInstance.resourceAccess?.[client].roles;
       console.log(roles);
       if (! (roles?.includes('ADMIN') || roles?.includes('APPROVER')))
       {

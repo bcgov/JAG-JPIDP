@@ -1,13 +1,12 @@
 namespace Pidp.Kafka.Consumer;
 
+using System;
+using System.Globalization;
 using System.Text;
 using Confluent.Kafka;
 using Newtonsoft.Json;
-using NodaTime.Text;
 using NodaTime;
-using NodaTime.Extensions;
-using System.Globalization;
-using System;
+using NodaTime.Text;
 
 internal sealed class KafkaDeserializer<T> : IDeserializer<T>
 {
@@ -54,7 +53,7 @@ public class InstantConverter : JsonConverter
             catch (UnparsableValueException ex)
             {
 
-                Serilog.Log.Warning($"Failed to parse instant value {instantString} {ex.Message}");
+                Serilog.Log.Debug($"Failed to parse instant value {instantString} {ex.Message} - will try alternate method");
                 // try to parse as regular date
 
                 var dateTime = DateTime.ParseExact(instantString, "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal);

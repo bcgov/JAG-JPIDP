@@ -47,7 +47,6 @@
 
 <script lang="ts" setup>
 import { onMounted, ref } from "vue";
-
 import KeyCloakService from "../security/KeycloakService";
 import { useApprovalStore } from "@/stores/approvals";
 import { storeToRefs } from "pinia";
@@ -68,7 +67,11 @@ function connect() {
     username.value = KeyCloakService.GetUserName();
     const approvalStore = useApprovalStore();
     const { data } = storeToRefs(approvalStore);
-    const socket = new WebSocket("wss://localhost:7231/ws", KeyCloakService.GetToken());
+    const WS_URL = import.meta.env.VITE_WS_URL;
+    console.log("Connect to %s", WS_URL);
+    debugger;
+    const token = KeyCloakService.GetToken();
+    const socket = new WebSocket(WS_URL, token);
     socket.onopen = () => {
         console.log("Socket connection established");
         connectionStatus.value = true;

@@ -1,10 +1,14 @@
 <script setup lang="ts">
+import { ref } from 'vue/dist/vue.js';
+const publicEnvVar = import.meta.env.VITE_MY_ENV_VARIABLE;
+
 </script>
 
 <template>
 
   <div class="mt-5">
   <h1>Welcome to the BCPS DIAM Admin Tool</h1>
+  <h2>Environment {{ publicEnvVar  }}</h2>
 </div>
 
 </template>
