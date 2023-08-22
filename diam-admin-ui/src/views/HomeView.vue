@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref } from 'vue/dist/vue.js';
 const publicEnvVar = import.meta.env.VITE_MY_ENV_VARIABLE;
 
 </script>
