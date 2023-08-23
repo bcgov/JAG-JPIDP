@@ -3,6 +3,7 @@ namespace Pidp;
 using System.Reflection;
 using System.Text.Json;
 using Azure.Monitor.OpenTelemetry.Exporter;
+using Common.Authorization;
 using FluentValidation.AspNetCore;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authorization;
@@ -239,6 +240,10 @@ public class Startup
         });
 
 
+
+        var tokenService = new TokenService("https://dev.common-sso.justice.gov.bc.ca/auth/realms/Services/protocol/openid-connect/token");
+        var token = tokenService.GetAuthHeader("justin-ords", "FV9K6JVxwH9Q25vGsW6VETN0Md7ctby3").Result;
+        Log.Logger.Information($"Token {token}");
         Log.Logger.Information("Startup configuration complete");
 
 
