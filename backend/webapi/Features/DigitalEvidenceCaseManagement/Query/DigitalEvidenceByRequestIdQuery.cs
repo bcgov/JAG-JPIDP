@@ -2,7 +2,6 @@ namespace Pidp.Features.DigitalEvidenceCaseManagement.Query;
 
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
-using NodaTime;
 using Pidp.Data;
 using Pidp.Models;
 using Prometheus;
@@ -11,7 +10,7 @@ public class DigitalEvidenceByRequestIdQuery
 {
 
     private static readonly Counter RCCActiveQueryCount = Metrics
-    .CreateCounter("case_rcc_active_user_query_count", "Number of requests to see RCC assigned users.");
+    .CreateCounter("case_rcc_active_user_query_count_total", "Number of requests to see RCC assigned users.");
 
     private static readonly Histogram RCCSearchDuration = Metrics
     .CreateHistogram("case_rcc_active_user_query_duration", "Histogram  of requests to see RCC assigned users.");
@@ -61,5 +60,5 @@ public class DigitalEvidenceByRequestIdQuery
         }
     }
 
- 
+
 }

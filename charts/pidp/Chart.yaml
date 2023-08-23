@@ -36,6 +36,9 @@ dependencies:
   - name: frontend
     repository: "file://../frontend"
     version: "0.1.2"
+  - name: admin-frontend
+    repository: "file://../admin-frontend"
+    version: "0.1.2"
   - name: webapi
     repository: "file://../webapi"
     version: "0.1.9"
@@ -47,6 +50,9 @@ dependencies:
     version: "0.1.0"
   - name: edt-disclosure
     repository: "file://../edt-disclosure"
+    version: "0.1.0"
+  - name: approvalflow
+    repository: "file://../approvalflow"
     version: "0.1.0"
   - name: plr-intake
     repository: "file://../plr-intake"

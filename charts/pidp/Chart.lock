@@ -2,6 +2,9 @@ dependencies:
 - name: frontend
   repository: file://../frontend
   version: 0.1.2
+- name: admin-frontend
+  repository: file://../admin-frontend
+  version: 0.1.2
 - name: webapi
   repository: file://../webapi
   version: 0.1.9
@@ -13,6 +16,9 @@ dependencies:
   version: 0.1.0
 - name: edt-disclosure
   repository: file://../edt-disclosure
+  version: 0.1.0
+- name: approvalflow
+  repository: file://../approvalflow
   version: 0.1.0
 - name: plr-intake
   repository: file://../plr-intake
@@ -26,5 +32,5 @@ dependencies:
 - name: nginx
   repository: file://../nginx
   version: 9.7.3
-digest: sha256:c4336b7ea4e1d343ff9c2a8b316b5b717b0da490ad8b5134a940dc55d0e40de0
-generated: "2023-05-05T14:33:43.4708016-07:00"
+digest: sha256:87ace57d0d77f3e5bf0668cb5e965b0d35f99d7c3dbeac3454e5b692b71e09f3
+generated: "2023-08-18T10:05:37.3903158-07:00"

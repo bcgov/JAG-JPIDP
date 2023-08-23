@@ -1,0 +1,235 @@
+{{ $release := .Release.Name }}
+{{ $ocEnv := regexFind "([^-]*$)" .Release.Namespace }}
+{{ $domain := .Values.global.vanityURL }}
+{{ $isPR := hasPrefix "pr-" .Release.Name }}
+## Derived release name
+{{ $drn := ternary $release $ocEnv $isPR }}
+{{ $isProd := contains "prod" $ocEnv }}
+#
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "approvalflow.fullname" . }}
+  labels:
+    {{- include "approvalflow.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "approvalflow.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: "8080"
+        {{- if .Values.global.commit_sha }}
+        commit_sha: {{ .Values.global.commit_sha }}
+        {{- end}}
+      {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "approvalflow.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "approvalflow.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.global.image.registry }}/{{ .Values.image.repository }}:{{ .Values.global.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+
+          env:
+
+            - name: Seq__Url
+              valueFrom:
+                secretKeyRef:
+                  name: datalust-seq
+                  key: url
+            - name: KafkaCluster__SslCaLocation
+              value: /opt/kafka/certificates/server-ca.crt
+            - name: KafkaCluster__SslCertificateLocation
+              value: /opt/kafka/certificates/client-ca.crt
+            - name: KafkaCluster__SslKeyLocation
+              value: /opt/kafka/certificates/client.key
+
+            - name: KafkaCluster__ConsumerGroupId
+              value: {{ include "approvalflow.fullname" . }}-consumer-group
+            - name: database-password
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "approvalflow.fullname" . }}-database
+                  key: database-password
+            - name: database-username
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "approvalflow.fullname" . }}-database
+                  key: database-username
+            - name: DATABASE_NAME
+              value: approvalflow
+            - name: DOTNET_BUNDLE_EXTRACT_BASE_DIR
+              value: /tmp
+            - name: ConnectionStrings__ApprovalFlowDataStore
+              valueFrom:
+                configMapKeyRef:
+                  name: approvalflow-api-database
+                  key: CONNECTION_STRINGS_DB    
+            - name: SchemaRegistry__Url
+              valueFrom:
+                secretKeyRef:
+                  name: apicurio-registry
+                  key: SchemaRegistry__Url
+            - name: SchemaRegistry__ClientId
+              valueFrom:
+                secretKeyRef:
+                  name: apicurio-registry
+                  key: SchemaRegistry__ClientId
+            - name: SchemaRegistry__ClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: apicurio-registry
+                  key: SchemaRegistry__ClientSecret
+            - name: KafkaCluster__BootstrapServers
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-common
+                  key: KafkaCluster__BootstrapServers
+            - name: KafkaCluster__SaslOauthbearerProducerClientId
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-common
+                  key: KafkaCluster__ProducerClientId
+            - name: KafkaCluster__SaslOauthbearerConsumerClientId
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-common
+                  key: KafkaCluster__ConsumerClientId
+            - name: KafkaCluster__SaslOauthbearerConsumerClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-common
+                  key: KafkaCluster__SaslOauthbearerConsumerClientSecret
+            - name: KafkaCluster__SaslOauthbearerProducerClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-common
+                  key: KafkaCluster__SaslOauthbearerProducerClientSecret
+
+            - name: KafkaCluster__SaslOauthbearerTokenEndpointUrl
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-common
+                  key: KafkaCluster__SaslOauthbearerTokenEndpointUrl
+            - name: ApplicationUrl
+              value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"     
+
+
+            - name: KafkaCluster__IncomingApprovalCreationTopic
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-approvalflow
+                  key: KafkaCluster__IncomingApprovalCreationTopic
+            - name: KafkaCluster__ApprovalResponseTopic
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-approvalflow
+                  key: KafkaCluster__ApprovalResponseTopic
+
+            - name: KafkaCluster__NotificationTopic
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-approvalflow
+                  key: KafkaCluster__NotificationTopic
+
+            - name: Telemetry__CollectorUrl
+              valueFrom: 
+                secretKeyRef:
+                  name: telemetry-pidp
+                  key: Telemetry__CollectorUrl
+
+            - name: SplunkConfig__CollectorToken
+              valueFrom: 
+                secretKeyRef:
+                  name: splunk-config
+                  key: SplunkConfig__CollectorToken
+            - name: SplunkConfig__Host
+              valueFrom: 
+                secretKeyRef:
+                  name: splunk-config
+                  key: SplunkConfig__Host
+          volumeMounts:
+          - name: truststore
+            mountPath: "/opt/kafka/certificates"
+            readOnly: true
+          envFrom:
+            - secretRef:
+                name: keycloak-secrets
+            - secretRef:
+                name: kafkaconfig
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health/liveness
+              port: http
+              scheme: HTTP
+            timeoutSeconds: 5
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 3
+        #  livenessProbe: //turn this on for TEST and PROD
+         #   httpGet:
+        #      path: /health/liveness
+        #      port: http
+         #   timeoutSeconds: 1
+        #    periodSeconds: 10
+         #   successThreshold: 1
+         #   failureThreshold: 3
+         # startupProbe:
+        #    httpGet:
+         #     path: /health/liveness
+         #     port: http
+          #    scheme: HTTP
+         #   timeoutSeconds: 1
+         #   periodSeconds: 10
+          #  successThreshold: 1
+          #  failureThreshold: 30
+          # readinessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: truststore
+          secret:
+            secretName: kafka-cluster-client-truststore
+        - name: truststore-key
+          secret:
+            secretName: kafka-cluster-client-key
+

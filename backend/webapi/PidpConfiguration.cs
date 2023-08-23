@@ -115,6 +115,7 @@ public class PidpConfiguration
         public string PersonCreationTopic { get; set; } = string.Empty;
         public string DisclosureUserCreationTopic { get; set; } = string.Empty;
         public string DisclosureUserModificationTopic { get; set; } = string.Empty;
+        public string ApprovalCreationTopic { get; set; } = string.Empty;
         public string ProcessResponseTopic { get; set; } = string.Empty;
         public string UserAccountChangeTopicName { get; set; } = string.Empty;
         public string NotificationTopicName { get; set; } = string.Empty;
@@ -131,7 +132,7 @@ public class PidpConfiguration
         public string Scope { get; set; } = "openid";
         public string ConsumerGroupId { get; set; } = "dems-notification-ack";
         public string KafkaAdminClientId { get; set;} = string.Empty;
-        public string KafkaAdminClientSecret { get; set;} = string.Empty; 
+        public string KafkaAdminClientSecret { get; set;} = string.Empty;
 
     }
     public class JumClientConfiguration
