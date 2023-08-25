@@ -36,7 +36,15 @@ public class UserProvisioningHandler : IKafkaHandler<string, Notification>
         consumeCount.Inc();
 
         // notification id is the message topic key
-        value.NotificationId = Guid.Parse(key);
+        try
+        {
+            value.NotificationId = Guid.Parse(key);
+        }
+        catch (FormatException fe)
+        {
+            Serilog.Log.Warning($"Failed to parse key {key} as a GUID");
+            return Task.CompletedTask;
+        }
 
         Serilog.Log.Information($"Checking if message {key} has already been processed by {consumerName}");
 
