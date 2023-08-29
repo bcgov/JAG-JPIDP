@@ -1,246 +1,256 @@
 namespace NotificationService.Services;
 using System.Linq.Expressions;
+using System.Text.RegularExpressions;
+using Microsoft.EntityFrameworkCore;
+using NodaTime;
+using NotificationService.Data;
+using NotificationService.Exceptions;
+using NotificationService.HttpClients.Mail;
+using NotificationService.Models;
+using NotificationService.NotificationEvents.UserProvisioning.Models;
+using Prometheus;
+using Serilog;
 
 public class EmailService : IEmailService
 {
-  public const string NotificationServiceEmail = "justinuserprovisioning@gov.bc.ca";
+    public const string NotificationServiceEmail = "justinuserprovisioning@gov.bc.ca";
 
-  private static readonly Counter EmailSentCount = Metrics
-  .CreateCounter("notification_email_sends", "Number of emails sent.");
-  private static readonly Counter EmailSentFailureCount = Metrics
-.CreateCounter("notification_email_send_failures", "Number of email failures.");
+    private static readonly Counter EmailSentCount = Metrics
+    .CreateCounter("notification_email_sends", "Number of emails sent.");
+    private static readonly Counter EmailSentFailureCount = Metrics
+  .CreateCounter("notification_email_send_failures", "Number of email failures.");
 
-  private readonly IChesClient chesClient;
-  private readonly IClock clock;
-  private readonly Microsoft.Extensions.Logging.ILogger logger;
-  private readonly ISmtpEmailClient smtpEmailClient;
-  private readonly NotificationServiceConfiguration config;
-  private readonly NotificationDbContext context;
-  private readonly IEmailTemplateCache templateCache;
-
-
-  public EmailService(
-      IChesClient chesClient,
-      IClock clock,
-      ILogger<EmailService> logger,
-      ISmtpEmailClient smtpEmailClient,
-      NotificationServiceConfiguration config,
-      NotificationDbContext context,
-      IEmailTemplateCache templateCache)
-  {
-    this.chesClient = chesClient;
-    this.clock = clock;
-    this.logger = logger;
-    this.smtpEmailClient = smtpEmailClient;
-    this.config = config;
-    this.context = context;
-    this.templateCache = templateCache;
-  }
-
-  /// <summary>
-  ///
-  /// Takes a notification model and converts and sends as an email
-  /// </summary>
-  /// <param name="notification"></param>
-  /// <returns></returns>
-  public async Task<Guid?> SendAsync(Notification notification)
-  {
+    private readonly IChesClient chesClient;
+    private readonly IClock clock;
+    private readonly Microsoft.Extensions.Logging.ILogger logger;
+    private readonly ISmtpEmailClient smtpEmailClient;
+    private readonly NotificationServiceConfiguration config;
+    private readonly NotificationDbContext context;
+    private readonly IEmailTemplateCache templateCache;
 
 
-    var domainEventEMail = await this.ConvertNotificationToDomainEventEmail(notification);
-
-    if (!NotificationServiceConfiguration.IsProduction())
+    public EmailService(
+        IChesClient chesClient,
+        IClock clock,
+        ILogger<EmailService> logger,
+        ISmtpEmailClient smtpEmailClient,
+        NotificationServiceConfiguration config,
+        NotificationDbContext context,
+        IEmailTemplateCache templateCache)
     {
-      domainEventEMail.EMail.Subject = $"Testing {domainEventEMail.EMail.Subject} - please ignore this message";
+        this.chesClient = chesClient;
+        this.clock = clock;
+        this.logger = logger;
+        this.smtpEmailClient = smtpEmailClient;
+        this.config = config;
+        this.context = context;
+        this.templateCache = templateCache;
     }
 
-    if (this.config.ChesClient.Enabled && await this.chesClient.HealthCheckAsync())
+    /// <summary>
+    ///
+    /// Takes a notification model and converts and sends as an email
+    /// </summary>
+    /// <param name="notification"></param>
+    /// <returns></returns>
+    public async Task<Guid?> SendAsync(Notification notification)
     {
-      //require outbox pattern here incase message got send and datastore persistent failed
-      /**
-       * we can use ches massage tag as random guid to string
-       * store the tag in the DB before SendAsync and then
-       * Query ches status using the tag whenever there's event failure to determine if a message was already sent
-       * implementation coming up soon using sage or outbox pattern
-       */
-      var emailLogId = await this.CreateEmailLog(domainEventEMail, SendType.Ches, notification.NotificationId);
-      Log.Information($"EmailLog entry [{emailLogId}] created for [{notification.NotificationId}]");
 
 
-      var fakeEmailSendStr = Environment.GetEnvironmentVariable("EMAIL_NO_SEND_MODE");
-      if (fakeEmailSendStr != null && fakeEmailSendStr.Equals("true", StringComparison.OrdinalIgnoreCase))
-      {
-        Log.Logger.Warning("*** EMAIL_NO_SEND_MODE=true - emails will not actually be sent ***");
-        var fakeMsgId = Guid.NewGuid();
-        await this.UpdateEmailLogSentResponseId(notification.NotificationId, fakeMsgId);
+        var domainEventEMail = await this.ConvertNotificationToDomainEventEmail(notification);
 
-        return fakeMsgId;
-      }
-
-      try
-      {
-        var emailResponse = await this.chesClient.SendAsync(domainEventEMail.EMail);
-
-        if (emailResponse != null)
+        if (!NotificationServiceConfiguration.IsProduction())
         {
-          EmailSentCount.Inc();
-          var msgResponseId = emailResponse.Messages.First().MsgId;
-          Log.Information($"EmailLog successfully send for id [{emailLogId} notificationId [{notification.NotificationId}] response: [{msgResponseId}]");
-          await this.UpdateEmailLogSentResponseId(notification.NotificationId, msgResponseId);
-
-          return msgResponseId;
+            domainEventEMail.EMail.Subject = $"Testing {domainEventEMail.EMail.Subject} - please ignore this message";
         }
-        else
+
+        if (this.config.ChesClient.Enabled && await this.chesClient.HealthCheckAsync())
         {
-          EmailSentFailureCount.Inc();
-          Log.Error($"EmailLog failed to  send for [{emailLogId} [{notification.NotificationId}]");
-          await this.UpdateEmailLogSendFailures(notification.NotificationId, "No error received");
+            //require outbox pattern here incase message got send and datastore persistent failed
+            /**
+             * we can use ches massage tag as random guid to string
+             * store the tag in the DB before SendAsync and then
+             * Query ches status using the tag whenever there's event failure to determine if a message was already sent
+             * implementation coming up soon using sage or outbox pattern
+             */
+            var emailLogId = await this.CreateEmailLog(domainEventEMail, SendType.Ches, notification.NotificationId);
+            Log.Information($"EmailLog entry [{emailLogId}] created for [{notification.NotificationId}]");
 
+
+            var fakeEmailSendStr = Environment.GetEnvironmentVariable("EMAIL_NO_SEND_MODE");
+            if (fakeEmailSendStr != null && fakeEmailSendStr.Equals("true", StringComparison.OrdinalIgnoreCase))
+            {
+                Log.Logger.Warning("*** EMAIL_NO_SEND_MODE=true - emails will not actually be sent ***");
+                var fakeMsgId = Guid.NewGuid();
+                await this.UpdateEmailLogSentResponseId(notification.NotificationId, fakeMsgId);
+
+                return fakeMsgId;
+            }
+
+            try
+            {
+                var emailResponse = await this.chesClient.SendAsync(domainEventEMail.EMail);
+
+                if (emailResponse != null)
+                {
+                    EmailSentCount.Inc();
+                    var msgResponseId = emailResponse.Messages.First().MsgId;
+                    Log.Information($"EmailLog successfully send for id [{emailLogId} notificationId [{notification.NotificationId}] response: [{msgResponseId}]");
+                    await this.UpdateEmailLogSentResponseId(notification.NotificationId, msgResponseId);
+
+                    return msgResponseId;
+                }
+                else
+                {
+                    EmailSentFailureCount.Inc();
+                    Log.Error($"EmailLog failed to  send for [{emailLogId} [{notification.NotificationId}]");
+                    await this.UpdateEmailLogSendFailures(notification.NotificationId, "No error received");
+
+                }
+            }
+            catch (DeliveryException ex)
+            {
+                EmailSentFailureCount.Inc();
+                await this.UpdateEmailLogSendFailures(notification.NotificationId, ex.Message);
+            }
         }
-      }
-      catch (DeliveryException ex)
-      {
-        EmailSentFailureCount.Inc();
-        await this.UpdateEmailLogSendFailures(notification.NotificationId, ex.Message);
-      }
+
+        // Fall back to SMTP client
+        //await this.CreateEmailLog(email, SendType.Smtp);
+        //await this.smtpEmailClient.SendAsync(email);
+        return notification.NotificationId;
     }
 
-    // Fall back to SMTP client
-    //await this.CreateEmailLog(email, SendType.Smtp);
-    //await this.smtpEmailClient.SendAsync(email);
-    return notification.NotificationId;
-  }
-
-  private async Task<DomainEventEmail> ConvertNotificationToDomainEventEmail(Notification notification)
-  {
-    if (notification == null)
+    private async Task<DomainEventEmail> ConvertNotificationToDomainEventEmail(Notification notification)
     {
-      throw new EMailTemplateException("Null call to ConvertNotificationToDomainEventEmail");
+        if (notification == null)
+        {
+            throw new EMailTemplateException("Null call to ConvertNotificationToDomainEventEmail");
+        }
+
+        var template = await this.templateCache.GetEmailTemplate(notification.DomainEvent);
+
+        Log.Information("Using template {0}", notification.DomainEvent);
+        return new DomainEventEmail
+        {
+            DomainEvent = notification.DomainEvent,
+
+            EMail = new Email
+            {
+                From = string.IsNullOrEmpty(template.From) ? notification.From! : template.From,
+                To = notification.To!.Split(';').AsEnumerable(),
+                Subject = string.IsNullOrEmpty(template.Subject) ? notification.Subject! : template.Subject,
+                Body = this.ConvertEmailBody(notification, template),
+                Priority = template.IsUrgent ? "high" : "normal",
+                Cc = string.IsNullOrEmpty(template.Cc) ? Enumerable.Empty<string>() : template.Cc.Split(";")
+            }
+        };
+
+
     }
 
-    var template = await this.templateCache.GetEmailTemplate(notification.DomainEvent);
-
-    Log.Information("Using template {0}", notification.DomainEvent);
-    return new DomainEventEmail
+    private string ConvertEmailBody(Notification notification, EMailTemplateModel template)
     {
-      DomainEvent = notification.DomainEvent,
+        var bodyText = template.BodyText;
 
-      EMail = new Email
-      {
-        From = string.IsNullOrEmpty(template.From) ? notification.From! : template.From,
-        To = notification.To!.Split(';').AsEnumerable(),
-        Subject = string.IsNullOrEmpty(template.Subject) ? notification.Subject! : template.Subject,
-        Body = this.ConvertEmailBody(notification, template),
-        Priority = template.IsUrgent ? "high" : "normal",
-        Cc = string.IsNullOrEmpty(template.Cc) ? Enumerable.Empty<string>() : template.Cc.Split(";")
-      }
-    };
+        // looks for environment variable values
+        var regex = new Regex("(?<=~~).*?(?=~~)");
+        var matchList = regex.Matches(bodyText);
+        for (var i = 0; i < matchList.Count; i++)
+        {
+            var match = matchList[i];
+            var replacement = Environment.GetEnvironmentVariable(match.Value);
+            if (replacement != null)
+            {
+                bodyText = bodyText.Replace("~~" + match.Value + "~~", replacement);
+            }
+            else
+            {
+                Log.Warning($"No env value for {match.Value} - unable to replace in template {template}");
+            }
+        }
 
 
-  }
+        foreach (var entry in notification.EventData)
+        {
+            bodyText = bodyText.Replace("{" + entry.Key + "}", entry.Value);
+        }
 
-  private string ConvertEmailBody(Notification notification, EMailTemplateModel template)
-  {
-    var bodyText = template.BodyText;
+        return bodyText;
 
-    // looks for environment variable values
-    var regex = new Regex("(?<=~~).*?(?=~~)");
-    var matchList = regex.Matches(bodyText);
-    for (var i = 0; i < matchList.Count; i++)
+    }
+
+    private async Task<int> CreateEmailLog(DomainEventEmail email, string sendType, Guid? notificationId)
     {
-      var match = matchList[i];
-      var replacement = Environment.GetEnvironmentVariable(match.Value);
-      if (replacement != null)
-      {
-        bodyText = bodyText.Replace("~~" + match.Value + "~~", replacement);
-      }
-      else
-      {
-        Log.Warning($"No env value for {match.Value} - unable to replace in template {template}");
-      }
+        var response = this.context.EmailLogs.Add(new EmailLog(email.EMail, sendType, notificationId, this.clock.GetCurrentInstant()));
+
+        return await this.context.SaveChangesAsync();
+    }
+    private async Task UpdateEmailLogSentResponseId(Guid? notificationId, Guid? responseId = null)
+    {
+        var emailLogs = await this.context.EmailLogs
+            .Where(emailLog => emailLog.NotificationId.Equals(notificationId)).SingleOrDefaultAsync();
+        if (emailLogs != null)
+        {
+            emailLogs.SentResponseId = responseId;
+            emailLogs.LatestStatus = ChesStatus.Accepted;
+            emailLogs.DateSent = this.clock.GetCurrentInstant();
+        }
+
+        await this.context.SaveChangesAsync();
+    }
+
+    private async Task UpdateEmailLogSendFailures(Guid? notificationId, string errorStr)
+    {
+        var emailLogs = await this.context.EmailLogs
+            .Where(emailLog => emailLog.NotificationId.Equals(notificationId)).SingleOrDefaultAsync();
+        if (emailLogs != null)
+        {
+            emailLogs.LatestStatus = ChesStatus.Failed;
+            emailLogs.StatusMessage = errorStr;
+        }
+
+        await this.context.SaveChangesAsync();
     }
 
 
-    foreach (var entry in notification.EventData)
+    public async Task<int> UpdateEmailLogStatuses(int limit)
     {
-      bodyText = bodyText.Replace("{" + entry.Key + "}", entry.Value);
+        Expression<Func<EmailLog, bool>> predicate = log =>
+            log.SendType == SendType.Ches
+            && log.NotificationId != null
+            && log.LatestStatus != ChesStatus.Complete;
+
+        var totalCount = await this.context.EmailLogs
+            .Where(predicate)
+            .CountAsync();
+
+        var emailLogs = await this.context.EmailLogs
+            .Where(predicate)
+            .OrderBy(e => e.UpdateCount)
+                .ThenBy(e => e.Modified)
+            .Take(limit)
+            .ToListAsync();
+
+        foreach (var emailLog in emailLogs)
+        {
+            var status = await this.chesClient.GetStatusAsync(emailLog.NotificationId!.Value);
+            if (status != null && emailLog.LatestStatus != status)
+            {
+                emailLog.LatestStatus = status;
+            }
+            emailLog.UpdateCount++;
+        }
+        await this.context.SaveChangesAsync();
+
+        return totalCount;
     }
 
-    return bodyText;
 
-  }
 
-  private async Task<int> CreateEmailLog(DomainEventEmail email, string sendType, Guid? notificationId)
-  {
-    var response = this.context.EmailLogs.Add(new EmailLog(email.EMail, sendType, notificationId, this.clock.GetCurrentInstant()));
-
-    return await this.context.SaveChangesAsync();
-  }
-  private async Task UpdateEmailLogSentResponseId(Guid? notificationId, Guid? responseId = null)
-  {
-    var emailLogs = await this.context.EmailLogs
-        .Where(emailLog => emailLog.NotificationId.Equals(notificationId)).SingleOrDefaultAsync();
-    if (emailLogs != null)
+    private static class SendType
     {
-      emailLogs.SentResponseId = responseId;
-      emailLogs.LatestStatus = ChesStatus.Accepted;
-      emailLogs.DateSent = this.clock.GetCurrentInstant();
+        public const string Ches = "CHES";
+        public const string Smtp = "SMTP";
     }
-
-    await this.context.SaveChangesAsync();
-  }
-
-  private async Task UpdateEmailLogSendFailures(Guid? notificationId, string errorStr)
-  {
-    var emailLogs = await this.context.EmailLogs
-        .Where(emailLog => emailLog.NotificationId.Equals(notificationId)).SingleOrDefaultAsync();
-    if (emailLogs != null)
-    {
-      emailLogs.LatestStatus = ChesStatus.Failed;
-      emailLogs.StatusMessage = errorStr;
-    }
-
-    await this.context.SaveChangesAsync();
-  }
-
-
-  public async Task<int> UpdateEmailLogStatuses(int limit)
-  {
-    Expression<Func<EmailLog, bool>> predicate = log =>
-        log.SendType == SendType.Ches
-        && log.NotificationId != null
-        && log.LatestStatus != ChesStatus.Complete;
-
-    var totalCount = await this.context.EmailLogs
-        .Where(predicate)
-        .CountAsync();
-
-    var emailLogs = await this.context.EmailLogs
-        .Where(predicate)
-        .OrderBy(e => e.UpdateCount)
-            .ThenBy(e => e.Modified)
-        .Take(limit)
-        .ToListAsync();
-
-    foreach (var emailLog in emailLogs)
-    {
-      var status = await this.chesClient.GetStatusAsync(emailLog.NotificationId!.Value);
-      if (status != null && emailLog.LatestStatus != status)
-      {
-        emailLog.LatestStatus = status;
-      }
-      emailLog.UpdateCount++;
-    }
-    await this.context.SaveChangesAsync();
-
-    return totalCount;
-  }
-
-
-
-  private static class SendType
-  {
-    public const string Ches = "CHES";
-    public const string Smtp = "SMTP";
-  }
 }
