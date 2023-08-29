@@ -126,6 +126,8 @@ spec:
                 name: mail-settings
             - secretRef:
                 name: jum-kafka-config-notification
+            - configMapRef:
+                name: notification-template-enviroment
           ports:
             - name: http
               containerPort: 8080
