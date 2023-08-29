@@ -1,5 +1,7 @@
 namespace NotificationService.Services;
 
+using System.Linq.Expressions;
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using NodaTime;
 using NotificationService.Data;
@@ -9,16 +11,15 @@ using NotificationService.Models;
 using NotificationService.NotificationEvents.UserProvisioning.Models;
 using Prometheus;
 using Serilog;
-using System.Linq.Expressions;
 
 public class EmailService : IEmailService
 {
     public const string NotificationServiceEmail = "justinuserprovisioning@gov.bc.ca";
 
     private static readonly Counter EmailSentCount = Metrics
-    .CreateCounter("notification_email_sends", "Number of emails sent.");
+    .CreateCounter("notification_email_sends_total", "Number of emails sent.");
     private static readonly Counter EmailSentFailureCount = Metrics
-.CreateCounter("notification_email_send_failures", "Number of email failures.");
+.CreateCounter("notification_email_send_failures_total", "Number of email failures.");
 
     private readonly IChesClient chesClient;
     private readonly IClock clock;
@@ -152,6 +153,32 @@ public class EmailService : IEmailService
     private string ConvertEmailBody(Notification notification, EMailTemplateModel template)
     {
         var bodyText = template.BodyText;
+
+        // looks for environment variable values
+
+        var regex = new Regex("(?<=~~).*?(?=~~)");
+        var matchList = regex.Matches(bodyText);
+        for (var i = 0; i < matchList.Count; i++)
+        {
+            var match = matchList[i];
+            Log.Information($"Replacing {match} enviroment vars");
+            var replacement = Environment.GetEnvironmentVariable(match.Value);
+            if (replacement != null)
+            {
+                Log.Information($"Replacing {match.Value} with {replacement}");
+                bodyText = bodyText.Replace("~~" + match.Value + "~~", replacement);
+            }
+            else
+            {
+                Log.Warning($"No env value for {match.Value} - unable to replace in template {template}");
+            }
+
+        }
+
+
+
+
+
         foreach (var entry in notification.EventData)
         {
             bodyText = bodyText.Replace("{" + entry.Key + "}", entry.Value);
