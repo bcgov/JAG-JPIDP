@@ -1,13 +1,11 @@
 namespace jumwebapi.Infrastructure.HttpClients;
 
-using DomainResults.Common;
-using Flurl;
 using System.Net;
 using System.Text;
 using System.Text.Json;
-
+using DomainResults.Common;
+using Flurl;
 using jumwebapi.Extensions;
-using System.Net.Http.Headers;
 
 public enum PropertySerialization
 {
@@ -155,6 +153,13 @@ public class BaseClient
             {
                 this.Logger.LogNullResponseContent();
                 return DomainResult.Failed<T>("Response content was null");
+            }
+
+            var test = await response.Content.ReadAsStringAsync(cancellationToken);
+            Serilog.Log.Information($"Got {test}");
+            if (typeof(T) == typeof(string))
+            {
+                return (IDomainResult<T>)DomainResult.Success(test);
             }
 
             var deserializationResult = await response.Content.ReadFromJsonAsync<T>(cancellationToken: cancellationToken);
