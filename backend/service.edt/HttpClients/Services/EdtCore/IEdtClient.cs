@@ -10,7 +10,7 @@ public interface IEdtClient
     Task<UserModificationEvent> CreatePerson(EdtPersonProvisioningModel accessRequest);
     Task<UserModificationEvent> ModifyPerson(EdtPersonProvisioningModel accessRequest, EdtPersonDto currentUser);
     Task<UserModificationEvent> ModifyPerson(IncomingUserModification modificationInfo);
-
+    Task<int> AddPersonIdentifier(int personId, string identifierType, string identifierValue);
     Task<UserModificationEvent> UpdateUserDetails(EdtUserDto userDetails);
 
 
