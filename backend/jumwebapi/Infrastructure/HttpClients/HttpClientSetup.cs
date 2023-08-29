@@ -1,16 +1,17 @@
 namespace jumwebapi.Infrastructure.HttpClients;
 
+using System;
+using System.Net.Http.Headers;
+using System.Text;
+using global::Common.Authorization;
 using IdentityModel.Client;
-
+using jumwebapi.Extensions;
 using jumwebapi.Infrastructure.Auth;
+using jumwebapi.Infrastructure.HttpClients.JustinParticipant;
+using jumwebapi.Infrastructure.HttpClients.JustinUserChangeManagement;
 using jumwebapi.Infrastructure.HttpClients.Keycloak;
 using jumwebapi.Infrastructure.HttpClients.Mail;
-using jumwebapi.Extensions;
-using jumwebapi.Infrastructure.HttpClients.JustinParticipant;
-using System.Text;
-using jumwebapi.Infrastructure.HttpClients.JustinUserChangeManagement;
-using System;
-using jumwebapi.Features.UserChangeManagement.Services;
+using jumwebapi.Infrastructure.HttpClients.TestORDS;
 
 public static class HttpClientSetup
 {
@@ -42,7 +43,18 @@ public static class HttpClientSetup
             services.AddHttpClientWithBaseAddress<IJustinUserChangeManagementClient, JustinUserChangeManagementClient>(config.JustinChangeEventClient.Url).ConfigureHttpClient(client => client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", config.JustinAuthentication.ApiKey));
 
         }
-        else if (!(string.IsNullOrEmpty(config.JustinAuthentication.BasicAuthUsername) && string.IsNullOrEmpty(config.JustinAuthentication.BasicAuthPassword)))
+        //else if (config.JustinAuthentication.Method.Equals("oauth", StringComparison.OrdinalIgnoreCase) && !(string.IsNullOrEmpty(config.JustinAuthentication.ClientId) && string.IsNullOrEmpty(config.JustinAuthentication.ClientSecret) && string.IsNullOrEmpty(config.JustinAuthentication.TokenUrl)))
+        //{
+
+
+
+
+        //    Serilog.Log.Logger.Information($"JUSTIN Client configured with oauth with client {config.JustinAuthentication.ClientId}");
+
+        //    services.AddHttpClientWithBaseAddress<IJustinParticipantClient, JustinParticipantClient>(config.JustinParticipantClient.Url).ConfigureHttpClient(client => client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenService.GetTokenString(config.JustinAuthentication.ClientId, config.JustinAuthentication.ClientSecret).Result));
+        //    services.AddHttpClientWithBaseAddress<IJustinUserChangeManagementClient, JustinUserChangeManagementClient>(config.JustinChangeEventClient.Url).ConfigureHttpClient(client => client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenService.GetTokenString(config.JustinAuthentication.ClientId, config.JustinAuthentication.ClientSecret).Result));
+        //}
+        else if (config.JustinAuthentication.Method.Equals("basic", StringComparison.OrdinalIgnoreCase) && !(string.IsNullOrEmpty(config.JustinAuthentication.BasicAuthUsername) && string.IsNullOrEmpty(config.JustinAuthentication.BasicAuthPassword)))
         {
             Serilog.Log.Logger.Information($"JUSTIN Client configured with basic auth for user {config.JustinAuthentication.BasicAuthUsername}");
             var username = config.JustinAuthentication.BasicAuthUsername;
@@ -58,10 +70,31 @@ public static class HttpClientSetup
             services.AddHttpClientWithBaseAddress<IJustinUserChangeManagementClient, JustinUserChangeManagementClient>(config.JustinChangeEventClient.Url);
 
         }
+
+        var testOrds = Environment.GetEnvironmentVariable("TEST_ORDS");
+        if (!string.IsNullOrEmpty(testOrds) && testOrds.Equals("true", StringComparison.OrdinalIgnoreCase))
+        {
+            Serilog.Log.Information($"*** Adding test ORDS Http client - NON PRODUCTION USE ONLY! ***");
+            var tokenService = new TokenService(config.JustinAuthentication.TokenUrl);
+            services.AddHttpClientWithBaseAddress<ITestORDSClient, TestORDSClient>(config.TestORDSConfiguration.Url).ConfigureHttpClient(client => client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenService.GetTokenString(config.JustinAuthentication.ClientId, config.JustinAuthentication.ClientSecret).Result));
+
+            //services.AddHttpClientWithBaseAddress<ITestORDSClient, TestORDSClient>(config.TestORDSConfiguration.Url)
+            //    .ConfigurePrimaryHttpMessageHandler(() =>
+            //    {
+            //        var handler = new HttpClientHandler();
+
+            //        handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; };
+
+            //        return handler;
+            //    });
+            //; //.ConfigureHttpClient(client => client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenService.GetTokenString(config.JustinAuthentication.ClientId, config.JustinAuthentication.ClientSecret).Result));
+        }
+
+
         services.AddTransient<ISmtpEmailClient, SmtpEmailClient>();
 
         // register background service for checking user changes in JUSTIN
-       // services.AddHostedService<UserChangeBackgroundService>();
+        // services.AddHostedService<UserChangeBackgroundService>();
 
 
 

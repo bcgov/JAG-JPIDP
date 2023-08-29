@@ -77,12 +77,12 @@ public class TokenService
         }
     }
 
-    public async Task<string> GetAuthHeader(string clientId, string clientSecret)
+    public async Task<string> GetTokenString(string clientId, string clientSecret)
     {
         var token = await this.GetToken(clientId, clientSecret);
-        var auth = "Bearer: " + token.Token.ToString();
 
-        return auth;
+
+        return token.Token.ToString();
 
     }
 

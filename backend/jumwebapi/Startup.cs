@@ -1,41 +1,42 @@
 namespace jumwebapi;
 
+using System.Reflection;
+using System.Security.Claims;
 using FluentValidation.AspNetCore;
+using jumwebapi.Common;
+using jumwebapi.Core.Http;
 using jumwebapi.Data;
+using jumwebapi.Data.Seed;
+using jumwebapi.Extensions;
+using jumwebapi.Features.Agencies.Services;
+using jumwebapi.Features.DigitalParticipants.Services;
+using jumwebapi.Features.ORDSTest;
+using jumwebapi.Features.Participants.Services;
+using jumwebapi.Features.Persons.Services;
+using jumwebapi.Features.UserChangeManagement.Services;
+using jumwebapi.Features.Users.Services;
+using jumwebapi.Helpers.Mapping;
 using jumwebapi.Infrastructure;
 using jumwebapi.Infrastructure.Auth;
+using jumwebapi.Infrastructure.HttpClients;
+using jumwebapi.PipelineBehaviours;
+using MediatR;
+using MediatR.Extensions.FluentValidation.AspNetCore;
+using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.OpenApi.Models;
 using NodaTime;
 using NodaTime.Serialization.SystemTextJson;
-using Serilog;
-using System.Reflection;
-using System.Text.Json;
-using Microsoft.AspNetCore.Mvc.Versioning;
-using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.Filters;
-using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
-using jumwebapi.Extensions;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authentication;
-using System.Security.Claims;
-using jumwebapi.Core.Http;
-using MediatR;
-using jumwebapi.PipelineBehaviours;
-using MediatR.Extensions.FluentValidation.AspNetCore;
-using jumwebapi.Features.Participants.Services;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-using jumwebapi.Common;
-using jumwebapi.Features.DigitalParticipants.Services;
-using jumwebapi.Features.Persons.Services;
-using jumwebapi.Features.Agencies.Services;
-using jumwebapi.Features.Users.Services;
-using jumwebapi.Infrastructure.HttpClients;
-using jumwebapi.Data.Seed;
-using jumwebapi.Helpers.Mapping;
 using Prometheus;
-using jumwebapi.Features.UserChangeManagement.Services;
+using Quartz;
+using Serilog;
+using Swashbuckle.AspNetCore.Filters;
 
 public class Startup
 {
@@ -173,6 +174,42 @@ public class Startup
         services.AddScoped<JustinUserChangeService>();
 
         Log.Logger.Information("### JUM Service Configuration complete");
+
+        // test serivces for ORDS
+        var testOrds = Environment.GetEnvironmentVariable("TEST_ORDS");
+        if (!string.IsNullOrEmpty(testOrds) && testOrds.Equals("true", StringComparison.OrdinalIgnoreCase))
+        {
+            Log.Logger.Information("Starting ORDS tests...");
+            services.AddQuartz(q =>
+            {
+                Log.Information("Starting ORDS Test scheduler..");
+                q.SchedulerId = "JUM-ORDS-TEST";
+                q.SchedulerName = "ORDS Test Scheduler";
+                q.UseMicrosoftDependencyInjectionJobFactory();
+                q.UseSimpleTypeLoader();
+                q.UseInMemoryStore();
+                q.UseDefaultThreadPool(tp =>
+                {
+                    tp.MaxConcurrency = 2;
+                });
+
+                q.ScheduleJob<ORDSTestJob>(trigger => trigger
+                  .WithIdentity("JUM Test ORDS trigger")
+                  .StartNow()
+                  .WithDailyTimeIntervalSchedule(x => x.WithInterval(10, IntervalUnit.Second))
+                  .WithDescription("JUM Test scheduled event")
+              );
+            });
+
+            services.AddQuartzServer(options =>
+            {
+                options.WaitForJobsToComplete = true;
+            });
+        }
+
+
+
+
 
     }
     private JumWebApiConfiguration InitializeConfiguration(IServiceCollection services)
