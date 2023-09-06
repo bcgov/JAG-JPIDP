@@ -27,20 +27,20 @@ public class PendingApprovalQueryHandler : IRequestHandler<ApprovalsQuery, IList
         List<ApprovalRequest> results;
         if (request.PendingOnly)
         {
-            results = this.context.ApprovalRequests.Include(req => req.Requests).ThenInclude(req => req.History).Where(req => req.Completed == null).ToList();
+            results = this.context.ApprovalRequests.AsSplitQuery().Include(req => req.PersonalIdentities).Include(req => req.Requests).ThenInclude(req => req.History).Where(req => req.Completed == null).ToList();
 
         }
         else
         {
-            results = this.context.ApprovalRequests.Include(req => req.Requests).ThenInclude(req => req.History).ToList();
+            results = this.context.ApprovalRequests.AsSplitQuery().Include(req => req.PersonalIdentities).Include(req => req.Requests).ThenInclude(req => req.History).ToList();
 
         }
 
 
-        if ( results.Any())
+        if (results.Any())
         {
             Serilog.Log.Information($"Found {results.Count()} results");
-            return mapper.Map<List<ApprovalModel>>(results);
+            return this.mapper.Map<List<ApprovalModel>>(results);
         }
         else
         {

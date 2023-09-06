@@ -13,6 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { CommonModelsApprovalPersonalIdentityModel } from './CommonModelsApprovalPersonalIdentityModel';
+import {
+    CommonModelsApprovalPersonalIdentityModelFromJSON,
+    CommonModelsApprovalPersonalIdentityModelFromJSONTyped,
+    CommonModelsApprovalPersonalIdentityModelToJSON,
+} from './CommonModelsApprovalPersonalIdentityModel';
 import type { CommonModelsApprovalRequestModel } from './CommonModelsApprovalRequestModel';
 import {
     CommonModelsApprovalRequestModelFromJSON,
@@ -61,6 +67,12 @@ export interface CommonModelsApprovalApprovalModel {
      * @type {object}
      * @memberof CommonModelsApprovalApprovalModel
      */
+    completed?: object;
+    /**
+     * 
+     * @type {object}
+     * @memberof CommonModelsApprovalApprovalModel
+     */
     deleted?: object;
     /**
      * 
@@ -79,6 +91,18 @@ export interface CommonModelsApprovalApprovalModel {
      * @type {string}
      * @memberof CommonModelsApprovalApprovalModel
      */
+    emailAddress?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof CommonModelsApprovalApprovalModel
+     */
+    phoneNumber?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof CommonModelsApprovalApprovalModel
+     */
     userId?: string | null;
     /**
      * 
@@ -86,6 +110,12 @@ export interface CommonModelsApprovalApprovalModel {
      * @memberof CommonModelsApprovalApprovalModel
      */
     identityProvider?: string | null;
+    /**
+     * 
+     * @type {Array<CommonModelsApprovalPersonalIdentityModel>}
+     * @memberof CommonModelsApprovalApprovalModel
+     */
+    personalIdentities?: Array<CommonModelsApprovalPersonalIdentityModel> | null;
     /**
      * 
      * @type {Array<CommonModelsApprovalRequestModel>}
@@ -118,11 +148,15 @@ export function CommonModelsApprovalApprovalModelFromJSONTyped(json: any, ignore
         'requiredAccess': !exists(json, 'requiredAccess') ? undefined : json['requiredAccess'],
         'noOfApprovalsRequired': !exists(json, 'noOfApprovalsRequired') ? undefined : json['noOfApprovalsRequired'],
         'approved': !exists(json, 'approved') ? undefined : json['approved'],
+        'completed': !exists(json, 'completed') ? undefined : json['completed'],
         'deleted': !exists(json, 'deleted') ? undefined : json['deleted'],
         'created': !exists(json, 'created') ? undefined : json['created'],
         'modified': !exists(json, 'modified') ? undefined : json['modified'],
+        'emailAddress': !exists(json, 'emailAddress') ? undefined : json['emailAddress'],
+        'phoneNumber': !exists(json, 'phoneNumber') ? undefined : json['phoneNumber'],
         'userId': !exists(json, 'userId') ? undefined : json['userId'],
         'identityProvider': !exists(json, 'identityProvider') ? undefined : json['identityProvider'],
+        'personalIdentities': !exists(json, 'personalIdentities') ? undefined : (json['personalIdentities'] === null ? null : (json['personalIdentities'] as Array<any>).map(CommonModelsApprovalPersonalIdentityModelFromJSON)),
         'requests': !exists(json, 'requests') ? undefined : (json['requests'] === null ? null : (json['requests'] as Array<any>).map(CommonModelsApprovalRequestModelFromJSON)),
     };
 }
@@ -141,11 +175,15 @@ export function CommonModelsApprovalApprovalModelToJSON(value?: CommonModelsAppr
         'requiredAccess': value.requiredAccess,
         'noOfApprovalsRequired': value.noOfApprovalsRequired,
         'approved': value.approved,
+        'completed': value.completed,
         'deleted': value.deleted,
         'created': value.created,
         'modified': value.modified,
+        'emailAddress': value.emailAddress,
+        'phoneNumber': value.phoneNumber,
         'userId': value.userId,
         'identityProvider': value.identityProvider,
+        'personalIdentities': value.personalIdentities === undefined ? undefined : (value.personalIdentities === null ? null : (value.personalIdentities as Array<any>).map(CommonModelsApprovalPersonalIdentityModelToJSON)),
         'requests': value.requests === undefined ? undefined : (value.requests === null ? null : (value.requests as Array<any>).map(CommonModelsApprovalRequestModelToJSON)),
     };
 }

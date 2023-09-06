@@ -1,23 +1,17 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
 import LayoutHeader from './components/LayoutHeader.vue';
-import SideBar from './components/SideBar.vue';
 
 </script>
 
 <template>
-  <LayoutHeader></LayoutHeader>
 
-  <div class="container-fluid d-flex h-100">
-    <div class="row">
-      <div class="col-1  ps-0" style="min-width:180px;">
-        <SideBar></SideBar>
-      </div>
-      <div class="col pt-5 h-100">
-        <RouterView></RouterView>
-
-      </div>
-
+  <div class="container-fluid">
+      <div class="row">
+    <LayoutHeader></LayoutHeader>
+    </div>
+    <div class="row mt-5 ml-5">
+      <RouterView></RouterView>
     </div>
   </div>
 </template>

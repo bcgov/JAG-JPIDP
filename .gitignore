@@ -372,3 +372,8 @@ FodyWeavers.xsd
 **/appsettings.Development.json
 **/launchSettings.json
 /backend/jum-api/jumwebapi/appsettings.Development.json~Stashed changes
+/integration/approval.yaml
+/charts/solr
+/deploy/dev_values_solr.yaml
+/integration/diam.yaml
+/integration/swagger.yaml

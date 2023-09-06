@@ -1,25 +1,24 @@
 namespace Pidp.Features.AccessRequests;
 
+using System.Diagnostics;
+using System.Linq;
+using common.Constants.Auth;
+using Common.Models.Approval;
+using Confluent.Kafka;
 using DomainResults.Common;
 using FluentValidation;
-using NodaTime;
-using Pidp.Data;
-using Pidp.Features.Organization.OrgUnitService;
-using Pidp.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using NodaTime;
+using OpenTelemetry.Trace;
+using Pidp.Data;
+using Pidp.Exceptions;
+using Pidp.Features.Organization.OrgUnitService;
 using Pidp.Infrastructure.HttpClients.Keycloak;
 using Pidp.Kafka.Interfaces;
-using System.Diagnostics;
-using OpenTelemetry.Trace;
+using Pidp.Models;
 using Pidp.Models.Lookups;
-using Confluent.Kafka;
-using Microsoft.EntityFrameworkCore.Storage;
-using common.Constants.Auth;
-using Pidp.Exceptions;
-using Common.Models.Approval;
-using Newtonsoft.Json;
-using Quartz;
 
 /// <summary>
 /// Requests to access defence counsel services will generate objects in the disclosure portal and the DEMS core portals.
@@ -94,7 +93,7 @@ public class DigitalEvidenceDefence
 
         public async Task<IDomainResult> HandleAsync(Command command)
         {
-            using IDbContextTransaction? trx = this.context.Database.BeginTransaction();
+            using var trx = this.context.Database.BeginTransaction();
 
             using (var activity = new Activity("DigitalEvidenceDefence Request").Start())
             {
@@ -269,7 +268,7 @@ public class DigitalEvidenceDefence
             Serilog.Log.Logger.Information("Adding message to topic {0} {1} {2}", this.config.KafkaCluster.PersonCreationTopic, command.ParticipantId, taskId);
 
             // use UUIDs for topic keys
-            var delivered = await this.kafkaDefenceCoreProducer.ProduceAsync(this.config.KafkaCluster.PersonCreationTopic, taskId, this.GetEdtPersonModel(command , dto, digitalEvidenceDefence));
+            var delivered = await this.kafkaDefenceCoreProducer.ProduceAsync(this.config.KafkaCluster.PersonCreationTopic, taskId, this.GetEdtPersonModel(command, dto, digitalEvidenceDefence));
 
             return delivered;
         }
@@ -422,15 +421,37 @@ public class DigitalEvidenceDefence
                 });
             }
 
+            var identities = new List<PersonalIdentityModel>
+            {
+                // add bc service card identity
+                new PersonalIdentityModel
+                {
+                    Source = "BCSC",
+                    FirstName = keycloakUser.Attributes["BCPerID_first_name"] != null && keycloakUser.Attributes["BCPerID_first_name"].Length > 0 ? string.Join(",", keycloakUser.Attributes["BCPerID_first_name"]) : "Not found",
+                    LastName = keycloakUser.Attributes["BCPerID_last_name"] != null && keycloakUser.Attributes["BCPerID_last_name"].Length > 0 ? string.Join(",", keycloakUser.Attributes["BCPerID_last_name"]) : "Not found",
+                },
+                // add bc law info
+                new PersonalIdentityModel
+                {
+                    Source = "BCLaw",
+                    FirstName = keycloakUser.FirstName,
+                    LastName = keycloakUser.LastName,
+                    EMail = dto.Email,
+
+                }
+            };
+
+
             // use UUIDs for topic keys
             results.Add(await this.approvalKafkaProducer.ProduceAsync(this.config.KafkaCluster.ApprovalCreationTopic, taskId, new ApprovalRequestModel
             {
                 AccessRequests = requests,
                 Reasons = reasonList,
-                RequiredAccess = "Defence and Duty Counsel DEMS Disclosure Access",
+                RequiredAccess = "Defence and Duty Counsel Access",
                 Created = DateTime.Now,
-                FirstName = dto.FirstName,
+                PersonalIdentities = identities,
                 EMailAddress = dto.Email,
+                Phone = dto.Phone,
                 UserId = userId,
                 IdentityProvider = identityProvider
             }));

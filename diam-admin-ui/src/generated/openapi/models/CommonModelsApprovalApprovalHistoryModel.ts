@@ -21,6 +21,18 @@ import { exists, mapValues } from '../runtime';
 export interface CommonModelsApprovalApprovalHistoryModel {
     /**
      * 
+     * @type {object}
+     * @memberof CommonModelsApprovalApprovalHistoryModel
+     */
+    created?: object;
+    /**
+     * 
+     * @type {object}
+     * @memberof CommonModelsApprovalApprovalHistoryModel
+     */
+    modified?: object;
+    /**
+     * 
      * @type {string}
      * @memberof CommonModelsApprovalApprovalHistoryModel
      */
@@ -64,6 +76,8 @@ export function CommonModelsApprovalApprovalHistoryModelFromJSONTyped(json: any,
     }
     return {
         
+        'created': !exists(json, 'created') ? undefined : json['created'],
+        'modified': !exists(json, 'modified') ? undefined : json['modified'],
         'decisionNote': !exists(json, 'decisionNote') ? undefined : json['decisionNote'],
         'approver': !exists(json, 'approver') ? undefined : json['approver'],
         'approvalRequestId': !exists(json, 'approvalRequestId') ? undefined : json['approvalRequestId'],
@@ -80,6 +94,8 @@ export function CommonModelsApprovalApprovalHistoryModelToJSON(value?: CommonMod
     }
     return {
         
+        'created': value.created,
+        'modified': value.modified,
         'decisionNote': value.decisionNote,
         'approver': value.approver,
         'approvalRequestId': value.approvalRequestId,

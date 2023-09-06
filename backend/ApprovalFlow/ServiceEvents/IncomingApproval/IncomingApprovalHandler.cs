@@ -1,10 +1,12 @@
 namespace ApprovalFlow.ServiceEvents.IncomingApproval;
 
+using System.Text.Json;
 using System.Threading.Tasks;
 using ApprovalFlow.Data;
 using ApprovalFlow.Data.Approval;
 using ApprovalFlow.Exceptions;
 using ApprovalFlow.Features.WebSockets;
+using Common.Helpers.Converters;
 using Common.Kafka;
 using Common.Models.Approval;
 using Common.Models.Notification;
@@ -81,10 +83,25 @@ public class IncomingApprovalHandler : IKafkaHandler<string, ApprovalRequestMode
                     RequiredAccess = incomingRequest.RequiredAccess,
                     UserId = incomingRequest.UserId,
                     IdentityProvider = incomingRequest.IdentityProvider,
+                    EMailAddress = incomingRequest.EMailAddress,
+                    PhoneNumber = incomingRequest.Phone,
                     Reason = string.Join(", ", incomingRequest.Reasons),
                     NoOfApprovalsRequired = incomingRequest.NoOfApprovalsRequired > 0 ? incomingRequest.NoOfApprovalsRequired : 1,
                     Requests = accessRequests
                 };
+
+                foreach (var identity in incomingRequest.PersonalIdentities)
+                {
+                    approvalRequest.PersonalIdentities.Add(new PersonalIdentity
+                    {
+                        Source = identity.Source,
+                        FirstName = identity.FirstName,
+                        LastName = identity.LastName,
+                        ApprovalRequest = approvalRequest,
+                        Phone = string.IsNullOrEmpty(identity.Phone) ? incomingRequest.Phone : identity.Phone,
+                        EMail = string.IsNullOrEmpty(identity.EMail) ? incomingRequest.EMailAddress : identity.EMail
+                    });
+                }
 
                 // add the entry to the context
                 this.context.ApprovalRequests.Add(approvalRequest);
@@ -104,7 +121,9 @@ public class IncomingApprovalHandler : IKafkaHandler<string, ApprovalRequestMode
                     var data = new Dictionary<string, string> {
                             { "reasons", string.Join(",",incomingRequest.Reasons )},
                             { "user", incomingRequest.UserId },
-                            { "firstName", incomingRequest.FirstName},
+                            { "identities", JsonSerializer.Serialize(incomingRequest.PersonalIdentities) },
+                            { "phone", StringConverters.ConvertPhoneNumber(incomingRequest.Phone) },
+                            { "email", incomingRequest.EMailAddress},
                             { "idp", incomingRequest.IdentityProvider  }
                         };
 
