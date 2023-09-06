@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ApprovalFlow.Data.Migrations
 {
     [DbContext(typeof(ApprovalFlowDataStoreDbContext))]
-    [Migration("20230815232634_Initial")]
+    [Migration("20230905223125_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -81,6 +81,10 @@ namespace ApprovalFlow.Data.Migrations
                     b.Property<Instant>("Created")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("EMailAddress")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("IdentityProvider")
                         .IsRequired()
                         .HasColumnType("text");
@@ -94,6 +98,10 @@ namespace ApprovalFlow.Data.Migrations
 
                     b.Property<int>("NoOfApprovalsRequired")
                         .HasColumnType("integer");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Reason")
                         .IsRequired()
@@ -110,6 +118,53 @@ namespace ApprovalFlow.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ApprovalRequest", "approvalflow");
+                });
+
+            modelBuilder.Entity("ApprovalFlow.Data.Approval.PersonalIdentity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ApprovalRequestId")
+                        .HasColumnType("integer");
+
+                    b.Property<Instant>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateOfBirth")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EMail")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Instant>("Modified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApprovalRequestId");
+
+                    b.ToTable("PersonalIdentity", "approvalflow");
                 });
 
             modelBuilder.Entity("ApprovalFlow.Data.Approval.Request", b =>
@@ -182,6 +237,17 @@ namespace ApprovalFlow.Data.Migrations
                     b.Navigation("AccessRequest");
                 });
 
+            modelBuilder.Entity("ApprovalFlow.Data.Approval.PersonalIdentity", b =>
+                {
+                    b.HasOne("ApprovalFlow.Data.Approval.ApprovalRequest", "ApprovalRequest")
+                        .WithMany("PersonalIdentities")
+                        .HasForeignKey("ApprovalRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ApprovalRequest");
+                });
+
             modelBuilder.Entity("ApprovalFlow.Data.Approval.Request", b =>
                 {
                     b.HasOne("ApprovalFlow.Data.Approval.ApprovalRequest", "ApprovalRequest")
@@ -195,6 +261,8 @@ namespace ApprovalFlow.Data.Migrations
 
             modelBuilder.Entity("ApprovalFlow.Data.Approval.ApprovalRequest", b =>
                 {
+                    b.Navigation("PersonalIdentities");
+
                     b.Navigation("Requests");
                 });
 

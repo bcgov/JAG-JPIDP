@@ -29,8 +29,7 @@ import { PersonalInformation } from './personal-information.model';
 })
 export class PersonalInformationPage
   extends AbstractFormPage<PersonalInformationFormState>
-  implements OnInit
-{
+  implements OnInit {
   public title: string;
   public formState: PersonalInformationFormState;
   public user$: Observable<User>;
@@ -87,9 +86,9 @@ export class PersonalInformationPage
       }
 
       // no phone required for VC users - but we need a valid email
-      if (idp === IdentityProvider.VERIFIED_CREDENTIALS) {
-        this.formState.phone.validator = null;
-      }
+      // if (idp === IdentityProvider.VERIFIED_CREDENTIALS) {
+      //   this.formState.phone.validator = null;
+      // }
     });
 
     this.resource

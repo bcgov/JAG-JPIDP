@@ -4,7 +4,9 @@
     <ui-page-section-subheader icon="assignment_ind" heading="Personal Information">
       <ng-container uiPageSectionSubheaderDesc *ngIf="!userDetailsLocked()">
         Provide the following information to complete your Digital Identity Profile.
+
       </ng-container>
+
       <ng-container uiPageSectionSubheaderDesc *ngIf="userDetailsLocked()">
         Your information has been retrieved from your login details.<br /> You do not need to make any changes.
       </ng-container>
@@ -45,6 +47,8 @@
       <ng-container uiPageSectionSubheaderDesc *ngIf="!userDetailsLocked()">
         Provide your contact information.
       </ng-container>
+
+
     </ui-page-section-subheader>
 
     <ui-contact-info-form [form]="formState.form"></ui-contact-info-form>
@@ -52,11 +56,11 @@
 
   <ui-page-footer>
     <button mat-stroked-button uiPageFooterAction type="button" color="primary" (click)="onBack()">
-      Back Home
+      Back
     </button>
 
     <button mat-flat-button uiPageFooterAction type="submit" color="primary" *ngIf="!userDetailsLocked()">
-      Save Information
+      Save
     </button>
   </ui-page-footer>
 </ui-page>

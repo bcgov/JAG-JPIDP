@@ -1,0 +1,15 @@
+@use '@angular/material' as mat;
+@use 'material/material-variables' as var;
+
+@use 'palette' as palette;
+
+span.callout {
+  width: 100%;
+  margin: 0;
+  padding: 8px;
+  display: flex;
+  border-radius: 5px;
+  border: 2px black solid;
+  color: palette.theme-palette(yellow);
+  background-color: palette.theme-palette(blue);
+}

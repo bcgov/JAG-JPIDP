@@ -1,28 +1,43 @@
 <template>
     <div>
+        <h5>Approval History</h5>
 
-        <table class="table table-striped table-hover caption-top ">
-            <caption>Approval History</caption>
+        <table class="table table-striped table-hover">
 
-            <thead class="table-light">
-                <th>Created</th>
-                <th>User</th>
-                <th>Approved</th>
-                <th>Access</th>
+            <thead>
+                <tr>
+                    <th scope="col">Created</th>
+                    <th scope="col">User</th>
+                    <th scope="col">Reason</th>
+                    <th scope="col">Approved?</th>
+                    <th scope="col">Decision Date</th>
+                    <th scope="col">Approver(s)</th>
+                    <th scope="col">Access</th>
+                </tr>
             </thead>
-            <tbody>
-                <tr v-for='(approval) in approvalsData' :key="approval.id">
+            <tbody v-for="(approval, id) in approvalsData" :key="id">
+                <tr :class="{ 'table-success': approval.approved !== undefined, 'table-primary': approval.completed === undefined, 'table-danger': approval.approved === undefined && approval.completed !== undefined}" >
                     <td>{{ getDateFormatted(approval.created) }}</td>
-
                     <td>{{ approval.userId }}</td>
-                    <td v-if="approval.approved">{{ getDateFormatted(approval.approved) }}</td>
-                                        <td v-if="!approval.approved">Not approved</td>
+                    <td>{{ approval.reason }}</td>
+                    <td class="justify-content-center">{{ approval.approved !== undefined ? 'Y' : 'N' }}</td>
+
+                    <td v-if="approval.completed !== undefined">{{ getDateFormatted(approval.completed) }}</td>
+                    <td :class="{ 'pending': approval.completed === undefined }" v-if="approval.completed === undefined">Pending</td>
+
+                    <td>{{ getApprover(approval) }}</td>
 
                     <td>{{ approval.requiredAccess }}</td>
 
+
+
                 </tr>
+
+
+
             </tbody>
         </table>
+
     </div>
 </template>
 
@@ -48,7 +63,18 @@ function getDateFormatted(dateIn: string) {
     return format(parsedTime, "MMM-dd p");
 }
 
+function getApprover(approval: CommonModelsApprovalApprovalModel) {
 
+    let approvers = new Set;
+    approval.requests?.forEach(req => {
+        approvers.add(req.history?.map((history) => history.approver));
+    });
+
+    const flattened = Array.from(approvers).flat();
+
+    return Array.from(new Set(flattened)).join(",");
+
+}
 
 const hasCurrentRequest = computed(() => currentRequest.value);
 
@@ -77,5 +103,9 @@ onMounted(() => {
 <style lang="scss" scoped>
 .main {
     margin-top: 100px;
+}
+
+.pending {
+    color: darkblue;
 }
 </style>

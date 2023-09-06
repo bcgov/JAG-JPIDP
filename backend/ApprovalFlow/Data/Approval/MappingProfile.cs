@@ -10,6 +10,7 @@ public class MappingProfile : Profile
         this.CreateMap<ApprovalRequest, ApprovalModel>();
         this.CreateMap<Request, RequestModel>();
         this.CreateMap<ApprovalHistory, ApprovalHistoryModel>();
+        this.CreateMap<PersonalIdentity, PersonalIdentityModel>();
 
     }
 }

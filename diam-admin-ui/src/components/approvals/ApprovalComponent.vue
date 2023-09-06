@@ -5,30 +5,50 @@
     </div>
     <div v-if="hasApprovalsPending">
       <h5>The following approval(s) need attention:</h5>
-      <div
-        class="aligns-items-center  text-center w-100 ">
-
+      <div class="aligns-items-center text-center col-6">
         <div v-for="pending in approvalsPending" :key="pending.id">
-          <div class="card text-center" title="test">
+          <div class="card text-center shadow" title="approve">
             <div class="card-header text-white bg-dark bg-warning bg-gradient">
-
               {{ pending.userId }}
             </div>
 
+
             <div class="card-body">
               <h5>{{ pending.requiredAccess }}</h5>
-              {{ pending.reason }}
 
-              <div class="mt-3">
-                Received: {{ getDateFormatted(pending.created) }}
+              <table class="table table-striped table-hover caption-top ">
+
+                <thead class="table-light">
+                  <th>Source</th>
+                  <th>First Name</th>
+                  <th>Last Name</th>
+                </thead>
+                <tbody>
+                  <tr v-for='(identity) in pending.personalIdentities' :key="identity.id">
+                    <td>{{ identity.source }}</td>
+                    <td>{{ identity.firstName }}</td>
+                    <td>{{ identity.lastName }}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <span class="reason">{{ pending.reason }}</span>
+
+
+              <div class="mt-3">Received: {{ getDateFormatted(pending.created) }}</div>
+              <div class="card-footer">
+                EMail: <b>{{ pending.emailAddress }}</b><br />
+                Phone: <b>{{ pending.phoneNumber }}</b><br />
+
               </div>
-
               <div class="mt-3">
-                <button type="button" class="btn btn-warning me-5" @click="clickDeny(pending)">Deny</button>
-                <button type="button" class="btn btn-primary" @click="approve(pending)">Approve</button>
+                <button type="button" class="btn btn-danger me-5" @click="clickDeny(pending)">
+                  Deny
+                </button>
+                <button type="button" class="btn btn-primary" @click="approve(pending)">
+                  Approve
+                </button>
               </div>
             </div>
-
           </div>
         </div>
       </div>
@@ -41,14 +61,20 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <p>Approve the request for <b>{{ currentRequest?.userId }}</b>?</p>
+            <p>
+              Approve the request for <b>{{ currentRequest?.userId }}</b>?
+            </p>
             <input type="textarea" v-model="approvalNotes" name="approvalNotes" id="approvalNotes" class="form-control"
-              placeholder="">
+              placeholder="" />
             <small id="denyId" class="text-muted">Optional approval notes</small>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-primary"  data-bs-dismiss="modal" @click="approveCurrentRequest">Approve Request</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              Cancel
+            </button>
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal" @click="approveCurrentRequest">
+              Approve Request
+            </button>
           </div>
         </div>
       </div>
@@ -67,7 +93,7 @@
                 <div class="col">
                   <div class="mb-3">
                     <input type="textarea" name="denyReason" id="denyReason" v-model="denialNotes" class="form-control"
-                      placeholder="" aria-describedby="denyId">
+                      placeholder="" aria-describedby="denyId" />
                     <small id="denyId" class="text-muted">Reason for denial</small>
                   </div>
                 </div>
@@ -75,8 +101,12 @@
             </form>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-primary" data-bs-dismiss="modal" @click="denyCurrentRequest">Deny Request</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              Cancel
+            </button>
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal" @click="denyCurrentRequest">
+              Deny Request
+            </button>
           </div>
         </div>
       </div>
@@ -109,7 +139,7 @@ function getDateFormatted(dateIn: string) {
 }
 
 /**
- * 
+ *
  * @param request Submit request for approval
  */
 async function approve(request: CommonModelsApprovalApprovalModel) {
@@ -129,7 +159,7 @@ async function clickDeny(request: CommonModelsApprovalApprovalModel) {
 }
 
 async function denyCurrentRequest() {
-    await api.approvalApi.apiApprovalsResponsePost({
+  await api.approvalApi.apiApprovalsResponsePost({
     commonModelsApprovalApproveDenyInput: {
       approved: false,
       decisionNotes: approvalNotes.value,
@@ -148,7 +178,7 @@ async function approveCurrentRequest() {
       approvalRequestId: currentRequest.value?.id
     }
   }).then((response: CommonModelsApprovalApprovalModel) => {
-      loadPending();
+    loadPending();
   });
 
 }
@@ -159,11 +189,11 @@ const hasCurrentRequest = computed(() => currentRequest.value);
 const api = new ApprovalService();
 
 async function loadPending() {
-    const approvalStore = useApprovalStore();
+  const approvalStore = useApprovalStore();
   approvalStore.incrementRefresh();
 
   api.approvalApi.apiApprovalsPendingGet({
-    pendingOnly : true
+    pendingOnly: true
   }).then((result: CommonModelsApprovalApprovalModel[]) => {
     approvalsPending.value = result;
   });
@@ -175,7 +205,7 @@ onMounted(() => {
   const { data } = storeToRefs(approvalStore);
   loadPending();
   watch(data, () => {
-      loadPending();
+    loadPending();
   })
 
 });
@@ -184,5 +214,16 @@ onMounted(() => {
 <style lang="scss" scoped>
 .main {
   margin-top: 100px;
+}
+
+.reason {
+  font-size: 0.9em;
+}
+
+.contact {
+  border: 2px solid blue;
+  border-radius: 5px;
+  margin-bottom: 8px;
+  margin-top: 8px
 }
 </style>
