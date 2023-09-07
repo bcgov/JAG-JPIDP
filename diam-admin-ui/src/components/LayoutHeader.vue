@@ -13,18 +13,27 @@
         <div class="container-fluid">
             <img class="ms-4" src="../assets/images/bcid-logo-rev-en.svg" height="32" alt="BC Logo" />
 
-            <span class="navbar-brand mx-auto px-3">Digital Identity Access Management Admin</span>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
-                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+            <span class="navbar-brand mx-auto px-3">DIAM Admin</span>
+
+            <ul class="nav nav-pills  mb-auto">
+            <li class="nav-item">
+              <router-link class="me-2 nav-link link-light" to="/"><i
+                  class="bi bi-house-fill link-light me-2"></i></router-link>
+            </li>
+            <li>
+
+              <router-link class="nav-link link-light" to="/approvals"> <i
+                  class="bi bi-card-checklist link-light me-2"></i>Approvals</router-link>
+            </li>
+   
+          </ul>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0"></ul>
                 <i class="bi bi-broadcast-pin me-2" :class="{ connected: connectionStatus, disconnected: !connectionStatus }"></i>
                 <span class="align-middle me-4 text-bcgold"> {{ username }}</span>
 
                 <form class="d-flex">
-                    <button type="button" class="btn btn-outline-info" aria-current="page" @click="Logout">
+                    <button type="button" class="btn btn-sm btn-outline-info" aria-current="page" @click="Logout">
                         Logout
                     </button>
                 </form>
@@ -68,12 +77,9 @@ function connect() {
     const approvalStore = useApprovalStore();
     const { data } = storeToRefs(approvalStore);
     const WS_URL = import.meta.env.VITE_WS_URL;
-    console.log("Connect to %s", WS_URL);
-    debugger;
     const token = KeyCloakService.GetToken();
     const socket = new WebSocket(WS_URL, token);
     socket.onopen = () => {
-        console.log("Socket connection established");
         connectionStatus.value = true;
     };
     socket.onclose = () => {

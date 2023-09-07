@@ -34,6 +34,18 @@ import {
 export interface CommonModelsApprovalRequestModel {
     /**
      * 
+     * @type {object}
+     * @memberof CommonModelsApprovalRequestModel
+     */
+    created?: object;
+    /**
+     * 
+     * @type {object}
+     * @memberof CommonModelsApprovalRequestModel
+     */
+    modified?: object;
+    /**
+     * 
      * @type {number}
      * @memberof CommonModelsApprovalRequestModel
      */
@@ -83,6 +95,8 @@ export function CommonModelsApprovalRequestModelFromJSONTyped(json: any, ignoreD
     }
     return {
         
+        'created': !exists(json, 'created') ? undefined : json['created'],
+        'modified': !exists(json, 'modified') ? undefined : json['modified'],
         'requestId': !exists(json, 'requestId') ? undefined : json['requestId'],
         'requestType': !exists(json, 'requestType') ? undefined : json['requestType'],
         'approvalType': !exists(json, 'approvalType') ? undefined : json['approvalType'],
@@ -100,6 +114,8 @@ export function CommonModelsApprovalRequestModelToJSON(value?: CommonModelsAppro
     }
     return {
         
+        'created': value.created,
+        'modified': value.modified,
         'requestId': value.requestId,
         'requestType': value.requestType,
         'approvalType': value.approvalType,

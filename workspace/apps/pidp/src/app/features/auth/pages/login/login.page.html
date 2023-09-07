@@ -34,13 +34,13 @@
 
         <div class="tagline">
           <ui-page-section>
-            <div class="row flex align-items-center">
+            <div class="row h-100 mt-5 flex align-items-center">
               <div class="col-4">
                 <img src="/assets/images/diam-logo.svg" alt="Digital Identity Access Management Portal Logo" />
               </div>
-              <div class="col-6 ">
+              <div class="col-6 d-flex  justify-content-center">
                 <h1>
-                  Verify yourself and gain access to many applications.
+                  Verify yourself and get access to many applications
                 </h1>
 
               </div>
@@ -73,21 +73,21 @@
       <div>
         <small class="left">Members of the public</small>
         <button mat-stroked-button (click)="onLogin(IdentityProvider.OIDC)">
-          BC Services Card Login
+          BC Services Card log in
         </button>
         <small class="center">
           Need an account?
           <a uiAnchor [attr.href]="bcscMobileSetupUrl">Set up</a>
         </small>
         <div class="divider"></div>
-        <small>Government members and Agencies</small>
+        <small>Government members and agencies</small>
 
         <button mat-stroked-button (click)="onLogin(IdentityProvider.ADFS)">
-          BCPS Login
+          BCPS log in
         </button>
 
         <button mat-stroked-button (click)="onLogin(IdentityProvider.VERIFIED_CREDENTIALS)">
-          Verifiable Credentials Login
+          Verifiable Credentials log in
         </button>
 
         <br /><br />
@@ -101,7 +101,7 @@
           </mat-autocomplete>
         </mat-form-field>
         <button mat-stroked-button class="agency-login-btn" [disabled]="!agencySelected()" (click)="onAgencyLogin()">
-          Agency Login
+          Agency log in
         </button>
       </div>
     </div>

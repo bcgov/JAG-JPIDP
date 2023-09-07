@@ -9,14 +9,14 @@ public class JumWebApiConfiguration
     public ConnectionStringConfiguration ConnectionStrings { get; set; } = new();
     public ChesClientConfiguration ChesClient { get; set; } = new();
     public JustinClientConfiguration JustinParticipantClient { get; set; } = new();
-
+    public JustinClientConfiguration TestORDSConfiguration { get; set; } = new();
     public JustinBackgroundEventConfiguration JustinChangeEventClient { get; set; } = new();
     public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
 
     public KafkaClusterConfiguration KafkaCluster { get; set; } = new();
     public KeycloakConfiguration Keycloak { get; set; } = new();
     public MailServerConfiguration MailServer { get; set; } = new();
-    public JustinClientAuthentication JustinAuthentication { get; set ; } = new();
+    public JustinClientAuthentication JustinAuthentication { get; set; } = new();
 
     // ------- Configuration Objects -------
 
@@ -53,7 +53,7 @@ public class JumWebApiConfiguration
         public string BootstrapServers { get; set; } = string.Empty;
         public string TopicName { get; set; } = string.Empty;
         public string UserChangeEventTopic { get; set; } = string.Empty;
-        public string UserChangeProcessedTopic { get; set;} = string.Empty;
+        public string UserChangeProcessedTopic { get; set; } = string.Empty;
         public string SecurityProtocol { get; set; } = string.Empty;
         public string SaslMechanism { get; set; } = string.Empty;
         public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;
@@ -80,6 +80,10 @@ public class JumWebApiConfiguration
     public class JustinClientAuthentication
     {
         public string ApiKey { get; set; } = string.Empty;
+        public string Method { get; set; } = string.Empty;
+        public string ClientId { get; set; } = string.Empty;
+        public string ClientSecret { get; set; } = string.Empty;
+        public string TokenUrl { get; set; } = string.Empty;
 
         public string BasicAuthUsername { get; set; } = string.Empty;
         public string BasicAuthPassword { get; set; } = string.Empty;

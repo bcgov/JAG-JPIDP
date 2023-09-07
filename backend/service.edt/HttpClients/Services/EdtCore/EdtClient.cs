@@ -2,11 +2,10 @@ namespace edt.service.HttpClients.Services.EdtCore;
 
 using System.Threading.Tasks;
 using AutoMapper;
-using DomainResults.Common;
+using Common.Models.EDT;
 using edt.service.Exceptions;
 using edt.service.Infrastructure.Telemetry;
 using edt.service.Kafka.Model;
-using edt.service.ServiceEvents.UserAccountCreation.Models;
 using edt.service.ServiceEvents.UserAccountModification.Models;
 using Prometheus;
 using Serilog;
@@ -206,6 +205,41 @@ public class EdtClient : BaseClient, IEdtClient
 
     }
 
+    /// <summary>
+    /// Add an identifier to a person
+    /// </summary>
+    /// <param name="personId"></param>
+    /// <param name="identifierType"></param>
+    /// <param name="identifierValue"></param>
+    /// <returns></returns>
+    public async Task<int> AddPersonIdentifier(int personId, string identifierType, string identifierValue)
+    {
+        if (personId <= 0 || string.IsNullOrEmpty(identifierValue))
+        {
+            Log.Logger.Error($"Unable to call identifiers update for person {personId} value {identifierValue} is invalid");
+            return -1;
+        }
+
+        var result = await this.PostAsync<IdentifierModel>($"api/v1/users", new IdentifierCreationInputModel
+        {
+            EntityId = personId,
+            IdentifierType = identifierType,
+            IdentifierValue = identifierValue
+        });
+
+        if (result.IsSuccess)
+        {
+            Log.Logger.Information($"New person {personId} identifier added with value {identifierType} : {identifierValue} = {result.Value.Id}");
+            return result.Value.Id;
+        }
+        else
+        {
+            Log.Error($"Failed to added new identifier value for {personId} with value {identifierType} : {identifierValue}");
+            return -1;
+        }
+    }
+
+
     public async Task<UserModificationEvent> UpdateUserDetails(EdtUserDto userDetails)
     {
         if (userDetails == null)
@@ -357,7 +391,7 @@ public class EdtClient : BaseClient, IEdtClient
 
     public async Task<List<EdtUserGroup>> GetAssignedOUGroups(string userKey)
     {
-        IDomainResult<List<EdtUserGroup>?>? result = await this.GetAsync<List<EdtUserGroup>?>($"api/v1/org-units/1/users/{userKey}/groups");
+        var result = await this.GetAsync<List<EdtUserGroup>?>($"api/v1/org-units/1/users/{userKey}/groups");
         if (!result.IsSuccess)
         {
             Log.Logger.Error("Failed to determine existing EDT groups for {0} [{1}]", string.Join(", ", result.Errors));
@@ -436,7 +470,7 @@ public class EdtClient : BaseClient, IEdtClient
     /// <exception cref="EdtServiceException"></exception>
     public async Task<string> GetVersion()
     {
-        var result = await this.GetAsync<EdtVersion?>($"api/v1/version");
+        var result = await this.GetAsync<Common.Models.EDT.EdtVersion?>($"api/v1/version");
 
         if (!result.IsSuccess)
         {
@@ -530,6 +564,8 @@ public class EdtClient : BaseClient, IEdtClient
             else
             {
                 Log.Logger.Information($"Successfully added {accessRequest.LastName} as a participant");
+                // add external Id
+                var createdIdentifer = await this.AddPersonIdentifier((int)edtPersonDto.Id!, "EdtExternalId", edtPersonDto.Key!);
 
             }
 
@@ -602,7 +638,8 @@ public class EdtClient : BaseClient, IEdtClient
 
             var edtPersonDto = this.mapper.Map<EdtPersonProvisioningModel, EdtPersonDto>(accessRequest);
 
-            edtPersonDto.Id = currentUser.Id; ;
+            edtPersonDto.Id = currentUser.Id;
+            ;
             edtPersonDto.Address.Id = currentUser.Address.Id;
 
             var result = await this.PutAsync($"api/v1/org-units/1/persons/" + currentUser.Id, edtPersonDto);

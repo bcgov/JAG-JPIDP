@@ -238,11 +238,6 @@ public class Startup
             options.WaitForJobsToComplete = true;
         });
 
-
-        Log.Logger.Information("Startup configuration complete");
-
-
-
     }
 
     public void LoadCourts(PidpDbContext context)

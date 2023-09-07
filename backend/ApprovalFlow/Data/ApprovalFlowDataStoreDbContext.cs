@@ -16,6 +16,7 @@ public class ApprovalFlowDataStoreDbContext : DbContext
     public DbSet<ApprovalRequest> ApprovalRequests { get; set; } = default!;
     public DbSet<Request> Requests { get; set; } = default!;
     public DbSet<ApprovalHistory> ApprovalHistories { get; set; } = default!;
+    public DbSet<PersonalIdentity> PersonalIdentities { get; set; } = default!;
 
 
 

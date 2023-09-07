@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 using NodaTime;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -25,6 +26,8 @@ namespace ApprovalFlow.Data.Migrations
                     UserId = table.Column<string>(type: "text", nullable: false),
                     IdentityProvider = table.Column<string>(type: "text", nullable: false),
                     NoOfApprovalsRequired = table.Column<int>(type: "integer", nullable: false),
+                    PhoneNumber = table.Column<string>(type: "text", nullable: false),
+                    EMailAddress = table.Column<string>(type: "text", nullable: false),
                     RequiredAccess = table.Column<string>(type: "text", nullable: false),
                     Approved = table.Column<Instant>(type: "timestamp with time zone", nullable: true),
                     Completed = table.Column<Instant>(type: "timestamp with time zone", nullable: true),
@@ -50,6 +53,35 @@ namespace ApprovalFlow.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_IdempotentConsumers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PersonalIdentity",
+                schema: "approvalflow",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Source = table.Column<string>(type: "text", nullable: false),
+                    ApprovalRequestId = table.Column<int>(type: "integer", nullable: false),
+                    LastName = table.Column<string>(type: "text", nullable: false),
+                    FirstName = table.Column<string>(type: "text", nullable: false),
+                    DateOfBirth = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Phone = table.Column<string>(type: "text", nullable: false),
+                    EMail = table.Column<string>(type: "text", nullable: false),
+                    Created = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
+                    Modified = table.Column<Instant>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PersonalIdentity", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PersonalIdentity_ApprovalRequest_ApprovalRequestId",
+                        column: x => x.ApprovalRequestId,
+                        principalSchema: "approvalflow",
+                        principalTable: "ApprovalRequest",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -112,6 +144,12 @@ namespace ApprovalFlow.Data.Migrations
                 column: "RequestId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_PersonalIdentity_ApprovalRequestId",
+                schema: "approvalflow",
+                table: "PersonalIdentity",
+                column: "ApprovalRequestId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Request_ApprovalRequestId",
                 schema: "approvalflow",
                 table: "Request",
@@ -126,6 +164,10 @@ namespace ApprovalFlow.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "IdempotentConsumers",
+                schema: "approvalflow");
+
+            migrationBuilder.DropTable(
+                name: "PersonalIdentity",
                 schema: "approvalflow");
 
             migrationBuilder.DropTable(
