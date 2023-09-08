@@ -136,7 +136,14 @@ public class DigitalEvidenceDefence
                     // create entry for defence (core) access
                     var defenceUser = await this.SubmitDigitalEvidenceDefenceRequest(command);
 
-                    if (userValidationErrors.Count > 0)
+                    var permitMismatchedVCCreds = Environment.GetEnvironmentVariable("PERMIT_MISMATCH_VC_CREDS");
+                    var ignoreBCServiceCard = false;
+                    if (permitMismatchedVCCreds != null && permitMismatchedVCCreds.Equals("true", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ignoreBCServiceCard = true;
+                    }
+
+                    if (userValidationErrors.Count > 0 && !ignoreBCServiceCard)
                     {
                         Serilog.Log.Warning($"User {keycloakUser} has errors {string.Join(",", userValidationErrors)}");
                         Serilog.Log.Information("User request will need to go through approval flows");
@@ -173,6 +180,11 @@ public class DigitalEvidenceDefence
                     }
                     else
                     {
+
+                        if (ignoreBCServiceCard && userValidationErrors.Count > 0)
+                        {
+                            Serilog.Log.Warning($"User {keycloakUser} has errors {string.Join(",", userValidationErrors)} - but we are going to ignore these due to env flag PERMIT_MISMATCH_VC_CREDS");
+                        }
 
                         // publish message for disclosure access
                         var publishedDisclosureRequest = await this.PublishDisclosureAccessRequest(command, dto, disclosureUser);
