@@ -44,7 +44,7 @@ public class CaseAccessRequestHandler : IKafkaHandler<string, SubAgencyDomainEve
     public async Task<Task> HandleAsync(string consumerName, string key, SubAgencyDomainEvent caseEvent)
     {
 
-        Serilog.Log.Information("Received request for event {0} case {1} party {2}", caseEvent.EventType, caseEvent.CaseId, caseEvent.PartyId);
+        Serilog.Log.Information("Received request for event {0} case {1} party {2} {3}", caseEvent.EventType, caseEvent.CaseId, caseEvent.PartyId, caseEvent.UserId);
 
         // get the user from keycloak
 
@@ -62,7 +62,7 @@ public class CaseAccessRequestHandler : IKafkaHandler<string, SubAgencyDomainEve
             else
             {
 
-                using var trx = context.Database.BeginTransaction();
+                using var trx = this.context.Database.BeginTransaction();
 
 
                 var partId = userInfo.Attributes.GetValueOrDefault("partId").FirstOrDefault();

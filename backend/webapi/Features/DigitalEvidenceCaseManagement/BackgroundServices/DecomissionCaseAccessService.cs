@@ -99,6 +99,7 @@ public class DecomissionCaseAccessService : BackgroundService
                 EventType = CaseEventType.Decommission,
                 CaseId = caseAccessRequest.CaseId,
                 Username = caseAccessRequest.Party!.Jpdid,
+                UserId = caseAccessRequest.Party!.UserId,
                 RequestedOn = caseAccessRequest.RequestedOn,
             });
         }
