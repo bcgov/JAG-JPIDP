@@ -1,6 +1,5 @@
 namespace Pidp.Features.DigitalEvidenceCaseManagement.Commands;
 
-using System.Text.Json.Serialization;
 using DomainResults.Common;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -78,7 +77,7 @@ public class CaseAccessRequest
 
                     var subAgencyRequest = await this.SubmitAgencyCaseRequest(command); //save all trx at once for production(remove this and handle using idempotent)
 
-                   // var exportedEvent = this.AddOutbox(command, subAgencyRequest, dto);
+                    // var exportedEvent = this.AddOutbox(command, subAgencyRequest, dto);
 
                     await this.PublishSubAgencyAccessRequest(dto, subAgencyRequest);
 
@@ -120,7 +119,7 @@ public class CaseAccessRequest
 
         private async Task PublishSubAgencyAccessRequest(PartyDto dto, SubmittingAgencyRequest subAgencyRequest)
         {
-            Serilog.Log.Logger.Information("Publishing Sub Agency Domain Event to topic {0} {1}", this.config.KafkaCluster.CaseAccessRequestTopicName, subAgencyRequest.RequestId);
+            Serilog.Log.Logger.Information("Publishing Sub Agency Domain Event to topic {0} {1} {2}", this.config.KafkaCluster.CaseAccessRequestTopicName, subAgencyRequest.RequestId, dto.UserId);
             await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.CaseAccessRequestTopicName, $"{subAgencyRequest.RequestId}", new SubAgencyDomainEvent
             {
                 RequestId = subAgencyRequest.RequestId,
