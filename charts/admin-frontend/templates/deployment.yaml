@@ -59,6 +59,9 @@ spec:
             - name: admin-frontend-config
               subPath: environment.json
               mountPath: /app/assets/environment.json
+          envFrom:
+            - secretRef:
+                name: admin-frontend-env-secrets
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
