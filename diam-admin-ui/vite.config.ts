@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig } from 'vite'
@@ -8,6 +9,9 @@ export default defineConfig({
   plugins: [
     vue(),
   ],
+  define: {
+    'process.env': process.env
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
