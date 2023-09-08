@@ -214,6 +214,8 @@ spec:
                 name: ches
             - configMapRef:
                 name: mail-settings
+            - secretRef:
+                name: webapi-additional-envs
           ports:
             - name: http
               containerPort: 8080
