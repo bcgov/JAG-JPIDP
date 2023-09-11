@@ -1,6 +1,18 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
 import LayoutHeader from './components/LayoutHeader.vue';
+import { onBeforeMount } from 'vue';
+import { defineStore } from 'pinia'
+
+onBeforeMount(() => {
+  debugger;
+    // get the hostname we're running on
+  const hostname = window.location.hostname;
+  
+  const mode = import.meta.env.MODE;
+  
+});
+
 
 </script>
 
