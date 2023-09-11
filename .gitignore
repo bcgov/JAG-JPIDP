@@ -377,3 +377,8 @@ FodyWeavers.xsd
 /deploy/dev_values_solr.yaml
 /integration/diam.yaml
 /integration/swagger.yaml
+/backend/service.edt/appsettings.Development.json
+/backend/webapi/Properties/launchSettings.json
+/backend/service.edt/Properties/launchSettings.json
+/diam-admin-ui/.vscode/extensions.json
+/diam-admin-ui/src/generated/openapi/.openapi-generator/FILES
