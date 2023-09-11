@@ -209,7 +209,11 @@ public class Startup
         {
             Log.Logger.Warning("*** PERMIT_IDIR_CASE_MANAGEMENT=true - access to case management for IDIR users is enabled - this is intended for NON production use only ***");
         }
-
+        var permitMismatchedVCCreds = Environment.GetEnvironmentVariable("PERMIT_MISMATCH_VC_CREDS");
+        if (permitMismatchedVCCreds != null && permitMismatchedVCCreds.Equals("true", StringComparison.OrdinalIgnoreCase))
+        {
+            Log.Logger.Warning("*** PERMIT_MISMATCH_VC_CREDS=true - lawyers with non-matching creds will be permitted - law info only will be used - this is intended for NON production use only ***");
+        }
 
         services.AddQuartz(q =>
         {

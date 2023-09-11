@@ -14,7 +14,8 @@ const Login = (onAuthenticatedCallback: CallbackOneParam) => {
     .init({ onLoad: "login-required" })
     .then(function (authenticated) {
       debugger;
-
+      const proc = process || null;
+      const environ = import.meta.env;
       const client = import.meta.env.VITE_KEYCLOAK_CLIENT;
       const roles = keycloakInstance.resourceAccess?.[client].roles;
       console.log(roles);

@@ -35,6 +35,9 @@ spec:
         - name: admin-frontend-config
           configMap: 
             name: {{ include "admin-frontend.fullname" . }}
+        - name: admin-frontend-env
+          configMap: 
+            name: admin-frontend-env
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
@@ -59,6 +62,12 @@ spec:
             - name: admin-frontend-config
               subPath: environment.json
               mountPath: /app/assets/environment.json
+            - name: admin-frontend-env
+              subPath: .env
+              mountPath: /app/.env
+          envFrom:
+            - secretRef:
+                name: admin-frontend-env-secrets
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
