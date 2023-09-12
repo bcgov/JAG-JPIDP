@@ -12,6 +12,7 @@ export default defineConfig(({command,mode}) => {
   ],
   define: {
     'test': loadEnv(mode, process.cwd(),''),
+    'process.env': {}
   },
   resolve: {
     alias: {

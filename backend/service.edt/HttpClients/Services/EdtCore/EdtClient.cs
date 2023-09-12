@@ -639,7 +639,7 @@ public class EdtClient : BaseClient, IEdtClient
             var edtPersonDto = this.mapper.Map<EdtPersonProvisioningModel, EdtPersonDto>(accessRequest);
 
             edtPersonDto.Id = currentUser.Id;
-            ;
+
             edtPersonDto.Address.Id = currentUser.Address.Id;
 
             var result = await this.PutAsync($"api/v1/org-units/1/persons/" + currentUser.Id, edtPersonDto);
