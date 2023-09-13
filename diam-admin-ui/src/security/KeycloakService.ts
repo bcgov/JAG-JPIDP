@@ -1,5 +1,8 @@
 import Keycloak from "keycloak-js";
 
+const client = import.meta.env.VITE_KEYCLOAK_CLIENT;
+debugger;
+
 const keycloakInstance = new Keycloak();
 interface CallbackOneParam<T1 = void, T2 = void> {
   (param1: T1): T2;
@@ -14,7 +17,6 @@ const Login = (onAuthenticatedCallback: CallbackOneParam) => {
     .init({ onLoad: "login-required" })
     .then(function (authenticated) {
       debugger;
-      const proc = process || null;
       const environ = import.meta.env;
       const client = import.meta.env.VITE_KEYCLOAK_CLIENT;
       const roles = keycloakInstance.resourceAccess?.[client].roles;

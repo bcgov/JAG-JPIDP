@@ -287,45 +287,54 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
         }
         else
         {
-            // get last modified time
-            var duration = accessRequest.Modified - value.EventTime;
-            Serilog.Log.Information($"Duration {duration.TotalMinutes} for JUSTIN to fully provision account for request {accessRequest.Id}");
 
-
-            JUSTINAccessCompletionHistogram.Observe(duration.Minutes);
-
-            accessRequest.Modified = value.EventTime;
-            if (value.ErrorList != null && value.ErrorList.Count > 0)
+            if (string.Equals(accessRequest.Status, "Complete", StringComparison.OrdinalIgnoreCase))
             {
-                accessRequest.Status = "Error";
+                Serilog.Log.Information($"Access request {accessRequest.Id} already marked as complete - ignoring message");
             }
             else
             {
-                accessRequest.Status = "Complete";
-            }
 
-            var updated = await this.context.SaveChangesAsync();
-            if (updated > 0)
-            {
-                // send a notification to the user that the account is complete
-                var messageKey = Guid.NewGuid().ToString();
-                Serilog.Log.Information($"Access request {value.Id} flagged as fully completed - sending notification message {messageKey}");
-                var eventData = new Dictionary<string, string>
+                // get last modified time
+                var duration = accessRequest.Modified - value.EventTime;
+                Serilog.Log.Information($"Duration {duration.TotalMinutes} for JUSTIN to fully provision account for request {accessRequest.Id}");
+
+
+                JUSTINAccessCompletionHistogram.Observe(duration.Minutes);
+
+                accessRequest.Modified = value.EventTime;
+                if (value.ErrorList != null && value.ErrorList.Count > 0)
+                {
+                    accessRequest.Status = "Error";
+                }
+                else
+                {
+                    accessRequest.Status = "Complete";
+                }
+
+                var updated = await this.context.SaveChangesAsync();
+                if (updated > 0)
+                {
+                    // send a notification to the user that the account is complete
+                    var messageKey = Guid.NewGuid().ToString();
+                    Serilog.Log.Information($"Access request {value.Id} flagged as fully completed - sending notification message {messageKey}");
+                    var eventData = new Dictionary<string, string>
                     {
                         { "FirstName", accessRequest.Party!.FirstName },
                         { "PartyId", "" + accessRequest.Id },
                         { "Duration (m)","" + duration.TotalMinutes }
                     };
 
-                var published = await this.notificationProducer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopicName, messageKey, new Notification
-                {
-                    DomainEvent = "digitalevidence-bcps-usercreation-fully-provisioned",
-                    To = accessRequest.Party!.Email,
-                    EventData = eventData
-                });
+                    var published = await this.notificationProducer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopicName, messageKey, new Notification
+                    {
+                        DomainEvent = "digitalevidence-bcps-usercreation-fully-provisioned",
+                        To = accessRequest.Party!.Email,
+                        EventData = eventData
+                    });
 
-                Serilog.Log.Information($"Publish response for {messageKey} is {published.Status}");
+                    Serilog.Log.Information($"Publish response for {messageKey} is {published.Status}");
 
+                }
             }
         }
     }
