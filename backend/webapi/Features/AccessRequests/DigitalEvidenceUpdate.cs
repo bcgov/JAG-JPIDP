@@ -360,7 +360,7 @@ public class DigitalEvidenceUpdate
             {
                 if (!string.IsNullOrEmpty(justinUserInfo.emailAddress))
                 {
-                    if (!string.IsNullOrEmpty(party.Email) && !party.Email.Equals(justinUserInfo.emailAddress, StringComparison.OrdinalIgnoreCase))
+                    if (!string.IsNullOrEmpty(party.Email) && !string.Equals(party.Email, justinUserInfo.emailAddress, StringComparison.OrdinalIgnoreCase))
                     {
                         Serilog.Log.Information($"User {party.Id} email changed from {party.Email} to {justinUserInfo.emailAddress} - users account will be disabled");
                         userChangeModel.SingleChangeTypes.Add(ChangeType.EMAIL, new SingleChangeType(party.Email, justinUserInfo.emailAddress));
