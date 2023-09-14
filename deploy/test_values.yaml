@@ -42,6 +42,10 @@ edt-disclosure:
   migrations:
     enabled: false
 
+approvalflow:
+  migrations:
+    enabled: false
+
 database:
   autoCreate: false
   # databaseHost: dev-patroni
