@@ -18,6 +18,7 @@ const Login = (onAuthenticatedCallback: CallbackOneParam) => {
     .then(function (authenticated) {
       debugger;
       const environ = import.meta.env;
+      console.log("Env %o", environ);
       const client = import.meta.env.VITE_KEYCLOAK_CLIENT;
       const roles = keycloakInstance.resourceAccess?.[client].roles;
       console.log(roles);
