@@ -174,6 +174,9 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
 
                     var producer = new SchemaAwareProducer(ConsumerSetup.GetProducerConfig(), this.userModificationProducer, this.configuration);
 
+
+
+
                     // publish to the user creation topic for others to consume
                     bool publishResultOk;
                     if (result.eventType == UserModificationEvent.UserEvent.Create)
@@ -190,6 +193,27 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
                     {
                         Serilog.Log.Information("Publishing EDT user modification event {0} {1}", msgKey, accessRequestModel.Key);
                         publishResultOk = await producer.ProduceAsync(this.configuration.KafkaCluster.UserModificationTopicName, key: msgKey, result);
+
+
+                        // if a tombstone account we'll just tell ISL that the account was created - this will trigger the DEMS flag in JUSTIN
+                        // and associate any cases not assigned prior to the user account being setup in EDT as a tombstone account
+                        if (result.eventType == UserModificationEvent.UserEvent.EnableTombstone && !string.IsNullOrEmpty(plainTextTopic))
+                        {
+                            Serilog.Log.Information($"Sending message to plain topic for tombstone account");
+                            var plainMessageOk = await this.userModificationProducer.ProduceAsync(plainTextTopic, key: msgKey, result);
+
+                            if (plainMessageOk.Status == Confluent.Kafka.PersistenceStatus.Persisted)
+                            {
+                                Serilog.Log.Information($"Published to {plainTextTopic} for partId: {result.partId} - reqId: {result.accessRequestId}");
+                            }
+                            else
+                            {
+                                Serilog.Log.Error($"Failed to publish to {plainTextTopic} for partId: {result.partId} - reqId: {result.accessRequestId}");
+
+                            }
+
+                        }
+
                     }
 
 

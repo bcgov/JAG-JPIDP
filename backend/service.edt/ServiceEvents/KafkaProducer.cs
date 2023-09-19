@@ -1,14 +1,13 @@
 namespace edt.service.ServiceEvents;
 
+using System.Diagnostics;
+using System.Globalization;
 using Confluent.Kafka;
 using edt.service.Infrastructure.Telemetry;
 using edt.service.Kafka.Interfaces;
 using EdtService.Kafka;
 using IdentityModel.Client;
-using OpenTelemetry.Context.Propagation;
 using Serilog;
-using System.Diagnostics;
-using System.Globalization;
 
 public class KafkaProducer<TKey, TValue> : KafkaOauthTokenRefreshHandler, IDisposable, IKafkaProducer<TKey, TValue> where TValue : class
 {
@@ -16,7 +15,6 @@ public class KafkaProducer<TKey, TValue> : KafkaOauthTokenRefreshHandler, IDispo
     private const string EXPIRY_CLAIM = "exp";
     private const string SUBJECT_CLAIM = "sub";
     private static readonly ActivitySource Activity = new(TelemetryConstants.ServiceName + "-Producer");
-    private static readonly TextMapPropagator Propagator = new TraceContextPropagator();
 
     /// <summary>
     /// for production use of sasl/oauthbearer
