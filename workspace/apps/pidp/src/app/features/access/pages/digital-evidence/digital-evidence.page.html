@@ -60,7 +60,7 @@
   </ng-template>
 
   <ng-container>
-    <ui-page-section *ngIf="!userIsLawyer && !pending">
+    <ui-page-section *ngIf="!userIsLawyer && !pending && !completed">
       <ui-page-section-subheader heading="Digital Evidence and Disclosure Management System">
         <ng-container uiPageSectionSubheaderDesc *ngIf="!userInAgency()">
           Check that the information below is correct, then click Submit. If the information needs updating, please
@@ -140,7 +140,7 @@
 
   <ui-page-footer [mode]="completed ? 'reverse' : 'normal'">
     <button mat-stroked-button uiPageFooterAction type="button" color="secondary" (click)="onBack()">
-      {{ completed || pending ? 'Back Home' : 'Cancel' }}
+      {{ completed || pending ? 'Back' : 'Back' }}
     </button>
 
     <button *ngIf="!(completed || pending)" mat-flat-button uiPageFooterAction type="button" color="primary"
