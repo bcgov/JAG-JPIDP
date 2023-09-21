@@ -16,8 +16,7 @@ import { IPortalSection } from '../portal-section.model';
 
 export class DigitalEvidencePortalSection
   extends BasePortalSection
-  implements IPortalSection
-{
+  implements IPortalSection {
   public readonly key: PortalSectionKey;
   public heading: string;
   public description: string;
@@ -59,10 +58,10 @@ export class DigitalEvidencePortalSection
         this.getStatusCode() === StatusCode.COMPLETED
           ? 'View'
           : this.getStatusCode() === StatusCode.PENDING
-          ? 'View'
-          : this.getStatusCode() === StatusCode.APPROVED
-          ? 'Pending'
-          : 'Request',
+            ? 'View'
+            : this.getStatusCode() === StatusCode.APPROVED
+              ? 'Pending'
+              : 'Request',
       route: AccessRoutes.routePath(AccessRoutes.DIGITAL_EVIDENCE),
       disabled: !(
         demographicsComplete &&
@@ -78,14 +77,14 @@ export class DigitalEvidencePortalSection
     return this.getStatusCode() === StatusCode.COMPLETED
       ? 'Your enrolment is complete. You can view the terms of enrolment by clicking the View button'
       : this.getStatusCode() === StatusCode.REQUIRESAPPROVAL
-      ? 'Your request is being reviewed - you will be emailed once a decision is made'
-      : this.getStatusCode() === StatusCode.APPROVED
-      ? 'Your request has been approved - your account should be available shortly'
-      : this.getStatusCode() === StatusCode.DENIED
-      ? 'Your request has been denied - please contact DEMS support for more information on why the request was denied.'
-      : this.getStatusCode() === StatusCode.PENDING
-      ? 'Your request is pending and should complete shortly'
-      : 'Request access to enroll in BCPS DEMS.';
+        ? 'Your request is being reviewed - you will be emailed once a decision is made'
+        : this.getStatusCode() === StatusCode.APPROVED
+          ? 'Your request has been approved - your account should be available shortly'
+          : this.getStatusCode() === StatusCode.DENIED
+            ? 'Your request has been denied - please contact DEMS support for more information on why the request was denied.'
+            : this.getStatusCode() === StatusCode.PENDING
+              ? 'Your request is pending and should complete shortly'
+              : 'Request access to enroll in DEMS.';
   }
 
   public get statusType(): AlertType {
@@ -93,16 +92,16 @@ export class DigitalEvidencePortalSection
       ? 'completed'
       : this.getStatusCode() === StatusCode.AVAILABLE ||
         this.getStatusCode() === StatusCode.INCOMPLETE
-      ? 'available'
-      : this.getStatusCode() === StatusCode.PENDING
-      ? 'pending'
-      : this.getStatusCode() === StatusCode.REQUIRESAPPROVAL
-      ? 'pending-approval'
-      : this.getStatusCode() === StatusCode.APPROVED
-      ? 'greyed'
-      : this.getStatusCode() === StatusCode.DENIED
-      ? 'danger'
-      : 'greyed';
+        ? 'available'
+        : this.getStatusCode() === StatusCode.PENDING
+          ? 'pending'
+          : this.getStatusCode() === StatusCode.REQUIRESAPPROVAL
+            ? 'pending-approval'
+            : this.getStatusCode() === StatusCode.APPROVED
+              ? 'greyed'
+              : this.getStatusCode() === StatusCode.DENIED
+                ? 'danger'
+                : 'greyed';
   }
 
   public get status(): string {
@@ -119,16 +118,16 @@ export class DigitalEvidencePortalSection
       this.getStatusCode() === StatusCode.INCOMPLETE
       ? 'Access Request Available'
       : statusCode === StatusCode.COMPLETED
-      ? 'Completed'
-      : statusCode === StatusCode.PENDING
-      ? 'Pending'
-      : statusCode === StatusCode.REQUIRESAPPROVAL
-      ? 'Pending Approval'
-      : statusCode === StatusCode.APPROVED
-      ? 'Approved - awaiting completion'
-      : statusCode === StatusCode.DENIED
-      ? 'Request reviewed and denied'
-      : 'Incomplete';
+        ? 'Completed'
+        : statusCode === StatusCode.PENDING
+          ? 'Pending'
+          : statusCode === StatusCode.REQUIRESAPPROVAL
+            ? 'Pending Approval'
+            : statusCode === StatusCode.APPROVED
+              ? 'Approved - awaiting completion'
+              : statusCode === StatusCode.DENIED
+                ? 'Request reviewed and denied'
+                : 'Incomplete';
   }
 
   public performAction(): void | Observable<void> {
