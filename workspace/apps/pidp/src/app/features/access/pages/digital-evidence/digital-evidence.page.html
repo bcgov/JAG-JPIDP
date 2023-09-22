@@ -14,11 +14,15 @@
   </ui-alert>
 
   <ui-alert *ngIf="pending" type="primary" icon="pending_outline" iconType="outlined"
-    heading="Access Request Pending for Approval">
+    heading="Access request is processing">
     <ng-container uiAlertContent>
       <p>
-        Your request for access to the Digital Evidence and Disclosure Management System has been
-        submitted and should be be processed soon.
+        Thank you for submitting your request.<br />
+        Your DEMS account is being finalized and created.<br />
+        Assigned cases will be available for you within 24 hours. Please check your email for confirmation that your
+        account is ready for use.<br />
+        For immediate access to a case or if you need DEMS support, please email <a uiAnchor scheme="mailto"
+          [attr.href]="digitalEvidenceSupportEmail"></a>
       </p>
     </ng-container>
   </ui-alert>
@@ -56,13 +60,11 @@
   </ng-template>
 
   <ng-container>
-    <ui-page-section *ngIf="!userIsLawyer">
+    <ui-page-section *ngIf="!userIsLawyer && !pending && !completed">
       <ui-page-section-subheader heading="Digital Evidence and Disclosure Management System">
         <ng-container uiPageSectionSubheaderDesc *ngIf="!userInAgency()">
-          Check that the information below is correct, then click Submit. If the information needs updating,
-          please
-          contact
-          <a uiAnchor scheme="mailto" [attr.href]="digitalEvidenceSupportEmail"></a>.
+          Check that the information below is correct, then click Submit. If the information needs updating, please
+          email <a uiAnchor scheme="mailto" [attr.href]="digitalEvidenceSupportEmail"></a>.
 
 
         </ng-container>
@@ -138,7 +140,7 @@
 
   <ui-page-footer [mode]="completed ? 'reverse' : 'normal'">
     <button mat-stroked-button uiPageFooterAction type="button" color="secondary" (click)="onBack()">
-      {{ completed || pending ? 'Back Home' : 'Cancel' }}
+      {{ completed || pending ? 'Back' : 'Back' }}
     </button>
 
     <button *ngIf="!(completed || pending)" mat-flat-button uiPageFooterAction type="button" color="primary"
