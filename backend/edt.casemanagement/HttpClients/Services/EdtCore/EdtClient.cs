@@ -283,7 +283,7 @@ public class EdtClient : BaseClient, IEdtClient
         ProcessedJobCount.Inc();
         var searchString = this.configuration.EdtClient.SearchFieldId + ":" + caseIdOrKey;
         Log.Logger.Information("Finding case {0}", searchString);
-
+        CaseModel foundCase = null;
         var caseSearch = await this.GetAsync<IEnumerable<CaseLookupModel>?>($"api/v1/org-units/1/cases/{searchString}/id");
 
         if (caseSearch.IsSuccess)
@@ -295,7 +295,34 @@ public class EdtClient : BaseClient, IEdtClient
             if (caseSearchValue.Count() == 0)
             {
                 Log.Information("No cases found for {0}", searchString);
-                return null;
+
+                // check for merged - switch to alternate search
+                if (this.configuration.EdtClient.AlternateSearchFieldId > 0)
+                {
+                    Log.Information($"Searching by alternate Id");
+                    searchString = this.configuration.EdtClient.AlternateSearchFieldId + ":" + caseIdOrKey;
+                    var alternateSearch = await this.GetAsync<IEnumerable<CaseLookupModel>?>($"api/v1/org-units/1/cases/{searchString}/id");
+                    if (alternateSearch.IsSuccess)
+                    {
+                        var alternateSearchValue = alternateSearch?.Value;
+                        if (alternateSearchValue.Count() > 0)
+                        {
+                            foreach (var alternateCase in alternateSearchValue)
+                            {
+                                var caseInfo = await this.GetCase(alternateCase.Id);
+
+                                if (caseInfo != null && caseInfo.Status == "Active")
+                                {
+                                    foundCase = caseInfo;
+                                    break;
+                                }
+                            }
+
+                        }
+                    }
+                }
+
+                return foundCase;
             }
 
             // see if we have multiple cases with the same id - if e do then ew want the one with a key
@@ -312,7 +339,7 @@ public class EdtClient : BaseClient, IEdtClient
                 caseId = cases.First().Id;
             }
 
-            var foundCase = await this.GetCase(caseId);
+            foundCase = await this.GetCase(caseId);
 
             if (foundCase.Status == "Inactive")
             {

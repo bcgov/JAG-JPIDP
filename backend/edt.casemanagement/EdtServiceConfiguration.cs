@@ -1,8 +1,4 @@
 namespace edt.casemanagement;
-
-
-using System.Text.Json;
-using System.Transactions;
 using Common.Configuration;
 using edt.casemanagement.Infrastructure.Auth;
 
@@ -47,6 +43,7 @@ public class EdtServiceConfiguration
         public string Url { get; set; } = string.Empty;
         public string SubmittingAgencyGroup { get; set; } = string.Empty;
         public int SearchFieldId { get; set; }
+        public int AlternateSearchFieldId { get; set; }
     }
 
     public class EdtDisclosureClientConfiguration
