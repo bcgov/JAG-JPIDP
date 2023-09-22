@@ -2,7 +2,6 @@ namespace edt.casemanagement.HttpClients.Services.EdtCore;
 using System.Threading.Tasks;
 using AutoMapper;
 using Common.Models.EDT;
-using DomainResults.Common;
 using edt.casemanagement.Exceptions;
 using edt.casemanagement.Features.Cases;
 using edt.casemanagement.Infrastructure.Telemetry;
@@ -48,7 +47,7 @@ public class EdtClient : BaseClient, IEdtClient
 
     public async Task<int> GetOuGroupId(string regionName)
     {
-        IDomainResult<IEnumerable<OrgUnitModel?>>? result = await this.GetAsync<IEnumerable<OrgUnitModel?>>($"api/v1/org-units/1/groups");
+        var result = await this.GetAsync<IEnumerable<OrgUnitModel?>>($"api/v1/org-units/1/groups");
 
         if (!result.IsSuccess)
         {
@@ -313,7 +312,58 @@ public class EdtClient : BaseClient, IEdtClient
                 caseId = cases.First().Id;
             }
 
-            return await this.GetCase(caseId);
+            var foundCase = await this.GetCase(caseId);
+
+            if (foundCase.Status == "Inactive")
+            {
+                var primaryAgencyFileField = foundCase.Fields.First(field => field.Name.Equals("Primary Agency File ID"));
+                if (primaryAgencyFileField.Value != null && !string.IsNullOrEmpty(primaryAgencyFileField.Value.ToString()))
+                {
+                    Log.Information($"Checking if case {caseId} was merged - primary file id {primaryAgencyFileField.Value.ToString()}");
+                    var primarySearchString = primaryAgencyFileField.Id + ":" + primaryAgencyFileField.Value.ToString();
+
+                    var primarySearch = await this.GetAsync<IEnumerable<CaseLookupModel>?>($"api/v1/org-units/1/cases/{primarySearchString}/id");
+
+                    if (primarySearch.IsSuccess)
+                    {
+                        if (primarySearch.Value != null)
+                        {
+                            Log.Information($"Found {primarySearch.Value.Count()} cases with primary ID {primarySearchString}");
+
+                            foreach (var caseModel in primarySearch.Value)
+                            {
+                                if (caseModel.Id == caseId)
+                                {
+                                    Log.Information($"Ignoring case {caseId} as it was our searched case");
+                                    continue;
+                                }
+                                else
+                                {
+                                    var testCase = await this.GetCase(caseModel.Id);
+                                    if (testCase != null && testCase.Status == "Active")
+                                    {
+                                        // check case has the original agency file number
+                                        var agencyFileNumber = testCase.Fields.First(c => c.Name == "Agency File No.");
+                                        if (agencyFileNumber != null && agencyFileNumber.Value != null && !string.IsNullOrEmpty(agencyFileNumber.Value.ToString()))
+                                        {
+                                            Log.Information($"Returning alternate case {caseModel.Id}");
+                                            foundCase = testCase;
+                                            break;
+                                        }
+                                    }
+
+                                }
+
+                            }
+
+                        }
+
+
+                    }
+                }
+            }
+
+            return foundCase;
 
         }
         else
