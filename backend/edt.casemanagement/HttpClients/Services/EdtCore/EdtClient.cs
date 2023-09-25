@@ -16,7 +16,7 @@ public class EdtClient : BaseClient, IEdtClient
     private readonly OtelMetrics meters;
     private readonly EdtServiceConfiguration configuration;
     private static readonly Counter ProcessedJobCount = Metrics
-        .CreateCounter("case_search_count", "Number of case search requests.");
+        .CreateCounter("case_search_count_total", "Number of case search requests.");
 
 
     public EdtClient(
