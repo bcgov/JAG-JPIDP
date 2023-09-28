@@ -236,8 +236,25 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
             else
             {
                 Serilog.Log.Error($"Add or update user request was not successful {accessRequestModel.UserName} {accessRequestModel.Id}");
+
                 AccountErrorCounter.Inc();
                 await trx.RollbackAsync();
+                var msgId = Guid.NewGuid().ToString();
+
+                var eventData = new Dictionary<string, string>
+                {
+                        { "FirstName", accessRequestModel.FullName!.Split(' ').FirstOrDefault("NAME_NOT_SET") },
+                        { "PartyId", accessRequestModel.Key! },
+                        { "Tag", msgId! }
+                    };
+
+                await this.producer.ProduceAsync(this.configuration.KafkaCluster.ProducerTopicName, key: key, new Notification
+                {
+                    To = accessRequestModel.Email,
+                    DomainEvent = "digitalevidence-bcps-usercreation-error",
+                    EventData = eventData
+                });
+
 
             }
 
