@@ -7,7 +7,7 @@
 .container {
   padding-top: 3rem;
   padding-bottom: 1rem;
-  max-width: 840px;
+  max-width: 1024px;
 
   @include media-breakpoint-up(xl) {
     // Constrain to center content within the container
@@ -82,7 +82,13 @@
       display: none;
     }
 
-    @media (min-width: 645px) {
+    @media screen and (max-width: 768px) {
+      h1 {
+        font-size: 0.5em;
+      }
+    }
+
+    @media (min-width: 768px) {
       img {
         display: block;
         height: 188px;
@@ -107,6 +113,21 @@
     @include media-breakpoint-up(lg) {
       width: 600px;
     }
+  }
+}
+
+.login-panel {
+  margin-top: 24px;
+  padding: 16px;
+
+  button {
+    background-color: palette.theme-palette(blue);
+    color: palette.theme-palette(buff);
+    font-weight: bold;
+    padding: 8px;
+    margin-top: 8px;
+    width: 288px !important;
+    min-width: unset !important;
   }
 }
 
@@ -165,6 +186,13 @@
     max-width: 550px;
     padding-left: 3rem;
   }
+}
+
+.danger {
+  background-color: palette.theme-palette(red);
+  color: white;
+  padding: 16px;
+  border-radius: 5px;
 }
 
 .center {
