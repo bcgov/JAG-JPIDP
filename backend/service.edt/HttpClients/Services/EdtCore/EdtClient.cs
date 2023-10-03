@@ -112,7 +112,7 @@ public class EdtClient : BaseClient, IEdtClient
         }
 
 
-        foreach (var region in assignedRegions)
+        foreach (var region in assignedRegions.Distinct())
         {
 
             var existingGroup = currentlyAssignedGroups.Find(g => g.Name.Equals(region.RegionName, StringComparison.Ordinal));
@@ -128,6 +128,7 @@ public class EdtClient : BaseClient, IEdtClient
                 var groupId = await this.GetOuGroupId(region.RegionName!);
                 if (groupId == 0)
                 {
+                    Log.Logger.Error("Region not found {0}", region.RegionName);
                     return false;
                 }
 
@@ -135,8 +136,16 @@ public class EdtClient : BaseClient, IEdtClient
 
                 if (!result.IsSuccess)
                 {
-                    Log.Logger.Error("Failed to add user {0} to region {1} due to {2}", userIdOrKey, region, string.Join(",", result.Errors));
-                    return false;
+                    var errorString = string.Join(", ", result.Errors);
+                    if (errorString.Contains("already a member"))
+                    {
+                        Log.Logger.Information($"User {0} already in region {1}", userIdOrKey, region.RegionName);
+                    }
+                    else
+                    {
+                        Log.Logger.Error("Failed to add user {0} to region {1} due to {2}", userIdOrKey, region, errorString);
+                        return false;
+                    }
                 }
             }
         }
