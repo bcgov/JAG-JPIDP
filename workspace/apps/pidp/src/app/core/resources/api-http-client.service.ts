@@ -17,3 +17,15 @@ export class ApiHttpClient extends AbstractHttpClient {
     this.uri = config.apiEndpoint;
   }
 }
+@Injectable({
+  providedIn: 'root',
+})
+export class ApiConfigHttpClient extends AbstractHttpClient {
+  protected uri: string;
+  public constructor(@Inject(APP_CONFIG) config: AppConfig, http: HttpClient) {
+    super(http);
+
+    this.uri = config.configEndpoint;
+  }
+
+}

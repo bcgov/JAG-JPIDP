@@ -4,7 +4,7 @@ import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { EMPTY, Observable, exhaustMap, map, startWith } from 'rxjs';
+import { EMPTY, Observable, catchError, exhaustMap, map, of, startWith, tap } from 'rxjs';
 
 import {
   DashboardHeaderConfig,
@@ -20,6 +20,10 @@ import { AgencyLookup, Lookup } from '@app/modules/lookup/lookup.types';
 
 import { IdentityProvider } from '../../enums/identity-provider.enum';
 import { AuthService } from '../../services/auth.service';
+import { AuthConfigService } from '../../services/auth-config-service';
+import { LoginConfigModel } from '../../models/loginConfigModel';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ToastService } from '@app/core/services/toast.service';
 
 @Component({
   selector: 'app-login',
@@ -46,14 +50,18 @@ export class LoginPage implements OnInit {
     name: 'Government User',
   };
   public IdentityProvider = IdentityProvider;
+  public loginOptions: Observable<LoginConfigModel[]>;
+  public noLoginOptions: boolean;
   // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
   selectedAgency: FormControl = new FormControl();
 
   public constructor(
     @Inject(APP_CONFIG) private config: AppConfig,
     private authService: AuthService,
+    private authConfigService: AuthConfigService,
     private route: ActivatedRoute,
     private router: Router,
+    private toastService: ToastService,
     private dialog: MatDialog,
     private lookupService: LookupService,
     private documentService: DocumentService
@@ -66,6 +74,8 @@ export class LoginPage implements OnInit {
     this.bcscSupportUrl = this.config.urls.bcscSupport;
     this.organizations = this.lookupService.organizations;
     this.bcscMobileSetupUrl = this.config.urls.bcscMobileSetup;
+    this.loginOptions = this.getLoginOptions();
+    this.noLoginOptions = false;
     this.specialAuthorityUrl = this.config.urls.specialAuthority;
     this.providerIdentitySupportEmail =
       this.config.emails.providerIdentitySupport;
@@ -87,11 +97,29 @@ export class LoginPage implements OnInit {
     this.onLogin(IdentityProvider.SUBMITTING_AGENCY, this.agency?.idpHint);
   }
 
+  public getLoginOptions(): Observable<LoginConfigModel[]> {
+    return this.authConfigService.getLoginOptions().pipe(map((res: LoginConfigModel[]) => {
+      return res;
+    }), catchError(err => {
+
+      this.toastService.openErrorToast("Unable to load configuration - if this persists please contact support");
+      console.error("Error getting config %o", err);
+      this.noLoginOptions = true;
+      return of([]);
+    })
+    );
+  }
+
   public ngOnInit(): void {
+
     this.filteredAgencies = this.selectedAgency.valueChanges.pipe(
       startWith(''),
       map((value) => this.filterAgencies(value || ''))
     );
+  }
+
+  public onOptionLogin(option: LoginConfigModel): void {
+    this.loginDyanmicIdp(option.idp);
   }
 
   public onLogin(idpHint?: IdentityProvider, idpStringVal?: string): void {

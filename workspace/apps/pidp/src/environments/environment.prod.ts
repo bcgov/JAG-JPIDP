@@ -28,8 +28,9 @@ import { AppEnvironment, EnvironmentName } from './environment.model';
 export const environment: AppEnvironment = {
   production: true,
   apiEndpoint: 'http://localhost:5050',
+  configEndpoint: 'https://diam-config-e27db1-dev.apps.gold.devops.gov.bc.ca',
   authEndpoint: 'https://dev.common-sso.justice.gov.bc.ca',
-  authRealm: 'DEMSDEV',
+  authRealm: 'BCPS',
   environmentName: EnvironmentName.LOCAL,
   applicationUrl: 'http://localhost:4200',
   demsImportURL: 'https://dems.dev.jag.gov.bc.ca/Edt.aspx#/import/',
@@ -53,7 +54,7 @@ export const environment: AppEnvironment = {
   keycloakConfig: {
     config: {
       url: 'https://dev.common-sso.justice.gov.bc.ca/auth',
-      realm: 'DEMSDEV',
+      realm: 'BCPS',
       clientId: 'PIDP-WEBAPP',
     },
     initOptions: {
