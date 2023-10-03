@@ -12,7 +12,7 @@ route:
 
 pidp-sso:
   keycloak:
-    realm: https://dev.common-sso.justice.gov.bc.ca/auth/realms/DEMSDEV
+    realm: https://dev.common-sso.justice.gov.bc.ca/auth/realms/BCPS
   auth:
   existingSecret: pidp-sso-postgresql
   secretKeys:
@@ -40,8 +40,8 @@ database:
   # trigger
 
 keycloak:
-  realm: DEMSDEV
-  auth: https://dev.common-sso.justice.gov.bc.ca/auth/realms/DEMSDEV
+  realm: BCPS
+  auth: https://dev.common-sso.justice.gov.bc.ca/auth/realms/BCPS
   base: https://dev.common-sso.justice.gov.bc.ca/auth
 
 edt-service:
@@ -93,7 +93,7 @@ frontend:
     environmentName: dev
     keycloak:
       url: https://dev.common-sso.justice.gov.bc.ca/auth
-      realm: DEMSDEV
+      realm: BCPS
 
 
 admin-frontend:
@@ -106,7 +106,7 @@ admin-frontend:
     environmentName: dev
     keycloak:
       url: https://dev.common-sso.justice.gov.bc.ca/auth
-      realm: DEMSDEV
+      realm: BCPS
 
 
 webapi:
