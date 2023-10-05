@@ -99,6 +99,9 @@ export class LoginPage implements OnInit {
 
   public getLoginOptions(): Observable<LoginConfigModel[]> {
     return this.authConfigService.getLoginOptions().pipe(map((res: LoginConfigModel[]) => {
+      if (res.length === 0) {
+        this.noLoginOptions = true;
+      }
       return res;
     }), catchError(err => {
 
@@ -119,7 +122,10 @@ export class LoginPage implements OnInit {
   }
 
   public onOptionLogin(option: LoginConfigModel): void {
-    this.loginDyanmicIdp(option.idp);
+    const letIdpString = option.idp;
+    const typedIdpString = letIdpString as keyof typeof IdentityProvider;
+    const idp: IdentityProvider = IdentityProvider[typedIdpString];
+    this.onLogin(idp, option.idp);
   }
 
   public onLogin(idpHint?: IdentityProvider, idpStringVal?: string): void {

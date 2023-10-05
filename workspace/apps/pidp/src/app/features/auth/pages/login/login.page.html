@@ -24,6 +24,10 @@
           <div class="row justify-content-center">
             <ui-page-section>
 
+              <div class="no-login-options" *ngIf="noLoginOptions">
+                No Login Options Found
+              </div>
+
               <div class="login-panel">
                 <div class="row">
                   <div *ngFor="let loginOpt of loginOptions | async">
