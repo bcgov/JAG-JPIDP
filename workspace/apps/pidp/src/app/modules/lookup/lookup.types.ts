@@ -24,7 +24,7 @@ export interface LookupConfig extends ILookupConfig {
   provinces: ProvinceLookup[];
   organizations: Lookup[];
   healthAuthorities: Lookup[];
-  submittingAgencies: AgencyLookup[];
+  submittingAgencies: LoginOptionLookup[];
   justiceSectors: Lookup[];
   lawEnforcements: Lookup[];
   correctionServices: Lookup[];
@@ -39,7 +39,7 @@ export interface Lookup<T extends number | string = number> {
 export interface ProvinceLookup extends Lookup<string> {
   countryCode: string;
 }
-export interface AgencyLookup extends Lookup<number> {
+export interface LoginOptionLookup extends Lookup<number> {
   idpHint: string;
 }
 export interface CollegeLookup extends Lookup<number> {

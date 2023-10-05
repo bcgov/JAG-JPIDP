@@ -21,7 +21,7 @@ import { IdentityProvider } from '@app/features/auth/enums/identity-provider.enu
 import { SubmittingAgencyResolver } from '@app/features/auth/models/submitting-agency-resolver';
 import { AuthorizedUserService } from '@app/features/auth/services/authorized-user.service';
 import { LookupService } from '@app/modules/lookup/lookup.service';
-import { AgencyLookup, Lookup } from '@app/modules/lookup/lookup.types';
+import { LoginOptionLookup, Lookup } from '@app/modules/lookup/lookup.types';
 
 import { OrganizationDetailsFormState } from './organization-details-form-state';
 import { OrganizationDetailsResource } from './organization-details-resource.service';
@@ -34,15 +34,14 @@ import { OrganizationDetails } from './organization-details.model';
 })
 export class OrganizationDetailsPage
   extends AbstractFormPage<OrganizationDetailsFormState>
-  implements OnInit
-{
+  implements OnInit {
   public title: string;
   public formState: OrganizationDetailsFormState;
   public organizations: (Lookup & { disabled: boolean })[];
   public healthAuthorities: Lookup[];
   public lawEnforcements: Lookup[];
   public justiceSectors: Lookup[];
-  public submittingAgencies: AgencyLookup[];
+  public submittingAgencies: LoginOptionLookup[];
   public isPrePopulatedOrg: boolean;
   public correctionServices: Lookup[];
   public lawSocieties: Lookup[];
