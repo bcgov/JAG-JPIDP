@@ -6,7 +6,7 @@ import { SortUtils } from '@bcgov/shared/utils';
 
 import { LookupResource } from './lookup-resource.service';
 import {
-  AgencyLookup,
+  LoginOptionLookup,
   CollegeLookup,
   Lookup,
   LookupConfig,
@@ -49,8 +49,8 @@ export class LookupService implements ILookupService {
     );
   }
 
-  public get submittingAgencies(): AgencyLookup[] {
-    return this.copyAndSortByKey<AgencyLookup>(
+  public get submittingAgencies(): LoginOptionLookup[] {
+    return this.copyAndSortByKey<LoginOptionLookup>(
       this.lookupConfig?.submittingAgencies,
       'name'
     );
@@ -85,13 +85,13 @@ export class LookupService implements ILookupService {
   public load(): Observable<LookupConfig | null> {
     return !this.lookupConfig
       ? this.lookupResource
-          .getLookups()
-          .pipe(
-            map(
-              (lookupConfig: LookupConfig | null) =>
-                (this.lookupConfig = lookupConfig)
-            )
+        .getLookups()
+        .pipe(
+          map(
+            (lookupConfig: LookupConfig | null) =>
+              (this.lookupConfig = lookupConfig)
           )
+        )
       : of({ ...this.lookupConfig });
   }
 

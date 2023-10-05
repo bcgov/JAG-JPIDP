@@ -1,15 +1,15 @@
 <ui-dashboard-header [theme]="headerConfig.theme" [allowMobileToggle]="headerConfig.allowMobileToggle">
 </ui-dashboard-header>
 
-<div class="container">
+<div class="container flex">
   <div class="row justify-content-center">
-    <div class="col-6 justify-content-center">
-      <div class="row">
-        <div class="col-2 justify-content-between">
-          <img src="/assets/images/diam-logo.svg" alt="Digital Identity Access Management Portal Logo" />
+    <div class="col-md-8 col-sm-12">
+      <div class="row justify-content-center">
+        <div class="col-md-2 hide-on-small-viewports">
+          <img src="/assets/images/diam-logo.svg" class="" alt="Digital Identity Access Management Portal Logo" />
         </div>
-        <div class="col-10">
-          <div class="justify-content-between">
+        <div class="col-sm-12 col-md-8 mat-elevation-z16 callout">
+          <div>
             <h1>
               Verify yourself and get access to many applications
             </h1>
@@ -21,7 +21,7 @@
           </span>
           <div class="tagline">
           </div>
-          <div class="row justify-content-center">
+          <div class="row justify-content-center center">
             <ui-page-section>
 
               <div class="no-login-options" *ngIf="noLoginOptions">
@@ -29,10 +29,27 @@
               </div>
 
               <div class="login-panel">
-                <div class="row">
+                <div class="row justify-content-center">
                   <div *ngFor="let loginOpt of loginOptions | async">
-                    <button type="button" mat-raised-button class="btn btn-primary btn-block"
-                      (click)="onOptionLogin(loginOpt)">
+                    <div *ngIf="loginOpt.type === 'AUTOCOMPLETE'">
+                      Please enter your {{loginOpt.name}} name below
+                      <mat-form-field class="option-field">
+                        <input type="text" placeholder="{{loginOpt.name}}" matInput aria-label="name"
+                          [formControl]="selectedLoginName" [matAutocomplete]="auto" class="form-control" />
+                        <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSelectionChanged($event)">
+                          <mat-option *ngFor="let option of getOptions(loginOpt) | async" [value]="option.name">
+                            {{ option.name }}
+                          </mat-option>
+                        </mat-autocomplete>
+                      </mat-form-field>
+                      <button mat-stroked-button class="agency-login-btn btn  btn-block" [disabled]="!agencySelected()"
+                        (click)="onAgencyLogin()">
+                        {{loginOpt.name}} log in
+                      </button>
+
+                    </div>
+                    <button *ngIf="loginOpt.type === 'BUTTON'" type="button" mat-raised-button
+                      class="btn btn-primary btn-block" (click)="onOptionLogin(loginOpt)">
                       {{ loginOpt.name }} log in
                     </button>
                   </div>

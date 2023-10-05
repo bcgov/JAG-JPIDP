@@ -16,7 +16,7 @@ import { ConfirmDialogComponent } from '@bcgov/shared/ui';
 import { APP_CONFIG, AppConfig } from '@app/app.config';
 import { DocumentService } from '@app/core/services/document.service';
 import { LookupService } from '@app/modules/lookup/lookup.service';
-import { AgencyLookup, Lookup } from '@app/modules/lookup/lookup.types';
+import { LoginOptionLookup, Lookup } from '@app/modules/lookup/lookup.types';
 
 import { IdentityProvider } from '../../enums/identity-provider.enum';
 import { AuthService } from '../../services/auth.service';
@@ -35,16 +35,16 @@ export class LoginPage implements OnInit {
   public headerConfig: DashboardHeaderConfig;
   public loginCancelled: boolean;
   public organizations: Lookup[];
-  public filteredAgencies!: Observable<AgencyLookup[]>;
-  public submittingAgencies: AgencyLookup[];
-  public agency: AgencyLookup | undefined;
+  public filteredLoginOptions!: Observable<LoginOptionLookup[]>;
+  public submittingAgencies: LoginOptionLookup[];
+  public agency: LoginOptionLookup | undefined;
 
   public bcscSupportUrl: string;
   public bcscMobileSetupUrl: string;
   public specialAuthorityUrl: string;
   public providerIdentitySupportEmail: string;
   public idpHint: IdentityProvider;
-  public governmentAgency: AgencyLookup = {
+  public governmentAgency: LoginOptionLookup = {
     code: 0,
     idpHint: IdentityProvider.AZUREIDIR,
     name: 'Government User',
@@ -53,7 +53,7 @@ export class LoginPage implements OnInit {
   public loginOptions: Observable<LoginConfigModel[]>;
   public noLoginOptions: boolean;
   // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
-  selectedAgency: FormControl = new FormControl();
+  selectedLoginName: FormControl = new FormControl();
 
   public constructor(
     @Inject(APP_CONFIG) private config: AppConfig,
@@ -113,9 +113,14 @@ export class LoginPage implements OnInit {
     );
   }
 
+  public getOptions(config: LoginConfigModel): Observable<LoginOptionLookup[]> {
+    console.log("Config %o", config);
+    return this.filteredLoginOptions;
+  }
+
   public ngOnInit(): void {
 
-    this.filteredAgencies = this.selectedAgency.valueChanges.pipe(
+    this.filteredLoginOptions = this.selectedLoginName.valueChanges.pipe(
       startWith(''),
       map((value) => this.filterAgencies(value || ''))
     );
@@ -167,7 +172,7 @@ export class LoginPage implements OnInit {
     });
   }
 
-  private filterAgencies(value: string): AgencyLookup[] {
+  private filterAgencies(value: string): LoginOptionLookup[] {
     if (this.agency && value !== this.agency.name) {
       this.agency = undefined;
     }
