@@ -131,6 +131,15 @@
   }
 }
 
+.no-login-options {
+  margin-top: 24px;
+  padding: 16px;
+  background-color: palette.theme-palette(red);
+  text-align: center;
+  color: white;
+  border-radius: 8px;
+}
+
 .divider {
   border-bottom: 1px white solid;
 }

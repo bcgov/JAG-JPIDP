@@ -28,7 +28,7 @@ import { AppEnvironment, EnvironmentName } from './environment.model';
 export const environment: AppEnvironment = {
   production: true,
   apiEndpoint: 'http://localhost:5050',
-  configEndpoint: 'https://diam-config-e27db1-dev.apps.gold.devops.gov.bc.ca',
+  configEndpoint: 'http://localhost:8080',
   authEndpoint: 'https://dev.common-sso.justice.gov.bc.ca',
   authRealm: 'BCPS',
   environmentName: EnvironmentName.LOCAL,
