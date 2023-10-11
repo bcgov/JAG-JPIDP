@@ -19,7 +19,7 @@ data:
     {
       "environmentName": "{{ .Values.settings.environmentName }}",
       "apiEndpoint": "https://{{ .Values.global.vanityURL }}/api/v1",
-      "configEndpoint": "https://{{ .Values.global.vanityURL }}/api/config/v1",
+      "configEndpoint": "https://{{ .Values.global.vanityURL }}",
       "applicationUrl": "https://{{ .Values.global.vanityURL }}",
       "demsImportURL": "{{ .Values.settings.edtURL }}/Edt.aspx#/import/",
       "keycloakConfig": {
