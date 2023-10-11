@@ -29,6 +29,7 @@ using Pidp.Extensions;
 using Pidp.Features;
 using Pidp.Features.CourtLocations;
 using Pidp.Features.CourtLocations.Jobs;
+using Pidp.Features.Monitor;
 using Pidp.Features.Organization.OrgUnitService;
 using Pidp.Features.Organization.UserTypeService;
 using Pidp.Helpers.Middleware;
@@ -233,7 +234,14 @@ public class Startup
               .StartNow()
               .WithDailyTimeIntervalSchedule(x => x.WithInterval(config.CourtAccess.PollSeconds, IntervalUnit.Second))
               .WithDescription("Court access scheduled event")
-          );
+            );
+
+            q.ScheduleJob<OnboardingMonitorJob>(monitoring => monitoring
+                .WithIdentity("Onboarding monitoring")
+                .StartNow()
+                .WithDailyTimeIntervalSchedule(x => x.WithInterval(30, IntervalUnit.Second))
+                .WithDescription("Monitor for onboarding events")
+            );
         });
 
 

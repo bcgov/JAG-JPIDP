@@ -222,6 +222,16 @@ spec:
                 secretKeyRef:
                   name: edt-client
                   key: EdtClient__AlternateSearchFieldId
+            - name: EdtClient__SearchField
+              valueFrom:
+                secretKeyRef:
+                  name: edt-client
+                  key: EdtClient__SearchField
+            - name: EdtClient__AlternateSearchField
+              valueFrom:
+                secretKeyRef:
+                  name: edt-client
+                  key: EdtClient__AlternateSearchField
           volumeMounts:
           - name: truststore
             mountPath: "/opt/kafka/certificates"

@@ -4,7 +4,7 @@ using Pidp.Models;
 public interface IEdtCaseManagementClient
 {
 
-    Task<DigitalEvidenceCaseModel?> FindCase(string caseName);
+    Task<DigitalEvidenceCaseModel?> FindCase(string partyId, string caseName);
     Task<DigitalEvidenceCaseModel?> GetCase(int caseId);
 
 }
