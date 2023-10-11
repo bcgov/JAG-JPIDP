@@ -19,6 +19,8 @@ public class EdtServiceConfiguration
     public SchemaRegistryConfiguration SchemaRegistry { get; set; } = new();
     public TelemeteryConfiguration Telemetry { get; set; } = new TelemeteryConfiguration();
     public List<CustomDisplayField> CaseDisplayCustomFields { get; set; } = new();
+    public int SearchFieldId { get; set; } = -1;
+    public int AlternateSearchFieldId { get; set; } = -1;
     public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
     public class SplunkConfiguration
     {
@@ -42,8 +44,8 @@ public class EdtServiceConfiguration
         public string ApiKey { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
         public string SubmittingAgencyGroup { get; set; } = string.Empty;
-        public int SearchFieldId { get; set; }
-        public int AlternateSearchFieldId { get; set; }
+        public string SearchField { get; set; }
+        public string AlternateSearchField { get; set; }
     }
 
     public class EdtDisclosureClientConfiguration

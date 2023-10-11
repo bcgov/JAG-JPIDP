@@ -31,7 +31,6 @@ using OpenTelemetry.Trace;
 using Prometheus;
 using Serilog;
 using Swashbuckle.AspNetCore.Filters;
-using static edt.casemanagement.EdtServiceConfiguration;
 
 public class Startup
 {
@@ -39,7 +38,7 @@ public class Startup
 
     public Startup(IConfiguration configuration)
     {
-        Configuration = configuration;
+        this.Configuration = configuration;
         StaticConfig = configuration;
     }
 
@@ -210,6 +209,21 @@ public class Startup
             var fields = await client.GetCustomFields("Case");
             Log.Information($"Got fields {fields.Count()}");
 
+            Log.Information($"Looking up search ID for field {config.EdtClient.SearchField}");
+
+            foreach (var field in fields)
+            {
+                if (field.Name.Equals(config.EdtClient.SearchField, StringComparison.OrdinalIgnoreCase))
+                {
+                    config.SearchFieldId = field.Id;
+                }
+                if (field.Name.Equals(config.EdtClient.AlternateSearchField, StringComparison.OrdinalIgnoreCase))
+                {
+                    config.AlternateSearchFieldId = field.Id;
+                }
+            }
+
+
             var caseDisplayCustomFieldsValue = config.CaseDisplayCustomFields;
 
             if (caseDisplayCustomFieldsValue != null)
@@ -249,6 +263,13 @@ public class Startup
             }
         }
 
+        Log.Information($"Search field id {config.SearchFieldId} Alt Id {config.AlternateSearchFieldId}");
+
+        if (config.SearchFieldId < 0 || config.AlternateSearchFieldId < 0)
+        {
+            Log.Fatal($"Unable to find values for search/alt search fields - check configuration");
+            Environment.Exit(1);
+        }
 
         Log.Information("Custom case management fields {0}", JsonConvert.SerializeObject(config.CaseDisplayCustomFields));
 
@@ -294,7 +315,7 @@ public class Startup
         {
             endpoints.MapControllers();
             endpoints.MapMetrics();
-           
+
             endpoints.MapHealthChecks("/health/liveness").AllowAnonymous();
         });
 
