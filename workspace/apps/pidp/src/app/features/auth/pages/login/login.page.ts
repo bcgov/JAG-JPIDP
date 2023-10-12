@@ -4,7 +4,7 @@ import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { EMPTY, Observable, exhaustMap, map, startWith } from 'rxjs';
+import { EMPTY, Observable, catchError, exhaustMap, map, of, startWith, tap } from 'rxjs';
 
 import {
   DashboardHeaderConfig,
@@ -16,10 +16,14 @@ import { ConfirmDialogComponent } from '@bcgov/shared/ui';
 import { APP_CONFIG, AppConfig } from '@app/app.config';
 import { DocumentService } from '@app/core/services/document.service';
 import { LookupService } from '@app/modules/lookup/lookup.service';
-import { AgencyLookup, Lookup } from '@app/modules/lookup/lookup.types';
+import { LoginOptionLookup, Lookup } from '@app/modules/lookup/lookup.types';
 
 import { IdentityProvider } from '../../enums/identity-provider.enum';
 import { AuthService } from '../../services/auth.service';
+import { AuthConfigService } from '../../services/auth-config-service';
+import { LoginConfigModel } from '../../models/loginConfigModel';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ToastService } from '@app/core/services/toast.service';
 
 @Component({
   selector: 'app-login',
@@ -31,29 +35,33 @@ export class LoginPage implements OnInit {
   public headerConfig: DashboardHeaderConfig;
   public loginCancelled: boolean;
   public organizations: Lookup[];
-  public filteredAgencies!: Observable<AgencyLookup[]>;
-  public submittingAgencies: AgencyLookup[];
-  public agency: AgencyLookup | undefined;
+  public filteredLoginOptions!: Observable<LoginOptionLookup[]>;
+  public submittingAgencies: LoginOptionLookup[];
+  public agency: LoginOptionLookup | undefined;
 
   public bcscSupportUrl: string;
   public bcscMobileSetupUrl: string;
   public specialAuthorityUrl: string;
   public providerIdentitySupportEmail: string;
   public idpHint: IdentityProvider;
-  public governmentAgency: AgencyLookup = {
+  public governmentAgency: LoginOptionLookup = {
     code: 0,
     idpHint: IdentityProvider.AZUREIDIR,
     name: 'Government User',
   };
   public IdentityProvider = IdentityProvider;
+  public loginOptions: Observable<LoginConfigModel[]>;
+  public noLoginOptions: boolean;
   // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
-  selectedAgency: FormControl = new FormControl();
+  selectedLoginName: FormControl = new FormControl();
 
   public constructor(
     @Inject(APP_CONFIG) private config: AppConfig,
     private authService: AuthService,
+    private authConfigService: AuthConfigService,
     private route: ActivatedRoute,
     private router: Router,
+    private toastService: ToastService,
     private dialog: MatDialog,
     private lookupService: LookupService,
     private documentService: DocumentService
@@ -66,6 +74,8 @@ export class LoginPage implements OnInit {
     this.bcscSupportUrl = this.config.urls.bcscSupport;
     this.organizations = this.lookupService.organizations;
     this.bcscMobileSetupUrl = this.config.urls.bcscMobileSetup;
+    this.loginOptions = this.getLoginOptions();
+    this.noLoginOptions = false;
     this.specialAuthorityUrl = this.config.urls.specialAuthority;
     this.providerIdentitySupportEmail =
       this.config.emails.providerIdentitySupport;
@@ -87,11 +97,40 @@ export class LoginPage implements OnInit {
     this.onLogin(IdentityProvider.SUBMITTING_AGENCY, this.agency?.idpHint);
   }
 
+  public getLoginOptions(): Observable<LoginConfigModel[]> {
+    return this.authConfigService.getLoginOptions().pipe(map((res: LoginConfigModel[]) => {
+      if (res.length === 0) {
+        this.noLoginOptions = true;
+      }
+      return res;
+    }), catchError(err => {
+
+      this.toastService.openErrorToast("Unable to load configuration - if this persists please contact support");
+      console.error("Error getting config %o", err);
+      this.noLoginOptions = true;
+      return of([]);
+    })
+    );
+  }
+
+  public getOptions(config: LoginConfigModel): Observable<LoginOptionLookup[]> {
+    console.log("Config %o", config);
+    return this.filteredLoginOptions;
+  }
+
   public ngOnInit(): void {
-    this.filteredAgencies = this.selectedAgency.valueChanges.pipe(
+
+    this.filteredLoginOptions = this.selectedLoginName.valueChanges.pipe(
       startWith(''),
       map((value) => this.filterAgencies(value || ''))
     );
+  }
+
+  public onOptionLogin(option: LoginConfigModel): void {
+    const letIdpString = option.idp;
+    const typedIdpString = letIdpString as keyof typeof IdentityProvider;
+    const idp: IdentityProvider = IdentityProvider[typedIdpString];
+    this.onLogin(idp, option.idp);
   }
 
   public onLogin(idpHint?: IdentityProvider, idpStringVal?: string): void {
@@ -133,7 +172,7 @@ export class LoginPage implements OnInit {
     });
   }
 
-  private filterAgencies(value: string): AgencyLookup[] {
+  private filterAgencies(value: string): LoginOptionLookup[] {
     if (this.agency && value !== this.agency.name) {
       this.agency = undefined;
     }

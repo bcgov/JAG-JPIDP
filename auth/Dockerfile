@@ -1,9 +1,6 @@
-FROM registry.redhat.io/rh-sso-7/sso76-openshift-rhel8:7.6-5
+FROM registry.redhat.io/rh-sso-7/sso76-openshift-rhel8:7.6-32
 
-
-MAINTAINER acme
-
-MAINTAINER acme
+MAINTAINER lee.wright@gov.bc.ca
 
 USER root
 
@@ -15,6 +12,8 @@ COPY bcgov-services-1.0.0.jar /opt/eap/standalone/deployments
 RUN touch /opt/eap/standalone/deployments/keycloak-metrics-spi-2.5.3.jar.deploy
 RUN touch /opt/eap/standalone/deployments/bcgov-services-1.0.0.jar.deploy
 
-RUN chown -R jboss:root $JBOSS_HOME/themes
+RUN chown -R jboss:jboss $JBOSS_HOME/themes
 
 RUN chmod -R 775 $JBOSS_HOME/themes
+
+USER 1000

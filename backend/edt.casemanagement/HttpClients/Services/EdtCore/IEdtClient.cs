@@ -24,9 +24,9 @@ public interface IEdtClient
     /// <summary>
     /// Get a case based on the KEY (case Number)
     /// </summary>
-    /// <param name="caseNumber"></param>
+    /// <param name="query"></param>
     /// <returns></returns>
-    Task<CaseModel> FindCase(string caseNumber);
+    Task<CaseModel> FindCase(CaseLookupQuery query);
 
     /// <summary>
     /// Get a case based on the case Id

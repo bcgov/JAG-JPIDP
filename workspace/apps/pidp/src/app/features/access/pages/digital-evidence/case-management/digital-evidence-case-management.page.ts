@@ -22,6 +22,7 @@ import {
   map,
   noop,
   of,
+  retry,
   takeWhile,
   tap,
 } from 'rxjs';
@@ -64,8 +65,7 @@ import {
 })
 export class DigitalEvidenceCaseManagementPage
   extends AbstractFormPage<DigitalEvidenceCaseManagementFormState>
-  implements OnInit, AfterViewInit
-{
+  implements OnInit, AfterViewInit {
   public formState: DigitalEvidenceCaseManagementFormState;
   public title: string;
 
@@ -225,8 +225,8 @@ export class DigitalEvidenceCaseManagementPage
         exhaustMap((result) =>
           result
             ? this.digitalEvidenceCaseResource.removeCaseAccessRequest(
-                requestedCase.requestId
-              )
+              requestedCase.requestId
+            )
             : EMPTY
         )
       )
@@ -282,24 +282,46 @@ export class DigitalEvidenceCaseManagementPage
   }
 
   public findCase(): void {
+    if (this.isCaseSearchInProgress) {
+      return;
+    }
+
+    this.requestedCase = null;
     this.requestedCaseNotFound = false;
     this.requestedCaseInactive = false;
+    this.isCaseSearchInProgress = true;
+
     this.digitalEvidenceCaseResource
       .findCase(this.formState.agencyCode.value, this.formState.caseName.value)
       .pipe(
-        tap(() => {
-          this.isCaseFound = true;
+        retry(0),
+        catchError((error) => {
+          if (error.status === 500) {
+            this.toastService.openErrorToast("Case searching failed - please retry or contact support");
+          }
+          if (error.status === 404) {
+            this.isCaseFound = false;
+            this.requestedCaseNotFound = true;
+          }
+
           this.isCaseSearchInProgress = false;
+
+          throw error;
         })
       )
-      .subscribe((digitalEvidenceCase: DigitalEvidenceCase | null) => {
+      .subscribe((digitalEvidenceCase: DigitalEvidenceCase) => {
+
+        this.isCaseFound = true;
         this.requestedCaseNotFound = !digitalEvidenceCase ? true : false;
         if (digitalEvidenceCase?.status !== 'Active') {
           this.requestedCaseInactive = true;
         }
         this.requestedCase = digitalEvidenceCase;
+        this.isCaseSearchInProgress = false;
+
       });
   }
+
   protected performSubmission(): Observable<unknown> {
     throw new Error('Method not implemented.');
   }
@@ -351,8 +373,8 @@ export class DigitalEvidenceCaseManagementPage
     } catch (e) {
       this.toastService.openErrorToast(
         'Popup blocked enabled - please add ' +
-          this.config.demsImportURL +
-          ' to your exception list'
+        this.config.demsImportURL +
+        ' to your exception list'
       );
     }
   }

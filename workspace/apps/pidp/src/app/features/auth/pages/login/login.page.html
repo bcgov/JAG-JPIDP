@@ -1,122 +1,86 @@
 <ui-dashboard-header [theme]="headerConfig.theme" [allowMobileToggle]="headerConfig.allowMobileToggle">
 </ui-dashboard-header>
 
-<div class="container">
-  <ng-container *ngIf="idpHint === IdentityProvider.BCSC; else admin">
-    <div class="row">
-      <div class="col-12">
-        <ui-alert *ngIf="loginCancelled" type="info" icon="error_outline" heading="Login Cancelled">
-          <ng-container uiAlertContent>
-            <p>
-              You have cancelled your login to the Digital Identity Access Management.
-            </p>
-            <ul>
-              <li>
-                For support with the provider identity portal, contact
-                <a uiAnchor scheme="mailto" [attr.href]="providerIdentitySupportEmail"></a>
-              </li>
-              <li>
-                For support with your BC Services Card, click
-                <a uiAnchor [attr.href]="bcscSupportUrl">here</a>
-              </li>
-            </ul>
-          </ng-container>
-        </ui-alert>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-12 col-xl-auto">
-
-        <div class="hide-on-large-viewports">
-          <ng-container *ngTemplateOutlet="login"></ng-container>
+<div class="container flex">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-sm-12">
+      <div class="row justify-content-center">
+        <div class="col-md-2 hide-on-small-viewports">
+          <img src="/assets/images/diam-logo.svg" class="" alt="Digital Identity Access Management Portal Logo" />
         </div>
+        <div class="col-sm-12 col-md-8 mat-elevation-z16 callout">
+          <div>
+            <h1>
+              Verify yourself and get access to many applications
+            </h1>
+          </div>
+          <span>
+            Log in using your authorized security credentials. <br />Note: You may be
+            redirected
+            to complete this process.
+          </span>
+          <div class="tagline">
+          </div>
+          <div class="row justify-content-center center">
+            <ui-page-section>
 
-
-        <div class="tagline">
-          <ui-page-section>
-            <div class="row h-100 mt-5 flex align-items-center">
-              <div class="col-4">
-                <img src="/assets/images/diam-logo.svg" alt="Digital Identity Access Management Portal Logo" />
+              <div class="no-login-options" *ngIf="noLoginOptions">
+                No Login Options Found
               </div>
-              <div class="col-6 d-flex  justify-content-center">
-                <h1>
-                  Verify yourself and get access to many applications
-                </h1>
 
+              <div class="login-panel">
+                <div class="row justify-content-center">
+                  <div *ngFor="let loginOpt of loginOptions | async">
+                    <div *ngIf="loginOpt.type === 'AUTOCOMPLETE'">
+                      Please enter your {{loginOpt.name}} name below
+                      <mat-form-field class="option-field">
+                        <input type="text" placeholder="{{loginOpt.name}}" matInput aria-label="name"
+                          [formControl]="selectedLoginName" [matAutocomplete]="auto" class="form-control" />
+                        <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSelectionChanged($event)">
+                          <mat-option *ngFor="let option of getOptions(loginOpt) | async" [value]="option.name">
+                            {{ option.name }}
+                          </mat-option>
+                        </mat-autocomplete>
+                      </mat-form-field>
+                      <button mat-stroked-button class="agency-login-btn btn  btn-block" [disabled]="!agencySelected()"
+                        (click)="onAgencyLogin()">
+                        {{loginOpt.name}} log in
+                      </button>
+
+                    </div>
+                    <button *ngIf="loginOpt.type === 'BUTTON'" type="button" mat-raised-button
+                      class="btn btn-primary btn-block" (click)="onOptionLogin(loginOpt)">
+                      {{ loginOpt.name }} log in
+                    </button>
+                  </div>
+                </div>
               </div>
 
-
-
+            </ui-page-section>
+            <div class="support  justify-content-center">
+              <app-get-support></app-get-support>
             </div>
-            <span>
-              Pick your sign in method and login using your authorized security credentials. <br />Note: You may be
-              redirected
-              to complete this process.
-            </span>
-          </ui-page-section>
 
-        </div>
-        <div class="support">
-          <app-get-support></app-get-support>
+          </div>
         </div>
       </div>
-
-      <div class="col-12 col-xl-auto hide-on-small-viewports">
-        <ng-container *ngTemplateOutlet="login"></ng-container>
-      </div>
     </div>
 
-  </ng-container>
 
-  <ng-template #login>
-    <div class="actions">
-      <div>
-        <small class="left">Members of the public</small>
-        <button mat-stroked-button (click)="onLogin(IdentityProvider.OIDC)">
-          BC Services Card log in
-        </button>
-        <small class="center">
-          Need an account?
-          <a uiAnchor [attr.href]="bcscMobileSetupUrl">Set up</a>
-        </small>
-        <div class="divider"></div>
-        <small>Government members and agencies</small>
 
-        <button mat-stroked-button (click)="onLogin(IdentityProvider.ADFS)">
-          BCPS log in
-        </button>
 
-        <button mat-stroked-button (click)="onLogin(IdentityProvider.VERIFIED_CREDENTIALS)">
-          Verifiable Credentials log in
-        </button>
 
-        <br /><br />
-        <mat-form-field class="agency-field">
-          <input type="text" placeholder="Enter your agency name" matInput aria-label="Agency name"
-            [formControl]="selectedAgency" [matAutocomplete]="auto" />
-          <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSelectionChanged($event)">
-            <mat-option *ngFor="let agency of filteredAgencies | async" [value]="agency.name">
-              {{ agency.name }}
-            </mat-option>
-          </mat-autocomplete>
-        </mat-form-field>
-        <button mat-stroked-button class="agency-login-btn" [disabled]="!agencySelected()" (click)="onAgencyLogin()">
-          Agency log in
-        </button>
+    <ng-template #admin>
+      <div class="row admin">
+        <div class="col-12">
+          <img src="/assets/images/pidp-logo-blue.svg" alt="Digital Identity Access Management Logo" />
+        </div>
+        <div class="col-12">
+          <button mat-flat-button color="primary" (click)="onLogin()">
+            {{ idpHint | uppercase }} Login
+          </button>
+        </div>
       </div>
-    </div>
-  </ng-template>
+    </ng-template>
 
-  <ng-template #admin>
-    <div class="row admin">
-      <div class="col-12">
-        <img src="/assets/images/pidp-logo-blue.svg" alt="Digital Identity Access Management Logo" />
-      </div>
-      <div class="col-12">
-        <button mat-flat-button color="primary" (click)="onLogin()">
-          {{ idpHint | uppercase }} Login
-        </button>
-      </div>
-    </div>
-  </ng-template>
-</div>
+  </div>

@@ -11,6 +11,7 @@ public class CaseManagementDataStoreDbContext : DbContext
     public CaseManagementDataStoreDbContext(DbContextOptions<CaseManagementDataStoreDbContext> options, IClock clock) : base(options) => this.clock = clock;
 
     public DbSet<CaseRequest> CaseRequests { get; set; } = default!;
+    public DbSet<CaseSearchRequest> CaseSearchRequests { get; set; } = default!;
 
 
     public override int SaveChanges()
