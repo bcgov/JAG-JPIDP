@@ -76,7 +76,6 @@ export class OrganizationDetailsPage
     this.lawSocieties = this.lookupService.lawSocieties;
     this.authorizedUserService.identityProvider$.subscribe((val) => {
       if (val === IdentityProvider.BCPS) {
-        this.isPrePopulatedOrg = true;
         this.organizations = this.lookupService.organizations
           .filter(
             (org: Lookup<OrganizationCode>) =>
@@ -160,9 +159,10 @@ export class OrganizationDetailsPage
       .get(partyId)
       .pipe(
         tap((model: OrganizationDetails | null) => {
-          if (model?.organizationCode === 0) {
+          if (model) {
             if (this.organizations.length === 1) {
               model.organizationCode = this.organizations[0].code;
+
               this.formState.patchValue(model);
 
               if (
