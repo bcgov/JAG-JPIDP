@@ -19,7 +19,7 @@ export class DigitalEvidenceResource {
   public constructor(
     private apiResource: ApiHttpClient,
     private portalResource: PortalResource
-  ) {}
+  ) { }
 
   public getProfileStatus(partyId: number): Observable<ProfileStatus | null> {
     return this.portalResource.getProfileStatus(partyId);
@@ -62,7 +62,8 @@ export class DigitalEvidenceResource {
     organizationType: DemsAccount,
     organizationName: DemsAccount,
     participantId: DemsAccount,
-    assignedRegions: DemsAccount
+    assignedRegions: DemsAccount,
+    keyData: DemsAccount,
   ): NoContent {
     return this.apiResource
       .post<NoContent>('access-requests/digital-evidence', {
@@ -71,6 +72,7 @@ export class DigitalEvidenceResource {
         organizationName,
         participantId,
         assignedRegions,
+        keyData
       })
       .pipe(
         NoContentResponse,

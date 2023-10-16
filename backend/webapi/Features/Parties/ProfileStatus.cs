@@ -1,26 +1,25 @@
 namespace Pidp.Features.Parties;
 
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
+using System.Security.Claims;
+using System.Text.Json.Serialization;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using FluentValidation;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using NodaTime;
-using System.Security.Claims;
-using System.Diagnostics.CodeAnalysis;
-using System.Text.Json.Serialization;
-
 using Pidp.Data;
 using Pidp.Extensions;
 using Pidp.Infrastructure;
 using Pidp.Infrastructure.Auth;
-using Pidp.Infrastructure.HttpClients.Plr;
-using Pidp.Models.Lookups;
 using Pidp.Infrastructure.HttpClients.Jum;
+using Pidp.Infrastructure.HttpClients.Plr;
 using Pidp.Models;
-using static Pidp.Features.Parties.ProfileStatus.ProfileStatusDto;
-using Microsoft.AspNetCore.Authentication;
-using System.Globalization;
+using Pidp.Models.Lookups;
 using Prometheus;
+using static Pidp.Features.Parties.ProfileStatus.ProfileStatusDto;
 
 public partial class ProfileStatus
 {
@@ -183,7 +182,7 @@ public partial class ProfileStatus
                     var justinPartAltId = party.AlternateIds.Where(alt => alt.Name == "JUSTINParticipant").FirstOrDefault();
                     if (justinPartAltId == null)
                     {
-                        ParticipantDetail? participant = profile.JustinUser.participantDetails.FirstOrDefault();
+                        var participant = profile.JustinUser.participantDetails.FirstOrDefault();
                         if (participant != null)
                         {
                             Serilog.Log.Information($"Storing JUSTIN alt id for {party.Id} as {participant.partId}");
@@ -248,7 +247,7 @@ public partial class ProfileStatus
                    // new Model.CollegeCertification(profile),
                     new Model.OrganizationDetails(profile),
                     new Model.Demographics(profile),
-                    new Model.DriverFitness(profile),
+                   // new Model.DriverFitness(profile),
                   //  new Model.HcimAccountTransfer(profile),
                   //  new Model.HcimEnrolment(profile),
                     new Model.DigitalEvidence(profile),
@@ -287,7 +286,7 @@ public partial class ProfileStatus
                 if (flow != null)
                 {
                     status.Value.Order = flow.Sequence;
-                    if ( status.Value.Order > order)
+                    if (status.Value.Order > order)
                     {
                         order = status.Value.Order;
                     }
@@ -325,7 +324,7 @@ public partial class ProfileStatus
             var query = new Lookups.Index.Query();
 
             // create an instance of the QueryHandler class
-            var handler = new Pidp.Features.Lookups.Index.QueryHandler(context);
+            var handler = new Pidp.Features.Lookups.Index.QueryHandler(this.context);
 
             // execute the query and get the result
             var result = handler.HandleAsync(query);
@@ -390,6 +389,7 @@ public partial class ProfileStatus
         public bool DemographicsEntered => this.User.GetIdentityProvider() is ClaimValues.Bcps or
                                             ClaimValues.Idir or
                                             ClaimValues.Adfs or
+                                            ClaimValues.BCServicesCard or
                                             ClaimValues.VerifiedCredentials ? this.Email != null : this.Email != null && this.Phone != null;
         //[MemberNotNullWhen(true, nameof(CollegeCode), nameof(LicenceNumber))]
         //public bool CollegeCertificationEntered => this.CollegeCode.HasValue && this.LicenceNumber != null;
@@ -400,11 +400,11 @@ public partial class ProfileStatus
         public bool UserIsBcServicesCard => this.User.GetIdentityProvider() == ClaimValues.BCServicesCard;
         //public bool UserIsPhsa => this.User.GetIdentityProvider() == ClaimValues.Phsa;
         //public bool UserIsBcps => this.User.GetIdentityProvider() == ClaimValues.Bcps;
-        public bool UserIsBcps => this.User.GetIdentityProvider() == ClaimValues.Bcps && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpApi).Contains(DefaultRoles.Bcps) || (PermitIDIRDEMS() && this.User.GetIdentityProvider() == ClaimValues.Idir);
+        public bool UserIsBcps => this.User.GetIdentityProvider() == ClaimValues.Bcps && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpApi).Contains(DefaultRoles.Bcps) || (this.PermitIDIRDEMS() && this.User.GetIdentityProvider() == ClaimValues.Idir);
         public bool UserIsIdir => this.User.GetIdentityProvider() == ClaimValues.Idir;
         public bool UserIsIdirCaseManagement => this.User.GetIdentityProvider() == ClaimValues.Idir && this.PermitIDIRDEMS() && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpApi).Contains(Roles.SubmittingAgency);
         public bool UserIsDutyCounsel => (this.User.GetIdentityProvider() == ClaimValues.VerifiedCredentials && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpApi).Contains(Roles.DutyCounsel))
-                  || (PermitIDIRDEMS() && this.User.GetIdentityProvider() == ClaimValues.Idir && this.User?.Identity is ClaimsIdentity claimsIdentity && claimsIdentity.GetResourceAccessRoles(Clients.PidpApi).Contains(Roles.DutyCounsel));
+                  || (this.PermitIDIRDEMS() && this.User.GetIdentityProvider() == ClaimValues.Idir && this.User?.Identity is ClaimsIdentity claimsIdentity && claimsIdentity.GetResourceAccessRoles(Clients.PidpApi).Contains(Roles.DutyCounsel));
 
         public bool UserIsInLawSociety => this.User.GetIdentityProvider() == ClaimValues.VerifiedCredentials;
 

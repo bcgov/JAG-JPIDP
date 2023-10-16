@@ -1,3 +1,6 @@
+@use 'palette' as palette;
+@import 'bootstrap/bootstrap-imports';
+
 .collection-notice {
   // Bump up the separation between the footer and
   // PageSection component
@@ -14,6 +17,24 @@
   border-radius: 5px;
   border: 1px black solid;
   padding: 5px;
+}
+
+.code-entry {
+  width: 80%;
+  border-radius: 8px;
+  padding-left: 18px;
+  padding-right: 18px;
+  background-color: palette.theme-palette(blue, 'lighter');
+  margin-bottom: 5px;
+  .mat-option-text > span {
+    font-size: large;
+    margin-left: 16px;
+  }
+  input {
+    background-color: palette.theme-palette(blue, 'lighter');
+    font-size: 22px;
+    line-height: 36px;
+  }
 }
 
 .no-margin-bottom {

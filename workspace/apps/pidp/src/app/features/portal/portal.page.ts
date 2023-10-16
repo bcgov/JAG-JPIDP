@@ -95,7 +95,8 @@ export class PortalPage implements OnInit {
                 StatusCode.HIDDENCOMPLETE;
               this.organizationHidden =
                 profileStatus?.status.organizationDetails.statusCode ===
-                StatusCode.HIDDENCOMPLETE;
+                StatusCode.HIDDENCOMPLETE || profileStatus?.status.organizationDetails.statusCode ===
+                StatusCode.HIDDEN;
               this.firstName =
                 profileStatus?.status.demographics.firstName || '';
             })
