@@ -201,6 +201,26 @@ spec:
                   key: SplunkConfig__Host
             - name: JUSTIN_EMAIL_CHANGE_DISABLED
               value: "true"
+            - name: EDTClient__Url
+              valueFrom:
+                secretKeyRef:
+                  name: pidp-edt-service-api
+                  key: url
+            - name: EDTClient__RealmUrl
+              valueFrom:
+                secretKeyRef:
+                  name: pidp-edt-service-api
+                  key: realmUrl
+            - name: EDTClient__ClientId
+              valueFrom:
+                secretKeyRef:
+                  name: pidp-edt-service-api
+                  key: clientId
+            - name: EDTClient__ClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: pidp-edt-service-api
+                  key: clientSecret
           volumeMounts:
             - name: kafka-truststore
               mountPath: "/opt/kafka/certificates"
