@@ -1,6 +1,7 @@
 namespace edt.service.HttpClients.Services.EdtCore;
 
 using AutoMapper;
+using Common.Models.EDT;
 
 public class MappingProfile : Profile
 {

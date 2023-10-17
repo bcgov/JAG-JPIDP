@@ -19,6 +19,27 @@
   padding: 5px;
 }
 
+.icon-display {
+  transform: scale(2);
+}
+
+.spinner {
+  text-align: center;
+  margin: 0 auto;
+}
+
+.error-icon {
+  color: red;
+}
+
+.invalid-icon {
+  color: red;
+}
+
+.valid-icon {
+  color: green;
+}
+
 .code-entry {
   width: 80%;
   border-radius: 8px;

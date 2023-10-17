@@ -13,6 +13,7 @@ public class UserTypeService : IUserTypeService
     private readonly PidpDbContext context;
     public string? OrgUserType { get; set; }
 
+
     public UserTypeService(PidpDbContext context) => this.context = context;//this.OrgUserType = orgUserType;
     public async Task<UserTypeModel?> GetOrgUserType(int partyId)
     {

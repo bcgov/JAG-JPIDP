@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Common.Models.EDT;
 using edt.service.Exceptions;
+using edt.service.Features.Person;
 using edt.service.Infrastructure.Telemetry;
 using edt.service.Kafka.Model;
 using edt.service.ServiceEvents.UserAccountModification.Models;
@@ -182,6 +183,29 @@ public class EdtClient : BaseClient, IEdtClient
 
     }
 
+    public async Task<List<EdtPersonDto>> GetPersonsByIdentifier(string identifierType, string identifierValue)
+    {
+        if (string.IsNullOrEmpty(identifierValue) || string.IsNullOrEmpty(identifierType))
+        {
+            throw new EdtServiceException("Invalid request to GetPersonsByIdentifier");
+        }
+
+        var returnPersons = new List<EdtPersonDto>();
+
+        var result = await this.GetAsync<IdentifierResponseModel>($"api/v1/org-units/1/identifiers?filter=IdentifierValue:{identifierValue},IdentifierType:{identifierType},ItemType:Person");
+
+        if (result.IsSuccess)
+        {
+            Log.Information($"Found {result.Value.Total} persons for {identifierValue}");
+            foreach (var identityInfo in result.Value.Items)
+            {
+                returnPersons.Add(await this.GetPersonById(identityInfo.EntityId));
+            }
+        }
+
+        return returnPersons;
+    }
+
     private async Task<bool> AddUserToSubmittingAgencyGroup(EdtUserProvisioningModel accessRequest, string userId)
     {
         if (accessRequest == null)
@@ -282,6 +306,7 @@ public class EdtClient : BaseClient, IEdtClient
 
 
 
+
     public async Task<UserModificationEvent> UpdateUser(EdtUserProvisioningModel accessRequest, EdtUserDto previousRequest, bool fromTombstone)
     {
         using (AccountUpdateDuration.NewTimer())
@@ -374,6 +399,22 @@ public class EdtClient : BaseClient, IEdtClient
             this.meters.GetPerson();
             Log.Logger.Information("Checking if person with key {0} already present", userKey);
             var result = await this.GetAsync<EdtPersonDto?>($"api/v1/org-units/1/persons/{userKey}");
+
+            if (!result.IsSuccess)
+            {
+                return null;
+            }
+            return result.Value;
+        }
+    }
+
+    public async Task<EdtPersonDto?> GetPersonById(int id)
+    {
+        using (GetUserDuration.NewTimer())
+        {
+            this.meters.GetPerson();
+            Log.Logger.Information("Checking if person with key {0} already present", id);
+            var result = await this.GetAsync<EdtPersonDto?>($"api/v1/org-units/1/persons/{id}");
 
             if (!result.IsSuccess)
             {
@@ -671,6 +712,8 @@ public class EdtClient : BaseClient, IEdtClient
             return userModificationResponse;
         }
     }
+
+
 
     public class AddUserToOuGroup
     {

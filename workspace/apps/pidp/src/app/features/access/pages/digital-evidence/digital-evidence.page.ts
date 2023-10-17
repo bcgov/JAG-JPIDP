@@ -23,7 +23,7 @@ import { PartyUserTypeResource } from '../../../../features/admin/shared/usertyp
 import { OrganizationUserType } from '../../../../features/admin/shared/usertype-service.model';
 import { BcpsAuthResourceService } from './auth/bcps-auth-resource.service';
 import { DigitalEvidenceCase } from './case-management/digital-evidence-case.model';
-import { AssignedRegion } from './digital-evidence-account.model';
+import { AssignedRegion, UserValidationResponse } from './digital-evidence-account.model';
 import { DigitalEvidenceFormState } from './digital-evidence-form-state';
 import { DigitalEvidenceResource } from './digital-evidence-resource.service';
 import {
@@ -59,7 +59,11 @@ export class DigitalEvidencePage
   public userIsLawyer?: boolean;
   public userIsPublic?: boolean;
   public folioId?: number;
+  public validatingUser: boolean;
+  public userCodeStatus: string;
+  public userValidationMessage?: string;
   public accessRequestFailed: boolean;
+  public publicAccessDenied: boolean;
   public digitalEvidenceSupportEmail: string;
   public formControlNames: string[];
   public selectedOption = 0;
@@ -96,9 +100,12 @@ export class DigitalEvidencePage
     this.userIsBCPS = false;
     this.userIsLawyer = false;
     this.userIsPublic = false;
+    this.validatingUser = false;
+    this.publicAccessDenied = false;
     this.dataSource = new MatTableDataSource();
     this.identityProvider$ = this.authorizedUserService.identityProvider$;
     this.result = '';
+    this.userCodeStatus = '';
     this.defenceValidationMessage = '';
     this.policeAgency = accessTokenService
       .decodeToken()
@@ -217,8 +224,52 @@ export class DigitalEvidencePage
     return this.organizationType.isSubmittingAgency;
   }
 
-  public checkUniqueID(val: string): void {
-    console.log("Val %o", val);
+  public checkUniqueID(_event: any): void {
+
+    if (this.formState.OOCUniqueId.valid) {
+      this.validatingUser = true;
+      this.userCodeStatus = '';
+      this.resource.validatePublicUniqueID(
+        this.partyService.partyId,
+        this.formState.OOCUniqueId.value
+      ).pipe(
+        tap(() => {
+          this.userValidationMessage = "Validating your code...";
+        }),
+      ).subscribe((res: UserValidationResponse | HttpErrorResponse) => {
+        this.validatingUser = false;
+
+        if (res instanceof HttpErrorResponse) {
+          this.userValidationMessage = "Unable to validate at this time - please try again later";
+          this.userCodeStatus = 'error';
+          this.formState.OOCUniqueId.patchValue('');
+        }
+        else {
+          if (res.tooManyAttempts) {
+            this.userCodeStatus = 'too_many_attempts';
+            this.formState.OOCUniqueId.patchValue('');
+            this.formState.OOCUniqueId.disable();
+
+            this.userValidationMessage = 'Too many attempts - please contact BCPS for assistance';
+          } else {
+            this.userCodeStatus = res.validated ? 'valid' : 'invalid';
+            if (res.validated) {
+              this.formState.OOCUniqueId.disable();
+            }
+
+            this.publicAccessDenied = !res.validated;
+            this.userValidationMessage = res.validated ? 'Code is valid - you may submit your request' : 'Please verify your code and retry';
+          }
+        }
+      });
+    } else {
+      this.userValidationMessage = undefined;
+    }
+
+  }
+
+  public validationEntryDisabled(): boolean {
+    return true;
   }
 
   public onChange(data: number): void {
