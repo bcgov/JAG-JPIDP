@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.0" name="com.squareup.okhttp3">
+    <resources>
+        <resource-root path="okhttp-3.9.0.jar"/>
+                <resource-root path="okio-1.13.0.jar"/>         <!-- Replace 'x.y.z' with the actual version -->
+    </resources>
+    <dependencies>
+        <!-- Define any module dependencies here, if needed -->
+    </dependencies>
+</module>
