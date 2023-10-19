@@ -75,7 +75,7 @@ jobs:
         if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/test' || github.ref == 'refs/heads/sso-spi' || startsWith(github.ref, 'refs/tags/')
         with:
           registry: registry.redhat.io
-          username: unused
+          username: 13974471|bcgov
           password: ${{ secrets.REDHAT_PASSWORD }}
 
       - name: Extract metadata for Docker
