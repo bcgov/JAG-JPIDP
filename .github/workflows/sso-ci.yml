@@ -78,11 +78,6 @@ jobs:
         with:
           images: |
             image-registry.apps.gold.devops.gov.bc.ca/e27db1-tools/common-sso
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
 
       - name: Build and Push to registries
         id: publish
@@ -92,4 +87,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           context: ./auth
           tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          labels: |
+              org.opencontainers.image.title=common sso
+              org.opencontainers.image.description=common sso with JUSTIN SPI
+              org.opencontainers.image.vendor=JAG
