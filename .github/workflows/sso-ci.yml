@@ -87,7 +87,4 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           context: ./auth
           tags: ${{ steps.meta.outputs.tags }}
-          labels: |
-              org.opencontainers.image.title=common sso
-              org.opencontainers.image.description=common sso with JUSTIN SPI
-              org.opencontainers.image.vendor=JAG
+          labels: ${{ steps.meta.outputs.labels }}
