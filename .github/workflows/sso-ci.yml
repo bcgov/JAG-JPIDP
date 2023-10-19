@@ -89,7 +89,7 @@ jobs:
         if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/test' || github.ref == 'refs/heads/sso-spi' || startsWith(github.ref, 'refs/tags/')
         with:
           push: ${{ github.event_name != 'pull_request' }}
-          context: ./src
+          context: ./auth
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           #platforms: linux/amd64,linux/arm64
