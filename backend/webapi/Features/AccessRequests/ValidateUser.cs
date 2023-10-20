@@ -2,6 +2,8 @@ namespace Pidp.Features.AccessRequests;
 
 using System.Threading.Tasks;
 using Common.Exceptions;
+using Common.Kafka;
+using Common.Models.Notification;
 using DomainResults.Common;
 using FluentValidation;
 using NodaTime;
@@ -38,14 +40,22 @@ public class ValidateUser
         private readonly IClock clock;
         private readonly IKeycloakAdministrationClient keycloakAdministrationClient;
         private readonly PidpConfiguration configuration;
+        private readonly IKafkaProducer<string, Notification> kafkaNotificationProducer;
 
-        public CommandHandler(PidpDbContext dbContext, IEdtCoreClient edtService, IClock clock, IKeycloakAdministrationClient keycloakAdministrationClient, PidpConfiguration configuration)
+        public CommandHandler(PidpDbContext dbContext,
+            IEdtCoreClient edtService,
+            IClock clock,
+            IKeycloakAdministrationClient keycloakAdministrationClient,
+            PidpConfiguration configuration,
+            IKafkaProducer<string, Notification> kafkaNotificationProducer
+            )
         {
             this.dbContext = dbContext;
             this.edtService = edtService;
             this.configuration = configuration;
             this.clock = clock;
             this.keycloakAdministrationClient = keycloakAdministrationClient;
+            this.kafkaNotificationProducer = kafkaNotificationProducer;
         }
 
         public async Task<IDomainResult<UserValidationResponse>> HandleAsync(Command command)
@@ -100,9 +110,37 @@ public class ValidateUser
                     Serilog.Log.Warning($"Too many validation attempts by user {party.Id} {party.FirstName} {party.LastName}");
                     response.TooManyAttempts = true;
                     await transaction.RollbackAsync();
+                    var codesTried = priorRequests.Select(req => req.Code).ToList();
+                    var eventData = new Dictionary<string, string>
+                    {
+                        { "attempts", "" + priorRequests.Count },
+                        { "codes", string.Join(",", codesTried) }
+                    };
+
+
+                    // send a notification to the message topic
+                    var produceResponse = await this.kafkaNotificationProducer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopicName, Guid.NewGuid().
+                        ToString(), new Notification
+                        {
+                            DomainEvent = "bcsc-too-many-validation-attempts",
+                            To = "lee.wright@nttdata.com",
+                            Subject = $"{party.Jpdid} Too Many Validation Attempts",
+                            EventData = eventData
+
+                        });
+
+                    if (produceResponse.Status == Confluent.Kafka.PersistenceStatus.Persisted)
+                    {
+                        Serilog.Log.Information($"Published user {party.Id} {party.Jpdid} too many requests message");
+                    }
+                    else
+                    {
+                        Serilog.Log.Error($"Failed to publish to topic for {party.Id} {party.Jpdid} - too many validation attempts");
+                    }
                     return DomainResult.Success(response);
 
                 }
+
 
                 var validation = new PublicUserValidation
                 {
@@ -112,7 +150,18 @@ public class ValidateUser
                     IsValid = false
                 };
 
-                this.dbContext.PublicUserValidations.Add(validation);
+                if (priorRequests != null && priorRequests.Any() && priorRequests.Last() != null)
+                {
+                    if (!priorRequests.Last().Code.Equals(command.Code, StringComparison.OrdinalIgnoreCase))
+                    {
+                        this.dbContext.PublicUserValidations.Add(validation);
+                    }
+                }
+                else
+                {
+                    this.dbContext.PublicUserValidations.Add(validation);
+                }
+
 
                 // get the user info from the EdtService
                 var userInfoResponse = await this.edtService.GetPersonsByIdentifier("EdtExternalId", command.Code);

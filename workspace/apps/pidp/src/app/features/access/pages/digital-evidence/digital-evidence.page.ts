@@ -227,11 +227,13 @@ export class DigitalEvidencePage
   public checkUniqueID(_event: any): void {
 
     if (this.formState.OOCUniqueId.valid) {
+      const codeToCheck = this.formState.OOCUniqueId.value.replace(/.{3}(?!$)/g, '$&-');
+
       this.validatingUser = true;
       this.userCodeStatus = '';
       this.resource.validatePublicUniqueID(
         this.partyService.partyId,
-        this.formState.OOCUniqueId.value
+        codeToCheck
       ).pipe(
         tap(() => {
           this.userValidationMessage = "Validating your code...";

@@ -13,6 +13,7 @@ public class EdtPersonDto
     public string? Role { get; set; } = "Defence";
     public bool? IsActive { get; set; } = true;
     public List<EdtField> Fields { get; set; } = new List<EdtField>();
+    public List<IdentifierModel> Identifiers { get; set; } = new List<IdentifierModel>();
 
 }
 
@@ -24,4 +25,5 @@ public class EdtPersonAddress
     public string? Mobile { get; set; }
     public string? Phone { get; set; }
 }
+
 

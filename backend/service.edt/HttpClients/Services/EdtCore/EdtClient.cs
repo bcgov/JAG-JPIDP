@@ -404,7 +404,13 @@ public class EdtClient : BaseClient, IEdtClient
             {
                 return null;
             }
-            return result.Value;
+            var person = result.Value;
+            // get identifiers
+            if (person != null && person.Id > 0)
+            {
+                person.Identifiers = await this.GetPersonIdentifiers(person.Id);
+            }
+            return person;
         }
     }
 
@@ -420,8 +426,46 @@ public class EdtClient : BaseClient, IEdtClient
             {
                 return null;
             }
-            return result.Value;
+
+            var person = result.Value;
+            // get identifiers
+            if (person != null && person.Id > 0)
+            {
+                var identifiers = await this.GetPersonIdentifiers(person.Id);
+                if (identifiers != null)
+                {
+                    person.Identifiers = identifiers;
+                }
+
+            }
+            return person;
+
+
         }
+    }
+
+    private async Task<List<IdentifierModel>> GetPersonIdentifiers(int? personID)
+    {
+
+        if (personID <= 0)
+        {
+            Log.Error("Invalid call to GetPersonIdentifiers");
+        }
+
+        Log.Logger.Information($"Getting identifiers for person {personID}");
+        var result = await this.GetAsync<IdentifierResponseModel>($"api/v1/org-units/1/identifiers?filter=itemType:Person,itemId:{personID}");
+
+        if (result.IsSuccess)
+        {
+            return result.Value.Items;
+        }
+        else
+        {
+            Log.Error($"Failed to get person identifiers for {personID}");
+            return new List<IdentifierModel>();
+        }
+
+
     }
 
     public async Task<int> GetOuGroupId(string regionName)

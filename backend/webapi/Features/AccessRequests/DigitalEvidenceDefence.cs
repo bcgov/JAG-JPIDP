@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using common.Constants.Auth;
 using Common.Models.Approval;
+using Common.Models.Notification;
 using Confluent.Kafka;
 using DomainResults.Common;
 using FluentValidation;
@@ -73,10 +74,8 @@ public class DigitalEvidenceDefence
     IOrgUnitService orgUnitService,
     PidpDbContext context,
         IKafkaProducer<string, EdtDisclosureUserProvisioning> kafkaProducer,
-
     IKafkaProducer<string, ApprovalRequestModel> approvalKafkaProducer,
         IKafkaProducer<string, EdtPersonProvisioningModel> kafkaDefenceCoreProducer,
-
     IKafkaProducer<string, Notification> kafkaNotificationProducer)
         {
             this.clock = clock;
