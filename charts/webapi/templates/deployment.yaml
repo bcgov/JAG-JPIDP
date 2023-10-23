@@ -244,10 +244,20 @@ spec:
             httpGet:
               path: /health/liveness
               port: http
-            timeoutSeconds: 5
+              scheme: HTTP
+            timeoutSeconds: 10
             periodSeconds: 30
             successThreshold: 1
-            failureThreshold: 3
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /health/liveness
+              port: http
+              scheme: HTTP
+            timeoutSeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 15
           startupProbe:
             httpGet:
               path: /health/liveness
