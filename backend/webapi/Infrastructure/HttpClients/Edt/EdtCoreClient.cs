@@ -30,8 +30,10 @@ public class EdtCoreClient : BaseClient, IEdtCoreClient
             // Check for merged participants - if record has a primary ID and is inactive then we need to fetch the primary record
             foreach (var person in result.Value)
             {
+                Serilog.Log.Information($"Checking possible person {person.LastName} {person.Id} for identifier {identifierValue}");
                 if ((bool)!person.IsActive)
                 {
+                    Serilog.Log.Information($"User with identifier {identifierValue} is inactive - checking for PrimaryID for merged participants");
                     var primaryPerson = await this.GetPrimaryPerson(person);
                     if (primaryPerson != null)
                     {
