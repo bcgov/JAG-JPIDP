@@ -13,11 +13,15 @@ public class UserOwnsResourceHandler : AuthorizationHandler<UserOwnsResourceRequ
     {
         if (resource == null)
         {
+
+            Serilog.Log.Warning($"No resource provided to UserOwnsResourceHandler");
             // TODO or error? Re-evaluate if auth gets more complicated.
             return Task.CompletedTask;
         }
 
         var userId = context.User.GetUserId();
+        Serilog.Log.Information($"UserOwnsResourceHandler {userId} - resource {resource.UserId}");
+
         if (userId != Guid.Empty
             && userId == resource.UserId)
         {

@@ -20,7 +20,7 @@ public class OnboardingMonitorJob : IJob
 
     public Task Execute(IJobExecutionContext context)
     {
-        Serilog.Log.Information($"Looking for onboarding issues...");
+        Serilog.Log.Debug($"Looking for onboarding issues...");
 
         this.dbContext.AccessRequests.Include(req => req.Party).Where(req => req.Status != "Complete").ForEachAsync(ar =>
         {
