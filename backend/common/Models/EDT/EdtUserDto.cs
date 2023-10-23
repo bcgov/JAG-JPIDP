@@ -1,4 +1,4 @@
-namespace edt.service.HttpClients.Services.EdtCore;
+namespace Common.Models.EDT;
 using System.Text.Json;
 
 public class EdtUserDto

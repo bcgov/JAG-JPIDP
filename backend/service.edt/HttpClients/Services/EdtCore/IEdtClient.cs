@@ -1,5 +1,6 @@
 namespace edt.service.HttpClients.Services.EdtCore;
 
+using Common.Models.EDT;
 using edt.service.Kafka.Model;
 using edt.service.ServiceEvents.UserAccountModification.Models;
 
@@ -18,6 +19,7 @@ public interface IEdtClient
 
     Task<EdtUserDto?> GetUser(string userKey);
     Task<EdtPersonDto?> GetPerson(string userKey);
+    Task<EdtPersonDto?> GetPersonById(int id);
 
     /// <summary>
     /// Get the version of EDT (also acts as a simple ping test)
@@ -83,4 +85,12 @@ public interface IEdtClient
     /// <param name="user"></param>
     /// <returns></returns>
     Task<UserModificationEvent> EnableTombstoneAccount(EdtUserProvisioningModel value, EdtUserDto user);
+
+    /// <summary>
+    /// Get people with the matching identifier type and value
+    /// </summary>
+    /// <param name="identifierType"></param>
+    /// <param name="identifierValue"></param>
+    /// <returns></returns>
+    Task<List<EdtPersonDto>> GetPersonsByIdentifier(string identifierType, string identifierValue);
 }

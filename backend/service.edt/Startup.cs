@@ -3,35 +3,36 @@ namespace edt.service;
 
 using System.Reflection;
 using System.Text.Json;
+using Azure.Monitor.OpenTelemetry.Exporter;
 using edt.service.Data;
 using edt.service.HttpClients;
+using edt.service.Infrastructure.Auth;
 using edt.service.Infrastructure.Telemetry;
 using edt.service.Kafka;
 using edt.service.ServiceEvents.UserAccountCreation.ConsumerRetry;
 using edt.service.ServiceEvents.UserAccountCreation.Handler;
+using edt.service.ServiceEvents.UserAccountModification.Handler;
+using FluentValidation.AspNetCore;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.OpenApi.Models;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using NodaTime;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
+using NodaTime.Serialization.SystemTextJson;
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Prometheus;
 using Serilog;
 using Swashbuckle.AspNetCore.Filters;
-using Azure.Monitor.OpenTelemetry.Exporter;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
-using Prometheus;
-using MediatR;
-using Microsoft.AspNetCore.Mvc.ApplicationModels;
-using FluentValidation.AspNetCore;
-using NodaTime.Serialization.SystemTextJson;
-using edt.service.ServiceEvents.UserAccountModification.Handler;
-using edt.service.Infrastructure.Auth;
 
 public class Startup
 {
@@ -39,7 +40,7 @@ public class Startup
 
     public Startup(IConfiguration configuration)
     {
-        Configuration = configuration;
+        this.Configuration = configuration;
         StaticConfig = configuration;
     }
 
@@ -124,7 +125,7 @@ public class Startup
 
         services.AddAuthorization(options =>
         {
-            //options.AddPolicy("Administrator", policy => policy.Requirements.Add(new RealmAccessRoleRequirement("administrator")));
+            //   options.AddPolicy("Administrator", policy => policy.Requirements.Add(new RealmAccessRoleRequirement("administrator")));
         });
 
 
@@ -157,6 +158,7 @@ public class Startup
         services.AddHttpClient();
 
         services.AddSingleton<OtelMetrics>();
+        services.AddSingleton<IAuthorizationHandler, RealmAccessRoleHandler>();
 
 
         //services.AddSingleton<ProblemDetailsFactory, UserManagerProblemDetailsFactory>();
@@ -200,7 +202,7 @@ public class Startup
             options.OperationFilter<SecurityRequirementsOperationFilter>();
             options.CustomSchemaIds(x => x.FullName);
         });
-       // services.AddFluentValidationRulesToSwagger();
+        // services.AddFluentValidationRulesToSwagger();
 
         JsonConvert.DefaultSettings = () => new JsonSerializerSettings
         {
@@ -259,7 +261,7 @@ public class Startup
             //    diagnosticContext.Set("User", userId);
             //}
         });
-        app.UseRouting();
+
         app.UseCors("CorsPolicy");
         app.UseMetricServer();
         app.UseHttpMetrics(options =>
@@ -269,6 +271,7 @@ public class Startup
             options.ReduceStatusCodeCardinality();
         });
         app.UseAuthentication();
+        app.UseRouting();
         app.UseAuthorization();
         app.UseEndpoints(endpoints =>
         {

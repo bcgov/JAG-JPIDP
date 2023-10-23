@@ -1,4 +1,4 @@
-namespace edt.service.HttpClients.Services.EdtCore;
+namespace Common.Models.EDT;
 
 using System.Text.Json.Serialization;
 
@@ -13,6 +13,7 @@ public class EdtPersonDto
     public string? Role { get; set; } = "Defence";
     public bool? IsActive { get; set; } = true;
     public List<EdtField> Fields { get; set; } = new List<EdtField>();
+    public List<IdentifierModel> Identifiers { get; set; } = new List<IdentifierModel>();
 
 }
 
@@ -25,8 +26,4 @@ public class EdtPersonAddress
     public string? Phone { get; set; }
 }
 
-public class EdtField
-{
-    public string? Name { get; set; }
-    public string? Value { get; set; }
-}
+

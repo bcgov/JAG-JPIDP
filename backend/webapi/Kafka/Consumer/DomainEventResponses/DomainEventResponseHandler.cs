@@ -3,6 +3,7 @@ namespace Pidp.Kafka.Consumer.Responses;
 using System;
 using System.Collections.Generic;
 using Common.Models.Approval;
+using Common.Models.Notification;
 using Confluent.Kafka;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
