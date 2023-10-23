@@ -205,22 +205,22 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: pidp-edt-service-api
-                  key: url
+                  key: EDTClient__Url
             - name: EDTClient__RealmUrl
               valueFrom:
                 secretKeyRef:
                   name: pidp-edt-service-api
-                  key: realmUrl
+                  key: EDTClient__RealmUrl
             - name: EDTClient__ClientId
               valueFrom:
                 secretKeyRef:
                   name: pidp-edt-service-api
-                  key: clientId
+                  key: EDTClient__ClientId
             - name: EDTClient__ClientSecret
               valueFrom:
                 secretKeyRef:
                   name: pidp-edt-service-api
-                  key: clientSecret
+                  key: EDTClient__ClientSecret
           volumeMounts:
             - name: kafka-truststore
               mountPath: "/opt/kafka/certificates"
