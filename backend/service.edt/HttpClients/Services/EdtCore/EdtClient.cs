@@ -419,7 +419,7 @@ public class EdtClient : BaseClient, IEdtClient
         using (GetUserDuration.NewTimer())
         {
             this.meters.GetPerson();
-            Log.Logger.Information("Checking if person with key {0} already present", id);
+            Log.Logger.Information($"Getting person by id {id}");
             var result = await this.GetAsync<EdtPersonDto?>($"api/v1/org-units/1/persons/{id}");
 
             if (!result.IsSuccess)
