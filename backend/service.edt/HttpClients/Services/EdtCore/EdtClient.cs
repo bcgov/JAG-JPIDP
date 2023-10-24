@@ -562,7 +562,12 @@ public class EdtClient : BaseClient, IEdtClient
 
     }
 
-
+    /// <summary>
+    /// Remove a user from a given group (Region/Agency etc)
+    /// </summary>
+    /// <param name="userIdOrKey"></param>
+    /// <param name="group"></param>
+    /// <returns></returns>
     public async Task<bool> RemoveUserFromGroup(string userIdOrKey, EdtUserGroup group)
     {
         Log.Logger.Information("Removing user {0} from group {1}", userIdOrKey, group.Name);
