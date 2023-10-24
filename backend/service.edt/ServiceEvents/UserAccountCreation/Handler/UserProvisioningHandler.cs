@@ -158,13 +158,16 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
 
                     var domainEvent = result.eventType == UserModificationEvent.UserEvent.EnableTombstone ? "digitalevidence-bcps-usercreation-tombstone-complete" : "digitalevidence-bcps-usercreation-complete";
 
-                    await this.producer.ProduceAsync(this.configuration.KafkaCluster.ProducerTopicName, key: key, new Notification
+
+                    var published = await this.producer.ProduceAsync(this.configuration.KafkaCluster.ProducerTopicName, key: key, new Notification
                     {
                         To = accessRequestModel.Email,
                         DomainEvent = domainEvent,
 
                         EventData = eventData,
                     });
+
+                    Serilog.Log.Information($"Published {domainEvent} to {this.configuration.KafkaCluster.ProducerTopicName} key: {published.Key}");
 
 
                     if (string.IsNullOrEmpty(this.configuration.SchemaRegistry.Url))
@@ -297,7 +300,9 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
             var response = await this.edtClient.EnableTombstoneAccount(value, user);
             if (response.successful)
             {
+
                 TombstoneConversions.Inc();
+
             }
 
             return response;
