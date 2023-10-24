@@ -191,7 +191,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
                     }
                     else
                     {
-                        Serilog.Log.Information("Publishing EDT user modification event {0} {1}", msgKey, accessRequestModel.Key);
+                        Serilog.Log.Information($"Publishing EDT user modification event {result.eventType} {msgKey} {accessRequestModel.Key}");
                         publishResultOk = await producer.ProduceAsync(this.configuration.KafkaCluster.UserModificationTopicName, key: msgKey, result);
 
 

@@ -143,8 +143,8 @@ export class DigitalEvidencePage
         // todo - remove IDIR
         if (idp === IdentityProvider.BCPS || idp === IdentityProvider.IDIR) {
           // if BCPS then get the crown-regions
-          this.formState.DefenceUniqueId.setValidators([]);
-          this.formState.DefenceUniqueId.clearValidators();
+          this.formState.OOCUniqueIdValid.setValidators([]);
+          this.formState.OOCUniqueIdValid.clearValidators();
 
           this.userIsBCPS = true;
           this.userOrgunit

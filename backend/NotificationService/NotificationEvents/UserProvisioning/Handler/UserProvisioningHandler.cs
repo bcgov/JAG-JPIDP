@@ -46,7 +46,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, Notification>
             return Task.CompletedTask;
         }
 
-        Serilog.Log.Information($"Checking if message {key} has already been processed by {consumerName}");
+        Serilog.Log.Information($"Checking if message {key} {value.DomainEvent} has already been processed by {consumerName}");
 
         if (await this.context.HasBeenProcessed(key))
         {
