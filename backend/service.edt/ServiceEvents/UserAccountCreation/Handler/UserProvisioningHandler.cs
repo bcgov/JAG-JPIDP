@@ -26,6 +26,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
     private readonly EdtDataStoreDbContext context;
     private static readonly Counter TombstoneConversions = Metrics.CreateCounter("edt_tombstone_conversion_total", "Number of tombstone accounts activated");
     private static readonly Counter AccountErrorCounter = Metrics.CreateCounter("edt_user_account_error_total", "Errors adding or updating accounts");
+    private static readonly Histogram TombstoneProcessDuration = Metrics.CreateHistogram("edt_tombstone_processing_duration", "Histogram of edt tombstone account activations.");
 
 
     public UserProvisioningHandler(
@@ -296,16 +297,19 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
         // already available to the user. This alleviates the lengthy case assignment process that is required for new JUSTIN users accessing EDT
         if (user != null && !string.IsNullOrEmpty(this.configuration.EdtClient.TombStoneEmailDomain) && (user.Email.EndsWith(this.configuration.EdtClient.TombStoneEmailDomain, StringComparison.OrdinalIgnoreCase) && user.IsActive == false))
         {
-            this.logger.LogUserTombstoneActivation(value.Key, value.AccessRequestId);
-            var response = await this.edtClient.EnableTombstoneAccount(value, user);
-            if (response.successful)
+            using (TombstoneProcessDuration.NewTimer())
             {
+                this.logger.LogUserTombstoneActivation(value.Key, value.AccessRequestId);
+                var response = await this.edtClient.EnableTombstoneAccount(value, user);
+                if (response.successful)
+                {
 
-                TombstoneConversions.Inc();
+                    TombstoneConversions.Inc();
 
+                }
+
+                return response;
             }
-
-            return response;
         }
         else
         {
