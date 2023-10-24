@@ -3,6 +3,7 @@ namespace Pidp;
 using System.Reflection;
 using System.Text.Json;
 using Azure.Monitor.OpenTelemetry.Exporter;
+using Common.Kafka;
 using FluentValidation.AspNetCore;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authorization;
@@ -154,7 +155,7 @@ public class Startup
         services.AddScoped<IUserTypeService, UserTypeService>();
         services.AddScoped<IOrgUnitService, OrgUnitService>();
         services.AddScoped<ICourtAccessService, CourtAccessService>();
-
+        services.AddSingleton(typeof(IKafkaProducer<,>), typeof(KafkaProducer<,>));
 
 
         services.AddHealthChecks()

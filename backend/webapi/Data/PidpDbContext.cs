@@ -2,12 +2,11 @@ namespace Pidp.Data;
 
 using Microsoft.EntityFrameworkCore;
 using NodaTime;
-
 using Pidp.Models;
 using Pidp.Models.Lookups;
 using Pidp.Models.OutBoxEvent;
 using Pidp.Models.ProcessFlow;
-using static Pidp.Models.Lookups.CourtLocation;
+using Pidp.Models.UserInfo;
 
 public class PidpDbContext : DbContext
 {
@@ -25,11 +24,11 @@ public class PidpDbContext : DbContext
     public DbSet<Facility> Facilities { get; set; } = default!;
     public DbSet<FutureUserChangeEvent> FutureUserChangeEvents { get; set; } = default!;
 
-    public DbSet<HcimAccountTransfer> HcimAccountTransfers { get; set; } = default!;
-    public DbSet<HcimEnrolment> HcimEnrolments { get; set; } = default!;
-    public DbSet<DigitalEvidence> DigitalEvidences { get; set; } = default!;
+    public DbSet<Models.HcimAccountTransfer> HcimAccountTransfers { get; set; } = default!;
+    public DbSet<Models.HcimEnrolment> HcimEnrolments { get; set; } = default!;
+    public DbSet<Models.DigitalEvidence> DigitalEvidences { get; set; } = default!;
     public DbSet<DigitalEvidenceDisclosure> DigitalEvidenceDisclosures { get; set; } = default!;
-    public DbSet<DigitalEvidenceDefence> DigitalEvidenceDefences { get; set; } = default!;
+    public DbSet<Models.DigitalEvidenceDefence> DigitalEvidenceDefences { get; set; } = default!;
 
     public DbSet<PartyLicenceDeclaration> PartyLicenceDeclarations { get; set; } = default!;
     public DbSet<Party> Parties { get; set; } = default!;
@@ -50,6 +49,7 @@ public class PidpDbContext : DbContext
     public DbSet<ProcessFlow> ProcessFlows { get; set; } = default!;
     public DbSet<DomainEventProcessStatus> DomainEventProcessStatus { get; set; } = default!;
     public DbSet<DeferredEvent> DeferredEvents { get; set; } = default!;
+    public DbSet<PublicUserValidation> PublicUserValidations { get; set; } = default!;
 
     public override int SaveChanges()
     {
@@ -85,7 +85,7 @@ public class PidpDbContext : DbContext
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(PidpDbContext).Assembly);
 
 
-   
+
     }
 
     public async Task IdempotentConsumer(string messageId, string consumer)

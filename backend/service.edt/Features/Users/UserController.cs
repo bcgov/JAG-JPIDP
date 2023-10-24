@@ -1,13 +1,12 @@
 namespace edt.service.Controllers;
 
+using Common.Models.EDT;
 using edt.service.Features.Users;
-using edt.service.HttpClients.Services.EdtCore;
 using edt.service.Infrastructure.Auth;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Polly;
 
 [Route("api/[controller]")]
 [ApiController]

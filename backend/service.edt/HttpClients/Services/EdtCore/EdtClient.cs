@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Common.Models.EDT;
 using edt.service.Exceptions;
+using edt.service.Features.Person;
 using edt.service.Infrastructure.Telemetry;
 using edt.service.Kafka.Model;
 using edt.service.ServiceEvents.UserAccountModification.Models;
@@ -182,6 +183,29 @@ public class EdtClient : BaseClient, IEdtClient
 
     }
 
+    public async Task<List<EdtPersonDto>> GetPersonsByIdentifier(string identifierType, string identifierValue)
+    {
+        if (string.IsNullOrEmpty(identifierValue) || string.IsNullOrEmpty(identifierType))
+        {
+            throw new EdtServiceException("Invalid request to GetPersonsByIdentifier");
+        }
+
+        var returnPersons = new List<EdtPersonDto>();
+
+        var result = await this.GetAsync<IdentifierResponseModel>($"api/v1/org-units/1/identifiers?filter=IdentifierValue:{identifierValue},IdentifierType:{identifierType},ItemType:Person");
+
+        if (result.IsSuccess)
+        {
+            Log.Information($"Found {result.Value.Total} persons for {identifierValue}");
+            foreach (var identityInfo in result.Value.Items)
+            {
+                returnPersons.Add(await this.GetPersonById(identityInfo.EntityId));
+            }
+        }
+
+        return returnPersons;
+    }
+
     private async Task<bool> AddUserToSubmittingAgencyGroup(EdtUserProvisioningModel accessRequest, string userId)
     {
         if (accessRequest == null)
@@ -278,6 +302,7 @@ public class EdtClient : BaseClient, IEdtClient
 
         return await this.UpdateUser(accessRequest, userDetails, true);
     }
+
 
 
 
@@ -379,8 +404,68 @@ public class EdtClient : BaseClient, IEdtClient
             {
                 return null;
             }
-            return result.Value;
+            var person = result.Value;
+            // get identifiers
+            if (person != null && person.Id > 0)
+            {
+                person.Identifiers = await this.GetPersonIdentifiers(person.Id);
+            }
+            return person;
         }
+    }
+
+    public async Task<EdtPersonDto?> GetPersonById(int id)
+    {
+        using (GetUserDuration.NewTimer())
+        {
+            this.meters.GetPerson();
+            Log.Logger.Information($"Getting person by id {id}");
+            var result = await this.GetAsync<EdtPersonDto?>($"api/v1/org-units/1/persons/{id}");
+
+            if (!result.IsSuccess)
+            {
+                return null;
+            }
+
+            var person = result.Value;
+            // get identifiers
+            if (person != null && person.Id > 0)
+            {
+                var identifiers = await this.GetPersonIdentifiers(person.Id);
+                if (identifiers != null)
+                {
+                    person.Identifiers = identifiers;
+                }
+
+            }
+            return person;
+
+
+        }
+    }
+
+    private async Task<List<IdentifierModel>> GetPersonIdentifiers(int? personID)
+    {
+
+        if (personID <= 0)
+        {
+            Log.Error("Invalid call to GetPersonIdentifiers");
+        }
+
+        Log.Logger.Information($"Getting identifiers for person {personID}");
+        var result = await this.GetAsync<IdentifierResponseModel>($"api/v1/org-units/1/identifiers?filter=itemType:Person,itemId:{personID}");
+
+        if (result.IsSuccess)
+        {
+            return result.Value.Items;
+        }
+        else
+        {
+            Log.Error($"Failed to get person identifiers for {personID}");
+            return new List<IdentifierModel>();
+        }
+
+
     }
 
     public async Task<int> GetOuGroupId(string regionName)
@@ -671,6 +756,8 @@ public class EdtClient : BaseClient, IEdtClient
             return userModificationResponse;
         }
     }
+
+
 
     public class AddUserToOuGroup
     {

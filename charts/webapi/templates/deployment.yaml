@@ -201,6 +201,26 @@ spec:
                   key: SplunkConfig__Host
             - name: JUSTIN_EMAIL_CHANGE_DISABLED
               value: "true"
+            - name: EDTClient__Url
+              valueFrom:
+                secretKeyRef:
+                  name: pidp-edt-service-api
+                  key: EDTClient__Url
+            - name: EDTClient__RealmUrl
+              valueFrom:
+                secretKeyRef:
+                  name: pidp-edt-service-api
+                  key: EDTClient__RealmUrl
+            - name: EDTClient__ClientId
+              valueFrom:
+                secretKeyRef:
+                  name: pidp-edt-service-api
+                  key: EDTClient__ClientId
+            - name: EDTClient__ClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: pidp-edt-service-api
+                  key: EDTClient__ClientSecret
           volumeMounts:
             - name: kafka-truststore
               mountPath: "/opt/kafka/certificates"
@@ -224,10 +244,20 @@ spec:
             httpGet:
               path: /health/liveness
               port: http
-            timeoutSeconds: 5
+              scheme: HTTP
+            timeoutSeconds: 10
             periodSeconds: 30
             successThreshold: 1
-            failureThreshold: 3
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /health/liveness
+              port: http
+              scheme: HTTP
+            timeoutSeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 15
           startupProbe:
             httpGet:
               path: /health/liveness

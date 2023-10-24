@@ -1,6 +1,5 @@
 namespace Pidp.Features.Organization.UserTypeService;
 
-using System.Numerics;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Pidp.Data;
@@ -10,8 +9,10 @@ using Pidp.Models.Lookups;
 
 public class UserTypeService : IUserTypeService
 {
+    private const string PUBLIC_ORG = "Public";
     private readonly PidpDbContext context;
     public string? OrgUserType { get; set; }
+
 
     public UserTypeService(PidpDbContext context) => this.context = context;//this.OrgUserType = orgUserType;
     public async Task<UserTypeModel?> GetOrgUserType(int partyId)
@@ -31,8 +32,21 @@ public class UserTypeService : IUserTypeService
             .Where(p => p.PartyId == partyId)
             .FirstOrDefaultAsync();
 
+        if (orgCode == null)
+        {
+            var party = this.context.Parties.First(p => p.Id == partyId);
+            // this should get updated once we actually know the status of the user based on requests
+            // however there is a current limitation and a user is only in one org :-(
+            Serilog.Log.Information($"Org is null for {partyId} - must be Public user of undetermined type");
+            return new UserTypeModel
+            {
+                ParticipantId = party.Jpdid,
+                OrganizationType = PUBLIC_ORG,
+                OrganizationName = PUBLIC_ORG
+            };
+        }
 
-        Serilog.Log.Information("Org Id {0}", orgCode.Id);
+        Serilog.Log.Information("Org Id {0}", orgCode?.Id);
 
         if (orgCode?.OrganizationCode == OrganizationCode.CorrectionService)
         {
@@ -100,7 +114,7 @@ public class UserTypeService : IUserTypeService
             var query = new Pidp.Features.Lookups.Index.Query();
 
             // create an instance of the QueryHandler class
-            var handler = new Pidp.Features.Lookups.Index.QueryHandler(context);
+            var handler = new Pidp.Features.Lookups.Index.QueryHandler(this.context);
 
             // execute the query and get the result
             var result = handler.HandleAsync(query);

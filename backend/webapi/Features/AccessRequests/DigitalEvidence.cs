@@ -1,22 +1,21 @@
 namespace Pidp.Features.AccessRequests;
 
 using System.Diagnostics;
+using Confluent.Kafka;
 using DomainResults.Common;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using NodaTime;
-
+using OpenTelemetry.Trace;
 using Pidp.Data;
+using Pidp.Features.Organization.OrgUnitService;
+using Pidp.Features.Parties;
 using Pidp.Infrastructure.HttpClients.Keycloak;
 using Pidp.Kafka.Interfaces;
 using Pidp.Models;
 using Pidp.Models.Lookups;
-using OpenTelemetry.Trace;
-using Newtonsoft.Json;
-using Pidp.Features.Parties;
-using Pidp.Features.Organization.OrgUnitService;
-using Confluent.Kafka;
 
 public class DigitalEvidence
 {
@@ -58,7 +57,6 @@ public class DigitalEvidence
         private readonly PidpDbContext context;
         private readonly IOrgUnitService orgUnitService;
         private readonly IKafkaProducer<string, EdtUserProvisioning> kafkaProducer;
-        private readonly IKafkaProducer<string, Notification> kafkaNotificationProducer;
         private readonly string SUBMITTING_AGENCY = "SubmittingAgency";
         private readonly string LAW_SOCIETY = "LawSociety";
 
@@ -70,8 +68,7 @@ public class DigitalEvidence
             PidpConfiguration config,
             IOrgUnitService orgUnitService,
             PidpDbContext context,
-            IKafkaProducer<string, EdtUserProvisioning> kafkaProducer,
-            IKafkaProducer<string, Notification> kafkaNotificationProducer)
+            IKafkaProducer<string, EdtUserProvisioning> kafkaProducer)
         {
             this.clock = clock;
             this.keycloakClient = keycloakClient;
@@ -79,7 +76,6 @@ public class DigitalEvidence
             this.context = context;
             this.kafkaProducer = kafkaProducer;
             this.config = config;
-            this.kafkaNotificationProducer = kafkaNotificationProducer;
             this.orgUnitService = orgUnitService;
         }
 
@@ -117,11 +113,11 @@ public class DigitalEvidence
                     var digitalEvidence = await this.SubmitDigitalEvidenceRequest(command); //save all trx at once for production(remove this and handle using idempotent)
                     var key = Guid.NewGuid().ToString();
 
-                   // var exportedEvent = this.AddOutbox(command, digitalEvidence, dto);
+                    // var exportedEvent = this.AddOutbox(command, digitalEvidence, dto);
 
                     var published = await this.PublishAccessRequest(command, dto, digitalEvidence);
 
-                    if ( published.Status == PersistenceStatus.Persisted)
+                    if (published.Status == PersistenceStatus.Persisted)
                     {
                         await this.context.SaveChangesAsync();
                         await trx.CommitAsync();
@@ -179,7 +175,7 @@ public class DigitalEvidence
                 // create an instance of the QueryHandler class
                 var handler = new CrownRegionQuery.QueryHandler(this.orgUnitService);
 
-                IEnumerable<OrgUnitModel?>? orgUnits = await handler.HandleAsync(query);
+                var orgUnits = await handler.HandleAsync(query);
                 regions = this.ConvertOrgUnitRegions(orgUnits);
 
                 // execute the query and get the result

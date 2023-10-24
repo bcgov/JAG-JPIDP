@@ -41,7 +41,7 @@ dependencies:
     version: "0.1.2"
   - name: webapi
     repository: "file://../webapi"
-    version: "0.1.9"
+    version: "0.1.10"
   - name: edt-service
     repository: "file://../edt-service"
     version: "0.1.3"

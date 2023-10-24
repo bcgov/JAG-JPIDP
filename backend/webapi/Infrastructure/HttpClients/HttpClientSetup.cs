@@ -40,6 +40,13 @@ public static class HttpClientSetup
         services.AddHttpClientWithBaseAddress<ILdapClient, LdapClient>(config.LdapClient.Url);
         services.AddHttpClientWithBaseAddress<IEdtCaseManagementClient, EdtCaseManagementClient>(config.EdtCaseManagementClient.Url);
         services.AddHttpClientWithBaseAddress<IEdtDisclosureClient, EdtDisclosureClient>(config.EdtDisclosureClient.Url);
+        services.AddHttpClientWithBaseAddress<IEdtCoreClient, EdtCoreClient>(config.EdtClient.Url).WithBearerToken(new KeycloakAdministrationClientCredentials
+        {
+            Address = config.EdtClient.RealmUrl,
+            ClientId = config.EdtClient.ClientId,
+            ClientSecret = config.EdtClient.ClientSecret
+        });
+        ;
 
         services.AddHttpClientWithBaseAddress<IJumClient, JumClient>(config.JumClient.Url).WithBearerToken(new KeycloakAdministrationClientCredentials
         {

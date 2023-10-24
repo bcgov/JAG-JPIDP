@@ -24,13 +24,16 @@ export class DigitalEvidencePortalSection
 
   public constructor(
     private profileStatus: ProfileStatus,
-    private router: Router
+    private router: Router,
+
   ) {
     super();
     this.key = 'digitalEvidence';
     this.heading = 'Digital Evidence and Disclosure Management System (DEMS)';
     this.description = this.getDescription();
     this.order = this.GetOrder(this.profileStatus.status.digitalEvidence);
+
+
   }
 
   public get hint(): string {

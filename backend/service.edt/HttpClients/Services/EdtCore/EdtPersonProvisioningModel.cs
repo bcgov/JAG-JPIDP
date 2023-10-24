@@ -1,5 +1,6 @@
 namespace edt.service.HttpClients.Services.EdtCore;
 
+using Common.Models.EDT;
 
 public class EdtPersonProvisioningModel
 {

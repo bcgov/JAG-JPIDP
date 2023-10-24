@@ -1,15 +1,13 @@
 namespace Pidp.Features.Parties;
 
+using System.Security.Claims;
 using FluentValidation;
 using NodaTime;
-using System.Security.Claims;
-
 using Pidp.Data;
 using Pidp.Extensions;
 using Pidp.Infrastructure.Auth;
 using Pidp.Models;
 using Pidp.Models.Lookups;
-using System.Transactions;
 
 public class Create
 {
@@ -88,7 +86,6 @@ public class Create
             {
                 this.RuleFor(x => x.Jpdid).NotEmpty().MatchesUserClaim(user, Claims.PreferredUsername);
                 this.RuleFor(x => x.Birthdate).NotEmpty().Equal(user?.GetBirthdate()).WithMessage($"Must match the \"birthdate\" Claim on the current User");
-                this.RuleFor(x => x.Gender).NotEmpty().Equal(user?.GetGender()).WithMessage($"Must match the \"gender\" Claim on the current User");
             }
         }
         private class BcpsValidator : AbstractValidator<Command>
@@ -124,10 +121,10 @@ public class Create
         {
             public VerifiedCredentialsValidator(ClaimsPrincipal? user, PidpConfiguration config)
             {
-                
+
                 //this.RuleFor(x => x.Jpdid).NotEmpty().MatchesUserClaim(user, Claims.PreferredUsername);
                 //this.RuleFor(x => x.LastName).NotEmpty().MatchesUserClaim(user, Claims.BcPersonFamilyName);
-               // this.RuleFor(x => "PRAC").MatchesUserClaim(user, Claims.MembershipStatusCode);
+                // this.RuleFor(x => "PRAC").MatchesUserClaim(user, Claims.MembershipStatusCode);
                 //this.RuleFor(x => config.VerifiableCredentials.PresentedRequestId).MatchesUserClaim(user, Claims.VerifiedCredPresentedRequestId);
             }
         }
@@ -183,7 +180,7 @@ public class Create
             }
 
 
-            // if this user is a verified user we'll also create the organization entry
+
             if (!(user.GetIdentityProvider().Equals(ClaimValues.Bcps, StringComparison.Ordinal) || user.GetIdentityProvider().Equals(ClaimValues.Idir, StringComparison.Ordinal)))
             {
 
