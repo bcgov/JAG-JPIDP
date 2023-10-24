@@ -98,6 +98,7 @@ public class EdtClient : BaseClient, IEdtClient
         // Get existing groups assigned to user
         var currentlyAssignedGroups = await this.GetAssignedOUGroups(userIdOrKey);
 
+        Log.Information($"User {userIdOrKey} is assigned to {currentlyAssignedGroups.Count} groups");
         foreach (var currentAssignedGroup in currentlyAssignedGroups)
         {
             var assignedRegion = assignedRegions.Find(region => region.RegionName.Equals(currentAssignedGroup.Name))!;
@@ -112,10 +113,15 @@ public class EdtClient : BaseClient, IEdtClient
             }
         }
 
+        if (assignedRegions.Count == 0)
+        {
+            Log.Warning($"User {userIdOrKey} is not assigned to any regions");
+        }
 
         foreach (var region in assignedRegions.Distinct())
         {
 
+            Log.Information($"Handling group {region.RegionName} for user {userIdOrKey}");
             var existingGroup = currentlyAssignedGroups.Find(g => g.Name.Equals(region.RegionName, StringComparison.Ordinal));
 
             if (existingGroup != null)
@@ -552,6 +558,10 @@ public class EdtClient : BaseClient, IEdtClient
         {
             Log.Logger.Error("Failed to remove user {0} from group {1} [{2}]", userIdOrKey, group.Name, string.Join(',', result.Errors));
             return false;
+        }
+        else
+        {
+            Log.Logger.Information($"Removed user {userIdOrKey} from group {group}");
         }
 
         return true;
