@@ -84,6 +84,8 @@ export class LoginPage implements OnInit {
       (agency) => agency.idpHint?.length > 0
     );
     this.submittingAgencies.push(this.governmentAgency);
+
+
   }
 
   public onScrollToAnchor(): void {
@@ -102,6 +104,8 @@ export class LoginPage implements OnInit {
       if (res.length === 0) {
         this.noLoginOptions = true;
       }
+      // set the URL to be the host for multi-domain setup
+      this.config.applicationUrl = window.location.origin;
       return res;
     }), catchError(err => {
 
@@ -208,6 +212,9 @@ export class LoginPage implements OnInit {
       redirectUri:
         this.config.applicationUrl +
         (endorsementToken ? `?endorsement-token=${endorsementToken}` : ''),
-    });
+    }).pipe(tap((res: any) => {
+      debugger;
+      console.log("Login complete %o", res);
+    }));
   }
 }
