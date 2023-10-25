@@ -100,9 +100,7 @@ export class LoginPage implements OnInit {
   }
 
   public getLoginOptions(): Observable<LoginConfigModel[]> {
-    debugger;
-    // set the URL to be the host for multi-domain setup
-    this.config.applicationUrl = window.location.origin;
+
     return this.authConfigService.getLoginOptions().pipe(map((res: LoginConfigModel[]) => {
       if (res.length === 0) {
         this.noLoginOptions = true;
@@ -120,7 +118,6 @@ export class LoginPage implements OnInit {
   }
 
   public getOptions(config: LoginConfigModel): Observable<LoginOptionLookup[]> {
-    console.log("Config %o", config);
     return this.filteredLoginOptions;
   }
 
