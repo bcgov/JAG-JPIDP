@@ -35,8 +35,10 @@ fetch('/assets/environment.json')
 
     // set the URL to be the host for multi-domain setup
     appConfig.applicationUrl = window.location.origin;
+    appConfig.configEndpoint = window.location.origin;
+    appConfig.apiEndpoint = window.location.origin + '/api/v1';
+
     console.log("App config %o", appConfig);
-    debugger;
 
     platformBrowserDynamic([
       {
