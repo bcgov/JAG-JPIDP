@@ -119,8 +119,9 @@ public class CaseAccessRequest
 
         private async Task PublishSubAgencyAccessRequest(PartyDto dto, SubmittingAgencyRequest subAgencyRequest)
         {
-            Serilog.Log.Logger.Information("Publishing Sub Agency Domain Event to topic {0} {1} {2}", this.config.KafkaCluster.CaseAccessRequestTopicName, subAgencyRequest.RequestId, dto.UserId);
-            await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.CaseAccessRequestTopicName, $"{subAgencyRequest.RequestId}", new SubAgencyDomainEvent
+            var msgKey = Guid.NewGuid().ToString();
+            Serilog.Log.Logger.Information("Publishing Sub Agency Domain Event to topic {0} {1} {2}", this.config.KafkaCluster.CaseAccessRequestTopicName, msgKey, subAgencyRequest.RequestId);
+            await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.CaseAccessRequestTopicName, msgKey, new SubAgencyDomainEvent
             {
                 RequestId = subAgencyRequest.RequestId,
                 CaseId = subAgencyRequest.CaseId,

@@ -7,7 +7,6 @@ using edt.disclosure.HttpClients.Services.EdtDisclosure;
 using edt.disclosure.Kafka.Interfaces;
 using edt.disclosure.Models;
 using edt.disclosure.ServiceEvents.CourtLocation.Models;
-using edt.disclosure.ServiceEvents.Models;
 using NodaTime;
 using Prometheus;
 
@@ -25,13 +24,14 @@ public class CourtLocationAccessRequestHandler : IKafkaHandler<string, CourtLoca
     private readonly IKafkaProducer<string, GenericProcessStatusResponse> producer;
     private readonly DisclosureDataStoreDbContext context;
     private static readonly Histogram CourtLocationRequestDuration = Metrics.CreateHistogram("court_location_request_duration", "Histogram of court location request call durations.");
+    private readonly IClock clock;
 
     public CourtLocationAccessRequestHandler(
     EdtDisclosureServiceConfiguration configuration,
     IKeycloakAdministrationClient keycloakAdministrationClient,
     IKafkaProducer<string, GenericProcessStatusResponse> producer,
     DisclosureDataStoreDbContext context,
-
+    IClock clock,
     IEdtDisclosureClient edtClient,
      ILogger logger)
     {
@@ -39,12 +39,22 @@ public class CourtLocationAccessRequestHandler : IKafkaHandler<string, CourtLoca
         this.keycloakAdministrationClient = keycloakAdministrationClient;
         this.logger = logger;
         this.context = context;
+        this.clock = clock;
         this.edtClient = edtClient;
         this.producer = producer;
     }
 
     public async Task<Task> HandleAsync(string consumerName, string key, CourtLocationDomainEvent courtLocationEvent)
     {
+
+        using var trx = this.context.Database.BeginTransaction();
+
+        //check whether this message has been processed before   
+        if (await this.context.HasBeenProcessed(key, consumerName))
+        {
+            await trx.RollbackAsync();
+            return Task.CompletedTask;
+        }
 
         using (CourtLocationRequestDuration.NewTimer())
         {
@@ -98,6 +108,11 @@ public class CourtLocationAccessRequestHandler : IKafkaHandler<string, CourtLoca
                     EventTime = SystemClock.Instance.GetCurrentInstant()
                 });
             }
+
+            //add to tell message has been processed by consumer
+            await this.context.IdempotentConsumer(messageId: key, consumer: consumerName, consumeDate: this.clock.GetCurrentInstant());
+            await this.context.SaveChangesAsync();
+            await trx.CommitAsync();
 
             return Task.CompletedTask;
         }
