@@ -117,41 +117,53 @@ public class EdtClient : BaseClient, IEdtClient
         {
             Log.Warning($"User {userIdOrKey} is not assigned to any regions");
         }
-
-        foreach (var region in assignedRegions.Distinct())
+        else
         {
 
-            Log.Information($"Handling group {region.RegionName} for user {userIdOrKey}");
-            var existingGroup = currentlyAssignedGroups.Find(g => g.Name.Equals(region.RegionName, StringComparison.Ordinal));
+            var regions = assignedRegions.DistinctBy(row => row.RegionName);
 
-            if (existingGroup != null)
+            Log.Information($"Adding user {userIdOrKey} to {regions.Count()} regions");
+
+            if (!regions.Any())
             {
-                Log.Logger.Information("User {0} already assigned to group {1}", userIdOrKey, existingGroup.Name);
+                Log.Warning($"User {userIdOrKey} has no assigned regions");
             }
-            else
+
+            foreach (var region in regions)
             {
 
-                Log.Logger.Information("Adding user {0} to region {1}", userIdOrKey, region);
-                var groupId = await this.GetOuGroupId(region.RegionName!);
-                if (groupId == 0)
+                Log.Information($"Handling group {region.RegionName} for user {userIdOrKey}");
+                var existingGroup = currentlyAssignedGroups.Find(g => g.Name.Equals(region.RegionName, StringComparison.Ordinal));
+
+                if (existingGroup != null)
                 {
-                    Log.Logger.Error("Region not found {0}", region.RegionName);
-                    return false;
+                    Log.Logger.Information("User {0} already assigned to group {1}", userIdOrKey, existingGroup.Name);
                 }
-
-                var result = await this.PostAsync($"api/v1/org-units/1/groups/{groupId}/users", new AddUserToOuGroup() { UserIdOrKey = userIdOrKey });
-
-                if (!result.IsSuccess)
+                else
                 {
-                    var errorString = string.Join(", ", result.Errors);
-                    if (errorString.Contains("already a member"))
+
+                    Log.Logger.Information("Adding user {0} to region {1}", userIdOrKey, region);
+                    var groupId = await this.GetOuGroupId(region.RegionName!);
+                    if (groupId == 0)
                     {
-                        Log.Logger.Information($"User {0} already in region {1}", userIdOrKey, region.RegionName);
-                    }
-                    else
-                    {
-                        Log.Logger.Error("Failed to add user {0} to region {1} due to {2}", userIdOrKey, region, errorString);
+                        Log.Logger.Error("Region not found {0}", region.RegionName);
                         return false;
+                    }
+
+                    var result = await this.PostAsync($"api/v1/org-units/1/groups/{groupId}/users", new AddUserToOuGroup() { UserIdOrKey = userIdOrKey });
+
+                    if (!result.IsSuccess)
+                    {
+                        var errorString = string.Join(", ", result.Errors);
+                        if (errorString.Contains("already a member"))
+                        {
+                            Log.Logger.Information($"User {0} already in region {1}", userIdOrKey, region.RegionName);
+                        }
+                        else
+                        {
+                            Log.Logger.Error("Failed to add user {0} to region {1} due to {2}", userIdOrKey, region, errorString);
+                            return false;
+                        }
                     }
                 }
             }
@@ -332,6 +344,7 @@ public class EdtClient : BaseClient, IEdtClient
 
             if (!result.IsSuccess)
             {
+                Log.Error($"Failed to update EDT user with PUT request {edtUserDto.Key} {string.Join(",", result.Errors)}");
                 userModificationResponse.successful = false;
             }
             //add user to group
@@ -549,7 +562,12 @@ public class EdtClient : BaseClient, IEdtClient
 
     }
 
-
+    /// <summary>
+    /// Remove a user from a given group (Region/Agency etc)
+    /// </summary>
+    /// <param name="userIdOrKey"></param>
+    /// <param name="group"></param>
+    /// <returns></returns>
     public async Task<bool> RemoveUserFromGroup(string userIdOrKey, EdtUserGroup group)
     {
         Log.Logger.Information("Removing user {0} from group {1}", userIdOrKey, group.Name);

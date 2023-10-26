@@ -83,6 +83,7 @@ export class LookupService implements ILookupService {
    * cached version of the lookups.
    */
   public load(): Observable<LookupConfig | null> {
+
     return !this.lookupConfig
       ? this.lookupResource
         .getLookups()
