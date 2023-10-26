@@ -1,5 +1,6 @@
 namespace edt.casemanagement.Data;
 
+using Common.Models;
 using edt.casemanagement.Models;
 using Microsoft.EntityFrameworkCore;
 using NodaTime;
@@ -12,6 +13,7 @@ public class CaseManagementDataStoreDbContext : DbContext
 
     public DbSet<CaseRequest> CaseRequests { get; set; } = default!;
     public DbSet<CaseSearchRequest> CaseSearchRequests { get; set; } = default!;
+    public DbSet<IdempotentConsumer> IdempotentConsumers { get; set; } = default!;
 
 
     public override int SaveChanges()
@@ -61,5 +63,16 @@ public class CaseManagementDataStoreDbContext : DbContext
         }
     }
 
+    public async Task IdempotentConsumer(string messageId, string consumer)
+    {
+        await this.IdempotentConsumers.AddAsync(new IdempotentConsumer
+        {
+            MessageId = messageId,
+            Consumer = consumer,
+        });
+        await this.SaveChangesAsync();
+    }
+
+    public async Task<bool> HasBeenProcessed(string messageId, string consumer) => await this.IdempotentConsumers.AnyAsync(x => x.MessageId == messageId && x.Consumer == consumer);
 
 }
