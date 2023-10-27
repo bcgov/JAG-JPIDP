@@ -226,6 +226,11 @@ spec:
                 secretKeyRef:
                   name: splunk-config
                   key: SplunkConfig__Host
+            - name: KafkaCluster__ProcessResponseTopic
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-disclosure
+                  key: KafkaCluster__ProcessResponseTopic
           volumeMounts:
           - name: truststore
             mountPath: "/opt/kafka/certificates"
