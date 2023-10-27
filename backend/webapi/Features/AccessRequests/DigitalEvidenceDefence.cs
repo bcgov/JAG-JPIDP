@@ -307,11 +307,7 @@ public class DigitalEvidenceDefence
 
         private EdtPersonProvisioningModel GetEdtPersonModel(Command command, PartyDto dto, Models.DigitalEvidenceDefence digitalEvidenceDefence)
         {
-            var field = new EdtField
-            {
-                Name = "PPID",
-                Value = command.ParticipantId
-            };
+
 
             return new EdtPersonProvisioningModel
             {
@@ -320,7 +316,7 @@ public class DigitalEvidenceDefence
                 {
                     Email = dto.Email ?? "Not set"
                 },
-                Fields = new List<EdtField> { field },
+                Fields = new List<EdtField> { },
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
                 Role = "Participant",
@@ -402,7 +398,7 @@ public class DigitalEvidenceDefence
         /// <param name="accessRequests"></param>
         /// <returns></returns>
         /// <exception cref="AccessRequestException"></exception>
-        private async Task<List<DeliveryResult<string, ApprovalRequestModel>>> PublishApprovalRequest(UserRepresentation keycloakUser, Command command, PartyDto dto, List<string> reasonList, List<Models.AccessRequest> accessRequests)
+        private async Task<List<DeliveryResult<string, ApprovalRequestModel>>> PublishApprovalRequest(UserRepresentation keycloakUser, Command command, PartyDto dto, List<string> reasonList, List<AccessRequest> accessRequests)
         {
 
             if (accessRequests == null || accessRequests.Count == 0)
@@ -490,7 +486,7 @@ public class DigitalEvidenceDefence
         private async Task<DigitalEvidenceDisclosure> SubmitDigitalEvidenceDisclosureRequest(Command command)
         {
 
-            var digitalEvidenceDisclosure = new Models.DigitalEvidenceDisclosure
+            var digitalEvidenceDisclosure = new DigitalEvidenceDisclosure
             {
                 PartyId = command.PartyId,
                 Status = AccessRequestStatus.Pending,
