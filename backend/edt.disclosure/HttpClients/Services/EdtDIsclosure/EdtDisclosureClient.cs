@@ -127,16 +127,33 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         }
         else
         {
-            Log.Information($"Adding user {user.Id} to court location {courtLocation.Id}");
-            var addedOk = await this.AddUserToCase(user.Id, courtLocation.Id, "Reviewers");
-            if (addedOk)
+            if (accessRequest.EventType.Equals(CourtLocationEventType.Decommission))
             {
-                Log.Information($"Added user {user.Id} to court location {courtLocation.Id}");
+                Log.Information($"Removing user {user.Id} from court location {courtLocation.Id} {courtLocation.Key}");
+                var removed = await this.RemoveUserFromCase(user.Id, courtLocation.Id);
+                if (removed)
+                {
+                    Log.Information($"Removed user {user.Id} from court location {courtLocation.Id} {courtLocation.Key}");
+                }
+                else
+                {
+                    Log.Error($"Failed to remove user {user.Id} from court location {courtLocation.Id} {courtLocation.Key}");
+
+                }
             }
             else
             {
-                Log.Error($"Failed to add user {user.Id} to court location {courtLocation.Id}");
+                Log.Information($"Adding user {user.Id} to court location {courtLocation.Id} {courtLocation.Key}");
+                var addedOk = await this.AddUserToCase(user.Id, courtLocation.Id, "Reviewers");
+                if (addedOk)
+                {
+                    Log.Information($"Added user {user.Id} to court location {courtLocation.Id} {courtLocation.Key}");
+                }
+                else
+                {
+                    Log.Error($"Failed to add user {user.Id} to court location {courtLocation.Id} {courtLocation.Key}");
 
+                }
             }
 
         }

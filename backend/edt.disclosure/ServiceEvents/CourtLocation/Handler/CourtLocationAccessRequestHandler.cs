@@ -70,11 +70,11 @@ public class CourtLocationAccessRequestHandler : IKafkaHandler<string, CourtLoca
 
                 var result = await this.edtClient.HandleCourtLocationRequest(uniqueKey, courtLocationEvent);
 
-                Serilog.Log.Information($"Publishing court location response for {courtLocationEvent.RequestId} {courtLocationEvent.Username} result: {result}");
+                Serilog.Log.Information($"Publishing court location response for {courtLocationEvent.RequestId} {courtLocationEvent.Username} success: {result.IsCompletedSuccessfully}");
 
                 if (result.IsCompletedSuccessfully)
                 {
-                    var produced = this.producer.ProduceAsync(this.configuration.KafkaCluster.ProcessResponseTopic, processResponseKey, new GenericProcessStatusResponse
+                    var produced = await this.producer.ProduceAsync(this.configuration.KafkaCluster.ProcessResponseTopic, processResponseKey, new GenericProcessStatusResponse
                     {
                         DomainEvent = courtLocationEvent.EventType == "court-location-provision" ? "digitalevidence-court-location-provision-complete" : "digitalevidence-court-location-decommission-complete",
                         PartId = courtLocationEvent.Username,
@@ -82,10 +82,20 @@ public class CourtLocationAccessRequestHandler : IKafkaHandler<string, CourtLoca
                         Status = courtLocationEvent.EventType == "court-location-provision" ? "Complete" : "Deleted",
                         EventTime = SystemClock.Instance.GetCurrentInstant()
                     });
+
+                    if (produced.Status == Confluent.Kafka.PersistenceStatus.Persisted)
+                    {
+                        Serilog.Log.Information($"{processResponseKey} msg published to {this.configuration.KafkaCluster.ProcessResponseTopic}");
+                    }
+                    else
+                    {
+                        Serilog.Log.Error($"{processResponseKey} msg publish failed to {this.configuration.KafkaCluster.ProcessResponseTopic}");
+                    }
+
                 }
                 else
                 {
-                    var produced = this.producer.ProduceAsync(this.configuration.KafkaCluster.ProcessResponseTopic, processResponseKey, new GenericProcessStatusResponse
+                    var produced = await this.producer.ProduceAsync(this.configuration.KafkaCluster.ProcessResponseTopic, processResponseKey, new GenericProcessStatusResponse
                     {
                         DomainEvent = courtLocationEvent.EventType == "court-location-provision" ? "digitalevidence-court-location-provision-error" : "digitalevidence-court-location-decommission-error",
                         PartId = courtLocationEvent.Username,
@@ -94,11 +104,20 @@ public class CourtLocationAccessRequestHandler : IKafkaHandler<string, CourtLoca
                         ErrorList = new List<string> { result.Exception.Message },
                         EventTime = SystemClock.Instance.GetCurrentInstant()
                     });
+
+                    if (produced.Status == Confluent.Kafka.PersistenceStatus.Persisted)
+                    {
+                        Serilog.Log.Information($"{processResponseKey} msg published to {this.configuration.KafkaCluster.ProcessResponseTopic}");
+                    }
+                    else
+                    {
+                        Serilog.Log.Error($"{processResponseKey} msg publish failed to {this.configuration.KafkaCluster.ProcessResponseTopic}");
+                    }
                 }
             }
             catch (Exception ex)
             {
-                var produced = this.producer.ProduceAsync(this.configuration.KafkaCluster.ProcessResponseTopic, processResponseKey, new GenericProcessStatusResponse
+                var produced = await this.producer.ProduceAsync(this.configuration.KafkaCluster.ProcessResponseTopic, processResponseKey, new GenericProcessStatusResponse
                 {
                     DomainEvent = courtLocationEvent.EventType == "court-location-provision" ? "digitalevidence-court-location-provision-error" : "digitalevidence-court-location-decommission-error",
                     PartId = courtLocationEvent.Username,
@@ -107,6 +126,15 @@ public class CourtLocationAccessRequestHandler : IKafkaHandler<string, CourtLoca
                     ErrorList = new List<string> { ex.Message },
                     EventTime = SystemClock.Instance.GetCurrentInstant()
                 });
+
+                if (produced.Status == Confluent.Kafka.PersistenceStatus.Persisted)
+                {
+                    Serilog.Log.Information($"{processResponseKey} msg published to {this.configuration.KafkaCluster.ProcessResponseTopic}");
+                }
+                else
+                {
+                    Serilog.Log.Error($"{processResponseKey} msg publish failed to {this.configuration.KafkaCluster.ProcessResponseTopic}");
+                }
             }
 
             //add to tell message has been processed by consumer

@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Newtonsoft.Json;
 using NodaTime;
 using Pidp.Data;
@@ -69,7 +68,6 @@ public class CourtAccessService : ICourtAccessService
                 var response = await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.CourtLocationAccessRequestTopic, messageKey.ToString(), courtLocationDomainEvent);
                 Serilog.Log.Information($"Sent {request.RequestId} to topic {this.config.KafkaCluster.CourtLocationAccessRequestTopic} Part: {response.Partition.Value} Key: {messageKey}");
 
-                await this.context.SaveChangesAsync();
 
             }
             catch (Exception ex)
