@@ -965,6 +965,12 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         {
             var groupId = await this.GetOuGroupId(groupName!);
 
+            if (groupId <= 0)
+            {
+                Log.Logger.Error("Failed to add user {0} to group {1} - group not found", userId, groupName);
+                return false;
+            }
+
             // see if user already in group
 
 
