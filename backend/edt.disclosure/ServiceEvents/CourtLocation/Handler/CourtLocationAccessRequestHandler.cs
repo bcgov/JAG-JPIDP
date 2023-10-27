@@ -70,7 +70,7 @@ public class CourtLocationAccessRequestHandler : IKafkaHandler<string, CourtLoca
 
                 var result = await this.edtClient.HandleCourtLocationRequest(uniqueKey, courtLocationEvent);
 
-                Serilog.Log.Information($"Publishing court location response for {courtLocationEvent.RequestId} {courtLocationEvent.Username} result: {result}");
+                Serilog.Log.Information($"Publishing court location response for {courtLocationEvent.RequestId} {courtLocationEvent.Username} success: {result.IsCompletedSuccessfully}");
 
                 if (result.IsCompletedSuccessfully)
                 {
