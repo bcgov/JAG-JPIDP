@@ -19,7 +19,6 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
     private readonly IMapper mapper;
     private readonly OtelMetrics meters;
     private readonly EdtDisclosureServiceConfiguration configuration;
-    private const string CounselGroup = "Counsel";
     private static readonly Counter ProcessedJobCount = Metrics
         .CreateCounter("disclosure_case_search_total", "Number of disclosure case search requests.");
     private static readonly Histogram AccountCreationDuration = Metrics.CreateHistogram("edt_disclosure_account_creation_duration", "Histogram of edt disclosure account creations.");
@@ -255,15 +254,15 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             if (newUser != null)
             {
 
-                var groupAddResponse = await this.AddUserToOUGroup(newUser.Id, CounselGroup);
+                var groupAddResponse = await this.AddUserToOUGroup(newUser.Id, this.configuration.EdtClient.CounselGroup);
                 if (!groupAddResponse)
                 {
                     userModificationResponse.successful = false;
-                    userModificationResponse.Errors.Add($"Failed to add user to group {CounselGroup}");
+                    userModificationResponse.Errors.Add($"Failed to add user to group {this.configuration.EdtClient.CounselGroup}");
                 }
                 else
                 {
-                    Log.Information($"User {newUser.Id} added to {CounselGroup} in EDT");
+                    Log.Information($"User {newUser.Id} added to {this.configuration.EdtClient.CounselGroup} in EDT");
                 }
 
                 //// add user to their folio folder
@@ -342,22 +341,22 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             // check user has folio and is associated
             var groups = await this.GetUserOUGroups(currentUser.Id);
 
-            var inGroup = groups.FirstOrDefault(group => group.Name.Equals(CounselGroup, StringComparison.OrdinalIgnoreCase));
+            var inGroup = groups.FirstOrDefault(group => group.Name.Equals(this.configuration.EdtClient.CounselGroup, StringComparison.OrdinalIgnoreCase));
 
             if (inGroup == null)
             {
-                Log.Information($"User {currentUser.Id} not currently in {CounselGroup} - adding");
-                var addedToGroup = await this.AddUserToOUGroup(currentUser.Id, CounselGroup);
+                Log.Information($"User {currentUser.Id} not currently in {this.configuration.EdtClient.CounselGroup} - adding");
+                var addedToGroup = await this.AddUserToOUGroup(currentUser.Id, this.configuration.EdtClient.CounselGroup);
 
                 if (addedToGroup)
                 {
-                    Log.Information($"Added user {currentUser.Id} to group {CounselGroup}");
+                    Log.Information($"Added user {currentUser.Id} to group {this.configuration.EdtClient.CounselGroup}");
                 }
                 else
                 {
-                    Log.Warning($"Failed to add user {currentUser.Id} to group {CounselGroup}");
+                    Log.Warning($"Failed to add user {currentUser.Id} to group {this.configuration.EdtClient.CounselGroup}");
                     userModificationResponse.successful = false;
-                    userModificationResponse.Errors.Add($"Failed to add user {currentUser.Id} to group {CounselGroup}");
+                    userModificationResponse.Errors.Add($"Failed to add user {currentUser.Id} to group {this.configuration.EdtClient.CounselGroup}");
                 }
             }
 

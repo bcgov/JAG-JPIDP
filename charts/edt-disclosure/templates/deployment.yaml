@@ -231,6 +231,11 @@ spec:
                 secretKeyRef:
                   name: kafkaconfig-disclosure
                   key: KafkaCluster__ProcessResponseTopic
+            - name: EdtClient__CounselGroup
+              valueFrom:
+                secretKeyRef:
+                  name: edt-disclosure-client
+                  key: EdtClient__CounselGroup
           volumeMounts:
           - name: truststore
             mountPath: "/opt/kafka/certificates"
