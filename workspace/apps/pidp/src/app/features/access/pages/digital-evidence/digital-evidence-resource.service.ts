@@ -74,13 +74,36 @@ export class DigitalEvidenceResource {
       );
   }
 
+  public requestDisclosureAccess(
+    partyId: number,
+    participantId: DemsAccount,
+    keyData: DemsAccount,
+  ): NoContent {
+    return this.apiResource
+      .post<NoContent>('access-requests/digital-evidence-disclosure', {
+        partyId,
+        participantId,
+        keyData
+      })
+      .pipe(
+        NoContentResponse,
+        catchError((error: HttpErrorResponse) => {
+          if (error.status === HttpStatusCode.BadRequest) {
+            return of(void 0);
+          }
+
+          return throwError(() => error);
+        })
+      );
+  }
+
   public requestAccess(
     partyId: number,
     organizationType: DemsAccount,
     organizationName: DemsAccount,
     participantId: DemsAccount,
     assignedRegions: DemsAccount,
-    keyData: DemsAccount,
+
   ): NoContent {
     return this.apiResource
       .post<NoContent>('access-requests/digital-evidence', {
@@ -89,7 +112,7 @@ export class DigitalEvidenceResource {
         organizationName,
         participantId,
         assignedRegions,
-        keyData
+
       })
       .pipe(
         NoContentResponse,
