@@ -64,7 +64,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
             case "digitalevidence-defence-personcreation-complete":
             case "digitalevidence-defence-personcreation-error":
             {
-                Serilog.Log.Information($"Handling {value.DomainEvent} for JustinUserChange {value.Id}");
+                Serilog.Log.Information($"Handling {value.DomainEvent} for Id {value.Id}");
                 // todo - this should move to a generic service
                 await this.MarkDefenceProcessComplete(value);
                 break;
@@ -233,6 +233,27 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
             {
                 disclosureUserAdded = request.Status.Equals("Complete");
             }
+        }
+
+        if (accessRequest.Status == "Error")
+        {
+            var messageKey = Guid.NewGuid().ToString();
+            var duration = accessRequest.Modified - processResponse.EventTime;
+
+            var eventData = new Dictionary<string, string>
+                    {
+                        { "FirstName", accessRequest.Party!.FirstName },
+                        { "PartyId", "" + accessRequest.Party.Id },
+                        {  "Errors", accessRequest.Details },
+                        { "Duration (s)","" + duration.TotalSeconds }
+
+                    };
+            var published = await this.notificationProducer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopicName, messageKey, new Notification
+            {
+                DomainEvent = "digitalevidence-bclaw-usercreation-error",
+                To = accessRequest.Party!.Email,
+                EventData = eventData
+            });
         }
 
         if (disclosureUserAdded && corePersonAdded)
