@@ -1,5 +1,7 @@
 namespace edt.disclosure.ServiceEvents;
 
+using System.Diagnostics;
+using System.Globalization;
 using Confluent.Kafka;
 using edt.disclosure.Infrastructure.Telemetry;
 using edt.disclosure.Kafka.Interfaces;
@@ -7,8 +9,6 @@ using EdtDisclosureService.Kafka;
 using IdentityModel.Client;
 using OpenTelemetry.Context.Propagation;
 using Serilog;
-using System.Diagnostics;
-using System.Globalization;
 
 public class KafkaProducer<TKey, TValue> : IDisposable, IKafkaProducer<TKey, TValue> where TValue : class
 {
@@ -41,7 +41,7 @@ public class KafkaProducer<TKey, TValue> : IDisposable, IKafkaProducer<TKey, TVa
             currentActivity?.SetTag("kafka.key", key);
 
             var response = await this.producer.ProduceAsync(topic, message);
-            Log.Information($"Producer response {response}");
+            Log.Information($"Producer response {response.Status} {response.Topic}");
             return response;
         }
         finally

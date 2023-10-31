@@ -44,6 +44,12 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
     {
         Serilog.Log.Information($"Process response received {key} for {value.Id} {value.DomainEvent}");
 
+        //check whether this message has been processed before   
+        if (await this.context.HasBeenProcessed(key, consumerName))
+        {
+            return Task.CompletedTask;
+        }
+
         // ideally there'd be a single process response service that can handle all processing responses
         // and these would be in a separate Db for tracking processes.
 
@@ -105,6 +111,10 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
                 break;
             }
         }
+
+        //add to tell message has been processed by consumer
+        await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
+        await this.context.SaveChangesAsync();
 
         return Task.CompletedTask;
 

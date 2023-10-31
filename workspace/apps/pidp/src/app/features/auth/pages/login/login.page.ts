@@ -84,6 +84,8 @@ export class LoginPage implements OnInit {
       (agency) => agency.idpHint?.length > 0
     );
     this.submittingAgencies.push(this.governmentAgency);
+
+
   }
 
   public onScrollToAnchor(): void {
@@ -98,10 +100,12 @@ export class LoginPage implements OnInit {
   }
 
   public getLoginOptions(): Observable<LoginConfigModel[]> {
+
     return this.authConfigService.getLoginOptions().pipe(map((res: LoginConfigModel[]) => {
       if (res.length === 0) {
         this.noLoginOptions = true;
       }
+
       return res;
     }), catchError(err => {
 
@@ -114,7 +118,6 @@ export class LoginPage implements OnInit {
   }
 
   public getOptions(config: LoginConfigModel): Observable<LoginOptionLookup[]> {
-    console.log("Config %o", config);
     return this.filteredLoginOptions;
   }
 
@@ -208,6 +211,9 @@ export class LoginPage implements OnInit {
       redirectUri:
         this.config.applicationUrl +
         (endorsementToken ? `?endorsement-token=${endorsementToken}` : ''),
-    });
+    }).pipe(tap((res: any) => {
+      debugger;
+      console.log("Login complete %o", res);
+    }));
   }
 }

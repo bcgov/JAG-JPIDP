@@ -21,6 +21,7 @@ fetch('/assets/environment.json')
       appConfig.keycloakConfig.config = keycloakConfig.config;
     }
 
+
     return appConfig;
   })
   .catch((err) => {
@@ -36,11 +37,9 @@ fetch('/assets/environment.json')
     console.log("Window locations %o", window.location);
     console.log("App config %o", appConfig);
 
-    if (environment.production) {
-      appConfig.applicationUrl = window.location.origin;
-      appConfig.configEndpoint = window.location.origin;
-      appConfig.apiEndpoint = window.location.origin + '/api/v1';
-    }
+    appConfig.applicationUrl = window.location.origin;
+    appConfig.configEndpoint = window.location.origin;
+    appConfig.apiEndpoint = window.location.origin + '/api/v1';
 
     console.log("App config %o", appConfig);
 

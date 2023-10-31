@@ -1,8 +1,4 @@
 namespace edt.service.ServiceEvents.UserAccountModification.Handler;
-
-using System.Diagnostics.Eventing.Reader;
-using System.Text;
-using System.Threading.Channels;
 using edt.service.Data;
 using edt.service.Exceptions;
 using edt.service.HttpClients.Services.EdtCore;
@@ -22,7 +18,6 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
     private readonly IEdtClient edtClient;
     private readonly ILogger logger;
     private readonly EdtDataStoreDbContext context;
-
 
 
     public IncomingUserChangeModificationHandler(
@@ -47,6 +42,10 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
 
         Serilog.Log.Information($"Message {key} received on topic {consumerName} for {incomingUserModification.UserID} {incomingUserModification.Key}");
 
+        if (await this.context.HasBeenProcessed(key, consumerName))
+        {
+            return Task.CompletedTask;
+        }
 
         if (incomingUserModification.IdpType == "verified")
         {
@@ -57,6 +56,9 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
         {
             return await this.HandleBCPSUserChange(consumerName, key, incomingUserModification);
         }
+
+        await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
+        await this.context.SaveChangesAsync();
 
         return Task.CompletedTask;
 
@@ -154,7 +156,7 @@ public class IncomingUserChangeModificationHandler : IKafkaHandler<string, Incom
 
                 var changesMade = await this.edtClient.UpdateUserAssignedGroups(incomingUserModification.Key, newRegions, removedRegions);
 
-               
+
             }
         }
 

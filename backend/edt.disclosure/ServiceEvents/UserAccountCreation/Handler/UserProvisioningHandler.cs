@@ -10,8 +10,6 @@ using edt.disclosure.Kafka.Interfaces;
 using edt.disclosure.Kafka.Model;
 using edt.disclosure.Models;
 using edt.disclosure.ServiceEvents.UserAccountCreation.Models;
-using Google.Protobuf.WellKnownTypes;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.Extensions.Logging;
 using NodaTime;
 
@@ -92,7 +90,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
             if (result.successful)
             {
                 //add to tell message has been processed by consumer
-                await this.context.IdempotentConsumer(messageId: key, consumer: consumerName, consumeDate: clock.GetCurrentInstant());
+                await this.context.IdempotentConsumer(messageId: key, consumer: consumerName, consumeDate: this.clock.GetCurrentInstant());
 
                 await this.context.SaveChangesAsync();
 
@@ -107,7 +105,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
                     Serilog.Log.Information($"User with key {accessRequestModel.Key} does not currently have a folio - adding folio");
                     var folio = await this.CreateUserFolio(accessRequestModel);
                     var linked = await this.LinkUserToFolio(accessRequestModel, folio.Id);
-                    processResponseData.Add("caseID", ""+ folio.Id);
+                    processResponseData.Add("caseID", "" + folio.Id);
 
                 }
                 else
@@ -130,11 +128,10 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
                         { "MessageId", key! }
                          };
 
-          
-                    
 
                     // send a response that the process is complete
-                    var sentStatus = this.processResponseProducer.ProduceAsync(this.configuration.KafkaCluster.ProcessResponseTopic, Guid.NewGuid().ToString(), new GenericProcessStatusResponse
+                    var msgKey = Guid.NewGuid().ToString();
+                    var sentStatus = await this.processResponseProducer.ProduceAsync(this.configuration.KafkaCluster.ProcessResponseTopic, msgKey, new GenericProcessStatusResponse
                     {
                         DomainEvent = (result.eventType == UserModificationEvent.UserEvent.Create) ? "digitalevidencedisclosure-defence-usercreation-complete" : "digitalevidencedisclosure-defence-usermodification-complete",
                         Id = accessRequestModel.AccessRequestId,
@@ -144,8 +141,19 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
                         TraceId = key
                     });
 
-                    await trx.CommitAsync();
-                    Serilog.Log.Information($"User {result.partId} provision event published to {this.configuration.KafkaCluster.AckTopicName}");
+                    if (sentStatus.Status == Confluent.Kafka.PersistenceStatus.Persisted)
+                    {
+                        Serilog.Log.Information($"{msgKey} successfully published to {this.configuration.KafkaCluster.ProcessResponseTopic} part {sentStatus.Partition.Value}");
+                        await trx.CommitAsync();
+
+                    }
+                    else
+                    {
+                        Serilog.Log.Error($"Failed to published {msgKey} to {this.configuration.KafkaCluster.ProcessResponseTopic}");
+
+                    }
+
+
 
                 }
                 catch (Exception ex)
@@ -197,7 +205,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
             Description = "Folio Case for Defence Counsel",
             Key = accessRequestModel.Key,
             TemplateCase = (this.configuration.EdtClient.DefenceFolioTemplateId < 0 && !string.IsNullOrEmpty(this.configuration.EdtClient.DefenceFolioTemplateName)) ? this.configuration.EdtClient.DefenceFolioTemplateName : null,
-            TemplateCaseId = (this.configuration.EdtClient.DefenceFolioTemplateId > -1 ) ? this.configuration.EdtClient.DefenceFolioTemplateId.ToString() : null,
+            TemplateCaseId = (this.configuration.EdtClient.DefenceFolioTemplateId > -1) ? this.configuration.EdtClient.DefenceFolioTemplateId.ToString() : null,
 
         };
 
