@@ -16,7 +16,7 @@ dependencies:
   version: 0.1.0
 - name: edt-disclosure
   repository: file://../edt-disclosure
-  version: 0.2.0
+  version: 0.3.0
 - name: approvalflow
   repository: file://../approvalflow
   version: 0.1.0
@@ -32,5 +32,5 @@ dependencies:
 - name: nginx
   repository: file://../nginx
   version: 9.7.3
-digest: sha256:5989bf7f4a50a8b926b3ae890cdef8d2f8ff14dc8a4ada4db1c1cde1edcdd04f
-generated: "2023-10-27T12:26:37.2547689-07:00"
+digest: sha256:09e6a7693d3b444c85b181d10de3b4a321ea744a9ecd833d180149c495408035
+generated: "2023-10-31T13:56:44.116057-07:00"
