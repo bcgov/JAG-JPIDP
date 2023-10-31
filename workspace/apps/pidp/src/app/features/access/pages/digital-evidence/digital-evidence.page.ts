@@ -18,6 +18,7 @@ import { AuthorizedUserService } from '@app/features/auth/services/authorized-us
 import { StatusCode } from '@app/features/portal/enums/status-code.enum';
 
 import { FormUtilsService } from '@core/services/form-utils.service';
+import { MatExpansionModule } from '@angular/material/expansion';
 
 import { PartyUserTypeResource } from '../../../../features/admin/shared/usertype-resource.service';
 import { OrganizationUserType } from '../../../../features/admin/shared/usertype-service.model';
@@ -35,13 +36,14 @@ import {
   selector: 'app-digital-evidence',
   templateUrl: './digital-evidence.page.html',
   styleUrls: ['./digital-evidence.page.scss'],
+
 })
 export class DigitalEvidencePage
   extends AbstractFormPage<DigitalEvidenceFormState>
   implements OnInit {
   public formState: DigitalEvidenceFormState;
   public title: string;
-
+  public panelOpenState = false;
   public organizationType: OrganizationUserType;
   public assignedRegions: AssignedRegion[] = [];
   public digitalEvidenceUrl: string;
@@ -190,7 +192,28 @@ export class DigitalEvidencePage
   protected performSubmission(): Observable<void> {
     const partyId = this.partyService.partyId;
 
-    if (this.selectedOption == 1) {
+    if (this.userIsPublic) {
+      return partyId && this.formState.json
+        ? this.resource.requestDisclosureAccess(
+          partyId,
+          this.formState.ParticipantId.value,
+          this.formState.OOCUniqueIdValid?.value,
+        ) : EMPTY;
+    } else {
+
+      if (this.selectedOption == 1) {
+        return partyId && this.formState.json
+          ? this.resource.requestAccess(
+            partyId,
+            this.formState.OrganizationType.value,
+            this.formState.OrganizationName.value,
+            this.formState.ParticipantId.value,
+            this.formState.AssignedRegions?.value || [],
+
+          )
+          : EMPTY;
+      }
+
       return partyId && this.formState.json
         ? this.resource.requestAccess(
           partyId,
@@ -198,23 +221,10 @@ export class DigitalEvidencePage
           this.formState.OrganizationName.value,
           this.formState.ParticipantId.value,
           this.formState.AssignedRegions?.value || [],
-          this.formState.OOCUniqueIdValid?.value || null,
 
         )
         : EMPTY;
     }
-
-    return partyId && this.formState.json
-      ? this.resource.requestAccess(
-        partyId,
-        this.formState.OrganizationType.value,
-        this.formState.OrganizationName.value,
-        this.formState.ParticipantId.value,
-        this.formState.AssignedRegions?.value || [],
-        this.formState.OOCUniqueId?.value || null,
-
-      )
-      : EMPTY;
   }
   public showFormControl(formControlName: string): boolean {
     return this.formControlNames.includes(formControlName);
@@ -279,35 +289,30 @@ export class DigitalEvidencePage
   }
 
   public onRequestAccess(): void {
-    if (this.userIsLawyer) {
+    if (this.userIsPublic) {
       this.resource
-        .requestDefenceCounselAccess(
+        .requestDisclosureAccess(
           this.partyService.partyId,
-          this.formState.OrganizationType.value,
-          this.formState.OrganizationName.value,
-          this.formState.ParticipantId.value
-        )
-        .pipe(
-          tap(() => (this.pending = true)),
-          catchError((error: HttpErrorResponse) => {
-            if (error.status === HttpStatusCode.NotFound) {
-              this.navigateToRoot();
-            }
-            this.accessRequestFailed = true;
-            return of(noop());
-          })
-        )
+          this.formState.ParticipantId.value,
+          this.formState.OOCUniqueId.value).pipe(
+            tap(() => (this.pending = true)),
+            catchError((error: HttpErrorResponse) => {
+              if (error.status === HttpStatusCode.NotFound) {
+                this.navigateToRoot();
+              }
+              this.accessRequestFailed = true;
+              return of(noop());
+            })
+          )
         .subscribe();
-    } else {
-      if (this.selectedOption == 1) {
+    } else
+      if (this.userIsLawyer) {
         this.resource
-          .requestAccess(
+          .requestDefenceCounselAccess(
             this.partyService.partyId,
             this.formState.OrganizationType.value,
             this.formState.OrganizationName.value,
-            this.formState.ParticipantId.value,
-            this.formState.AssignedRegions?.value || [],
-            this.formState.OOCUniqueId?.value || null,
+            this.formState.ParticipantId.value
           )
           .pipe(
             tap(() => (this.pending = true)),
@@ -321,29 +326,48 @@ export class DigitalEvidencePage
           )
           .subscribe();
       } else {
-        this.resource
-          .requestAccess(
-            this.partyService.partyId,
-            this.formState.OrganizationType.value,
-            this.formState.OrganizationName.value,
-            this.formState.ParticipantId.value,
-            this.formState.AssignedRegions?.value || [],
-            this.formState.OOCUniqueId?.value || null,
-
-          )
-          .pipe(
-            tap(() => (this.pending = true)),
-            catchError((error: HttpErrorResponse) => {
-              if (error.status === HttpStatusCode.NotFound) {
-                this.navigateToRoot();
-              }
-              this.accessRequestFailed = true;
-              return of(noop());
-            })
-          )
-          .subscribe();
+        if (this.selectedOption == 1) {
+          this.resource
+            .requestAccess(
+              this.partyService.partyId,
+              this.formState.OrganizationType.value,
+              this.formState.OrganizationName.value,
+              this.formState.ParticipantId.value,
+              this.formState.AssignedRegions?.value || []
+            )
+            .pipe(
+              tap(() => (this.pending = true)),
+              catchError((error: HttpErrorResponse) => {
+                if (error.status === HttpStatusCode.NotFound) {
+                  this.navigateToRoot();
+                }
+                this.accessRequestFailed = true;
+                return of(noop());
+              })
+            )
+            .subscribe();
+        } else {
+          this.resource
+            .requestAccess(
+              this.partyService.partyId,
+              this.formState.OrganizationType.value,
+              this.formState.OrganizationName.value,
+              this.formState.ParticipantId.value,
+              this.formState.AssignedRegions?.value || []
+            )
+            .pipe(
+              tap(() => (this.pending = true)),
+              catchError((error: HttpErrorResponse) => {
+                if (error.status === HttpStatusCode.NotFound) {
+                  this.navigateToRoot();
+                }
+                this.accessRequestFailed = true;
+                return of(noop());
+              })
+            )
+            .subscribe();
+        }
       }
-    }
   }
 
   public ngOnInit(): void {
