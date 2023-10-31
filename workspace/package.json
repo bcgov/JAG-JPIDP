@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "license": "MIT",
   "scripts": {
-    "start": "nx serve",
+    "start": "nx serve --disable-host-check",
     "build": "nx build",
     "test": "nx test",
     "test:ci": "nx test --ci --reporters=default --reporters=jest-Junit",
@@ -24,7 +24,7 @@
     "@angular/platform-browser": "^13.0.0",
     "@angular/platform-browser-dynamic": "^13.0.0",
     "@angular/router": "^13.0.0",
-    "@auth0/angular-jwt": "^5.0.2",
+    "@auth0/angular-jwt": "5.1.2",
     "@bcgov/bc-sans": "bcgov/bc-sans",
     "@ngneat/until-destroy": "^9.0.0",
     "bootstrap": "5.3.0",
