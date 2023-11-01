@@ -494,6 +494,7 @@ public class EdtClient : BaseClient, IEdtClient
         // get the edt user
 
         var edtUser = await this.GetUser(userKey);
+        var response = false;
 
         if (edtUser == null)
         {
@@ -506,12 +507,12 @@ public class EdtClient : BaseClient, IEdtClient
             if (accessRequest.EventType.Equals(CaseEventType.Provisioning, StringComparison.Ordinal))
             {
                 Log.Information("Case provision request {0} {1}", userKey, accessRequest.CaseId);
-                await this.AddUserToCase(edtUser.Id, accessRequest.CaseId);
+                response = await this.AddUserToCase(edtUser.Id, accessRequest.CaseId);
             }
             else if (accessRequest.EventType.Equals(CaseEventType.Decommission, StringComparison.Ordinal))
             {
                 Log.Information("Case decommission request {0} {1}", userKey, accessRequest.CaseId);
-                await this.RemoveUserFromCase(edtUser.Id, accessRequest.CaseId);
+                response = await this.RemoveUserFromCase(edtUser.Id, accessRequest.CaseId);
             }
             else
             {
@@ -523,6 +524,10 @@ public class EdtClient : BaseClient, IEdtClient
             return Task.FromException(ex);
         }
 
+        if (!response)
+        {
+            return Task.FromException(new CaseAssignmentException($"Failed to process {accessRequest.AgencyFileNumber} request for {userKey} event {accessRequest.EventType}"));
+        }
         return Task.CompletedTask;
     }
 
