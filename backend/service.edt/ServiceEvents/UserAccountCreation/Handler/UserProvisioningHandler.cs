@@ -19,7 +19,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
 
     private readonly IKafkaProducer<string, EdtUserProvisioningModel> retryProducer;
     private readonly IKafkaProducer<string, UserModificationEvent> userModificationProducer;
-
+    private Dictionary<string, int> AdditionalGroupMap = new Dictionary<string, int>();
     private readonly EdtServiceConfiguration configuration;
     private readonly IEdtClient edtClient;
     private readonly ILogger logger;
@@ -87,6 +87,13 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
 
             //check whether edt user already exist
             var result = await this.AddOrUpdateUser(accessRequestModel);
+
+            // if BCPS then check additional groups are assigned as needed
+            if (result.successful && !result.submittingAgencyUser)
+            {
+                Serilog.Log.Information($"Ensuring user {result.partId} is in required groups {string.Join(",", this.configuration.EdtClient.AdditionalBCPSGroups)}");
+                await this.EnsureUserInRequiredGroups(accessRequestModel);
+            }
 
 
             if (result.successful)
@@ -164,7 +171,6 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
                     {
                         To = accessRequestModel.Email,
                         DomainEvent = domainEvent,
-
                         EventData = eventData,
                     });
 
@@ -285,6 +291,51 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
         return Task.CompletedTask; //create specific exception handler later
     }
 
+    /// <summary>
+    /// As it says in the name
+    /// </summary>
+    /// <param name="accessRequestModel"></param>
+    /// <returns></returns>
+    private async Task<bool> EnsureUserInRequiredGroups(EdtUserProvisioningModel accessRequestModel)
+    {
+        var user = await this.edtClient.GetUser(accessRequestModel.Key!) ?? throw new EdtServiceException($"Invalid user key provided {accessRequestModel.Key} to EnsureUserInRequiredGroups");
+        var groups = await this.edtClient.GetAssignedOUGroups(user.Id!);
+
+        var additionalGroups = 0;
+        var additionalGroupConfig = this.configuration.EdtClient.AdditionalBCPSGroups.Split(",", StringSplitOptions.TrimEntries);
+        foreach (var group in additionalGroupConfig)
+        {
+            var edtGroup = groups.FirstOrDefault(g => g.Name.Equals(group, StringComparison.OrdinalIgnoreCase));
+            if (edtGroup == null)
+            {
+                if (!this.AdditionalGroupMap.ContainsKey(group))
+                {
+                    var groupId = await this.edtClient.GetOuGroupId(group);
+                    if (groupId > 0)
+                    {
+                        this.AdditionalGroupMap.Add(group, groupId);
+                    }
+                    else
+                    {
+                        throw new EdtServiceException($"Unknown EDT group {group} in call to EnsureUserInRequiredGroups - check configuration");
+                    }
+
+                }
+                Serilog.Log.Information($"Adding user {accessRequestModel.UserName} to {group} {this.AdditionalGroupMap[group]}");
+                var added = await this.edtClient.AddUserToGroup(user.Id!, this.AdditionalGroupMap[group]);
+                if (added)
+                {
+                    additionalGroups++;
+                }
+            }
+            else
+            {
+                additionalGroups++;
+            }
+        }
+
+        return additionalGroups == additionalGroupConfig.Length;
+    }
 
     private async Task<string> CheckEdtServiceVersion() => await this.edtClient.GetVersion();
 

@@ -1,8 +1,7 @@
 namespace edt.service;
 
-using edt.service.Infrastructure.Auth;
 using System.Text.Json;
-using System.Transactions;
+using edt.service.Infrastructure.Auth;
 
 public class EdtServiceConfiguration
 {
@@ -44,7 +43,7 @@ public class EdtServiceConfiguration
     {
         public string ApiKey { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
-
+        public string AdditionalBCPSGroups { get; set; } = string.Empty;
         public int SearchFieldId { get; set; }
         public string TombStoneEmailDomain { get; set; } = string.Empty;
     }

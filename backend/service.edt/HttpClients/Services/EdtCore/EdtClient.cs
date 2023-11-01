@@ -201,6 +201,26 @@ public class EdtClient : BaseClient, IEdtClient
 
     }
 
+    private async Task<bool> AddUserToOUGroupById(string userId, int groupId)
+    {
+        if (groupId < 0)
+        {
+            throw new EdtServiceException($"Invalid groups Id {groupId} in call to AddUserToOUGroupById for user {userId}");
+        }
+        var result = await this.PostAsync($"api/v1/org-units/1/groups/{groupId}/users", new AddUserToOuGroup() { UserIdOrKey = userId });
+        if (!result.IsSuccess)
+        {
+            Log.Logger.Error("Failed to add user {0} to group {1} due to {2}", userId, groupId, string.Join(",", result.Errors));
+            return false;
+        }
+        else
+        {
+            Log.Logger.Information("Successfully added user {0} to region {1}", userId, groupId);
+            return true;
+        }
+    }
+
+
     public async Task<List<EdtPersonDto>> GetPersonsByIdentifier(string identifierType, string identifierValue)
     {
         if (string.IsNullOrEmpty(identifierValue) || string.IsNullOrEmpty(identifierType))
@@ -584,6 +604,14 @@ public class EdtClient : BaseClient, IEdtClient
 
         return true;
     }
+
+    /// <summary>
+    /// Add to group by ID
+    /// </summary>
+    /// <param name="userIdOrKey"></param>
+    /// <param name="groupId"></param>
+    /// <returns></returns>
+    public async Task<bool> AddUserToGroup(string userIdOrKey, int groupId) => await this.AddUserToOUGroupById(userIdOrKey, groupId);
 
     /// <summary>
     /// Get the current EDT version
