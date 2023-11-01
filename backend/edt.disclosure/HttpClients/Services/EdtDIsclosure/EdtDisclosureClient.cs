@@ -634,7 +634,6 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         }
 
 
-        return false;
     }
 
 
