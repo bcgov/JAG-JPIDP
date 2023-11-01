@@ -44,7 +44,7 @@ dependencies:
     version: "0.1.10"
   - name: edt-service
     repository: "file://../edt-service"
-    version: "0.1.3"
+    version: "0.2.3"
   - name: edt-casemgmt
     repository: "file://../edt-casemgmt"
     version: "0.1.0"
