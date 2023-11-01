@@ -71,6 +71,7 @@ export class DigitalEvidencePortalSection
         orgComplete &&
         this.getStatusCode() !== StatusCode.REQUIRESAPPROVAL &&
         this.getStatusCode() !== StatusCode.APPROVED &&
+        this.getStatusCode() !== StatusCode.ERROR &&
         this.getStatusCode() !== StatusCode.DENIED
       ),
     };
@@ -87,7 +88,9 @@ export class DigitalEvidencePortalSection
             ? 'Your request has been denied - please contact DEMS support for more information on why the request was denied.'
             : this.getStatusCode() === StatusCode.PENDING
               ? 'Your request is pending and should complete shortly'
-              : 'Request access to enroll in DEMS.';
+              : this.getStatusCode() === StatusCode.ERROR
+                ? 'Your request resulted in an error - please contact BCPS Support at the email below'
+                : 'Request access to enroll in DEMS.';
   }
 
   public get statusType(): AlertType {
@@ -104,7 +107,9 @@ export class DigitalEvidencePortalSection
               ? 'greyed'
               : this.getStatusCode() === StatusCode.DENIED
                 ? 'danger'
-                : 'greyed';
+                : this.getStatusCode() === StatusCode.ERROR
+                  ? 'danger'
+                  : 'greyed';
   }
 
   public get status(): string {
@@ -130,7 +135,9 @@ export class DigitalEvidencePortalSection
               ? 'Approved - awaiting completion'
               : statusCode === StatusCode.DENIED
                 ? 'Request reviewed and denied'
-                : 'Incomplete';
+                : statusCode === StatusCode.ERROR ?
+                  'Request Failed'
+                  : 'Incomplete';
   }
 
   public performAction(): void | Observable<void> {

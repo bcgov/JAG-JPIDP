@@ -11,7 +11,7 @@ public class JustinParticipantClient : BaseClient, IJustinParticipantClient
 
         if (!result.IsSuccess)
         {
-            this.Logger.LogJustinQueryFailure(string.Join(",",result.Errors));
+            this.Logger.LogJustinQueryFailure(string.Join(",", result.Errors));
             return null;
         }
         var participants = result.Value;
@@ -22,6 +22,7 @@ public class JustinParticipantClient : BaseClient, IJustinParticipantClient
         }
         if (participants.participant.participantDetails[0].assignedAgencies.Count == 0)
         {
+            Serilog.Log.Information($"User {username} has no assigned agencies in JUSTIN - user will be disabled");
             this.Logger.LogDisabledUserFound(username);
         }
         return participants.participant;
@@ -50,16 +51,16 @@ public class JustinParticipantClient : BaseClient, IJustinParticipantClient
 }
 public static partial class JustinParticipantClientLoggingExtensions
 {
-[LoggerMessage(1, LogLevel.Warning, "No User found in JUM with Username = {username}.")]
-public static partial void LogNoUserFound(this ILogger logger, string username);
-[LoggerMessage(2, LogLevel.Warning, "No User found in JUM with PartId = {partId}.")]
-public static partial void LogNoUserWithPartIdFound(this ILogger logger, decimal partId);
-[LoggerMessage(3, LogLevel.Warning, "User found but disabled in JUM with Username = {username}.")]
-public static partial void LogDisabledUserFound(this ILogger logger, string username);
-[LoggerMessage(4, LogLevel.Warning, "User found but disabled in JUM with PartId = {partId}.")]
-public static partial void LogDisabledPartIdFound(this ILogger logger, decimal partId);
-[LoggerMessage(5, LogLevel.Error, "Justin user not found.")]
-public static partial void LogJustinUserNotFound(this ILogger logger);
-[LoggerMessage(6, LogLevel.Error, "Failed to query JUSTIN system [{errors}]")]
-public static partial void LogJustinQueryFailure(this ILogger logger,string errors);
+    [LoggerMessage(1, LogLevel.Warning, "No User found in JUM with Username = {username}.")]
+    public static partial void LogNoUserFound(this ILogger logger, string username);
+    [LoggerMessage(2, LogLevel.Warning, "No User found in JUM with PartId = {partId}.")]
+    public static partial void LogNoUserWithPartIdFound(this ILogger logger, decimal partId);
+    [LoggerMessage(3, LogLevel.Warning, "User found but disabled in JUM with Username = {username}.")]
+    public static partial void LogDisabledUserFound(this ILogger logger, string username);
+    [LoggerMessage(4, LogLevel.Warning, "User found but disabled in JUM with PartId = {partId}.")]
+    public static partial void LogDisabledPartIdFound(this ILogger logger, decimal partId);
+    [LoggerMessage(5, LogLevel.Error, "Justin user not found.")]
+    public static partial void LogJustinUserNotFound(this ILogger logger);
+    [LoggerMessage(6, LogLevel.Error, "Failed to query JUSTIN system [{errors}]")]
+    public static partial void LogJustinQueryFailure(this ILogger logger, string errors);
 }
