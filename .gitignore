@@ -382,3 +382,4 @@ FodyWeavers.xsd
 /backend/service.edt/Properties/launchSettings.json
 /diam-admin-ui/.vscode/extensions.json
 /diam-admin-ui/src/generated/openapi/.openapi-generator/FILES
+/diam-config/.idea/workspace.xml
