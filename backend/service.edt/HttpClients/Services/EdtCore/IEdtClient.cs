@@ -52,6 +52,14 @@ public interface IEdtClient
     /// <returns></returns>
     Task<bool> RemoveUserFromGroup(string userIdOrKey, EdtUserGroup group);
 
+    /// <summary>
+    /// Remove the user from the group
+    /// </summary>
+    /// <param name="userIdOrKey"></param>
+    /// <param name="group"></param>
+    /// <returns></returns>
+    Task<bool> AddUserToGroup(string userIdOrKey, int groupId);
+
 
     /// <summary>
     /// Flag account as inactive
