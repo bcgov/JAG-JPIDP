@@ -106,8 +106,9 @@ public class EdtClient : BaseClient, IEdtClient
             {
                 Log.Logger.Information("User {0} is in group {1} that is no longer valid", userIdOrKey, currentAssignedGroup.Name);
                 var result = await this.RemoveUserFromGroup(userIdOrKey, currentAssignedGroup);
-                if (result)
+                if (!result)
                 {
+                    Log.Warning($"Failed to remove user {userIdOrKey} from group {currentAssignedGroup.Name}");
                     return false;
                 }
             }
