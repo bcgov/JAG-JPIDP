@@ -292,7 +292,7 @@ public class EdtClient : BaseClient, IEdtClient
             return -1;
         }
 
-        var result = await this.PostAsync<IdentifierModel>($"api/v1/users", new IdentifierCreationInputModel
+        var result = await this.PostAsync<IdentifierModel>($"api/v1/org-units/1/identifiers", new IdentifierCreationInputModel
         {
             EntityId = personId,
             IdentifierType = identifierType,
@@ -714,9 +714,11 @@ public class EdtClient : BaseClient, IEdtClient
             }
             else
             {
+                var newParticipant = await this.GetPerson(edtPersonDto.Key!);
+
                 Log.Logger.Information($"Successfully added {accessRequest.LastName} as a participant");
                 // add external Id
-                var createdIdentifer = await this.AddPersonIdentifier((int)edtPersonDto.Id!, "EdtExternalId", edtPersonDto.Key!);
+                var createdIdentifer = await this.AddPersonIdentifier((int)newParticipant.Id, this.configuration.EdtClient.DefenceParticipantAdditionalId, edtPersonDto.Key!);
 
             }
 

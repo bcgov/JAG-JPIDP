@@ -44,6 +44,7 @@ public class EdtServiceConfiguration
         public string ApiKey { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
         public string AdditionalBCPSGroups { get; set; } = string.Empty;
+        public string DefenceParticipantAdditionalId { get; set; } = "PPID";
         public int SearchFieldId { get; set; }
         public string TombStoneEmailDomain { get; set; } = string.Empty;
     }
