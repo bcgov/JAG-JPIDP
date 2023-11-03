@@ -3,34 +3,34 @@ namespace edt.casemanagement;
 
 using System.Reflection;
 using System.Text.Json;
+using Azure.Monitor.OpenTelemetry.Exporter;
+using edt.casemanagement.Data;
 using edt.casemanagement.HttpClients;
+using edt.casemanagement.HttpClients.Services.EdtCore;
 using edt.casemanagement.Infrastructure.Telemetry;
 using edt.casemanagement.Kafka;
+using edt.casemanagement.ServiceEvents.CaseManagement.Handler;
+using FluentValidation.AspNetCore;
+using MediatR;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using NodaTime;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
+using NodaTime.Serialization.SystemTextJson;
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Prometheus;
 using Serilog;
 using Swashbuckle.AspNetCore.Filters;
-using Azure.Monitor.OpenTelemetry.Exporter;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
-using Prometheus;
-using MediatR;
-using Microsoft.AspNetCore.Mvc.ApplicationModels;
-using FluentValidation.AspNetCore;
-using NodaTime.Serialization.SystemTextJson;
-using edt.casemanagement.ServiceEvents.CaseManagement.Handler;
-using edt.casemanagement.Data;
-using Microsoft.Extensions.Hosting;
-using static edt.casemanagement.EdtServiceConfiguration;
 
 public class Startup
 {
@@ -38,14 +38,14 @@ public class Startup
 
     public Startup(IConfiguration configuration)
     {
-        Configuration = configuration;
+        this.Configuration = configuration;
         StaticConfig = configuration;
     }
 
     public static IConfiguration StaticConfig { get; private set; }
 
 
-    public void ConfigureServices(IServiceCollection services)
+    public async void ConfigureServices(IServiceCollection services)
     {
         var config = this.InitializeConfiguration(services);
 
@@ -182,7 +182,7 @@ public class Startup
             options.OperationFilter<SecurityRequirementsOperationFilter>();
             options.CustomSchemaIds(x => x.FullName);
         });
-       // services.AddFluentValidationRulesToSwagger();
+        // services.AddFluentValidationRulesToSwagger();
 
         JsonConvert.DefaultSettings = () => new JsonSerializerSettings
         {
@@ -204,15 +204,71 @@ public class Startup
                 Log.Error($"Database migration failure {string.Join(",", ex.Message)}");
                 throw;
             }
+
+            var client = serviceScope.ServiceProvider.GetRequiredService<IEdtClient>();
+            var fields = await client.GetCustomFields("Case");
+            Log.Information($"Got fields {fields.Count()}");
+
+            Log.Information($"Looking up search ID for field {config.EdtClient.SearchField}");
+
+            foreach (var field in fields)
+            {
+                if (field.Name.Equals(config.EdtClient.SearchField, StringComparison.OrdinalIgnoreCase))
+                {
+                    config.SearchFieldId = field.Id;
+                }
+                if (field.Name.Equals(config.EdtClient.AlternateSearchField, StringComparison.OrdinalIgnoreCase))
+                {
+                    config.AlternateSearchFieldId = field.Id;
+                }
+            }
+
+
+            var caseDisplayCustomFieldsValue = config.CaseDisplayCustomFields;
+
+            if (caseDisplayCustomFieldsValue != null)
+            {
+                foreach (var customField in caseDisplayCustomFieldsValue)
+                {
+                    if (!string.IsNullOrEmpty(customField.RelatedName))
+                    {
+                        var relatedField = fields.FirstOrDefault(field => field.Name == customField.RelatedName);
+                        if (relatedField == null)
+                        {
+                            Log.Error($"Requested related custom field {customField.Name} was not found");
+                            Environment.Exit(-1);
+                        }
+                        else
+                        {
+                            Log.Information($"{customField.RelatedName} found with Id {relatedField.Id} Type: {relatedField.DataType}");
+                            customField.RelatedId = relatedField.Id;
+                        }
+                    }
+                    var field = fields.FirstOrDefault(field => field.Name == customField.Name);
+                    {
+                        if (field == null)
+                        {
+                            Log.Error($"Requested custom field {customField.Name} was not found");
+                            Environment.Exit(-1);
+                        }
+                        else
+                        {
+                            Log.Information($"{customField.Name} found with Id {field.Id} Type: {field.DataType}");
+                            customField.Id = field.Id;
+                        }
+                    }
+                }
+
+                config.CaseDisplayCustomFields = caseDisplayCustomFieldsValue;
+            }
         }
 
+        Log.Information($"Search field id {config.SearchFieldId} Alt Id {config.AlternateSearchFieldId}");
 
-        var caseDisplayCustomFieldsValue = Environment.GetEnvironmentVariable("CaseDisplayCustomFields");
-
-        if (caseDisplayCustomFieldsValue != null)
+        if (config.SearchFieldId < 0 || config.AlternateSearchFieldId < 0)
         {
-            var caseDisplayCustomFields = System.Text.Json.JsonSerializer.Deserialize<List<CustomDisplayField>>(caseDisplayCustomFieldsValue);
-            config.CaseDisplayCustomFields = caseDisplayCustomFields;
+            Log.Fatal($"Unable to find values for search/alt search fields - check configuration");
+            Environment.Exit(1);
         }
 
         Log.Information("Custom case management fields {0}", JsonConvert.SerializeObject(config.CaseDisplayCustomFields));
@@ -259,6 +315,7 @@ public class Startup
         {
             endpoints.MapControllers();
             endpoints.MapMetrics();
+
             endpoints.MapHealthChecks("/health/liveness").AllowAnonymous();
         });
 

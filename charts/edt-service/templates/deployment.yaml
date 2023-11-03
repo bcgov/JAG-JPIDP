@@ -217,6 +217,11 @@ spec:
                 secretKeyRef:
                   name: splunk-config
                   key: SplunkConfig__Host
+            - name: EdtClient__AdditionalBCPSGroups
+              valueFrom: 
+                secretKeyRef:
+                  name: edt-client
+                  key: EdtClient__AdditionalBCPSGroups
           volumeMounts:
           - name: truststore
             mountPath: "/opt/kafka/certificates"

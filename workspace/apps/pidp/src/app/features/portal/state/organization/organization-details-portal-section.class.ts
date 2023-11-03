@@ -121,6 +121,7 @@ export class OrganizationDetailsPortalSection
   }
   public get action(): PortalSectionAction {
     return {
+      hidden: true,
       label:
         this.profileStatus.status.organizationDetails?.statusCode ===
           StatusCode.LOCKEDCOMPLETE ||

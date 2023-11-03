@@ -24,7 +24,7 @@ public class DigitalEvidenceCaseModel
     public Instant AssignedOn { get; set; }
     public Instant LastUpdated { get; set; }
     public string Status { get; set; }
-
+    public string Errors { get; set; } = string.Empty;
     public string RequestStatus { get; set; } = string.Empty;
 
     public List<Field> Fields { get; set; }

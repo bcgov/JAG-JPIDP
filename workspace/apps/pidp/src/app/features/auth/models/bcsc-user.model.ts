@@ -9,7 +9,6 @@ export class BcscUser implements User {
   public firstName: string;
   public lastName: string;
   public birthdate: string;
-  public gender: string;
   public email: string;
 
   public constructor({ accessTokenParsed, brokerProfile }: UserIdentity) {
@@ -17,27 +16,21 @@ export class BcscUser implements User {
       firstName,
       lastName,
       email,
-      username: jpdid,
-      attributes: {
-        birthdate: [birthdate],
-        gender: [gender],
-      },
+      username: jpdid
     } = brokerProfile;
-    const { identity_provider, sub: userId } = accessTokenParsed;
-
+    const { identity_provider, sub: userId, birthdate } = accessTokenParsed;
     this.identityProvider = identity_provider;
     this.jpdid = jpdid || '';
     this.userId = userId;
     this.firstName = firstName || '';
     this.lastName = lastName || '';
     this.birthdate = birthdate;
-    this.gender = gender;
     this.email = email || '';
   }
 }
 
 export class BcscResolver implements IUserResolver<BcscUser> {
-  public constructor(public userIdentity: UserIdentity) {}
+  public constructor(public userIdentity: UserIdentity) { }
   public resolve(): BcscUser {
     return new BcscUser(this.userIdentity);
   }

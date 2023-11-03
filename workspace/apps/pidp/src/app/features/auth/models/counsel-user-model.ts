@@ -32,7 +32,7 @@ export class CounselUser implements User {
 }
 
 export class CounselResolver implements IUserResolver<CounselUser> {
-  public constructor(public userIdentity: UserIdentity) {}
+  public constructor(public userIdentity: UserIdentity) { }
   public resolve(): CounselUser {
     return new CounselUser(this.userIdentity);
   }

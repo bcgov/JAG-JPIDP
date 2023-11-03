@@ -4,12 +4,9 @@ using DomainResults.Common;
 using DomainResults.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Globalization;
-
-using Pidp.Extensions;
 using Pidp.Infrastructure.Auth;
 using Pidp.Infrastructure.Services;
-using static Pidp.Infrastructure.HttpClients.Ldap.HcimAuthorizationStatus;
+using Pidp.Models;
 
 [Route("api/[controller]")]
 public class AccessRequestsController : PidpControllerBase
@@ -24,6 +21,16 @@ public class AccessRequestsController : PidpControllerBase
                                                                          [FromRoute] Index.Query query)
         => await this.AuthorizePartyBeforeHandleAsync(query.PartyId, handler, query)
             .ToActionResultOfT();
+
+    [HttpGet("digital-evidence/validate/{partyId}/{code}")]
+    [Authorize(Policy = Policies.BcscAuthentication)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ValidatePublicUserCode([FromServices] ICommandHandler<ValidateUser.Command, IDomainResult<UserValidationResponse>> handler,
+                                                          [FromRoute] ValidateUser.Command command)
+        => await this.AuthorizePartyBeforeHandleAsync(command.PartyId, handler, command)
+            .ToActionResult();
+
 
     [HttpPost("driver-fitness")]
     [Authorize(Policy = Policies.BcscAuthentication)]

@@ -2,11 +2,11 @@ namespace edt.service.HttpClients.Services.EdtCore;
 
 using System.Threading.Tasks;
 using AutoMapper;
-using DomainResults.Common;
+using Common.Models.EDT;
 using edt.service.Exceptions;
+using edt.service.Features.Person;
 using edt.service.Infrastructure.Telemetry;
 using edt.service.Kafka.Model;
-using edt.service.ServiceEvents.UserAccountCreation.Models;
 using edt.service.ServiceEvents.UserAccountModification.Models;
 using Prometheus;
 using Serilog;
@@ -98,6 +98,7 @@ public class EdtClient : BaseClient, IEdtClient
         // Get existing groups assigned to user
         var currentlyAssignedGroups = await this.GetAssignedOUGroups(userIdOrKey);
 
+        Log.Information($"User {userIdOrKey} is assigned to {currentlyAssignedGroups.Count} groups");
         foreach (var currentAssignedGroup in currentlyAssignedGroups)
         {
             var assignedRegion = assignedRegions.Find(region => region.RegionName.Equals(currentAssignedGroup.Name))!;
@@ -105,39 +106,66 @@ public class EdtClient : BaseClient, IEdtClient
             {
                 Log.Logger.Information("User {0} is in group {1} that is no longer valid", userIdOrKey, currentAssignedGroup.Name);
                 var result = await this.RemoveUserFromGroup(userIdOrKey, currentAssignedGroup);
-                if (result)
+                if (!result)
                 {
+                    Log.Warning($"Failed to remove user {userIdOrKey} from group {currentAssignedGroup.Name}");
                     return false;
                 }
             }
         }
 
-
-        foreach (var region in assignedRegions)
+        if (assignedRegions.Count == 0)
+        {
+            Log.Warning($"User {userIdOrKey} is not assigned to any regions");
+        }
+        else
         {
 
-            var existingGroup = currentlyAssignedGroups.Find(g => g.Name.Equals(region.RegionName, StringComparison.Ordinal));
+            var regions = assignedRegions.DistinctBy(row => row.RegionName);
 
-            if (existingGroup != null)
+            Log.Information($"Adding user {userIdOrKey} to {regions.Count()} regions");
+
+            if (!regions.Any())
             {
-                Log.Logger.Information("User {0} already assigned to group {1}", userIdOrKey, existingGroup.Name);
+                Log.Warning($"User {userIdOrKey} has no assigned regions");
             }
-            else
+
+            foreach (var region in regions)
             {
 
-                Log.Logger.Information("Adding user {0} to region {1}", userIdOrKey, region);
-                var groupId = await this.GetOuGroupId(region.RegionName!);
-                if (groupId == 0)
+                Log.Information($"Handling group {region.RegionName} for user {userIdOrKey}");
+                var existingGroup = currentlyAssignedGroups.Find(g => g.Name.Equals(region.RegionName, StringComparison.Ordinal));
+
+                if (existingGroup != null)
                 {
-                    return false;
+                    Log.Logger.Information("User {0} already assigned to group {1}", userIdOrKey, existingGroup.Name);
                 }
-
-                var result = await this.PostAsync($"api/v1/org-units/1/groups/{groupId}/users", new AddUserToOuGroup() { UserIdOrKey = userIdOrKey });
-
-                if (!result.IsSuccess)
+                else
                 {
-                    Log.Logger.Error("Failed to add user {0} to region {1} due to {2}", userIdOrKey, region, string.Join(",", result.Errors));
-                    return false;
+
+                    Log.Logger.Information("Adding user {0} to region {1}", userIdOrKey, region);
+                    var groupId = await this.GetOuGroupId(region.RegionName!);
+                    if (groupId == 0)
+                    {
+                        Log.Logger.Error("Region not found {0}", region.RegionName);
+                        return false;
+                    }
+
+                    var result = await this.PostAsync($"api/v1/org-units/1/groups/{groupId}/users", new AddUserToOuGroup() { UserIdOrKey = userIdOrKey });
+
+                    if (!result.IsSuccess)
+                    {
+                        var errorString = string.Join(", ", result.Errors);
+                        if (errorString.Contains("already a member"))
+                        {
+                            Log.Logger.Information($"User {0} already in region {1}", userIdOrKey, region.RegionName);
+                        }
+                        else
+                        {
+                            Log.Logger.Error("Failed to add user {0} to region {1} due to {2}", userIdOrKey, region, errorString);
+                            return false;
+                        }
+                    }
                 }
             }
         }
@@ -174,6 +202,49 @@ public class EdtClient : BaseClient, IEdtClient
 
     }
 
+    private async Task<bool> AddUserToOUGroupById(string userId, int groupId)
+    {
+        if (groupId < 0)
+        {
+            throw new EdtServiceException($"Invalid groups Id {groupId} in call to AddUserToOUGroupById for user {userId}");
+        }
+        var result = await this.PostAsync($"api/v1/org-units/1/groups/{groupId}/users", new AddUserToOuGroup() { UserIdOrKey = userId });
+        if (!result.IsSuccess)
+        {
+            Log.Logger.Error("Failed to add user {0} to group {1} due to {2}", userId, groupId, string.Join(",", result.Errors));
+            return false;
+        }
+        else
+        {
+            Log.Logger.Information("Successfully added user {0} to region {1}", userId, groupId);
+            return true;
+        }
+    }
+
+
+    public async Task<List<EdtPersonDto>> GetPersonsByIdentifier(string identifierType, string identifierValue)
+    {
+        if (string.IsNullOrEmpty(identifierValue) || string.IsNullOrEmpty(identifierType))
+        {
+            throw new EdtServiceException("Invalid request to GetPersonsByIdentifier");
+        }
+
+        var returnPersons = new List<EdtPersonDto>();
+
+        var result = await this.GetAsync<IdentifierResponseModel>($"api/v1/org-units/1/identifiers?filter=IdentifierValue:{identifierValue},IdentifierType:{identifierType},ItemType:Person");
+
+        if (result.IsSuccess)
+        {
+            Log.Information($"Found {result.Value.Total} persons for {identifierValue}");
+            foreach (var identityInfo in result.Value.Items)
+            {
+                returnPersons.Add(await this.GetPersonById(identityInfo.EntityId));
+            }
+        }
+
+        return returnPersons;
+    }
+
     private async Task<bool> AddUserToSubmittingAgencyGroup(EdtUserProvisioningModel accessRequest, string userId)
     {
         if (accessRequest == null)
@@ -205,6 +276,41 @@ public class EdtClient : BaseClient, IEdtClient
 
 
     }
+
+    /// <summary>
+    /// Add an identifier to a person
+    /// </summary>
+    /// <param name="personId"></param>
+    /// <param name="identifierType"></param>
+    /// <param name="identifierValue"></param>
+    /// <returns></returns>
+    public async Task<int> AddPersonIdentifier(int personId, string identifierType, string identifierValue)
+    {
+        if (personId <= 0 || string.IsNullOrEmpty(identifierValue))
+        {
+            Log.Logger.Error($"Unable to call identifiers update for person {personId} value {identifierValue} is invalid");
+            return -1;
+        }
+
+        var result = await this.PostAsync<IdentifierModel>($"api/v1/users", new IdentifierCreationInputModel
+        {
+            EntityId = personId,
+            IdentifierType = identifierType,
+            IdentifierValue = identifierValue
+        });
+
+        if (result.IsSuccess)
+        {
+            Log.Logger.Information($"New person {personId} identifier added with value {identifierType} : {identifierValue} = {result.Value.Id}");
+            return result.Value.Id;
+        }
+        else
+        {
+            Log.Error($"Failed to added new identifier value for {personId} with value {identifierType} : {identifierValue}");
+            return -1;
+        }
+    }
+
 
     public async Task<UserModificationEvent> UpdateUserDetails(EdtUserDto userDetails)
     {
@@ -239,6 +345,7 @@ public class EdtClient : BaseClient, IEdtClient
 
 
 
+
     public async Task<UserModificationEvent> UpdateUser(EdtUserProvisioningModel accessRequest, EdtUserDto previousRequest, bool fromTombstone)
     {
         using (AccountUpdateDuration.NewTimer())
@@ -258,6 +365,7 @@ public class EdtClient : BaseClient, IEdtClient
 
             if (!result.IsSuccess)
             {
+                Log.Error($"Failed to update EDT user with PUT request {edtUserDto.Key} {string.Join(",", result.Errors)}");
                 userModificationResponse.successful = false;
             }
             //add user to group
@@ -336,8 +444,68 @@ public class EdtClient : BaseClient, IEdtClient
             {
                 return null;
             }
-            return result.Value;
+            var person = result.Value;
+            // get identifiers
+            if (person != null && person.Id > 0)
+            {
+                person.Identifiers = await this.GetPersonIdentifiers(person.Id);
+            }
+            return person;
         }
+    }
+
+    public async Task<EdtPersonDto?> GetPersonById(int id)
+    {
+        using (GetUserDuration.NewTimer())
+        {
+            this.meters.GetPerson();
+            Log.Logger.Information($"Getting person by id {id}");
+            var result = await this.GetAsync<EdtPersonDto?>($"api/v1/org-units/1/persons/{id}");
+
+            if (!result.IsSuccess)
+            {
+                return null;
+            }
+
+            var person = result.Value;
+            // get identifiers
+            if (person != null && person.Id > 0)
+            {
+                var identifiers = await this.GetPersonIdentifiers(person.Id);
+                if (identifiers != null)
+                {
+                    person.Identifiers = identifiers;
+                }
+
+            }
+            return person;
+
+
+        }
+    }
+
+    private async Task<List<IdentifierModel>> GetPersonIdentifiers(int? personID)
+    {
+
+        if (personID <= 0)
+        {
+            Log.Error("Invalid call to GetPersonIdentifiers");
+        }
+
+        Log.Logger.Information($"Getting identifiers for person {personID}");
+        var result = await this.GetAsync<IdentifierResponseModel>($"api/v1/org-units/1/identifiers?filter=itemType:Person,itemId:{personID}");
+
+        if (result.IsSuccess)
+        {
+            return result.Value.Items;
+        }
+        else
+        {
+            Log.Error($"Failed to get person identifiers for {personID}");
+            return new List<IdentifierModel>();
+        }
+
+
     }
 
     public async Task<int> GetOuGroupId(string regionName)
@@ -357,7 +525,7 @@ public class EdtClient : BaseClient, IEdtClient
 
     public async Task<List<EdtUserGroup>> GetAssignedOUGroups(string userKey)
     {
-        IDomainResult<List<EdtUserGroup>?>? result = await this.GetAsync<List<EdtUserGroup>?>($"api/v1/org-units/1/users/{userKey}/groups");
+        var result = await this.GetAsync<List<EdtUserGroup>?>($"api/v1/org-units/1/users/{userKey}/groups");
         if (!result.IsSuccess)
         {
             Log.Logger.Error("Failed to determine existing EDT groups for {0} [{1}]", string.Join(", ", result.Errors));
@@ -415,7 +583,12 @@ public class EdtClient : BaseClient, IEdtClient
 
     }
 
-
+    /// <summary>
+    /// Remove a user from a given group (Region/Agency etc)
+    /// </summary>
+    /// <param name="userIdOrKey"></param>
+    /// <param name="group"></param>
+    /// <returns></returns>
     public async Task<bool> RemoveUserFromGroup(string userIdOrKey, EdtUserGroup group)
     {
         Log.Logger.Information("Removing user {0} from group {1}", userIdOrKey, group.Name);
@@ -425,9 +598,21 @@ public class EdtClient : BaseClient, IEdtClient
             Log.Logger.Error("Failed to remove user {0} from group {1} [{2}]", userIdOrKey, group.Name, string.Join(',', result.Errors));
             return false;
         }
+        else
+        {
+            Log.Logger.Information($"Removed user {userIdOrKey} from group {group}");
+        }
 
         return true;
     }
+
+    /// <summary>
+    /// Add to group by ID
+    /// </summary>
+    /// <param name="userIdOrKey"></param>
+    /// <param name="groupId"></param>
+    /// <returns></returns>
+    public async Task<bool> AddUserToGroup(string userIdOrKey, int groupId) => await this.AddUserToOUGroupById(userIdOrKey, groupId);
 
     /// <summary>
     /// Get the current EDT version
@@ -436,7 +621,7 @@ public class EdtClient : BaseClient, IEdtClient
     /// <exception cref="EdtServiceException"></exception>
     public async Task<string> GetVersion()
     {
-        var result = await this.GetAsync<EdtVersion?>($"api/v1/version");
+        var result = await this.GetAsync<Common.Models.EDT.EdtVersion?>($"api/v1/version");
 
         if (!result.IsSuccess)
         {
@@ -530,6 +715,8 @@ public class EdtClient : BaseClient, IEdtClient
             else
             {
                 Log.Logger.Information($"Successfully added {accessRequest.LastName} as a participant");
+                // add external Id
+                var createdIdentifer = await this.AddPersonIdentifier((int)edtPersonDto.Id!, "EdtExternalId", edtPersonDto.Key!);
 
             }
 
@@ -602,7 +789,8 @@ public class EdtClient : BaseClient, IEdtClient
 
             var edtPersonDto = this.mapper.Map<EdtPersonProvisioningModel, EdtPersonDto>(accessRequest);
 
-            edtPersonDto.Id = currentUser.Id; ;
+            edtPersonDto.Id = currentUser.Id;
+
             edtPersonDto.Address.Id = currentUser.Address.Id;
 
             var result = await this.PutAsync($"api/v1/org-units/1/persons/" + currentUser.Id, edtPersonDto);
@@ -625,6 +813,8 @@ public class EdtClient : BaseClient, IEdtClient
             return userModificationResponse;
         }
     }
+
+
 
     public class AddUserToOuGroup
     {

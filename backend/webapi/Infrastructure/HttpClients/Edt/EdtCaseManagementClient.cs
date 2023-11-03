@@ -1,6 +1,5 @@
 namespace Pidp.Infrastructure.HttpClients.Edt;
 
-using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using Pidp.Models;
@@ -10,11 +9,11 @@ public class EdtCaseManagementClient : BaseClient, IEdtCaseManagementClient
 
     public EdtCaseManagementClient(HttpClient httpClient, ILogger<EdtCaseManagementClient> logger) : base(httpClient, logger) { }
 
-    public async Task<DigitalEvidenceCaseModel?> FindCase(string caseName)
+    public async Task<DigitalEvidenceCaseModel?> FindCase(string partyId, string caseName)
     {
-        Serilog.Log.Information("Case search requested {0}", caseName);
+        Serilog.Log.Information($"Case search on {caseName} by {partyId}");
 
-        var result = await this.GetAsync<DigitalEvidenceCaseModel>($"case/{WebUtility.UrlEncode(caseName)}");
+        var result = await this.GetAsync<DigitalEvidenceCaseModel>($"case/{WebUtility.UrlEncode(partyId)}/{WebUtility.UrlEncode(caseName)}");
 
         if (!result.IsSuccess)
         {

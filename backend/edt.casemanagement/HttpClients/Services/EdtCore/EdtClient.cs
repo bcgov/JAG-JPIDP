@@ -1,37 +1,48 @@
 namespace edt.casemanagement.HttpClients.Services.EdtCore;
-
-using System.Diagnostics.Metrics;
-using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using AutoMapper;
-using DomainResults.Common;
+using Common.Models.EDT;
+using edt.casemanagement.Data;
 using edt.casemanagement.Exceptions;
 using edt.casemanagement.Features.Cases;
 using edt.casemanagement.Infrastructure.Telemetry;
 using edt.casemanagement.Models;
 using edt.casemanagement.ServiceEvents.CaseManagement.Models;
-using edt.casemanagement.ServiceEvents.UserAccountCreation.Models;
-using Microsoft.AspNetCore.Mvc;
+using NodaTime;
 using Prometheus;
 using Serilog;
 
 public class EdtClient : BaseClient, IEdtClient
 {
     private readonly IMapper mapper;
+    private readonly IClock clock;
+
     private readonly OtelMetrics meters;
     private readonly EdtServiceConfiguration configuration;
-    private static readonly Counter ProcessedJobCount = Metrics
-        .CreateCounter("case_search_count", "Number of case search requests.");
+    private readonly CaseManagementDataStoreDbContext context;
 
+
+    private static readonly Counter SearchCount = Metrics
+        .CreateCounter("case_search_count_total", "Number of case search requests.");
+
+    private static readonly Counter ProcessedJobCount = Metrics
+        .CreateCounter("case_access_count_total", "Number of case access requests.");
+
+    private static readonly Counter ProcessRemovedJob = Metrics
+        .CreateCounter("case_removal_count_total", "Number of case removal requests.");
 
     public EdtClient(
         HttpClient httpClient, OtelMetrics meters, EdtServiceConfiguration edtServiceConfiguration,
         IMapper mapper,
+        IClock clock,
+        CaseManagementDataStoreDbContext context,
         ILogger<EdtClient> logger)
         : base(httpClient, logger)
     {
         this.mapper = mapper;
+        this.clock = clock;
         this.meters = meters;
+        this.context = context;
         this.configuration = edtServiceConfiguration;
     }
 
@@ -52,7 +63,7 @@ public class EdtClient : BaseClient, IEdtClient
 
     public async Task<int> GetOuGroupId(string regionName)
     {
-        IDomainResult<IEnumerable<OrgUnitModel?>>? result = await this.GetAsync<IEnumerable<OrgUnitModel?>>($"api/v1/org-units/1/groups");
+        var result = await this.GetAsync<IEnumerable<OrgUnitModel?>>($"api/v1/org-units/1/groups");
 
         if (!result.IsSuccess)
         {
@@ -145,6 +156,7 @@ public class EdtClient : BaseClient, IEdtClient
 
         if (result.IsSuccess)
         {
+            ProcessedJobCount.Inc();
             Log.Information("Successfully added user {0} to case {1}", userKey, caseId);
 
             var caseGroupId = await this.GetCaseGroupId(caseId, this.configuration.EdtClient.SubmittingAgencyGroup);
@@ -198,6 +210,8 @@ public class EdtClient : BaseClient, IEdtClient
 
         if (result.IsSuccess)
         {
+            ProcessRemovedJob.Inc();
+
             Log.Information("Successfully removed user {0} from case {1}", userId, caseId);
         }
         else
@@ -282,52 +296,197 @@ public class EdtClient : BaseClient, IEdtClient
     }
 
 
-    public async Task<CaseModel> FindCase(string caseIdOrKey)
+    public async Task<CaseModel> FindCase(CaseLookupQuery query)
     {
+
+        var caseIdOrKey = query.caseName;
         //' /api/v1/org-units/1/cases/3:105: 23-472018/id
-        ProcessedJobCount.Inc();
-        var searchString = this.configuration.EdtClient.SearchFieldId + ":" + caseIdOrKey;
+        SearchCount.Inc();
+
+
+
+        if (this.configuration.SearchFieldId == -1 || this.configuration.AlternateSearchFieldId == -1)
+        {
+            Log.Fatal("Unable to determine search fields based on config - please check configuration");
+            Environment.Exit(1);
+        }
+
+        var searchString = this.configuration.SearchFieldId + ":" + caseIdOrKey;
         Log.Logger.Information("Finding case {0}", searchString);
 
+
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+
+        // record case search request
+        var searchRequest = new CaseSearchRequest { AgencyFileNumber = caseIdOrKey, SearchString = searchString, PartyId = query.partyId, Created = this.clock.GetCurrentInstant() };
+        this.context.Add(searchRequest);
+
+        CaseModel foundCase = null;
         var caseSearch = await this.GetAsync<IEnumerable<CaseLookupModel>?>($"api/v1/org-units/1/cases/{searchString}/id");
 
-        if (caseSearch.IsSuccess)
+
+        try
         {
-            var caseSearchValue = caseSearch?.Value;
-
-            // Do something with the caseSearchValue
-
-            if (caseSearchValue.Count() == 0)
+            if (caseSearch.IsSuccess)
             {
-                Log.Information("No cases found for {0}", searchString);
-                return null;
-            }
+                var caseSearchValue = caseSearch?.Value;
 
-            // see if we have multiple cases with the same id - if e do then ew want the one with a key
-            var cases = caseSearch?.Value;
-            int caseId;
+                // Do something with the caseSearchValue
 
-            if (cases.Count() > 1)
-            {
-                Log.Information("Multiple cases found for {0}", searchString.ToString());
-                caseId = cases.FirstOrDefault(c => c.Key != null).Id;
+                if (!caseSearchValue.Any())
+                {
+                    Log.Information("No cases found for {0}", searchString);
+
+                    // check for merged - switch to alternate search
+                    if (this.configuration.AlternateSearchFieldId > 0)
+                    {
+                        Log.Information($"Searching by alternate Id");
+                        searchString = this.configuration.AlternateSearchFieldId + ":" + caseIdOrKey;
+                        var alternateSearch = await this.GetAsync<IEnumerable<CaseLookupModel>?>($"api/v1/org-units/1/cases/{searchString}/id");
+                        if (alternateSearch.IsSuccess)
+                        {
+                            var alternateSearchValue = alternateSearch?.Value;
+                            if (alternateSearchValue.Count() > 0)
+                            {
+                                foreach (var alternateCase in alternateSearchValue)
+                                {
+                                    var caseInfo = await this.GetCase(alternateCase.Id);
+
+                                    if (caseInfo != null && caseInfo.Status == "Active")
+                                    {
+                                        foundCase = caseInfo;
+                                        break;
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+
+
+                    searchRequest.ResponseStatus = (foundCase != null) ? "Found " + foundCase.Id : "Not found";
+
+                    return foundCase;
+                }
+
+                // see if we have multiple cases with the same id - if we do then we want the one with a key
+                var cases = caseSearch?.Value;
+                int caseId;
+
+                if (cases.Count() > 1)
+                {
+                    Log.Information("Multiple cases found for {0}", searchString.ToString());
+                    caseId = cases.FirstOrDefault(c => c.Key != null).Id;
+                }
+                else
+                {
+                    caseId = cases.First().Id;
+                }
+
+                foundCase = await this.GetCase(caseId);
+
+                if (foundCase.Status == "Inactive")
+                {
+                    var primaryAgencyFileField = foundCase.Fields.First(field => field.Name.Equals("Primary Agency File ID"));
+                    if (primaryAgencyFileField.Value != null && !string.IsNullOrEmpty(primaryAgencyFileField.Value.ToString()))
+                    {
+                        Log.Information($"Checking if case {caseId} was merged - primary file id {primaryAgencyFileField.Value.ToString()}");
+                        var primarySearchString = primaryAgencyFileField.Id + ":" + primaryAgencyFileField.Value.ToString();
+
+                        var primarySearch = await this.GetAsync<IEnumerable<CaseLookupModel>?>($"api/v1/org-units/1/cases/{primarySearchString}/id");
+
+                        if (primarySearch.IsSuccess)
+                        {
+                            if (primarySearch.Value != null)
+                            {
+                                Log.Information($"Found {primarySearch.Value.Count()} cases with primary ID {primarySearchString}");
+
+                                foreach (var caseModel in primarySearch.Value)
+                                {
+                                    if (caseModel.Id == caseId)
+                                    {
+                                        Log.Information($"Ignoring case {caseId} as it was our searched case");
+                                        continue;
+                                    }
+                                    else
+                                    {
+                                        var testCase = await this.GetCase(caseModel.Id);
+                                        if (testCase != null && testCase.Status == "Active")
+                                        {
+                                            // check case has the original agency file number
+                                            var agencyFileNumber = testCase.Fields.First(c => c.Name == "Agency File No.");
+                                            if (agencyFileNumber != null && agencyFileNumber.Value != null && !string.IsNullOrEmpty(agencyFileNumber.Value.ToString()))
+                                            {
+                                                Log.Information($"Returning alternate case {caseModel.Id}");
+                                                foundCase = testCase;
+                                                break;
+                                            }
+                                        }
+
+                                    }
+
+                                }
+
+                            }
+
+
+                        }
+                    }
+                }
+
+                searchRequest.ResponseStatus = "Found " + foundCase.Id;
+
+
+                return foundCase;
+
             }
             else
             {
-                caseId = cases.First().Id;
+
+
+                var errors = string.Join(",", caseSearch.Errors);
+                searchRequest.ResponseStatus = $"Errors: {errors}";
+
+                return new CaseModel
+                {
+                    Errors = errors,
+                    Id = -1
+                };
+
             }
 
-            return await this.GetCase(caseId);
-
         }
-        else
+        catch (Exception ex)
         {
-            throw new EdtServiceException(string.Join(",", caseSearch.Errors));
+            searchRequest.ResponseStatus = ex.Message;
+            return foundCase;
 
         }
+        finally
+        {
+            watch.Stop();
+            var elapsedMs = watch.ElapsedMilliseconds;
+            searchRequest.ResponseTime = elapsedMs;
+
+            await this.context.SaveChangesAsync();
+        }
+
     }
 
+    public async Task<IEnumerable<CustomFieldDefinition>> GetCustomFields(string objectType)
+    {
+        Log.Information($"Getting all field info for type {objectType}");
 
+        var result = await this.GetAsync<IEnumerable<CustomFieldDefinition>?>($"api/v1/org-units/1/fields");
+
+        if (result.IsSuccess && result.Value != null)
+        {
+            return result.Value.Where(c => c.ObjectType == objectType);
+
+        }
+
+        return null;
+    }
 
 
     public async Task<Task> HandleCaseRequest(string userKey, SubAgencyDomainEvent accessRequest)
@@ -335,6 +494,7 @@ public class EdtClient : BaseClient, IEdtClient
         // get the edt user
 
         var edtUser = await this.GetUser(userKey);
+        var response = false;
 
         if (edtUser == null)
         {
@@ -347,12 +507,12 @@ public class EdtClient : BaseClient, IEdtClient
             if (accessRequest.EventType.Equals(CaseEventType.Provisioning, StringComparison.Ordinal))
             {
                 Log.Information("Case provision request {0} {1}", userKey, accessRequest.CaseId);
-                await this.AddUserToCase(edtUser.Id, accessRequest.CaseId);
+                response = await this.AddUserToCase(edtUser.Id, accessRequest.CaseId);
             }
             else if (accessRequest.EventType.Equals(CaseEventType.Decommission, StringComparison.Ordinal))
             {
                 Log.Information("Case decommission request {0} {1}", userKey, accessRequest.CaseId);
-                await this.RemoveUserFromCase(edtUser.Id, accessRequest.CaseId);
+                response = await this.RemoveUserFromCase(edtUser.Id, accessRequest.CaseId);
             }
             else
             {
@@ -364,6 +524,10 @@ public class EdtClient : BaseClient, IEdtClient
             return Task.FromException(ex);
         }
 
+        if (!response)
+        {
+            return Task.FromException(new CaseAssignmentException($"Failed to process {accessRequest.AgencyFileNumber} request for {userKey} event {accessRequest.EventType}"));
+        }
         return Task.CompletedTask;
     }
 

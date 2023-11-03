@@ -117,8 +117,10 @@ public partial class ProfileStatus
             // submitting agency user details are locked
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
-                this.StatusCode = profile.DemographicsEntered || profile.SubmittingAgency != null ?
-                    (profile.SubmittingAgency != null || profile.UserIsBcps) ? StatusCode.LockedComplete : StatusCode.Complete : StatusCode.Incomplete;
+                this.StatusCode = profile.UserIsBcServicesCard ? StatusCode.LockedComplete : profile.DemographicsEntered || profile.SubmittingAgency != null ?
+                    (profile.SubmittingAgency != null || profile.UserIsBcps) ? StatusCode.HiddenComplete : StatusCode.Complete :
+
+                    StatusCode.Incomplete;
             }
         }
 
@@ -149,7 +151,14 @@ public partial class ProfileStatus
 
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
-                if (!(profile.UserIsBcServicesCard || profile.UserIsBcps || profile.UserIsInSubmittingAgency || profile.UserIsInLawSociety))
+
+                if (profile.UserIsBcServicesCard)
+                {
+                    this.StatusCode = StatusCode.HiddenComplete;
+                    return;
+                }
+
+                if (!(profile.UserIsBcps || profile.UserIsInSubmittingAgency || profile.UserIsInLawSociety))
                 {
                     this.StatusCode = StatusCode.Hidden;
                     return;
@@ -165,9 +174,9 @@ public partial class ProfileStatus
                     var familyName = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("family_name"));
                     var givenName = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("given_name"));
 
-                    if ( familyName == null || givenName == null || BCServicesCardLastName == null || BCServicesCardLastName.Value != familyName.Value || BCServicesCardFirstName == null || BCServicesCardFirstName.Value != givenName.Value)
+                    if (familyName == null || givenName == null || BCServicesCardLastName == null || BCServicesCardLastName.Value != familyName.Value || BCServicesCardFirstName == null || BCServicesCardFirstName.Value != givenName.Value)
                     {
-                        this.Alerts.Add(Alert.PersonVerificationError);
+                        this.Alerts.Add(Alert.VerifiedCredentialMismatch);
                         this.StatusCode = StatusCode.Error;
                     }
 
@@ -180,16 +189,24 @@ public partial class ProfileStatus
                     else
                     {
                         // check user info is valid
-                        this.StatusCode = StatusCode.LockedComplete;
+                        this.StatusCode = StatusCode.HiddenComplete;
                     }
 
                     return;
 
                 }
 
+                // no org for bc services card users currently
+                if (profile.UserIsBcServicesCard)
+                {
+                    this.StatusCode = StatusCode.Hidden;
+                    return;
+
+                }
+
                 if (profile.UserIsInSubmittingAgency)
                 {
-                    this.StatusCode = StatusCode.LockedComplete;
+                    this.StatusCode = StatusCode.HiddenComplete;
                     return;
                 }
 
@@ -254,6 +271,11 @@ public partial class ProfileStatus
                                 this.StatusCode = StatusCode.Pending;
                                 return;
                             }
+                            if (request.Equals(StatusCode.RequiresApproval.ToString(), StringComparison.Ordinal))
+                            {
+                                this.StatusCode = StatusCode.RequiresApproval;
+                                return;
+                            }
                         }
                     }
                     else if (requests != null && requests.Count > 0)
@@ -284,7 +306,7 @@ public partial class ProfileStatus
                 }
 
                 if (!profile.UserIsInLawSociety && !profile.UserIsInSubmittingAgency && !profile.DemographicsEntered
-                    || !profile.OrganizationDetailEntered
+                    || !profile.OrganizationDetailEntered && !profile.UserIsBcServicesCard
                     )
                 {
                     this.StatusCode = StatusCode.PriorStepRequired;

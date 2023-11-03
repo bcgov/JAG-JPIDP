@@ -7,7 +7,7 @@
 .container {
   padding-top: 3rem;
   padding-bottom: 1rem;
-  max-width: 840px;
+  max-width: 1024px;
 
   @include media-breakpoint-up(xl) {
     // Constrain to center content within the container
@@ -17,21 +17,21 @@
 }
 
 //
-.agency-field {
+.option-field {
   width: 100%;
-  border-top-right-radius: 5px;
-  border-top-left-radius: 5px;
+  border-radius: 8px;
   padding-left: 10px;
   padding-right: 10px;
-  background-color: white;
+  background-color: palette.theme-palette(blue);
   margin-bottom: 5px;
   .mat-option-text > span {
     font-size: large;
+    margin-left: 16px;
   }
   input {
-    background-color: aliceblue;
-    padding-top: 3px;
-    padding-bottom: 3px;
+    background-color: palette.theme-palette(blue, 'lighter');
+    font-size: 22px;
+    line-height: 36px;
   }
 }
 
@@ -82,10 +82,16 @@
       display: none;
     }
 
-    @media (min-width: 645px) {
+    @media screen and (max-width: 768px) {
+      h1 {
+        font-size: 0.5em;
+      }
+    }
+
+    @media (min-width: 768px) {
       img {
         display: block;
-        height: 88px;
+        height: 188px;
       }
 
       h1 {
@@ -108,6 +114,36 @@
       width: 600px;
     }
   }
+}
+
+.login-panel {
+  margin-top: 24px;
+  padding: 16px;
+
+  button {
+    background-color: palette.theme-palette(blue);
+    color: palette.theme-palette(buff);
+    font-weight: bold;
+    padding: 8px;
+    margin-top: 8px;
+    width: 288px !important;
+    min-width: unset !important;
+  }
+  button:disabled,
+  button[disabled] {
+    border: 1px solid #999999;
+    background-color: #cccccc;
+    color: #666666;
+  }
+}
+
+.no-login-options {
+  margin-top: 24px;
+  padding: 16px;
+  background-color: palette.theme-palette(red);
+  text-align: center;
+  color: white;
+  border-radius: 8px;
 }
 
 .divider {
@@ -167,6 +203,13 @@
   }
 }
 
+.danger {
+  background-color: palette.theme-palette(red);
+  color: white;
+  padding: 16px;
+  border-radius: 5px;
+}
+
 .center {
   text-align: center;
 }
@@ -174,6 +217,23 @@
 .tagline {
   @include media-breakpoint-up(xl) {
     width: 600px;
+  }
+
+  img {
+    @include media-breakpoint-up(sm) {
+      width: 48px;
+    }
+    @include media-breakpoint-up(md) {
+      width: 48px;
+    }
+    @include media-breakpoint-up(lg) {
+      width: 96px;
+    }
+    @include media-breakpoint-up(xl) {
+      width: 128px;
+    }
+    margin-bottom: 1.5rem;
+    height: auto;
   }
 }
 
@@ -201,8 +261,16 @@
   }
 
   img {
+    @include media-breakpoint-up(sm) {
+      width: 88px;
+    }
+    @media (min-width: 645px) {
+      width: 150px;
+    }
+    @include media-breakpoint-up(lg) {
+      width: 275px;
+    }
     margin-bottom: 3rem;
-    width: 275px;
     height: auto;
   }
 }

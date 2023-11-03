@@ -18,12 +18,13 @@ import { AuthorizedUserService } from '@app/features/auth/services/authorized-us
 import { StatusCode } from '@app/features/portal/enums/status-code.enum';
 
 import { FormUtilsService } from '@core/services/form-utils.service';
+import { MatExpansionModule } from '@angular/material/expansion';
 
 import { PartyUserTypeResource } from '../../../../features/admin/shared/usertype-resource.service';
 import { OrganizationUserType } from '../../../../features/admin/shared/usertype-service.model';
 import { BcpsAuthResourceService } from './auth/bcps-auth-resource.service';
 import { DigitalEvidenceCase } from './case-management/digital-evidence-case.model';
-import { AssignedRegion } from './digital-evidence-account.model';
+import { AssignedRegion, UserValidationResponse } from './digital-evidence-account.model';
 import { DigitalEvidenceFormState } from './digital-evidence-form-state';
 import { DigitalEvidenceResource } from './digital-evidence-resource.service';
 import {
@@ -35,14 +36,14 @@ import {
   selector: 'app-digital-evidence',
   templateUrl: './digital-evidence.page.html',
   styleUrls: ['./digital-evidence.page.scss'],
+
 })
 export class DigitalEvidencePage
   extends AbstractFormPage<DigitalEvidenceFormState>
-  implements OnInit
-{
+  implements OnInit {
   public formState: DigitalEvidenceFormState;
   public title: string;
-
+  public panelOpenState = false;
   public organizationType: OrganizationUserType;
   public assignedRegions: AssignedRegion[] = [];
   public digitalEvidenceUrl: string;
@@ -58,8 +59,13 @@ export class DigitalEvidencePage
   public result: string;
   public userIsBCPS?: boolean;
   public userIsLawyer?: boolean;
+  public userIsPublic?: boolean;
   public folioId?: number;
+  public validatingUser: boolean;
+  public userCodeStatus: string;
+  public userValidationMessage?: string;
   public accessRequestFailed: boolean;
+  public publicAccessDenied: boolean;
   public digitalEvidenceSupportEmail: string;
   public formControlNames: string[];
   public selectedOption = 0;
@@ -95,9 +101,13 @@ export class DigitalEvidencePage
     const partyId = this.partyService.partyId;
     this.userIsBCPS = false;
     this.userIsLawyer = false;
+    this.userIsPublic = false;
+    this.validatingUser = false;
+    this.publicAccessDenied = false;
     this.dataSource = new MatTableDataSource();
     this.identityProvider$ = this.authorizedUserService.identityProvider$;
     this.result = '';
+    this.userCodeStatus = '';
     this.defenceValidationMessage = '';
     this.policeAgency = accessTokenService
       .decodeToken()
@@ -109,19 +119,24 @@ export class DigitalEvidencePage
       }
     });
     this.usertype.getUserType(partyId).subscribe((data: any) => {
-      this.organizationType.organizationType = data['organizationType'];
       this.organizationType.participantId = data['participantId'];
-      this.organizationType.organizationName = data['organizationName'];
+
+      if (data['organizationType']) {
+        this.organizationType.organizationType = data['organizationType'];
+        this.organizationType.organizationName = data['organizationName'];
+
+        this.formState.OrganizationName.patchValue(
+          this.organizationType.organizationName
+        );
+
+        this.formState.OrganizationType.patchValue(
+          this.organizationType.organizationType
+        );
+      }
       this.organizationType.isSubmittingAgency =
         data['isSubmittingAgency'] || false;
 
-      this.formState.OrganizationName.patchValue(
-        this.organizationType.organizationName
-      );
 
-      this.formState.OrganizationType.patchValue(
-        this.organizationType.organizationType
-      );
       this.formState.ParticipantId.patchValue(
         this.organizationType.participantId
       );
@@ -130,8 +145,8 @@ export class DigitalEvidencePage
         // todo - remove IDIR
         if (idp === IdentityProvider.BCPS || idp === IdentityProvider.IDIR) {
           // if BCPS then get the crown-regions
-          this.formState.DefenceUniqueId.setValidators([]);
-          this.formState.DefenceUniqueId.clearValidators();
+          this.formState.OOCUniqueIdValid.setValidators([]);
+          this.formState.OOCUniqueIdValid.clearValidators();
 
           this.userIsBCPS = true;
           this.userOrgunit
@@ -146,6 +161,9 @@ export class DigitalEvidencePage
         }
         if (idp === IdentityProvider.VERIFIED_CREDENTIALS) {
           this.userIsLawyer = true;
+        }
+        if (idp === IdentityProvider.BCSC) {
+          this.userIsPublic = true;
         }
       });
     });
@@ -164,6 +182,7 @@ export class DigitalEvidencePage
       'AssignedRegions',
       'DefenceUniqueId',
       'ParticipantId',
+      'OOCUniqueId'
     ];
   }
 
@@ -173,27 +192,39 @@ export class DigitalEvidencePage
   protected performSubmission(): Observable<void> {
     const partyId = this.partyService.partyId;
 
-    if (this.selectedOption == 1) {
+    if (this.userIsPublic) {
       return partyId && this.formState.json
-        ? this.resource.requestAccess(
+        ? this.resource.requestDisclosureAccess(
+          partyId,
+          this.formState.ParticipantId.value,
+          this.formState.OOCUniqueIdValid?.value,
+        ) : EMPTY;
+    } else {
+
+      if (this.selectedOption == 1) {
+        return partyId && this.formState.json
+          ? this.resource.requestAccess(
             partyId,
             this.formState.OrganizationType.value,
             this.formState.OrganizationName.value,
             this.formState.ParticipantId.value,
-            this.formState.AssignedRegions?.value || []
-          )
-        : EMPTY;
-    }
+            this.formState.AssignedRegions?.value || [],
 
-    return partyId && this.formState.json
-      ? this.resource.requestAccess(
+          )
+          : EMPTY;
+      }
+
+      return partyId && this.formState.json
+        ? this.resource.requestAccess(
           partyId,
           this.formState.OrganizationType.value,
           this.formState.OrganizationName.value,
           this.formState.ParticipantId.value,
-          this.formState.AssignedRegions?.value || []
+          this.formState.AssignedRegions?.value || [],
+
         )
-      : EMPTY;
+        : EMPTY;
+    }
   }
   public showFormControl(formControlName: string): boolean {
     return this.formControlNames.includes(formControlName);
@@ -203,39 +234,85 @@ export class DigitalEvidencePage
     return this.organizationType.isSubmittingAgency;
   }
 
+  public checkUniqueID(_event: any): void {
+
+    if (this.formState.OOCUniqueId.valid) {
+      const codeToCheck = this.formState.OOCUniqueId.value.replace(/.{3}(?!$)/g, '$&-');
+
+      this.validatingUser = true;
+      this.userCodeStatus = '';
+      this.resource.validatePublicUniqueID(
+        this.partyService.partyId,
+        codeToCheck
+      ).pipe(
+        tap(() => {
+          this.userValidationMessage = "Validating your code...";
+        }),
+      ).subscribe((res: UserValidationResponse | HttpErrorResponse) => {
+        this.validatingUser = false;
+
+        if (res instanceof HttpErrorResponse) {
+          this.userValidationMessage = "Unable to validate at this time - please try again later";
+          this.userCodeStatus = 'error';
+          this.formState.OOCUniqueId.patchValue('');
+        }
+        else {
+          if (res.tooManyAttempts) {
+            this.userCodeStatus = 'too_many_attempts';
+            this.formState.OOCUniqueId.patchValue('');
+            this.formState.OOCUniqueId.disable();
+
+            this.userValidationMessage = 'Too many attempts - please contact BCPS for assistance';
+          } else {
+            this.userCodeStatus = res.validated ? 'valid' : 'invalid';
+            if (res.validated) {
+              this.formState.OOCUniqueId.disable();
+            }
+
+            this.publicAccessDenied = !res.validated;
+            this.userValidationMessage = res.validated ? 'Code is valid - you may submit your request' : 'Please verify your code and retry';
+          }
+        }
+      });
+    } else {
+      this.userValidationMessage = undefined;
+    }
+
+  }
+
+  public validationEntryDisabled(): boolean {
+    return true;
+  }
+
   public onChange(data: number): void {
     this.selectedOption = data;
   }
 
   public onRequestAccess(): void {
-    if (this.userIsLawyer) {
+    if (this.userIsPublic) {
       this.resource
-        .requestDefenceCounselAccess(
+        .requestDisclosureAccess(
           this.partyService.partyId,
-          this.formState.OrganizationType.value,
-          this.formState.OrganizationName.value,
-          this.formState.ParticipantId.value
-        )
-        .pipe(
-          tap(() => (this.pending = true)),
-          catchError((error: HttpErrorResponse) => {
-            if (error.status === HttpStatusCode.NotFound) {
-              this.navigateToRoot();
-            }
-            this.accessRequestFailed = true;
-            return of(noop());
-          })
-        )
+          this.formState.ParticipantId.value,
+          this.formState.OOCUniqueId.value).pipe(
+            tap(() => (this.pending = true)),
+            catchError((error: HttpErrorResponse) => {
+              if (error.status === HttpStatusCode.NotFound) {
+                this.navigateToRoot();
+              }
+              this.accessRequestFailed = true;
+              return of(noop());
+            })
+          )
         .subscribe();
-    } else {
-      if (this.selectedOption == 1) {
+    } else
+      if (this.userIsLawyer) {
         this.resource
-          .requestAccess(
+          .requestDefenceCounselAccess(
             this.partyService.partyId,
             this.formState.OrganizationType.value,
             this.formState.OrganizationName.value,
-            this.formState.ParticipantId.value,
-            this.formState.AssignedRegions?.value || []
+            this.formState.ParticipantId.value
           )
           .pipe(
             tap(() => (this.pending = true)),
@@ -249,27 +326,48 @@ export class DigitalEvidencePage
           )
           .subscribe();
       } else {
-        this.resource
-          .requestAccess(
-            this.partyService.partyId,
-            this.formState.OrganizationType.value,
-            this.formState.OrganizationName.value,
-            this.formState.ParticipantId.value,
-            this.formState.AssignedRegions?.value || []
-          )
-          .pipe(
-            tap(() => (this.pending = true)),
-            catchError((error: HttpErrorResponse) => {
-              if (error.status === HttpStatusCode.NotFound) {
-                this.navigateToRoot();
-              }
-              this.accessRequestFailed = true;
-              return of(noop());
-            })
-          )
-          .subscribe();
+        if (this.selectedOption == 1) {
+          this.resource
+            .requestAccess(
+              this.partyService.partyId,
+              this.formState.OrganizationType.value,
+              this.formState.OrganizationName.value,
+              this.formState.ParticipantId.value,
+              this.formState.AssignedRegions?.value || []
+            )
+            .pipe(
+              tap(() => (this.pending = true)),
+              catchError((error: HttpErrorResponse) => {
+                if (error.status === HttpStatusCode.NotFound) {
+                  this.navigateToRoot();
+                }
+                this.accessRequestFailed = true;
+                return of(noop());
+              })
+            )
+            .subscribe();
+        } else {
+          this.resource
+            .requestAccess(
+              this.partyService.partyId,
+              this.formState.OrganizationType.value,
+              this.formState.OrganizationName.value,
+              this.formState.ParticipantId.value,
+              this.formState.AssignedRegions?.value || []
+            )
+            .pipe(
+              tap(() => (this.pending = true)),
+              catchError((error: HttpErrorResponse) => {
+                if (error.status === HttpStatusCode.NotFound) {
+                  this.navigateToRoot();
+                }
+                this.accessRequestFailed = true;
+                return of(noop());
+              })
+            )
+            .subscribe();
+        }
       }
-    }
   }
 
   public ngOnInit(): void {
@@ -287,12 +385,8 @@ export class DigitalEvidencePage
 
     // dynamically add form validators
     this.identityProvider$.subscribe((idp) => {
-      if (idp === IdentityProvider.VERIFIED_CREDENTIALS) {
-        this.formState.DefenceUniqueId.setValidators([
-          Validators.pattern('^[A-Za-z]{2,3}-[0-9]{6}$'),
-          Validators.required,
-        ]);
-        this.formState.DefenceUniqueIdValid.setValidators([
+      if (idp === IdentityProvider.BCSC) {
+        this.formState.OOCUniqueId.setValidators([
           Validators.required,
         ]);
       }

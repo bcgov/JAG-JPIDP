@@ -1,8 +1,6 @@
 namespace edt.disclosure;
 
 using System.Reflection;
-using edt.disclosure;
-using log4net;
 using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Json;

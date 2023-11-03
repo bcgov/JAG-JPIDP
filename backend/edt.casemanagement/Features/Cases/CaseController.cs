@@ -1,4 +1,6 @@
 namespace edt.casemanagement.Features.Cases;
+
+using Common.Models.EDT;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Prometheus;
@@ -18,7 +20,7 @@ public class CaseController : ControllerBase
 
     public CaseController(IMediator mediator)
     {
-        _mediator = mediator;
+        this._mediator = mediator;
     }
 
     [HttpGet("id/{caseId}")]
@@ -34,34 +36,40 @@ public class CaseController : ControllerBase
             var response = await this._mediator.Send(new CaseGetByIdQuery(caseId));
             if (response == null)
             {
-                return NotFound();
+                return this.NotFound();
             }
             else
             {
-                return Ok(response);
+                return this.Ok(response);
             }
         }
     }
 
 
-    [HttpGet("{caseName}")]
-    //[Authorize(Policy = Policies.SubAgencyIdentityProvider)]
+    [HttpGet("{partyId}/{caseName}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<CaseModel>> SearchCases([FromRoute] string caseName)
+    public async Task<ActionResult<CaseModel>> SearchCases([FromRoute] string partyId, [FromRoute] string caseName)
     {
         using (CaseFindDuration.NewTimer())
         {
 
-            var response = await this._mediator.Send(new CaseLookupQuery(caseName));
-            if (response == null)
+            try
             {
-                return NotFound();
+                var response = await this._mediator.Send(new CaseLookupQuery(partyId, caseName));
+                if (response == null)
+                {
+                    return this.NotFound();
+                }
+                else
+                {
+                    return this.Ok(response);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                return Ok(response);
+                return this.Problem(ex.Message);
             }
         }
     }

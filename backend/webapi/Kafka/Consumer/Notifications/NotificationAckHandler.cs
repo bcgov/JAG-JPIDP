@@ -15,10 +15,14 @@ public class NotificationAckHandler : IKafkaHandler<string, NotificationAckModel
     public async Task<Task> HandleAsync(string consumerName, string key, NotificationAckModel value)
     {
 
+        using var trx = this.context.Database.BeginTransaction();
+
+
         Log.Logger.Information("Message received on {0} with key {1}", consumerName, key);
         //check whether this message has been processed before   
         if (await this.context.HasBeenProcessed(key, consumerName))
         {
+            await trx.RollbackAsync();
             return Task.CompletedTask;
         }
 
@@ -32,7 +36,6 @@ public class NotificationAckHandler : IKafkaHandler<string, NotificationAckModel
             {
                 Log.Information($"Marking access request {value.AccessRequestId} as {value.Status}");
 
-                using var trx = this.context.Database.BeginTransaction();
 
                 try
                 {
@@ -62,7 +65,6 @@ public class NotificationAckHandler : IKafkaHandler<string, NotificationAckModel
               .Where(request => request.RequestId == value.AccessRequestId).SingleOrDefaultAsync();
             if (accessRequest != null)
             {
-                using var trx = this.context.Database.BeginTransaction();
 
                 try
                 {

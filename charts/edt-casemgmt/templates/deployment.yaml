@@ -217,6 +217,21 @@ spec:
                 secretKeyRef:
                   name: splunk-config
                   key: SplunkConfig__Host
+            - name: EdtClient__AlternateSearchFieldId
+              valueFrom:
+                secretKeyRef:
+                  name: edt-client
+                  key: EdtClient__AlternateSearchFieldId
+            - name: EdtClient__SearchField
+              valueFrom:
+                secretKeyRef:
+                  name: edt-client
+                  key: EdtClient__SearchField
+            - name: EdtClient__AlternateSearchField
+              valueFrom:
+                secretKeyRef:
+                  name: edt-client
+                  key: EdtClient__AlternateSearchField
           volumeMounts:
           - name: truststore
             mountPath: "/opt/kafka/certificates"
@@ -241,18 +256,11 @@ spec:
               path: /health/liveness
               port: http
               scheme: HTTP
-            timeoutSeconds: 5
+            timeoutSeconds: 10
             periodSeconds: 30
             successThreshold: 1
-            failureThreshold: 3
-        #  livenessProbe: //turn this on for TEST and PROD
-         #   httpGet:
-        #      path: /health/liveness
-        #      port: http
-         #   timeoutSeconds: 1
-        #    periodSeconds: 10
-         #   successThreshold: 1
-         #   failureThreshold: 3
+            failureThreshold: 5
+
          # startupProbe:
         #    httpGet:
          #     path: /health/liveness

@@ -73,7 +73,9 @@ public class UserRepresentation
     public string? LastName { get; set; }
     public string? FirstName { get; set; }
 
-    public bool? Enabled { get; set; } = true; // enabled by default
+    public List<FederatedIdentityRepresentation> FederatedIdentities { get; set; }
+
+    public bool Enabled { get; set; } = true; // enabled by default
 
   //  public List<Group> Groups { get; set; } =  new List<Group>();
 
@@ -93,4 +95,10 @@ public class UserRepresentation
     private void SetAttribute(string key, string value) => this.Attributes[key] = new string[] { value };
 }
 
+public class FederatedIdentityRepresentation
+{
+    public string IdentityProvider { get; set; }
+    public string UserId { get; set; }
+    public string UserName { get; set; }
 
+}

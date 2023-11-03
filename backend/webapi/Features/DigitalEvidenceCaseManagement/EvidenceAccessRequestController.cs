@@ -52,7 +52,7 @@ public class EvidenceCaseManagementController : PidpControllerBase
                                                                                    [FromQuery] SubmittingAgencyByCaseId.Query query)
     {
         var result = await handler.HandleAsync(new SubmittingAgencyByCaseId.Query(query.RCCNumber));
-        return Ok(result);
+        return this.Ok(result);
     }
 
 
@@ -113,7 +113,33 @@ public class EvidenceCaseManagementController : PidpControllerBase
     [Authorize(Policy = Policies.SubAgencyIdentityProvider)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<DigitalEvidenceCaseModel>> FindCase([FromServices] IQueryHandler<DigitalEvidenceCaseQuery.Query, Models.DigitalEvidenceCaseModel> handler,
+    public async Task<ActionResult<DigitalEvidenceCaseModel>> FindCase([FromServices] IQueryHandler<DigitalEvidenceCaseQuery.Query, DigitalEvidenceCaseModel> handler,
                                                                                                  [FromQuery] DigitalEvidenceCaseQuery.Query query)
-        => await handler.HandleAsync(query);
+    {
+
+        try
+        {
+            var claim = this.HttpContext.User.Claims.First(c => c.Type == "preferred_username");
+            var emailAddress = claim.Value;
+            query.PartyId = emailAddress;
+            var response = await handler.HandleAsync(query);
+            if (response == null)
+            {
+                return this.NotFound();
+            }
+            if (response.Errors.Any())
+            {
+                return this.Problem(response.Errors);
+            }
+            return response;
+        }
+        catch (Exception ex)
+        {
+            return this.Problem(ex.Message);
+
+        }
+
+
+
+    }
 }

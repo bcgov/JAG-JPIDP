@@ -7,6 +7,7 @@ import { PartyService } from '@app/core/party/party.service';
 import { Role } from '@app/shared/enums/roles.enum';
 
 import { EndorsementsResource } from '../organization-info/pages/endorsements/endorsements-resource.service';
+import { StatusCode } from './enums/status-code.enum';
 import { ProfileStatusAlert } from './models/profile-status-alert.model';
 import { ProfileStatus } from './models/profile-status.model';
 import { PortalResource } from './portal-resource.service';
@@ -39,6 +40,10 @@ export class PortalPage implements OnInit {
    */
   public completedProfile: boolean;
 
+  public firstName: string;
+  public demographicsHidden: boolean;
+  public organizationHidden: boolean;
+
   public Role = Role;
 
   public constructor(
@@ -52,6 +57,9 @@ export class PortalPage implements OnInit {
     this.state$ = this.portalService.state$;
     this.completedProfile = false;
     this.alerts = [];
+    this.firstName = '';
+    this.demographicsHidden = true;
+    this.organizationHidden = true;
   }
 
   public onScrollToAnchor(): void {
@@ -59,6 +67,14 @@ export class PortalPage implements OnInit {
       fragment: 'access',
       queryParamsHandling: 'preserve',
     });
+  }
+
+  public hideOrganization(): boolean {
+    return this.organizationHidden;
+  }
+
+  public hideDemographics(): boolean {
+    return this.demographicsHidden;
   }
 
   public onCardAction(section: IPortalSection): void {
@@ -74,6 +90,15 @@ export class PortalPage implements OnInit {
               this.portalService.updateState(profileStatus);
               this.completedProfile = this.portalService.completedProfile;
               this.alerts = this.portalService.alerts;
+              this.demographicsHidden =
+                profileStatus?.status.demographics.statusCode ===
+                StatusCode.HIDDENCOMPLETE;
+              this.organizationHidden =
+                profileStatus?.status.organizationDetails.statusCode ===
+                StatusCode.HIDDENCOMPLETE || profileStatus?.status.organizationDetails.statusCode ===
+                StatusCode.HIDDEN;
+              this.firstName =
+                profileStatus?.status.demographics.firstName || '';
             })
           )
         )

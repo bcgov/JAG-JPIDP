@@ -9,7 +9,7 @@ global:
 
 pidp-sso:
   keycloak:
-    realm: https://test.common-sso.justice.gov.bc.ca/auth/realms/DEMSTEST
+    realm: https://test.common-sso.justice.gov.bc.ca/auth/realms/BCPS
   auth:
   existingSecret: pidp-sso-postgresql
   secretKeys:
@@ -42,6 +42,10 @@ edt-disclosure:
   migrations:
     enabled: false
 
+approvalflow:
+  migrations:
+    enabled: false
+
 database:
   autoCreate: false
   # databaseHost: dev-patroni
@@ -49,8 +53,8 @@ database:
   # trigger
 
 keycloak:
-  realm: DEMSTEST
-  auth: https://test.common-sso.justice.gov.bc.ca/auth/realms/DEMSTEST
+  realm: BCPS
+  auth: https://test.common-sso.justice.gov.bc.ca/auth/realms/BCPS
   base: https://test.common-sso.justice.gov.bc.ca/auth
 
 edt-service:
@@ -78,7 +82,7 @@ frontend:
     environmentName: dev
     keycloak:
       url: https://test.common-sso.justice.gov.bc.ca/auth
-      realm: DEMSTEST
+      realm: BCPS
 
 
 webapi:

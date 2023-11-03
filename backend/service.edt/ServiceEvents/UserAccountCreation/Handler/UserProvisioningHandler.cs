@@ -8,7 +8,6 @@ using edt.service.Kafka;
 using edt.service.Kafka.Interfaces;
 using edt.service.Kafka.Model;
 using edt.service.ServiceEvents.UserAccountCreation.Models;
-using edt.service.ServiceEvents.UserAccountModification.Models;
 using Microsoft.Extensions.Logging;
 using Prometheus;
 using static edt.service.EdtServiceConfiguration;
@@ -20,12 +19,14 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
 
     private readonly IKafkaProducer<string, EdtUserProvisioningModel> retryProducer;
     private readonly IKafkaProducer<string, UserModificationEvent> userModificationProducer;
-
+    private Dictionary<string, int> AdditionalGroupMap = new Dictionary<string, int>();
     private readonly EdtServiceConfiguration configuration;
     private readonly IEdtClient edtClient;
     private readonly ILogger logger;
     private readonly EdtDataStoreDbContext context;
-    private static readonly Counter TombstoneConversions = Metrics.CreateCounter("edt_tombstone_conversions", "Number of tombstone accounts activated");
+    private static readonly Counter TombstoneConversions = Metrics.CreateCounter("edt_tombstone_conversion_total", "Number of tombstone accounts activated");
+    private static readonly Counter AccountErrorCounter = Metrics.CreateCounter("edt_user_account_error_total", "Errors adding or updating accounts");
+    private static readonly Histogram TombstoneProcessDuration = Metrics.CreateHistogram("edt_tombstone_processing_duration", "Histogram of edt tombstone account activations.");
 
 
     public UserProvisioningHandler(
@@ -87,10 +88,17 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
             //check whether edt user already exist
             var result = await this.AddOrUpdateUser(accessRequestModel);
 
+            // if BCPS then check additional groups are assigned as needed
+            if (result.successful && !result.submittingAgencyUser)
+            {
+                Serilog.Log.Information($"Ensuring user {result.partId} is in required groups {string.Join(",", this.configuration.EdtClient.AdditionalBCPSGroups)}");
+                await this.EnsureUserInRequiredGroups(accessRequestModel);
+            }
+
 
             if (result.successful)
             {
-                //add to tell message has been proccessed by consumer
+                //add to tell message has been processed by consumer
                 await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
 
                 await this.context.SaveChangesAsync();
@@ -158,13 +166,15 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
 
                     var domainEvent = result.eventType == UserModificationEvent.UserEvent.EnableTombstone ? "digitalevidence-bcps-usercreation-tombstone-complete" : "digitalevidence-bcps-usercreation-complete";
 
-                    await this.producer.ProduceAsync(this.configuration.KafkaCluster.ProducerTopicName, key: key, new Notification
+
+                    var published = await this.producer.ProduceAsync(this.configuration.KafkaCluster.ProducerTopicName, key: key, new Notification
                     {
                         To = accessRequestModel.Email,
                         DomainEvent = domainEvent,
-
                         EventData = eventData,
                     });
+
+                    Serilog.Log.Information($"Published {domainEvent} to {this.configuration.KafkaCluster.ProducerTopicName} key: {published.Key}");
 
 
                     if (string.IsNullOrEmpty(this.configuration.SchemaRegistry.Url))
@@ -173,6 +183,9 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
                     }
 
                     var producer = new SchemaAwareProducer(ConsumerSetup.GetProducerConfig(), this.userModificationProducer, this.configuration);
+
+
+
 
                     // publish to the user creation topic for others to consume
                     bool publishResultOk;
@@ -188,8 +201,29 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
                     }
                     else
                     {
-                        Serilog.Log.Information("Publishing EDT user modification event {0} {1}", msgKey, accessRequestModel.Key);
+                        Serilog.Log.Information($"Publishing EDT user modification event {result.eventType} {msgKey} {accessRequestModel.Key}");
                         publishResultOk = await producer.ProduceAsync(this.configuration.KafkaCluster.UserModificationTopicName, key: msgKey, result);
+
+
+                        // if a tombstone account we'll just tell ISL that the account was created - this will trigger the DEMS flag in JUSTIN
+                        // and associate any cases not assigned prior to the user account being setup in EDT as a tombstone account
+                        if (result.eventType == UserModificationEvent.UserEvent.EnableTombstone && !string.IsNullOrEmpty(plainTextTopic))
+                        {
+                            Serilog.Log.Information($"Sending message to plain topic for tombstone account");
+                            var plainMessageOk = await this.userModificationProducer.ProduceAsync(plainTextTopic, key: msgKey, result);
+
+                            if (plainMessageOk.Status == Confluent.Kafka.PersistenceStatus.Persisted)
+                            {
+                                Serilog.Log.Information($"Published to {plainTextTopic} for partId: {result.partId} - reqId: {result.accessRequestId}");
+                            }
+                            else
+                            {
+                                Serilog.Log.Error($"Failed to publish to {plainTextTopic} for partId: {result.partId} - reqId: {result.accessRequestId}");
+
+                            }
+
+                        }
+
                     }
 
 
@@ -200,6 +234,8 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
                     else
                     {
                         Serilog.Log.Logger.Error("Failed to publish to user notification topic - rolling back transaction");
+                        AccountErrorCounter.Inc();
+
                         await trx.RollbackAsync();
                     }
 
@@ -207,6 +243,31 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
 
                 }
             }
+            else
+            {
+                Serilog.Log.Error($"Add or update user request was not successful {accessRequestModel.UserName} {accessRequestModel.Id}");
+
+                AccountErrorCounter.Inc();
+                await trx.RollbackAsync();
+                var msgId = Guid.NewGuid().ToString();
+
+                var eventData = new Dictionary<string, string>
+                {
+                        { "FirstName", accessRequestModel.FullName!.Split(' ').FirstOrDefault("NAME_NOT_SET") },
+                        { "PartyId", accessRequestModel.Key! },
+                        { "Tag", msgId! }
+                    };
+
+                await this.producer.ProduceAsync(this.configuration.KafkaCluster.ProducerTopicName, key: key, new Notification
+                {
+                    To = accessRequestModel.Email,
+                    DomainEvent = "digitalevidence-bcps-usercreation-error",
+                    EventData = eventData
+                });
+
+
+            }
+
         }
         catch (Exception ex)
         {
@@ -230,6 +291,51 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
         return Task.CompletedTask; //create specific exception handler later
     }
 
+    /// <summary>
+    /// As it says in the name
+    /// </summary>
+    /// <param name="accessRequestModel"></param>
+    /// <returns></returns>
+    private async Task<bool> EnsureUserInRequiredGroups(EdtUserProvisioningModel accessRequestModel)
+    {
+        var user = await this.edtClient.GetUser(accessRequestModel.Key!) ?? throw new EdtServiceException($"Invalid user key provided {accessRequestModel.Key} to EnsureUserInRequiredGroups");
+        var groups = await this.edtClient.GetAssignedOUGroups(user.Id!);
+
+        var additionalGroups = 0;
+        var additionalGroupConfig = this.configuration.EdtClient.AdditionalBCPSGroups.Split(",", StringSplitOptions.TrimEntries);
+        foreach (var group in additionalGroupConfig)
+        {
+            var edtGroup = groups.FirstOrDefault(g => g.Name.Equals(group, StringComparison.OrdinalIgnoreCase));
+            if (edtGroup == null)
+            {
+                if (!this.AdditionalGroupMap.ContainsKey(group))
+                {
+                    var groupId = await this.edtClient.GetOuGroupId(group);
+                    if (groupId > 0)
+                    {
+                        this.AdditionalGroupMap.Add(group, groupId);
+                    }
+                    else
+                    {
+                        throw new EdtServiceException($"Unknown EDT group {group} in call to EnsureUserInRequiredGroups - check configuration");
+                    }
+
+                }
+                Serilog.Log.Information($"Adding user {accessRequestModel.UserName} to {group} {this.AdditionalGroupMap[group]}");
+                var added = await this.edtClient.AddUserToGroup(user.Id!, this.AdditionalGroupMap[group]);
+                if (added)
+                {
+                    additionalGroups++;
+                }
+            }
+            else
+            {
+                additionalGroups++;
+            }
+        }
+
+        return additionalGroups == additionalGroupConfig.Length;
+    }
 
     private async Task<string> CheckEdtServiceVersion() => await this.edtClient.GetVersion();
 
@@ -242,14 +348,19 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
         // already available to the user. This alleviates the lengthy case assignment process that is required for new JUSTIN users accessing EDT
         if (user != null && !string.IsNullOrEmpty(this.configuration.EdtClient.TombStoneEmailDomain) && (user.Email.EndsWith(this.configuration.EdtClient.TombStoneEmailDomain, StringComparison.OrdinalIgnoreCase) && user.IsActive == false))
         {
-            this.logger.LogUserTombstoneActivation(value.Key, value.AccessRequestId);
-            var response = await this.edtClient.EnableTombstoneAccount(value, user);
-            if (response.successful)
+            using (TombstoneProcessDuration.NewTimer())
             {
-                TombstoneConversions.Inc();
-            }
+                this.logger.LogUserTombstoneActivation(value.Key, value.AccessRequestId);
+                var response = await this.edtClient.EnableTombstoneAccount(value, user);
+                if (response.successful)
+                {
 
-            return response;
+                    TombstoneConversions.Inc();
+
+                }
+
+                return response;
+            }
         }
         else
         {

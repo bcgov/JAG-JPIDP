@@ -1,8 +1,6 @@
 namespace edt.service.ServiceEvents.UserAccountCreation.Handler;
 
-using System.Diagnostics;
 using System.Threading.Tasks;
-using Avro;
 using Chr.Avro.Confluent;
 using Confluent.Kafka;
 using Confluent.SchemaRegistry;
@@ -10,9 +8,6 @@ using Confluent.SchemaRegistry.Serdes;
 using edt.service.Infrastructure.Telemetry;
 using edt.service.Kafka.Interfaces;
 using edt.service.Kafka.Model;
-using Google.Protobuf.WellKnownTypes;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Schema;
 using Serilog;
 
 /// <summary>

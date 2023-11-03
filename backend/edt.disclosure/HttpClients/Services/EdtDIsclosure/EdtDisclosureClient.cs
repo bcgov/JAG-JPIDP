@@ -1,7 +1,4 @@
 namespace edt.disclosure.HttpClients.Services.EdtDisclosure;
-
-using System.Dynamic;
-using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using AutoMapper;
 
@@ -14,9 +11,6 @@ using edt.disclosure.ServiceEvents.CourtLocation.Models;
 using edt.disclosure.ServiceEvents.Models;
 using edt.disclosure.ServiceEvents.UserAccountCreation.Models;
 using edt.disclosure.ServiceEvents.UserAccountModification.Models;
-using Google.Protobuf.WellKnownTypes;
-using MediatR;
-using Microsoft.AspNetCore.Connections.Features;
 using Prometheus;
 using Serilog;
 
@@ -25,13 +19,12 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
     private readonly IMapper mapper;
     private readonly OtelMetrics meters;
     private readonly EdtDisclosureServiceConfiguration configuration;
-    private const string CounselGroup = "Counsel";
     private static readonly Counter ProcessedJobCount = Metrics
-        .CreateCounter("disclosure_case_searches", "Number of disclosure case search requests.");
+        .CreateCounter("disclosure_case_search_total", "Number of disclosure case search requests.");
     private static readonly Histogram AccountCreationDuration = Metrics.CreateHistogram("edt_disclosure_account_creation_duration", "Histogram of edt disclosure account creations.");
     private static readonly Histogram AccountUpdateDuration = Metrics.CreateHistogram("edt_disclosure_account_update_duration", "Histogram of edt disclosure account updates.");
     private static readonly Counter CaseAddRequest = Metrics
-    .CreateCounter("disclosure_case_additions", "Number of disclosure cases added.");
+    .CreateCounter("disclosure_case_addition_total", "Number of disclosure cases added.");
 
     public EdtDisclosureClient(
         HttpClient httpClient, OtelMetrics meters, EdtDisclosureServiceConfiguration edtServiceConfiguration,
@@ -106,7 +99,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             // get the id of the case
             courtLocation = await this.FindLocationCase(this.configuration.EdtClient.CourtLocationKeyPrefix + accessRequest.CourtLocationKey);
         }
-        catch ( ResourceNotFoundException ex)
+        catch (ResourceNotFoundException ex)
         {
             if (this.configuration.EdtClient.CreateCourtLocations)
             {
@@ -133,16 +126,33 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         }
         else
         {
-            Log.Information($"Adding user {user.Id} to court location {courtLocation.Id}");
-            var addedOk = await this.AddUserToCase(user.Id, courtLocation.Id, "Reviewers");
-            if (addedOk)
+            if (accessRequest.EventType.Equals(CourtLocationEventType.Decommission))
             {
-                Log.Information($"Added user {user.Id} to court location {courtLocation.Id}");
+                Log.Information($"Removing user {user.Id} from court location {courtLocation.Id} {courtLocation.Key}");
+                var removed = await this.RemoveUserFromCase(user.Id, courtLocation.Id);
+                if (removed)
+                {
+                    Log.Information($"Removed user {user.Id} from court location {courtLocation.Id} {courtLocation.Key}");
+                }
+                else
+                {
+                    Log.Error($"Failed to remove user {user.Id} from court location {courtLocation.Id} {courtLocation.Key}");
+
+                }
             }
             else
             {
-                Log.Error($"Failed to add user {user.Id} to court location {courtLocation.Id}");
+                Log.Information($"Adding user {user.Id} to court location {courtLocation.Id} {courtLocation.Key}");
+                var addedOk = await this.AddUserToCase(user.Id, courtLocation.Id, "Reviewers");
+                if (addedOk)
+                {
+                    Log.Information($"Added user {user.Id} to court location {courtLocation.Id} {courtLocation.Key}");
+                }
+                else
+                {
+                    Log.Error($"Failed to add user {user.Id} to court location {courtLocation.Id} {courtLocation.Key}");
 
+                }
             }
 
         }
@@ -183,7 +193,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         else
         {
             var cases = caseSearch?.Value;
-   
+
             if (cases?.Count() == 0)
             {
                 throw new ResourceNotFoundException("Case", caseName);
@@ -244,15 +254,15 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             if (newUser != null)
             {
 
-                var groupAddResponse = await this.AddUserToOUGroup(newUser.Id, CounselGroup);
+                var groupAddResponse = await this.AddUserToOUGroup(newUser.Id, this.configuration.EdtClient.CounselGroup);
                 if (!groupAddResponse)
                 {
                     userModificationResponse.successful = false;
-                    userModificationResponse.Errors.Add($"Failed to add user to group {CounselGroup}");
+                    userModificationResponse.Errors.Add($"Failed to add user to group {this.configuration.EdtClient.CounselGroup}");
                 }
                 else
                 {
-                    Log.Information($"User {newUser.Id} added to {CounselGroup} in EDT");
+                    Log.Information($"User {newUser.Id} added to {this.configuration.EdtClient.CounselGroup} in EDT");
                 }
 
                 //// add user to their folio folder
@@ -331,22 +341,22 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             // check user has folio and is associated
             var groups = await this.GetUserOUGroups(currentUser.Id);
 
-            var inGroup = groups.FirstOrDefault(group => group.Name.Equals(CounselGroup, StringComparison.OrdinalIgnoreCase));
+            var inGroup = groups.FirstOrDefault(group => group.Name.Equals(this.configuration.EdtClient.CounselGroup, StringComparison.OrdinalIgnoreCase));
 
             if (inGroup == null)
             {
-                Log.Information($"User {currentUser.Id} not currently in {CounselGroup} - adding");
-                var addedToGroup = await this.AddUserToOUGroup(currentUser.Id, CounselGroup);
+                Log.Information($"User {currentUser.Id} not currently in {this.configuration.EdtClient.CounselGroup} - adding");
+                var addedToGroup = await this.AddUserToOUGroup(currentUser.Id, this.configuration.EdtClient.CounselGroup);
 
                 if (addedToGroup)
                 {
-                    Log.Information($"Added user {currentUser.Id} to group {CounselGroup}");
+                    Log.Information($"Added user {currentUser.Id} to group {this.configuration.EdtClient.CounselGroup}");
                 }
                 else
                 {
-                    Log.Warning($"Failed to add user {currentUser.Id} to group {CounselGroup}");
+                    Log.Warning($"Failed to add user {currentUser.Id} to group {this.configuration.EdtClient.CounselGroup}");
                     userModificationResponse.successful = false;
-                    userModificationResponse.Errors.Add($"Failed to add user {currentUser.Id} to group {CounselGroup}");
+                    userModificationResponse.Errors.Add($"Failed to add user {currentUser.Id} to group {this.configuration.EdtClient.CounselGroup}");
                 }
             }
 
@@ -370,7 +380,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
 
             // check the user exists
-            EdtUserDto? currentUser = await this.GetUser(changeEvent.Key);
+            var currentUser = await this.GetUser(changeEvent.Key);
             if (currentUser == null)
             {
                 throw new EdtDisclosureServiceException($"No user found in disclosure with key {changeEvent.Key}");
@@ -404,7 +414,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
                             Log.Warning($"Ignoring change event {changeType.Key} for {changeEvent.UserID} ({changeType.Value.To})");
                             break;
                         }
-                  
+
                     }
 
                 }
@@ -434,7 +444,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
             var result = await this.PutAsync($"api/v1/users", currentUser);
 
-            if ( !result.IsSuccess)
+            if (!result.IsSuccess)
             {
                 userModificationResponse.successful = false;
                 userModificationResponse.Errors.AddRange(result.Errors);
@@ -624,7 +634,6 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         }
 
 
-        return false;
     }
 
 
@@ -970,6 +979,12 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         else
         {
             var groupId = await this.GetOuGroupId(groupName!);
+
+            if (groupId <= 0)
+            {
+                Log.Logger.Error("Failed to add user {0} to group {1} - group not found", userId, groupName);
+                return false;
+            }
 
             // see if user already in group
 

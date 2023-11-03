@@ -1,10 +1,9 @@
 <ui-page-section>
   <ng-content select="ui-scroll-target"></ng-content>
-  <ui-page-section-subheader icon="" heading="Get Support"></ui-page-section-subheader>
+  <ui-page-section-subheader icon="" heading="Support"></ui-page-section-subheader>
   <ul>
     <li *ngFor="let support of providedSupport">
-      Questions about the {{ support.name }}<br />
-      should be directed to:
+      For {{ support.name }} assistance, please email
       <a uiAnchor scheme="mailto" [attr.href]="support.email"></a>
     </li>
   </ul>

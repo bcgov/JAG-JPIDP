@@ -1,7 +1,7 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
-import { Observable, catchError, of, throwError } from 'rxjs';
+import { Observable, catchError, map, of, throwError } from 'rxjs';
 
 import { NoContent, NoContentResponse } from '@bcgov/shared/data-access';
 
@@ -10,7 +10,7 @@ import { ProfileStatus } from '@app/features/portal/models/profile-status.model'
 import { PortalResource } from '@app/features/portal/portal-resource.service';
 
 import { DigitalEvidenceCase } from './case-management/digital-evidence-case.model';
-import { DemsAccount } from './digital-evidence-account.model';
+import { DemsAccount, UserValidationResponse } from './digital-evidence-account.model';
 
 @Injectable({
   providedIn: 'root',
@@ -19,10 +19,27 @@ export class DigitalEvidenceResource {
   public constructor(
     private apiResource: ApiHttpClient,
     private portalResource: PortalResource
-  ) {}
+  ) { }
 
   public getProfileStatus(partyId: number): Observable<ProfileStatus | null> {
     return this.portalResource.getProfileStatus(partyId);
+  }
+
+
+  public validatePublicUniqueID(
+    partyID: number,
+    uniqueID: string
+  ): Observable<UserValidationResponse | HttpErrorResponse> {
+    return this.apiResource.get(`access-requests/digital-evidence/validate/${partyID}/${uniqueID}`)
+      .pipe(
+
+        map((response: any) => {
+          return response;
+        }),
+        catchError((error: HttpErrorResponse) => {
+
+          return of(error);
+        }));
   }
 
   public validateDefenceId(
@@ -57,12 +74,36 @@ export class DigitalEvidenceResource {
       );
   }
 
+  public requestDisclosureAccess(
+    partyId: number,
+    participantId: DemsAccount,
+    keyData: DemsAccount,
+  ): NoContent {
+    return this.apiResource
+      .post<NoContent>('access-requests/digital-evidence-disclosure', {
+        partyId,
+        participantId,
+        keyData
+      })
+      .pipe(
+        NoContentResponse,
+        catchError((error: HttpErrorResponse) => {
+          if (error.status === HttpStatusCode.BadRequest) {
+            return of(void 0);
+          }
+
+          return throwError(() => error);
+        })
+      );
+  }
+
   public requestAccess(
     partyId: number,
     organizationType: DemsAccount,
     organizationName: DemsAccount,
     participantId: DemsAccount,
-    assignedRegions: DemsAccount
+    assignedRegions: DemsAccount,
+
   ): NoContent {
     return this.apiResource
       .post<NoContent>('access-requests/digital-evidence', {
@@ -71,6 +112,7 @@ export class DigitalEvidenceResource {
         organizationName,
         participantId,
         assignedRegions,
+
       })
       .pipe(
         NoContentResponse,

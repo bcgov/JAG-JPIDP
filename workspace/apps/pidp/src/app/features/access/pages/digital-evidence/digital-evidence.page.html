@@ -14,20 +14,35 @@
   </ui-alert>
 
   <ui-alert *ngIf="pending" type="primary" icon="pending_outline" iconType="outlined"
-    heading="Access Request Pending for Approval">
+    heading="Access request is processing">
     <ng-container uiAlertContent>
       <p>
-        Your request for access to the Digital Evidence and Disclosure Management System has been
-        submitted and should be be processed soon.
+        Thank you for submitting your request.<br />
+        Your DEMS account is being finalized and created.<br />
       </p>
+      <div *ngIf="userIsBCPS">
+        Assigned cases will be available for you within 24 hours. Please check your email for confirmation that your
+        account is ready for use.<br />
+        For immediate access to a case or if you need DEMS support, please email <a uiAnchor scheme="mailto"
+          [attr.href]="digitalEvidenceSupportEmail"></a>
+      </div>
+      <div *ngIf="!userIsBCPS">
+        If you need DEMS support, please email <a uiAnchor scheme="mailto"
+          [attr.href]="digitalEvidenceSupportEmail"></a>
+      </div>
+
     </ng-container>
+
   </ui-alert>
+
+
+
 
   <ui-page-section>
     <ui-page-section-subheader icon="assignment" heading="Digital Evidence and Disclosure Management System">
       <ng-container uiPageSectionSubheaderDesc>
         {{ completed ? 'Enrolment Complete.' : pending ? 'Enrolment Pending' :
-        'Collection Notice.' }}
+        '' }}
       </ng-container>
     </ui-page-section-subheader>
   </ui-page-section>
@@ -47,7 +62,17 @@
 
   <ng-template #notCompleted>
     <ui-page-section>
-      <p class="collection-notice" [innerHtml]="collectionNotice | safe: 'html'"></p>
+      <mat-accordion>
+        <mat-expansion-panel (opened)="panelOpenState = true" (closed)="panelOpenState = false">
+          <mat-expansion-panel-header>
+            <mat-panel-title class="primary">
+              View Collection Notice
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <p class="collection-notice accordion-body collapse " [innerHtml]="collectionNotice | safe: 'html'"></p>
+        </mat-expansion-panel>
+      </mat-accordion>
+
     </ui-page-section>
   </ng-template>
 
@@ -55,20 +80,66 @@
     <ng-container *ngIf="pending; else notCompleted"> </ng-container>
   </ng-template>
 
-  <ng-container>
-    <ui-page-section *ngIf="!userIsLawyer">
+
+  <ng-container *ngIf="userIsPublic">
+    <ui-page-section-subheader heading="Disclosure System Access">
+      <div>
+        Please enter the code that was provided to you by The BC Prosecution Service<br />
+        If you do not have a code please contact your local Court Location<br />
+        Once you have entered a valid code, click Submit to request access to your Disclosure.<p></p>
+
+      </div>
+
+      <div class="row form-group">
+
+        <div class="col-md-6 col-sm-12">
+          <mat-form-field class="code-entry mat-elevation-z16">
+            <input oninput="this.value = this.value.toUpperCase()" matInput placeholder="Code" class="formControl"
+              formControlName="OOCUniqueId" [readonly]="false" (keyup)="checkUniqueID($event)" mask="SSS-000" />
+          </mat-form-field>
+        </div>
+
+        <div class="col-md-6 col-sm-12 align-middle my-auto">
+          <div *ngIf="validatingUser">
+            <mat-spinner class="spinner" [diameter]="60"></mat-spinner>
+          </div>
+          <div *ngIf="userCodeStatus === 'too_many_attempts'">
+            <mat-icon>warning</mat-icon>
+            <b>You have entered an invalid code too many times.</b><br />
+            <i>Please contact the BC Prosecution Service for assistance</i>
+          </div>
+          <div *ngIf="userCodeStatus === 'error'">
+            <mat-icon>error</mat-icon>
+
+            We are unable to check your code at this time, please try again later
+          </div>
+          <div *ngIf="userCodeStatus !== 'error' && userCodeStatus !== 'too_many_attempts' ">
+            <mat-icon [class]="userCodeStatus === 'valid' ? 'valid-icon' : 'error-icon'">
+              {{ userCodeStatus === '' ? '' : userCodeStatus === 'valid' ? 'check_circle_outline' :
+              'block' }}
+            </mat-icon>
+            {{userValidationMessage}}
+          </div>
+        </div>
+
+
+      </div>
+
+    </ui-page-section-subheader>
+  </ng-container>
+
+  <ng-container *ngIf="!userIsPublic">
+    <ui-page-section *ngIf=" (!userIsLawyer && !pending && !completed)">
       <ui-page-section-subheader heading="Digital Evidence and Disclosure Management System">
         <ng-container uiPageSectionSubheaderDesc *ngIf="!userInAgency()">
-          Check that the information below is correct, then click Request Access. If the information needs updating,
-          please
-          contact
-          <a uiAnchor scheme="mailto" [attr.href]="digitalEvidenceSupportEmail"></a>.
+          Check that the information below is correct, then click Submit. If the information needs updating, please
+          email <a uiAnchor scheme="mailto" [attr.href]="digitalEvidenceSupportEmail"></a>.
 
 
         </ng-container>
         <ng-container uiPageSectionSubheaderDesc *ngIf="userInAgency()">
           <div *ngIf="userInAgency()">
-            Click on <b>Request Access</b> to submit your request to have access to the DEMS system.
+            Click on <b>Submit</b> to submit your request to have access to the DEMS system.
             <br />
             As a submitting agency user, you will be able to request access to cases for the purposes of uploading
             digital evidence once your
@@ -77,28 +148,6 @@
         </ng-container>
       </ui-page-section-subheader>
 
-      <!-- <div class="row">
-        <div *ngIf="showFormControl('OrganizationType')" class="col-12">
-          <mat-form-field class="w-100">
-            <input matInput placeholder="Organization Type" formControlName="OrganizationType" [readonly]="true" />
-            <mat-error>Required</mat-error>
-          </mat-form-field>
-        </div>
-      </div>
-
-      <div class="col-12">
-        <mat-form-field class="w-100">
-          <input matInput placeholder="Organization Name" formControlName="OrganizationName" [readonly]="true" />
-          <mat-error>Required</mat-error>
-        </mat-form-field>
-      </div> -->
-
-      <!-- <div class="col-12">
-        <mat-form-field class="w-100">
-          <input matInput placeholder="Participant Id" formControlName="ParticipantId" [readonly]="true" />
-          <mat-error>Required</mat-error>
-        </mat-form-field>
-      </div> -->
     </ui-page-section>
     <ui-page-section *ngIf="userIsLawyer">
       <div class="col-12 ">
@@ -107,7 +156,6 @@
           for the purposes of Duty Counsel
           <p>If you are acting as Defence Counsel for Accused individuals then contact BCPS for case assignment once
             your DEMS Onboarding is complete</p>
-          <b style="color:red">Wording here needs attention</b>
         </ui-page-section-subheader>
       </div>
     </ui-page-section>
@@ -139,12 +187,12 @@
 
   <ui-page-footer [mode]="completed ? 'reverse' : 'normal'">
     <button mat-stroked-button uiPageFooterAction type="button" color="secondary" (click)="onBack()">
-      {{ completed || pending ? 'Back Home' : 'Cancel Back Home' }}
+      {{ completed || pending ? 'Back' : 'Back' }}
     </button>
 
     <button *ngIf="!(completed || pending)" mat-flat-button uiPageFooterAction type="button" color="primary"
-      [disabled]="!formState.form.valid" (click)="onRequestAccess()">
-      Request Access
+      [disabled]="!formState.form.valid || publicAccessDenied" (click)="onRequestAccess()">
+      Submit
     </button>
   </ui-page-footer>
 </ui-page>

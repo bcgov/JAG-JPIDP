@@ -21,6 +21,7 @@ fetch('/assets/environment.json')
       appConfig.keycloakConfig.config = keycloakConfig.config;
     }
 
+
     return appConfig;
   })
   .catch((err) => {
@@ -31,6 +32,16 @@ fetch('/assets/environment.json')
     if (environment.production) {
       enableProdMode();
     }
+
+    // set the URL to be the host for multi-domain setup
+    console.log("Window locations %o", window.location);
+    console.log("App config %o", appConfig);
+
+    appConfig.applicationUrl = window.location.origin;
+    appConfig.configEndpoint = window.location.origin;
+    appConfig.apiEndpoint = window.location.origin + '/api/v1';
+
+    console.log("App config %o", appConfig);
 
     platformBrowserDynamic([
       {

@@ -143,6 +143,8 @@ public class DefenceParticipantHandler : IKafkaHandler<string, EdtPersonProvisio
         {
             Serilog.Log.Information($"Adding {accessRequestModel.LastName} as a new person");
             return await this.edtClient.CreatePerson(accessRequestModel);
+
+
         }
         else
         {

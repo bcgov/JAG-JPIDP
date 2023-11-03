@@ -43,7 +43,9 @@ export class AdministratorPortalSection implements IPortalSection {
       route: AdminRoutes.routePath(AdminRoutes.PARTIES),
       disabled:
         demographicsStatusCode !== StatusCode.COMPLETED &&
-        demographicsStatusCode !== StatusCode.LOCKEDCOMPLETE,
+        demographicsStatusCode !== StatusCode.LOCKEDCOMPLETE &&
+        demographicsStatusCode !== StatusCode.HIDDENCOMPLETE
+
     };
   }
 

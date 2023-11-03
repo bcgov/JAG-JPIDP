@@ -54,6 +54,7 @@ export class DigitalEvidenceCounselPortalSection
       demographicsStatusCode === StatusCode.LOCKEDCOMPLETE;
     const orgComplete =
       organizationStatusCode === StatusCode.COMPLETED ||
+      organizationStatusCode === StatusCode.HIDDENCOMPLETE ||
       organizationStatusCode === StatusCode.LOCKEDCOMPLETE;
     return {
       label:

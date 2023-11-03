@@ -68,6 +68,7 @@ public class AdminController : PidpControllerBase
 
     [HttpGet("parties")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<List<PartyIndex.Model>>> GetParties([FromServices] IQueryHandler<PartyIndex.Query, List<PartyIndex.Model>> handler,
                                                                        [FromQuery] PartyIndex.Query query)
         => await handler.HandleAsync(query);

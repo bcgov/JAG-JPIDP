@@ -8,6 +8,12 @@
     <ui-bc-gov-logo [theme]="theme"></ui-bc-gov-logo>
   </span>
 
+  <span class="heading flex-fill" *ngIf=" (usernameBreakpoint$ | async)">
+    <h1>Digital Identity Access Management</h1>
+  </span>
+
+
+
   <span class="flex-fill"></span>
 
   <div class="userinfo">
@@ -17,6 +23,10 @@
 
     <span *ngIf="email && (usernameBreakpoint$ | async)" class="email">
       {{ email }}
+    </span>
+
+    <span *ngIf="email && (usernameBreakpoint$ | async)" class="organization">
+      {{ organization }}
     </span>
   </div>
 

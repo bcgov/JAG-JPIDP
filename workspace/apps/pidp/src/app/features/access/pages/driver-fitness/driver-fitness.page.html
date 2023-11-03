@@ -1,11 +1,7 @@
 <ui-page>
   <ui-page-header>{{ title }}</ui-page-header>
 
-  <ui-alert
-    *ngIf="accessRequestFailed"
-    type="danger"
-    icon="error_outline"
-    iconType="outlined"
+  <ui-alert *ngIf="accessRequestFailed" type="danger" icon="error_outline" iconType="outlined"
     heading="Error Requesting Access">
     <ng-container uiAlertContent>
       <p>
@@ -20,9 +16,7 @@
   <app-enrolment-error *ngIf="enrolmentError"></app-enrolment-error>
 
   <ui-page-section>
-    <ui-page-section-subheader
-      icon="assignment"
-      heading="Driver Medical Fitness">
+    <ui-page-section-subheader icon="assignment" heading="Driver Medical Fitness">
       <ng-container uiPageSectionSubheaderDesc>
         {{ completed ? 'Enrolment Complete.' : 'Collection Notice.' }}
       </ng-container>
@@ -30,11 +24,7 @@
   </ui-page-section>
 
   <ng-container *ngIf="completed; else notCompleted">
-    <ui-alert
-      type="success"
-      icon="check_circle"
-      iconType="outlined"
-      heading="You have access">
+    <ui-alert type="success" icon="check_circle" iconType="outlined" heading="You have access">
       <ng-container uiAlertContent>
         <p>
           You now have access to the Driver Medical Fitness application. You can
@@ -54,28 +44,16 @@
 
   <ng-template #notCompleted>
     <ui-page-section>
-      <p
-        class="collection-notice"
-        [innerHtml]="collectionNotice | safe: 'html'"></p>
+      <p class="collection-notice" [innerHtml]="collectionNotice | safe: 'html'"></p>
     </ui-page-section>
   </ng-template>
 
   <ui-page-footer [mode]="completed ? 'reverse' : 'normal'">
-    <button
-      mat-stroked-button
-      uiPageFooterAction
-      type="button"
-      color="primary"
-      (click)="onBack()">
-      {{ completed ? 'Back Home' : 'Cancel Back Home' }}
+    <button mat-stroked-button uiPageFooterAction type="button" color="primary" (click)="onBack()">
+      {{ completed ? 'Back' : 'Cancel Back Home' }}
     </button>
 
-    <button
-      *ngIf="!completed"
-      mat-flat-button
-      uiPageFooterAction
-      type="button"
-      color="primary"
+    <button *ngIf="!completed" mat-flat-button uiPageFooterAction type="button" color="primary"
       (click)="onRequestAccess()">
       Next
     </button>

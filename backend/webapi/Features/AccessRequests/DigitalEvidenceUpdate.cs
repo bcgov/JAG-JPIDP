@@ -2,6 +2,7 @@ namespace Pidp.Features.AccessRequests;
 
 using System;
 using System.Diagnostics;
+using Common.Models.Notification;
 using DomainResults.Common;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +15,6 @@ using Pidp.Infrastructure.HttpClients.Keycloak;
 using Pidp.Kafka.Consumer.JustinUserChanges;
 using Pidp.Kafka.Interfaces;
 using Pidp.Models;
-using Pidp.Models.Lookups;
 using Prometheus;
 
 /// <summary>
@@ -54,12 +54,13 @@ public class DigitalEvidenceUpdate
         private readonly IOrgUnitService orgUnitService;
         private readonly IKafkaProducer<string, EdtUserProvisioning> kafkaProducer;
         private readonly IKafkaProducer<string, UserChangeModel> kafkaAccountChangeProducer;
+        private bool JUSTIN_EMAIL_CHANGE_DISABLED;
 
         private readonly IKafkaProducer<string, Notification> kafkaNotificationProducer;
 
-        private static readonly Counter UserUpdateCounter = Metrics.CreateCounter("diam_user_updates", "Number of user updates");
-        private static readonly Counter UserUpdateFailureCounter = Metrics.CreateCounter("diam_user_update_failure", "Number of user update failures");
-        private static readonly Counter UserDeactivationCounter = Metrics.CreateCounter("diam_user_account_deactivation", "Number of user deactivations");
+        private static readonly Counter UserUpdateCounter = Metrics.CreateCounter("diam_user_update_total", "Number of user updates");
+        private static readonly Counter UserUpdateFailureCounter = Metrics.CreateCounter("diam_user_update_failure_total", "Number of user update failures");
+        private static readonly Counter UserDeactivationCounter = Metrics.CreateCounter("diam_user_account_deactivation_total", "Number of user deactivations");
 
         public CommandHandler(
             IClock clock,
@@ -83,6 +84,12 @@ public class DigitalEvidenceUpdate
             this.kafkaNotificationProducer = kafkaNotificationProducer;
             this.orgUnitService = orgUnitService;
             this.kafkaAccountChangeProducer = kafkaAccountChangeProducer;
+            this.JUSTIN_EMAIL_CHANGE_DISABLED = Environment.GetEnvironmentVariable("JUSTIN_EMAIL_CHANGE_DISABLED") != null && bool.Parse(Environment.GetEnvironmentVariable("JUSTIN_EMAIL_CHANGE_DISABLED"));
+
+            if (this.JUSTIN_EMAIL_CHANGE_DISABLED)
+            {
+                Serilog.Log.Warning("*** JUSTIN Email Account Check is disabled - email changes in JUSTIN wont trigger account changes ***");
+            }
         }
 
 
@@ -151,6 +158,19 @@ public class DigitalEvidenceUpdate
                                 if (changes.SingleChangeTypes.ContainsKey(ChangeType.EMAIL) || changes.IsAccountDeactivated())
                                 {
 
+                                    var notifyUser = true;
+                                    if (!keycloakUserInfo.Enabled)
+                                    {
+                                        Serilog.Log.Information($"Party {party.Id} account currently disabled in keycloak - notification will not be sent");
+                                        notifyUser = false;
+                                    }
+
+                                    if (changes.SingleChangeTypes.ContainsKey(ChangeType.EMAIL) && !string.IsNullOrEmpty(changes.SingleChangeTypes[ChangeType.EMAIL].To))
+                                    {
+                                        keycloakUserInfo.Email = changes.SingleChangeTypes[ChangeType.EMAIL].To;
+                                        party.Email = changes.SingleChangeTypes[ChangeType.EMAIL].To;
+                                    }
+
                                     // deactivate the account
                                     keycloakUserInfo!.Enabled = false;
                                     var deactivated = await this.UpdateKeycloakUser(party.UserId, keycloakUserInfo);
@@ -165,24 +185,26 @@ public class DigitalEvidenceUpdate
                                         this.logger.LogKeycloakAccountDisableFailure(party.UserId.ToString());
                                     }
 
-                                    // notify user of deactiviation
-                                    var eventType = changes.SingleChangeTypes.ContainsKey(ChangeType.EMAIL) ? "digitalevidence-bcps-userupdate-emailchanged" : "digitalevidence-bcps-userupdate-deactivated";
-                                    var email = changes.SingleChangeTypes.ContainsKey(ChangeType.EMAIL) ? changes.SingleChangeTypes[ChangeType.EMAIL].To : party.Email;
-
-                                    var eventData = new Dictionary<string, string>
-                                {
-                                    { "FirstName", party.FirstName! },
-                                    { "AccessRequestId", "" + digitalEvidence.Id }
-                                };
-
-                                    var produceNotificationResponse = await this.kafkaNotificationProducer.ProduceAsync(this.config.KafkaCluster.NotificationTopicName, Guid.NewGuid().ToString(), new Notification
+                                    if (notifyUser)
                                     {
-                                        To = email,
-                                        DomainEvent = eventType,
-                                        EventData = eventData,
-                                    });
+                                        // notify user of deactiviation
+                                        var eventType = changes.SingleChangeTypes.ContainsKey(ChangeType.EMAIL) ? "digitalevidence-bcps-userupdate-emailchanged" : "digitalevidence-bcps-userupdate-deactivated";
+                                        var email = changes.SingleChangeTypes.ContainsKey(ChangeType.EMAIL) ? changes.SingleChangeTypes[ChangeType.EMAIL].To : party.Email;
 
-                                    Serilog.Log.Information($"Change notification event for {party.Email} sent to {this.config.KafkaCluster.NotificationTopicName}");
+                                        var eventData = new Dictionary<string, string>  {
+                                        { "FirstName", party.FirstName! },
+                                        { "AccessRequestId", "" + digitalEvidence.Id }
+                                        };
+
+                                        var produceNotificationResponse = await this.kafkaNotificationProducer.ProduceAsync(this.config.KafkaCluster.NotificationTopicName, Guid.NewGuid().ToString(), new Notification
+                                        {
+                                            To = email,
+                                            DomainEvent = eventType,
+                                            EventData = eventData,
+                                        });
+
+                                        Serilog.Log.Information($"Change notification event for {party.Email} sent to {this.config.KafkaCluster.NotificationTopicName}");
+                                    }
                                 }
                                 else
                                 {
@@ -335,16 +357,26 @@ public class DigitalEvidenceUpdate
             };
 
             // see if email has changed - case insensitive
-            if (!string.IsNullOrEmpty(justinUserInfo.emailAddress))
+            if (!this.JUSTIN_EMAIL_CHANGE_DISABLED)
             {
-                if (string.IsNullOrEmpty(justinUserInfo.emailAddress))
+                if (!string.IsNullOrEmpty(justinUserInfo.emailAddress))
                 {
-                    Serilog.Log.Warning($"User {party.Id} email is null or empty in JUSTIN");
+                    if (!string.IsNullOrEmpty(party.Email) && !string.Equals(party.Email, justinUserInfo.emailAddress, StringComparison.OrdinalIgnoreCase))
+                    {
+                        Serilog.Log.Information($"User {party.Id} email changed from {party.Email} to {justinUserInfo.emailAddress} - users account will be disabled");
+                        userChangeModel.SingleChangeTypes.Add(ChangeType.EMAIL, new SingleChangeType(party.Email, justinUserInfo.emailAddress));
+                    }
+                    else if (string.IsNullOrEmpty(party.Email) && !string.IsNullOrEmpty(justinUserInfo.emailAddress))
+                    {
+                        Serilog.Log.Information($"User {party.Id} email was empty and is now {justinUserInfo.emailAddress} - users account will be enabled if disabled");
+                        userChangeModel.SingleChangeTypes.Add(ChangeType.EMAIL, new SingleChangeType(party.Email, justinUserInfo.emailAddress));
+                    }
                 }
-                else if (!party.Email.Equals(justinUserInfo.emailAddress, StringComparison.OrdinalIgnoreCase))
+                else
                 {
-                    Serilog.Log.Information($"User {party.Id} email changed from {party.Email} to {justinUserInfo.emailAddress}");
+                    Serilog.Log.Information($"User {party.Id} email is empty in JUSTIN - account will be disabled");
                     userChangeModel.SingleChangeTypes.Add(ChangeType.EMAIL, new SingleChangeType(party.Email, justinUserInfo.emailAddress));
+
                 }
             }
 
@@ -426,7 +458,7 @@ public class DigitalEvidenceUpdate
                 var groups = await this.keycloakClient.GetUserGroups(party.UserId);
                 var keycloakGroups = groups.Select(group => group.Name).ToList();
                 var keycloakRegions = allRegions.Intersect(keycloakGroups).ToList();
-                if ( keycloakRegions.Count > 0)
+                if (keycloakRegions.Count > 0)
                 {
                     userChangeModel.ListChangeTypes.Add(ChangeType.REGIONS, new ListChangeType(keycloakRegions, Enumerable.Empty<string>()));
                 }
@@ -441,7 +473,7 @@ public class DigitalEvidenceUpdate
             var query = new Lookups.Index.Query();
             var handler = new Lookups.Index.QueryHandler(this.context);
 
-            List<CrownRegion>? regions = handler.HandleAsync(query).Result.CrownRegions;
+            var regions = handler.HandleAsync(query).Result.CrownRegions;
 
             var assignedCrownRegions = regions.Where(region => AssignedAgencies.Any(x => region.CrownLocation.Equals(x, StringComparison.OrdinalIgnoreCase)));
 
@@ -457,7 +489,7 @@ public class DigitalEvidenceUpdate
             var query = new Lookups.Index.Query();
             var handler = new Lookups.Index.QueryHandler(this.context);
 
-            List<CrownRegion>? regions = handler.HandleAsync(query).Result.CrownRegions;
+            var regions = handler.HandleAsync(query).Result.CrownRegions;
             var distinctRegions = regions.Select(region => region.RegionName).Distinct().ToList();
 
             return distinctRegions;

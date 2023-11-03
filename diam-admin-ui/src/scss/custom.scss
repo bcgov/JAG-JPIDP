@@ -1,0 +1,32 @@
+// Custom.scss
+// Option A: Include all of Bootstrap
+
+// Include any default variable overrides here (though functions won't be available)
+
+$bcgold: #fcba19;
+
+
+// Then add additional custom code here
+$theme-colors: (
+    primary: #38598a,
+    success: #43893e,
+    info: #96c0e6,
+    warning: #f9ca54,
+    danger: #d93e45,
+    // new entries
+    primary-nav: #036,
+    secondary-nav: #5475a7,
+    bcgold: #fcba19,
+    dark: #003366
+
+);
+
+// Add our font as default
+$bcgov-font-path: "../fonts" !default;
+$font-family-sans-serif: BCSans, "Noto Sans", Verdana, Arial, sans serif !default;
+$font-family-base: $font-family-sans-serif !default;
+$line-height-base: 1.6 !default;
+$body-color: #494949 !default;
+$table-hover-bg: rgba($bcgold, 0.075);
+
+@import "../node_modules/bootstrap/scss/bootstrap";

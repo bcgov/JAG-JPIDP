@@ -56,7 +56,7 @@ export class PortalStateBuilder {
   public constructor(
     private router: Router,
     private permissionsService: PermissionsService
-  ) {}
+  ) { }
 
   public createState(
     profileStatus: ProfileStatus
@@ -95,7 +95,7 @@ export class PortalStateBuilder {
       new DemographicsPortalSection(profileStatus, this.router),
       ...ArrayUtils.insertResultIf<IPortalSection>(
         this.insertSection('collegeCertification', profileStatus) &&
-          this.permissionsService.hasRole([Role.FEATURE_PIDP_DEMO]),
+        this.permissionsService.hasRole([Role.FEATURE_PIDP_DEMO]),
         () => [
           new CollegeCertificationPortalSection(profileStatus, this.router),
         ]
@@ -104,7 +104,7 @@ export class PortalStateBuilder {
         // TODO remove permissions when API exists and ready for production, or
         // TODO replace || with && to keep it flagged when API exists
         this.insertSection('userAccessAgreement', profileStatus) ||
-          this.permissionsService.hasRole([Role.FEATURE_PIDP_DEMO]),
+        this.permissionsService.hasRole([Role.FEATURE_PIDP_DEMO]),
         () => [new UserAccessAgreementPortalSection(profileStatus, this.router)]
       ),
     ];
@@ -130,7 +130,7 @@ export class PortalStateBuilder {
         // TODO remove permissions when API exists and ready for production, or
         // TODO replace || with && to keep it flagged when API exists
         this.permissionsService.hasRole([Role.ADMIN]) &&
-          this.insertSection('administratorInfo', profileStatus),
+        this.insertSection('administratorInfo', profileStatus),
         () => [new AdministratorInfoPortalSection(profileStatus, this.router)]
       ),
       // TODO - temporarily removed the endorsements section
@@ -149,25 +149,25 @@ export class PortalStateBuilder {
     return [
       ...ArrayUtils.insertResultIf<IPortalSection>(
         this.insertSection('saEforms', profileStatus) &&
-          this.permissionsService.hasRole([Role.FEATURE_PIDP_DEMO]),
+        this.permissionsService.hasRole([Role.FEATURE_PIDP_DEMO]),
         () => [new SaEformsPortalSection(profileStatus, this.router)]
       ),
       ...ArrayUtils.insertResultIf<IPortalSection>(
         this.insertSection('hcimAccountTransfer', profileStatus) &&
-          this.permissionsService.hasRole([Role.FEATURE_PIDP_DEMO]),
+        this.permissionsService.hasRole([Role.FEATURE_PIDP_DEMO]),
         () => [new HcimAccountTransferPortalSection(profileStatus, this.router)]
       ),
       ...ArrayUtils.insertResultIf<IPortalSection>(
         // TODO remove permissions when ready for production
         this.insertSection('hcimEnrolment', profileStatus) &&
-          this.permissionsService.hasRole([Role.FEATURE_PIDP_DEMO]),
+        this.permissionsService.hasRole([Role.FEATURE_PIDP_DEMO]),
         () => [new HcimEnrolmentPortalSection(profileStatus, this.router)]
       ),
       ...ArrayUtils.insertResultIf<IPortalSection>(
         // TODO remove permissions when API exists and ready for production, or
         // TODO replace || with && to keep it flagged when API exists
         this.insertSection('sitePrivacySecurityChecklist', profileStatus) ||
-          this.permissionsService.hasRole([Role.FEATURE_PIDP_DEMO]),
+        this.permissionsService.hasRole([Role.FEATURE_PIDP_DEMO]),
         () => [new SitePrivacySecurityPortalSection(profileStatus, this.router)]
       ),
       ...ArrayUtils.insertResultIf<IPortalSection>(
@@ -177,12 +177,12 @@ export class PortalStateBuilder {
       ),
       ...ArrayUtils.insertResultIf<IPortalSection>(
         this.permissionsService.hasGroup([Group.BSPS]) ||
-          this.insertSection('digitalEvidence', profileStatus),
+        this.insertSection('digitalEvidence', profileStatus),
         () => [new DigitalEvidencePortalSection(profileStatus, this.router)]
       ),
       ...ArrayUtils.insertResultIf<IPortalSection>(
         this.permissionsService.hasGroup([Group.BSPS]) ||
-          this.insertSection('digitalEvidenceCaseManagement', profileStatus),
+        this.insertSection('digitalEvidenceCaseManagement', profileStatus),
         () => [
           new DigitalEvidenceCaseManagementPortalSection(
             profileStatus,
@@ -192,7 +192,7 @@ export class PortalStateBuilder {
       ),
       ...ArrayUtils.insertResultIf<IPortalSection>(
         this.permissionsService.hasGroup([Group.BSPS]) ||
-          this.insertSection('digitalEvidenceCounsel', profileStatus),
+        this.insertSection('digitalEvidenceCounsel', profileStatus),
         () => [
           new DigitalEvidenceCounselPortalSection(profileStatus, this.router),
         ]
@@ -200,13 +200,13 @@ export class PortalStateBuilder {
       ...ArrayUtils.insertResultIf<IPortalSection>(
         // TODO remove permissions when ready for production
         this.permissionsService.hasRole([Role.FEATURE_PIDP_DEMO]) ||
-          this.insertSection('msTeams', profileStatus),
+        this.insertSection('msTeams', profileStatus),
         () => [new MsTeamsPortalSection(profileStatus, this.router)]
       ),
       ...ArrayUtils.insertResultIf<IPortalSection>(
         // TODO remove permissions when ready for production
         this.permissionsService.hasRole([Role.FEATURE_PIDP_DEMO]) &&
-          this.insertSection('uci', profileStatus),
+        this.insertSection('uci', profileStatus),
         () => [new UciPortalSection(profileStatus, this.router)]
       ),
     ];

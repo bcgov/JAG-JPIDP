@@ -1,8 +1,5 @@
 namespace edt.casemanagement;
-
-
-using System.Text.Json;
-using System.Transactions;
+using Common.Configuration;
 using edt.casemanagement.Infrastructure.Auth;
 
 public class EdtServiceConfiguration
@@ -22,6 +19,8 @@ public class EdtServiceConfiguration
     public SchemaRegistryConfiguration SchemaRegistry { get; set; } = new();
     public TelemeteryConfiguration Telemetry { get; set; } = new TelemeteryConfiguration();
     public List<CustomDisplayField> CaseDisplayCustomFields { get; set; } = new();
+    public int SearchFieldId { get; set; } = -1;
+    public int AlternateSearchFieldId { get; set; } = -1;
     public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
     public class SplunkConfiguration
     {
@@ -45,7 +44,8 @@ public class EdtServiceConfiguration
         public string ApiKey { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
         public string SubmittingAgencyGroup { get; set; } = string.Empty;
-        public int SearchFieldId { get; set; }
+        public string SearchField { get; set; }
+        public string AlternateSearchField { get; set; }
     }
 
     public class EdtDisclosureClientConfiguration
@@ -82,10 +82,11 @@ public class EdtServiceConfiguration
 
     public class CustomDisplayField
     {
-        public int Id { get; set; }
+        public int? Id { get; set; }
         public bool Display { get; set; }
-
-        public int RelatedId { get; set; }
+        public string? Name { get; set; } = string.Empty;
+        public int? RelatedId { get; set; }
+        public string? RelatedName { get; set; } = string.Empty;
         public bool RelatedValueEmpty { get; set; }
     }
 
@@ -97,29 +98,14 @@ public class EdtServiceConfiguration
         public string ClientSecret { get; set; } = string.Empty;
         public string TokenUrl { get; set; } = string.Empty;
     }
-    public class KafkaClusterConfiguration
+    public class KafkaClusterConfiguration : BaseKafkafiguration
     {
-        public string Url { get; set; } = string.Empty;
-        public string BootstrapServers { get; set; } = string.Empty;
         public string CaseAccessRequestTopicName { get; set; } = string.Empty;
         public string CaseAccessResponseTopicName { get; set; } = string.Empty;
         public string CourtLocationAccessRequestTopic { get; set; } = string.Empty;
-        public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;
-
         public string AckTopicName { get; set; } = string.Empty;
-        public string SaslOauthbearerProducerClientId { get; set; } = string.Empty;
-        public string SaslOauthbearerProducerClientSecret { get; set; } = string.Empty;
-        public string SaslOauthbearerConsumerClientId { get; set; } = string.Empty;
-        public string SaslOauthbearerConsumerClientSecret { get; set; } = string.Empty;
-        public string SslCaLocation { get; set; } = string.Empty;
-        public string SslCertificateLocation { get; set; } = string.Empty;
-        public string SslKeyLocation { get; set; } = string.Empty;
-        public string Scope { get; set; } = "openid";
         public string ConsumerGroupId { get; set; } = "caseaccess-consumer-group";
         public string RetryConsumerGroupId { get; set; } = "caseaccess-retry-consumer-group";
-
-
-
     }
 
 

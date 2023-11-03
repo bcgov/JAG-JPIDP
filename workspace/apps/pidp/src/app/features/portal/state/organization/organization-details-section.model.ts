@@ -16,6 +16,7 @@ export interface PartyOrganizationDetailsSection
       | 'correctionServiceCode'
       | 'submittingAgency'
       | 'justiceSectorService'
+      | 'justiceSectorCode'
       | 'lawSociety'
     >,
     Section {}

@@ -24,6 +24,27 @@ namespace edt.casemanagement.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Common.Models.IdempotentConsumer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Consumer")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("MessageId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("IdempotentConsumers", "casemgmt");
+                });
+
             modelBuilder.Entity("edt.casemanagement.Models.CaseRequest", b =>
                 {
                     b.Property<int>("Id")
@@ -42,8 +63,16 @@ namespace edt.casemanagement.Migrations
                     b.Property<Instant>("Created")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Details")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<Instant>("Modified")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Party")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<int>("PartyId")
                         .HasColumnType("integer");
@@ -54,9 +83,58 @@ namespace edt.casemanagement.Migrations
                     b.Property<Instant?>("Requested")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.ToTable("CaseRequest", "casemgmt");
+                });
+
+            modelBuilder.Entity("edt.casemanagement.Models.CaseSearchRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AgencyFileNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Instant>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Instant>("Modified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PartyId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Instant?>("Requested")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ResponseError")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ResponseStatus")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<long>("ResponseTime")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("SearchString")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CaseSearchRequest", "casemgmt");
                 });
 #pragma warning restore 612, 618
         }

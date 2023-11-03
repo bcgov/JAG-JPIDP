@@ -120,6 +120,28 @@ spec:
                 secretKeyRef:
                   name: jum-api-config
                   key: JustinAuthentication__BasicAuthPassword
+
+            - name: JustinAuthentication__Method
+              valueFrom:
+                secretKeyRef:
+                  name: jum-api-config
+                  key: JustinAuthentication__Method
+            - name: JustinAuthentication__ClientId
+              valueFrom:
+                secretKeyRef:
+                  name: jum-api-config
+                  key: JustinAuthentication__ClientId
+            - name: JustinAuthentication__ClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: jum-api-config
+                  key: JustinAuthentication__ClientSecret
+            - name: JustinAuthentication__TokenUrl
+              valueFrom:
+                secretKeyRef:
+                  name: jum-api-config
+                  key: JustinAuthentication__TokenUrl
+
             - name: JustinChangeEventClient__Url
               valueFrom:
                 secretKeyRef:
@@ -155,6 +177,11 @@ spec:
                 secretKeyRef:
                   name: splunk-config
                   key: SplunkConfig__Host
+            - name: TestORDSConfiguration__Url
+              valueFrom: 
+                secretKeyRef:
+                  name: jum-ordstest-config
+                  key: TestORDSConfiguration__Url
           volumeMounts:
             - name: kafka-truststore
               mountPath: "/opt/kafka/certificates"
@@ -177,10 +204,10 @@ spec:
               path: /health/liveness
               port: http
               scheme: HTTP
-            timeoutSeconds: 5
+            timeoutSeconds: 10
             periodSeconds: 30
             successThreshold: 1
-            failureThreshold: 3
+            failureThreshold: 5
          # startupProbe:
         #    httpGet:
          #     path: /health/liveness

@@ -1,7 +1,6 @@
 namespace Pidp;
 
 using Pidp.Infrastructure.Auth;
-using Serilog;
 
 public class PidpConfiguration
 {
@@ -115,6 +114,7 @@ public class PidpConfiguration
         public string PersonCreationTopic { get; set; } = string.Empty;
         public string DisclosureUserCreationTopic { get; set; } = string.Empty;
         public string DisclosureUserModificationTopic { get; set; } = string.Empty;
+        public string ApprovalCreationTopic { get; set; } = string.Empty;
         public string ProcessResponseTopic { get; set; } = string.Empty;
         public string UserAccountChangeTopicName { get; set; } = string.Empty;
         public string NotificationTopicName { get; set; } = string.Empty;
@@ -130,8 +130,8 @@ public class PidpConfiguration
         public string CourtLocationAccessRequestTopic { get; set; } = string.Empty;
         public string Scope { get; set; } = "openid";
         public string ConsumerGroupId { get; set; } = "dems-notification-ack";
-        public string KafkaAdminClientId { get; set;} = string.Empty;
-        public string KafkaAdminClientSecret { get; set;} = string.Empty; 
+        public string KafkaAdminClientId { get; set; } = string.Empty;
+        public string KafkaAdminClientSecret { get; set; } = string.Empty;
 
     }
     public class JumClientConfiguration
@@ -152,7 +152,12 @@ public class PidpConfiguration
     public class EdtClientConfiguration
     {
         public string Url { get; set; } = string.Empty;
+        public string RealmUrl { get; set; } = string.Empty;
+        public string ClientId { get; set; } = string.Empty;
+        public string ClientSecret { get; set; } = string.Empty;
+        public int MaxClientValidations { get; set; } = 5;
     }
+
 
     public class EdtCaseManagementClientConfiguration
     {

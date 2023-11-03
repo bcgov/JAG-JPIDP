@@ -1,8 +1,6 @@
 namespace Pidp.Features.CourtLocations.Jobs;
 
 using System.Threading.Tasks;
-using Microsoft.Identity.Client;
-using Pidp.Data;
 using Pidp.Models;
 using Prometheus;
 using Quartz;
