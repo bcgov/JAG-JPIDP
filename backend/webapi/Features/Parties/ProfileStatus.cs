@@ -149,16 +149,6 @@ public partial class ProfileStatus
                     : null;
 
 
-
-
-                //if (profile.CollegeCertificationEntered && profile.Ipc == null)
-                if (profile.HasDeclaredLicence
-                    && string.IsNullOrWhiteSpace(profile.Cpn))
-                {
-                    // Cert has been entered but no CPN found, likely due to a transient error or delay in PLR record updates. Retry once.
-                    profile.Cpn = await this.RecheckCpn(command.Id, profile.LicenceDeclaration, profile.Birthdate);
-                }
-
                 // if the user is a BCPS user then we'll flag this portion as completed
                 if (profile.OrganizationDetailEntered && profile.OrganizationCode == OrganizationCode.CorrectionService && orgCorrectionDetail != null)
                 {
@@ -348,6 +338,10 @@ public partial class ProfileStatus
 
     public class ProfileStatusDto
     {
+        private readonly PidpConfiguration configuration;
+        public ProfileStatusDto(PidpConfiguration configuration) => this.configuration = configuration;
+
+
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public LocalDate? Birthdate { get; set; }
@@ -401,10 +395,10 @@ public partial class ProfileStatus
         //public bool UserIsPhsa => this.User.GetIdentityProvider() == ClaimValues.Phsa;
         //public bool UserIsBcps => this.User.GetIdentityProvider() == ClaimValues.Bcps;
         public bool UserIsBcps => this.User.GetIdentityProvider() == ClaimValues.Bcps && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpApi).Contains(DefaultRoles.Bcps) || (this.PermitIDIRDEMS() && this.User.GetIdentityProvider() == ClaimValues.Idir);
-        public bool UserIsIdir => this.User.GetIdentityProvider() == ClaimValues.Idir;
+        public bool UserIsIdir => this.User.GetIdentityProvider() == ClaimValues.Idir || this.User.GetIdentityProvider() == this.configuration.Keycloak.IDIRProvider;
         public bool UserIsIdirCaseManagement => this.User.GetIdentityProvider() == ClaimValues.Idir && this.PermitIDIRDEMS() && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpApi).Contains(Roles.SubmittingAgency);
         public bool UserIsDutyCounsel => (this.User.GetIdentityProvider() == ClaimValues.VerifiedCredentials && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpApi).Contains(Roles.DutyCounsel))
-                  || (this.PermitIDIRDEMS() && this.User.GetIdentityProvider() == ClaimValues.Idir && this.User?.Identity is ClaimsIdentity claimsIdentity && claimsIdentity.GetResourceAccessRoles(Clients.PidpApi).Contains(Roles.DutyCounsel));
+                  || (this.PermitIDIRDEMS() && (this.User.GetIdentityProvider() == ClaimValues.Idir || this.User.GetIdentityProvider() == this.configuration.Keycloak.IDIRProvider || this.User.GetIdentityProvider() == this.configuration.Keycloak.IDIRProvider) && this.User?.Identity is ClaimsIdentity claimsIdentity && claimsIdentity.GetResourceAccessRoles(Clients.PidpApi).Contains(Roles.DutyCounsel));
 
         public bool UserIsInLawSociety => this.User.GetIdentityProvider() == ClaimValues.VerifiedCredentials;
 

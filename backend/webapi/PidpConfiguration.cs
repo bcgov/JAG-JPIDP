@@ -95,6 +95,7 @@ public class PidpConfiguration
         public string AdministrationClientId { get; set; } = string.Empty;
         public string AdministrationClientSecret { get; set; } = string.Empty;
         public string HcimClientId { get; set; } = string.Empty;
+        public string IDIRProvider { get; set; } = "azuread";
     }
 
     public class LdapClientConfiguration

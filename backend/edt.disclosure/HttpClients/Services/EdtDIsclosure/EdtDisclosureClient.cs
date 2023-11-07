@@ -113,7 +113,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             }
             else
             {
-                throw new EdtDisclosureServiceException($"Unable to determine court location with key {accessRequest.CourtLocationKey}");
+                throw new EdtDisclosureServiceException($"Court Location Creation not enabled - Unable to determine court location with key {this.configuration.EdtClient.CourtLocationKeyPrefix}{accessRequest.CourtLocationKey}");
 
             }
         }
