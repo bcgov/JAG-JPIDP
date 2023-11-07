@@ -221,6 +221,11 @@ spec:
                 secretKeyRef:
                   name: pidp-edt-service-api
                   key: EDTClient__ClientSecret
+            - name: KafkaCluster__ApprovalCreationTopic
+              valueFrom:
+                secretKeyRef:
+                  name: kafkaconfig-jpidp
+                  key: KafkaCluster__ApprovalCreationTopic
           volumeMounts:
             - name: kafka-truststore
               mountPath: "/opt/kafka/certificates"
