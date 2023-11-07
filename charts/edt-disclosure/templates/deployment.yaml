@@ -236,6 +236,11 @@ spec:
                 secretKeyRef:
                   name: edt-disclosure-client
                   key: EdtClient__CounselGroup
+            - name: EdtClient__CreateCourtLocations
+              valueFrom:
+                secretKeyRef:
+                  name: edt-disclosure-client
+                  key: EdtClient__CreateCourtLocations
           volumeMounts:
           - name: truststore
             mountPath: "/opt/kafka/certificates"
