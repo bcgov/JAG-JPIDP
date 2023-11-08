@@ -20,7 +20,7 @@ public class UserOwnsResourceHandler : AuthorizationHandler<UserOwnsResourceRequ
         }
 
         var userId = context.User.GetUserId();
-        Serilog.Log.Information($"UserOwnsResourceHandler {userId} - resource {resource.UserId}");
+        Serilog.Log.Debug($"UserOwnsResourceHandler {userId} - resource {resource.UserId}");
 
         if (userId != Guid.Empty
             && userId == resource.UserId)

@@ -33,6 +33,7 @@ public static class ClaimValues
     public const string BCServicesCard = "bcsc";
     public const string Idir = "idir";
     public const string Phsa = "phsa";
+    public const string AzureAd = "azuread";
     public const string Bcps = "adfscert";
     public const string Adfs = "adfs"; // test
     public const string SubmittingAgency = "SUBMITTING_AGENCY";

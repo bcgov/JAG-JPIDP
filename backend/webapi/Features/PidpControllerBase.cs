@@ -108,6 +108,10 @@ public class PidpControllerBase : ControllerBase
             {
                 return DomainResult.Success(await handler.HandleAsync(request));
             }
+            else
+            {
+                Serilog.Log.Warning($"Party access failure {access.Status}");
+            }
 
             return access.To<TResult>();
         }
