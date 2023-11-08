@@ -51,13 +51,14 @@ public class Create
             {
                 this.Include<AbstractValidator<Command>>(x =>
                 {
-
+                    // we need to quit hardcoding this stuff :-(
                     return user.GetIdentityProvider() switch
                     {
                         ClaimValues.BCServicesCard => new BcscValidator(user),
                         ClaimValues.Phsa => new PhsaValidator(),
                         ClaimValues.Bcps => new BcpsValidator(user),
                         ClaimValues.Idir => new IdirValidator(user),
+                        ClaimValues.AzureAd => new IdirValidator(user),
                         ClaimValues.VerifiedCredentials => new VerifiedCredentialsValidator(user, config),
                         _ => throw new NotImplementedException($"Given Identity Provider {user.GetIdentityProvider()} is not supported")
                     };

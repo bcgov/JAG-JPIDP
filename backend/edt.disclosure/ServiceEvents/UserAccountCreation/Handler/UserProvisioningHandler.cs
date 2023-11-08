@@ -27,7 +27,6 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
     private readonly IKafkaProducer<string, Notification> producer;
     private readonly IKafkaProducer<string, GenericProcessStatusResponse> processResponseProducer;
 
-
     public UserProvisioningHandler(
         EdtDisclosureServiceConfiguration configuration,
         IEdtDisclosureClient edtClient,
@@ -223,25 +222,49 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
 
     public async Task<bool> LinkUserToFolio(EdtDisclosureUserProvisioningModel accessRequestModel, int caseId)
     {
-        var addedOk = false;
+        var addGroupCount = 0;
 
         var user = await this.edtClient.GetUser(accessRequestModel.Key!) ?? throw new EdtDisclosureServiceException($"User was not found {accessRequestModel.Key}");
 
 
-        if (this.configuration.EdtClient.DefenceCaseGroup != null)
+        if (this.configuration.EdtClient.DefenceCaseGroups.Any())
         {
-            addedOk = await this.edtClient.AddUserToCase(user.Id, caseId, this.configuration.EdtClient.DefenceCaseGroup);
+            foreach (var group in this.configuration.EdtClient.DefenceCaseGroups)
+            {
+                if (await this.edtClient.AddUserToCase(user.Id, caseId, group))
+                {
+                    addGroupCount++;
+                }
+                else
+                {
+                    Serilog.Log.Error($"Failed to add group {group} to case {caseId}");
+                }
+
+            }
         }
         else
         {
             Serilog.Log.Warning($"*** NO case group for defence assigned in configuration - no case group will be assigned for user {user.Id} and case {caseId} ***");
-            addedOk = await this.edtClient.AddUserToCase(user.Id, caseId);
+            if (await this.edtClient.AddUserToCase(user.Id, caseId))
+            {
+                addGroupCount++;
+            }
+            else
+            {
+                Serilog.Log.Warning($"Failed to add user to case {user.Id} {caseId}");
+            }
         }
 
-        if (!addedOk)
+        if (addGroupCount == 0)
         {
             throw new EdtDisclosureServiceException($"Failed to add user {user.Id} to defence folio");
         }
+        if (this.configuration.EdtClient.DefenceCaseGroups.Any() && addGroupCount != this.configuration.EdtClient.DefenceCaseGroups.Count)
+        {
+            throw new EdtDisclosureServiceException($"Failed to add user {user.Id} to all case groups for folio {caseId}");
+        }
+
+        Serilog.Log.Information($"Added groups {addGroupCount} to user {user.Id} folio {caseId}");
         return true;
     }
 
