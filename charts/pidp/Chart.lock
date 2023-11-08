@@ -7,7 +7,7 @@ dependencies:
   version: 0.1.2
 - name: webapi
   repository: file://../webapi
-  version: 0.1.10
+  version: 0.2.0
 - name: edt-service
   repository: file://../edt-service
   version: 0.2.3
@@ -16,7 +16,7 @@ dependencies:
   version: 0.1.0
 - name: edt-disclosure
   repository: file://../edt-disclosure
-  version: 0.4.0
+  version: 0.5.0
 - name: approvalflow
   repository: file://../approvalflow
   version: 0.1.0
@@ -32,5 +32,5 @@ dependencies:
 - name: nginx
   repository: file://../nginx
   version: 9.7.3
-digest: sha256:b7015403edeae85291acba3dd21625574a91abc1b1cebab484585a847ac6c8f7
-generated: "2023-11-07T14:12:14.3407965-08:00"
+digest: sha256:6b0af3f52f98fed1ad01464f747f50e22e38dc0e6611f9902031b1560e26a207
+generated: "2023-11-08T11:17:57.747432-08:00"
