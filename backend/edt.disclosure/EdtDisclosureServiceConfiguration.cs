@@ -1,8 +1,4 @@
 namespace edt.disclosure;
-
-
-using System.Text.Json;
-using System.Transactions;
 using edt.disclosure.Infrastructure.Auth;
 
 public class EdtDisclosureServiceConfiguration
@@ -47,7 +43,7 @@ public class EdtDisclosureServiceConfiguration
         public string CounselGroup { get; set; } = "Counsel";
         public string DefenceFolioTemplateName { get; set; } = string.Empty;
         public int DefenceFolioTemplateId { get; set; } = -1;
-        public string DefenceCaseGroup { get; set; } = string.Empty;
+        public List<string> DefenceCaseGroups { get; set; } = new List<string>();
         public string CourtLocationKeyPrefix { get; set; } = "CH-";
         public string CourtLocationGroup { get; set; } = string.Empty;
         public int CourtLocationTemplateId { get; set; }

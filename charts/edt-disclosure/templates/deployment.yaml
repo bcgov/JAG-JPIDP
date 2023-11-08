@@ -200,11 +200,11 @@ spec:
                   name: edt-disclosure-client
                   key: EdtClient__DefenceFolioTemplateId
 
-            - name: EdtClient__DefenceCaseGroup
+            - name: EdtClient__DefenceCaseGroups
               valueFrom:
                 secretKeyRef:
                   name: edt-disclosure-client
-                  key: EdtClient__DefenceCaseGroup
+                  key: EdtClient__DefenceCaseGroups
 
             - name: Telemetry__CollectorUrl
               valueFrom: 
