@@ -379,6 +379,7 @@ public partial class ProfileStatus
         public bool DemographicsEntered => this.User.GetIdentityProvider() is ClaimValues.Bcps or
                                             ClaimValues.Idir or
                                             ClaimValues.Adfs or
+                                            ClaimValues.AzureAd or
                                             ClaimValues.BCServicesCard or
                                             ClaimValues.VerifiedCredentials ? this.Email != null : this.Email != null && this.Phone != null;
         //[MemberNotNullWhen(true, nameof(CollegeCode), nameof(LicenceNumber))]
