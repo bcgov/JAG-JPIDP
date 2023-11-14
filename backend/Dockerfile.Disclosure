@@ -30,8 +30,15 @@ RUN dotnet build -r linux-musl-x64 "edt.disclosure.csproj" -c Release -o /app/bu
 
 FROM build AS publish
 RUN dotnet publish -r linux-musl-x64 "edt.disclosure.csproj" -c Release -o /app/publish
+USER root
+COPY entrypoint.sh /app/publish
+
+
+RUN chgrp 0 entrypoint.sh && chmod a+rx,o-rx entrypoint.sh
 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "edt.disclosure.dll"]
+USER 1001
+
+ENTRYPOINT ["./entrypoint.sh","dotnet", "edt.disclosure.dll"]
