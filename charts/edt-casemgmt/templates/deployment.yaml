@@ -94,11 +94,6 @@ spec:
                 configMapKeyRef:
                   name: edt-casemgmt-api-database
                   key: CONNECTION_STRINGS_DB    
-            - name: CaseDisplayCustomFields
-              valueFrom:
-                configMapKeyRef:
-                  name: edt-casemgmt-fields
-                  key: edt-casemgmt-fields.yaml 
             - name: SchemaRegistry__Url
               valueFrom:
                 secretKeyRef:
@@ -245,6 +240,8 @@ spec:
                 name: mail-settings
             - configMapRef:
                 name: retry-policy
+            - configMapRef:
+                name: edt-casemgmt-fields
             - secretRef:
                 name: kafkaconfig
           ports:
