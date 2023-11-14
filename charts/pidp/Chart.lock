@@ -13,7 +13,7 @@ dependencies:
   version: 0.2.3
 - name: edt-casemgmt
   repository: file://../edt-casemgmt
-  version: 0.1.0
+  version: 0.2.0
 - name: edt-disclosure
   repository: file://../edt-disclosure
   version: 0.6.0
@@ -32,5 +32,5 @@ dependencies:
 - name: nginx
   repository: file://../nginx
   version: 9.7.3
-digest: sha256:96c022c0688a45a40842bacff19ac9b1b3b720eaa9c0b1677d983d659d6abb3a
-generated: "2023-11-14T12:52:28.3534406-08:00"
+digest: sha256:8386307c9828674855685809110f5e378ca1cae59b3a53b1be8a9889d23662b4
+generated: "2023-11-14T14:10:52.1975561-08:00"
