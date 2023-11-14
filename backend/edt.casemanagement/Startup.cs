@@ -230,6 +230,7 @@ public class Startup
             {
                 foreach (var customField in caseDisplayCustomFieldsValue)
                 {
+                    Log.Information($"Checking for field {customField.Name}");
                     if (!string.IsNullOrEmpty(customField.RelatedName))
                     {
                         var relatedField = fields.FirstOrDefault(field => field.Name == customField.RelatedName);

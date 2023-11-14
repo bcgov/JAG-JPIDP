@@ -6,6 +6,9 @@ global:
   environment: "dev"
   image:
     tag: develop
+  vault:
+    role: e27db1-nonprod
+    path: dev/
 
 route:
   enabled: false
