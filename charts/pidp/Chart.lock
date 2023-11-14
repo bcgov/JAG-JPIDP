@@ -20,9 +20,6 @@ dependencies:
 - name: approvalflow
   repository: file://../approvalflow
   version: 0.1.0
-- name: plr-intake
-  repository: file://../plr-intake
-  version: 0.1.2
 - name: jum-backend
   repository: file://../jum-backend
   version: 0.1.2
@@ -32,5 +29,5 @@ dependencies:
 - name: nginx
   repository: file://../nginx
   version: 9.7.3
-digest: sha256:8386307c9828674855685809110f5e378ca1cae59b3a53b1be8a9889d23662b4
-generated: "2023-11-14T14:10:52.1975561-08:00"
+digest: sha256:b22e2e53944437152c09dff35d186f74640fe5b3ec80809055d6082f3956cb1c
+generated: "2023-11-14T14:58:55.8355067-08:00"

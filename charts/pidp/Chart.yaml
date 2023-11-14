@@ -54,9 +54,6 @@ dependencies:
   - name: approvalflow
     repository: "file://../approvalflow"
     version: "0.1.0"
-  - name: plr-intake
-    repository: "file://../plr-intake"
-    version: "0.1.2"
   - name: jum-backend
     repository: "file://../jum-backend"
     version: "0.1.2"
