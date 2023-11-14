@@ -34,11 +34,12 @@ USER root
 COPY entrypoint.sh /app/publish
 
 
-RUN chgrp 0 entrypoint.sh && chmod a+rx,o-rx entrypoint.sh
 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+RUN chgrp 0 entrypoint.sh && chmod a+rx,o-rx entrypoint.sh
+
 USER 1001
 
 ENTRYPOINT ["./entrypoint.sh","dotnet", "edt.disclosure.dll"]
