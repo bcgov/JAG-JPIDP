@@ -19,7 +19,6 @@ FROM mcr.microsoft.com/dotnet/sdk:6.0-alpine AS build
 RUN dotnet tool install --tool-path /tools dotnet-trace
 RUN dotnet tool install --tool-path /tools dotnet-counters
 RUN dotnet tool install --tool-path /tools dotnet-dump
-RUN dotnet tool install --tool-path /tools dotnet-ef
 
 WORKDIR /src
 COPY ["service.edt/edt.service.csproj", "service.edt/"]
