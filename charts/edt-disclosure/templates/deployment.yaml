@@ -12,23 +12,7 @@ metadata:
   annotations:
     #prometheus.io/scrape: 'true'
     #prometheus.io/port: "9090"
-    vault.hashicorp.com/agent-inject: 'true'
-    vault.hashicorp.com/agent-pre-populate-only: 'true'
-    vault.hashicorp.com/auth-path: auth/k8s-gold
-    vault.hashicorp.com/namespace: platform-services
-    vault.hashicorp.com/role: {{ .Values.global.vault.role }}  # licenseplate-nonprod or licenseplate-prod are your options
-    vault.hashicorp.com/agent-inject-secret-secrets.env: {{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-common
-    vault.hashicorp.com/agent-inject-template-secrets.env: |
-       {{`{{- with secret `}}"{{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-common"{{` }}
-       {{- range $k, $v := .Data.data }}
-       {{ $k }}={{ $v }}{{ end -}}
-       {{- end `}} }}
-    vault.hashicorp.com/agent-inject-secret-secrets.env: {{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-disclosure
-    vault.hashicorp.com/agent-inject-template-secrets.env: |
-       {{`{{- with secret `}}"{{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-disclosure"{{` }}
-       {{- range $k, $v := .Data.data }}
-       {{ $k }}={{ $v }}{{ end -}}
-       {{- end `}} }}
+
   name: {{ include "edt-disclosure.fullname" . }}
   labels:
     {{- include "edt-disclosure.labels" . | nindent 4 }}
@@ -44,6 +28,25 @@ spec:
       annotations:
         prometheus.io/scrape: 'true'
         prometheus.io/port: "8080"
+        vault.hashicorp.com/agent-inject: 'true'
+        vault.hashicorp.com/auth-path: auth/k8s-gold
+        vault.hashicorp.com/namespace: platform-services
+        vault.hashicorp.com/agent-requests-cpu: 5m
+        vault.hashicorp.com/agent-limits-cpu: 10m
+        vault.hashicorp.com/agent-requests-mem: 20Mi
+        vault.hashicorp.com/role: {{ .Values.global.vault.role }}  # licenseplate-nonprod or licenseplate-prod are your options
+        vault.hashicorp.com/agent-inject-secret-DIAM-common: {{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-common
+        vault.hashicorp.com/agent-inject-template-DIAM-common: |
+          {{`{{- with secret `}}"{{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-common"{{` }}
+          {{- range $k, $v := .Data.data }}
+          {{ $k }}={{ $v }}{{ end -}}
+          {{- end `}} }}
+        vault.hashicorp.com/agent-inject-secret-DIAM-disclosure: {{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-disclosure
+        vault.hashicorp.com/agent-inject-template-DIAM-disclosure: |
+          {{`{{- with secret `}}"{{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-disclosure"{{` }}
+          {{- range $k, $v := .Data.data }}
+          {{ $k }}={{ $v }}{{ end -}}
+          {{- end `}} }}
         {{- if .Values.global.commit_sha }}
         commit_sha: {{ .Values.global.commit_sha }}
         {{- end}}
@@ -53,6 +56,7 @@ spec:
       labels:
         {{- include "edt-disclosure.selectorLabels" . | nindent 8 }}
     spec:
+      serviceAccountName: {{ .Values.global.licenseplate }}-vault 
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
