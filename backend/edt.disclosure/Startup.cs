@@ -207,7 +207,7 @@ public class Startup
         this.Configuration.Bind(config);
         services.AddSingleton(config);
 
-        Log.Logger.Information($"Counsel groups : {string.Join(",", config.EdtClient.DefenceCaseGroups)}");
+        Log.Logger.Information($"Counsel groups : {string.Join("|", config.EdtClient.DefenceCaseGroups.Split(",", StringSplitOptions.TrimEntries))}");
 
         Log.Logger.Information("### EDT Disclosure Service Version:{0} ###", Assembly.GetExecutingAssembly().GetName().Version);
         Log.Logger.Debug("### Edt Disclosure Configuration:{0} ###", System.Text.Json.JsonSerializer.Serialize(config));
