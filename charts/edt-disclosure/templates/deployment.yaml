@@ -89,55 +89,10 @@ spec:
               value: disclosure
             - name: DOTNET_BUNDLE_EXTRACT_BASE_DIR
               value: /tmp
-            - name: ConnectionStrings__DisclosureDataStore
-              valueFrom:
-                configMapKeyRef:
-                  name: edt-disclosure-api-database
-                  key: CONNECTION_STRINGS_DB    
+
             - name: ApplicationUrl
               value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"     
-            - name: EdtClient__Apikey
-              valueFrom:
-                secretKeyRef:
-                  name: edt-disclosure-client
-                  key: EdtClient__Apikey
 
-            - name: EdtClient__Url
-              valueFrom:
-                secretKeyRef:
-                  name: edt-disclosure-client
-                  key: EdtClient__Url
-
-            - name: EdtClient__DefenceFolioTemplateName
-              valueFrom:
-                secretKeyRef:
-                  name: edt-disclosure-client
-                  key: EdtClient__DefenceFolioTemplateName
-            - name: EdtClient__DefenceFolioTemplateId
-              valueFrom:
-                secretKeyRef:
-                  name: edt-disclosure-client
-                  key: EdtClient__DefenceFolioTemplateId
-            - name: Telemetry__CollectorUrl
-              valueFrom: 
-                secretKeyRef:
-                  name: telemetry-pidp
-                  key: Telemetry__CollectorUrl
-            - name: Telemetry__AzureConnectionString
-              valueFrom: 
-                secretKeyRef:
-                  name: telemetry-pidp
-                  key: Telemetry__AzureConnectionString
-            - name: EdtClient__CounselGroup
-              valueFrom:
-                secretKeyRef:
-                  name: edt-disclosure-client
-                  key: EdtClient__CounselGroup
-            - name: EdtClient__CreateCourtLocations
-              valueFrom:
-                secretKeyRef:
-                  name: edt-disclosure-client
-                  key: EdtClient__CreateCourtLocations
           volumeMounts:
           - name: truststore
             mountPath: "/opt/kafka/certificates"
