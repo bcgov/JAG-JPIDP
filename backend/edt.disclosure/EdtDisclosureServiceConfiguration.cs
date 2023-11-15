@@ -43,7 +43,7 @@ public class EdtDisclosureServiceConfiguration
         public string CounselGroup { get; set; } = "Counsel";
         public string DefenceFolioTemplateName { get; set; } = string.Empty;
         public int DefenceFolioTemplateId { get; set; } = -1;
-        public List<string> DefenceCaseGroups { get; set; } = new List<string>();
+        public string DefenceCaseGroups { get; set; } = string.Empty;
         public string CourtLocationKeyPrefix { get; set; } = "CH-";
         public string CourtLocationGroup { get; set; } = string.Empty;
         public int CourtLocationTemplateId { get; set; }

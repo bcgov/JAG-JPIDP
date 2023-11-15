@@ -226,8 +226,9 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
 
         var user = await this.edtClient.GetUser(accessRequestModel.Key!) ?? throw new EdtDisclosureServiceException($"User was not found {accessRequestModel.Key}");
 
+        var defenceCaseGroups = this.configuration.EdtClient.DefenceCaseGroups.Split(",", StringSplitOptions.TrimEntries);
 
-        if (this.configuration.EdtClient.DefenceCaseGroups.Any())
+        if (defenceCaseGroups.Any())
         {
             foreach (var group in this.configuration.EdtClient.DefenceCaseGroups)
             {
@@ -259,7 +260,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
         {
             throw new EdtDisclosureServiceException($"Failed to add user {user.Id} to defence folio");
         }
-        if (this.configuration.EdtClient.DefenceCaseGroups.Any() && addGroupCount != this.configuration.EdtClient.DefenceCaseGroups.Count)
+        if (this.configuration.EdtClient.DefenceCaseGroups.Any() && addGroupCount != defenceCaseGroups.Length)
         {
             throw new EdtDisclosureServiceException($"Failed to add user {user.Id} to all case groups for folio {caseId}");
         }

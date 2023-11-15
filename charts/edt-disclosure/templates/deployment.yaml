@@ -61,7 +61,6 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "edt-disclosure.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
 
@@ -223,13 +222,6 @@ spec:
                 secretKeyRef:
                   name: edt-disclosure-client
                   key: EdtClient__DefenceFolioTemplateId
-
-            - name: EdtClient__DefenceCaseGroups
-              valueFrom:
-                secretKeyRef:
-                  name: edt-disclosure-client
-                  key: EdtClient__DefenceCaseGroups
-
             - name: Telemetry__CollectorUrl
               valueFrom: 
                 secretKeyRef:
