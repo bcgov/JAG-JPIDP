@@ -3,7 +3,6 @@ namespace edt.disclosure;
 
 using System.Reflection;
 using System.Text.Json;
-using Azure.Monitor.OpenTelemetry.Exporter;
 using edt.disclosure.Data;
 using edt.disclosure.HttpClients;
 using edt.disclosure.Infrastructure.Telemetry;
@@ -47,6 +46,7 @@ public class Startup
     public void ConfigureServices(IServiceCollection services)
     {
         var config = this.InitializeConfiguration(services);
+        Log.Information($"Db config {config.ConnectionStrings.DisclosureDataStore}");
 
         if (string.IsNullOrEmpty(config.SchemaRegistry.Url))
         {
@@ -80,11 +80,7 @@ public class Startup
                    {
                        builder.AddConsoleExporter();
                    }
-                   if (config.Telemetry.AzureConnectionString != null)
-                   {
-                       Log.Information("*** Azure trace exporter enabled ***");
-                       builder.AddAzureMonitorTraceExporter(o => o.ConnectionString = config.Telemetry.AzureConnectionString);
-                   }
+
                    if (config.Telemetry.CollectorUrl != null)
                    {
                        builder.AddOtlpExporter(options =>
