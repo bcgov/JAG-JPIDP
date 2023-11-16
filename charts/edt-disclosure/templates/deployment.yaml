@@ -48,6 +48,12 @@ spec:
           {{- range $k, $v := .Data.data }}
           {{ $k }}="{{ $v }}"{{ end -}}
           {{- end `}} }}
+        vault.hashicorp.com/agent-inject-secret-DIAM-keycloak: {{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-keycloak
+        vault.hashicorp.com/agent-inject-template-DIAM-keycloak: |
+          {{`{{- with secret `}}"{{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-keycloak"{{` }}
+          {{- range $k, $v := .Data.data }}
+          {{ $k }}="{{ $v }}"{{ end -}}
+          {{- end `}} }}
         {{- if .Values.global.commit_sha }}
         commit_sha: {{ .Values.global.commit_sha }}
         {{- end}}
