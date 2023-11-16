@@ -30,8 +30,6 @@ RUN dotnet publish -r linux-musl-x64 "edt.disclosure.csproj" -c Release -o /app/
 USER root
 COPY entrypoint.sh /app/publish
 
-
-
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .

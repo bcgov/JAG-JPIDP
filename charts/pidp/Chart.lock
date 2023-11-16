@@ -7,7 +7,7 @@ dependencies:
   version: 0.1.2
 - name: webapi
   repository: file://../webapi
-  version: 0.2.0
+  version: 0.3.0
 - name: edt-service
   repository: file://../edt-service
   version: 0.3.0
@@ -29,5 +29,5 @@ dependencies:
 - name: nginx
   repository: file://../nginx
   version: 9.7.3
-digest: sha256:932e1cdaec153565ef14f108931e1f84ef26d5939c1ab572433292052a21962d
-generated: "2023-11-16T08:46:22.6611384-08:00"
+digest: sha256:81bf86b425b51a523719839e9f2506ca49b26ecbd5583886c15f68c00f04e3b5
+generated: "2023-11-16T09:14:45.9017269-08:00"
