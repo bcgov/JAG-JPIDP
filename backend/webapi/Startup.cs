@@ -2,7 +2,6 @@ namespace Pidp;
 
 using System.Reflection;
 using System.Text.Json;
-using Azure.Monitor.OpenTelemetry.Exporter;
 using Common.Kafka;
 using FluentValidation.AspNetCore;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
@@ -90,10 +89,6 @@ public class Startup
                     if (config.Telemetry.LogToConsole)
                     {
                         builder.AddConsoleExporter();
-                    }
-                    if (config.Telemetry.AzureConnectionString != null)
-                    {
-                        builder.AddAzureMonitorTraceExporter(o => o.ConnectionString = config.Telemetry.AzureConnectionString);
                     }
                     if (config.Telemetry.CollectorUrl != null)
                     {
