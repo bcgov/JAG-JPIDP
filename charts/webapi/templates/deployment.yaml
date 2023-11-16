@@ -22,6 +22,32 @@ spec:
   template:
     metadata:
       annotations:
+        vault.hashicorp.com/agent-inject: 'true'
+        vault.hashicorp.com/agent-pre-populate-only: 'true'
+        vault.hashicorp.com/auth-path: auth/k8s-gold
+        vault.hashicorp.com/namespace: platform-services
+        vault.hashicorp.com/agent-requests-cpu: 5m
+        vault.hashicorp.com/agent-limits-cpu: 10m
+        vault.hashicorp.com/agent-requests-mem: 20Mi
+        vault.hashicorp.com/role: {{ .Values.global.vault.role }}  # licenseplate-nonprod or licenseplate-prod are your options
+        vault.hashicorp.com/agent-inject-secret-DIAM-common: {{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-common
+        vault.hashicorp.com/agent-inject-template-DIAM-common: |
+          {{`{{- with secret `}}"{{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-common"{{` }}
+          {{- range $k, $v := .Data.data }}
+          {{ $k }}="{{ $v }}"{{ end -}}
+          {{- end `}} }}
+        vault.hashicorp.com/agent-inject-secret-DIAM-webapi: {{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-webapi
+        vault.hashicorp.com/agent-inject-template-DIAM-webapi: |
+          {{`{{- with secret `}}"{{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-webapi"{{` }}
+          {{- range $k, $v := .Data.data }}
+          {{ $k }}="{{ $v }}"{{ end -}}
+          {{- end `}} }}
+        vault.hashicorp.com/agent-inject-secret-DIAM-keycloak: {{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-keycloak
+        vault.hashicorp.com/agent-inject-template-DIAM-keycloak: |
+          {{`{{- with secret `}}"{{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-keycloak"{{` }}
+          {{- range $k, $v := .Data.data }}
+          {{ $k }}="{{ $v }}"{{ end -}}
+          {{- end `}} }}
         {{- if .Values.global.commit_sha }}
         commit_sha: {{ .Values.global.commit_sha }}
         {{- end}}
@@ -35,7 +61,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "webapi.serviceAccountName" . }}
+      serviceAccountName: {{ .Values.global.licenseplate }}-vault
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -45,23 +71,7 @@ spec:
           image: "{{ .Values.global.image.registry }}/{{ .Values.image.repository }}:{{ .Values.global.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-            - name: PlrClient__Url
-              value: http://{{ $release }}-plr-intake:8080/api
-            - name: EDTDisclosureClient__Url
-              valueFrom:
-                secretKeyRef:
-                  name: pidp-edt-disclosure-api
-                  key: url
-            - name: EdtCaseManagementClient__Url
-              valueFrom:
-                secretKeyRef:
-                  name: pidp-edt-casemgmt-api
-                  key: url
-            - name: JumClient__Url
-              valueFrom:
-                secretKeyRef:
-                  name: pidp-backend-jum-api
-                  key: url
+
             #- name: JumClient__Url
             #  value: {{ .Values.jumClientURL }}
             # Skip null emails
@@ -69,178 +79,26 @@ spec:
               value: "true"
             - name: ASPNETCORE_ENVIRONMENT
               value: {{ .Values.aspnetcore.environment }}
-            - name: Seq__Url
-              valueFrom:
-                secretKeyRef:
-                  name: datalust-seq
-                  key: url
-            - name: DB_HOST
-              value: pidp-postgresql
-            - name: POSTGRESQL_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: pidp-postgresql
-                  key: database-password
-            - name: POSTGRESQL_USER
-              valueFrom:
-                secretKeyRef:
-                  name: pidp-postgresql
-                  key: database-user
-            - name: POSTGRESQL_DATABASE
-              {{- if $isPR }}
-              value: pidp_{{ $drn }}
-              {{ else }}
-              valueFrom:
-                secretKeyRef:
-                  name: pidp-postgresql
-                  key: database-name
-              {{- end }}
-            - name: ConnectionStrings__PidpDatabase
-              valueFrom:
-                configMapKeyRef:
-                  name: pidp-api-database
-                  key: CONNECTION_STRINGS_PIDP
-            - name: KafkaCluster__BootstrapServers
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-jpidp
-                  key: KafkaCluster__BootstrapServers
-            - name: KafkaCluster__SaslOauthbearerProducerClientId
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-jpidp
-                  key: KafkaCluster__ProducerClientId
-            - name: KafkaCluster__SaslOauthbearerConsumerClientId
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-jpidp
-                  key: KafkaCluster__ConsumerClientId
-            - name: KafkaCluster__CaseAccessRequestTopicName
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-jpidp
-                  key: KafkaCluster__CaseAccessRequestTopicName
-            - name: KafkaCluster__ConsumerTopicName
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-jpidp
-                  key: KafkaCluster__ConsumerTopicName
-            - name: KafkaCluster__ProducerTopicName
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-jpidp
-                  key: KafkaCluster__ProducerTopicName
- 
-            - name: KafkaCluster__SaslOauthbearerConsumerClientSecret
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-jpidp
-                  key: KafkaCluster__SaslOauthbearerConsumerClientSecret
-            - name: KafkaCluster__SaslOauthbearerProducerClientSecret
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-jpidp
-                  key: KafkaCluster__SaslOauthbearerProducerClientSecret
-            - name: KafkaCluster__SslCaLocation
-              value: /opt/kafka/certificates/server-ca.crt
-            - name: KafkaCluster__SslCertificateLocation
-              value: /opt/kafka/certificates/client-ca.crt
-            - name: KafkaCluster__SslKeyLocation
-              value: /opt/kafka/certificates/client.key
-            - name: KafkaCluster__SaslOauthbearerTokenEndpointUrl
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-jpidp
-                  key: KafkaCluster__SaslOauthbearerTokenEndpointUrl
-            - name: KafkaCluster__NotificationTopicName
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-jpidp
-                  key: KafkaCluster__NotificationTopicName
-            - name: KafkaCluster__CourtLocationAccessRequestTopic
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-jpidp
-                  key: KafkaCluster__CourtLocationAccessRequestTopic
-            - name: KafkaCluster__DisclosureUserCreationTopic
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-jpidp
-                  key: KafkaCluster__DisclosureUserCreationTopic
-            - name: KafkaCluster__PersonCreationTopic
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-jpidp
-                  key: KafkaCluster__PersonCreationTopic
-            - name: Telemetry__CollectorUrl
-              valueFrom: 
-                secretKeyRef:
-                  name: telemetry-pidp
-                  key: Telemetry__CollectorUrl
-            - name: Telemetry__AzureConnectionString
-              valueFrom: 
-                secretKeyRef:
-                  name: telemetry-pidp
-                  key: Telemetry__AzureConnectionString
+
+
+
             - name: ApplicationUrl
               value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"
-            - name: CourtAccess__PollSeconds
-              valueFrom: 
-                secretKeyRef:
-                  name: pidp-court-access
-                  key: pollSeconds
-            - name: SplunkConfig__CollectorToken
-              valueFrom: 
-                secretKeyRef:
-                  name: splunk-config
-                  key: SplunkConfig__CollectorToken
-            - name: SplunkConfig__Host
-              valueFrom: 
-                secretKeyRef:
-                  name: splunk-config
-                  key: SplunkConfig__Host
+
+
             - name: JUSTIN_EMAIL_CHANGE_DISABLED
               value: "true"
-            - name: EDTClient__Url
-              valueFrom:
-                secretKeyRef:
-                  name: pidp-edt-service-api
-                  key: EDTClient__Url
-            - name: EDTClient__RealmUrl
-              valueFrom:
-                secretKeyRef:
-                  name: pidp-edt-service-api
-                  key: EDTClient__RealmUrl
-            - name: EDTClient__ClientId
-              valueFrom:
-                secretKeyRef:
-                  name: pidp-edt-service-api
-                  key: EDTClient__ClientId
-            - name: EDTClient__ClientSecret
-              valueFrom:
-                secretKeyRef:
-                  name: pidp-edt-service-api
-                  key: EDTClient__ClientSecret
-            - name: KafkaCluster__ApprovalCreationTopic
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-jpidp
-                  key: KafkaCluster__ApprovalCreationTopic
+
           volumeMounts:
             - name: kafka-truststore
               mountPath: "/opt/kafka/certificates"
               readOnly: true
           envFrom:
             - secretRef:
-                name: keycloak-secrets
-            - secretRef:
-                name: canada-post-addresscomplete-secrets
-            - secretRef:
                 name: ches
             - configMapRef:
                 name: mail-settings
-            - secretRef:
-                name: webapi-additional-envs
+
           ports:
             - name: http
               containerPort: 8080
