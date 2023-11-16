@@ -29,6 +29,7 @@ spec:
         prometheus.io/scrape: 'true'
         prometheus.io/port: "8080"
         vault.hashicorp.com/agent-inject: 'true'
+        vault.hashicorp.com/agent-pre-populate-only: 'true'
         vault.hashicorp.com/auth-path: auth/k8s-gold
         vault.hashicorp.com/namespace: platform-services
         vault.hashicorp.com/agent-requests-cpu: 5m
@@ -71,28 +72,12 @@ spec:
           image: "{{ .Values.global.image.registry }}/{{ .Values.image.repository }}:{{ .Values.global.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-            - name: DB_HOST
-              value: jum-database
             - name: KafkaCluster__ConsumerGroupId
               value: {{ include "edt-disclosure.fullname" . }}-consumer-group
-            - name: database-password
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "edt-disclosure.fullname" . }}-database
-                  key: database-password
-            - name: database-username
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "edt-disclosure.fullname" . }}-database
-                  key: database-username
-            - name: DATABASE_NAME
-              value: disclosure
             - name: DOTNET_BUNDLE_EXTRACT_BASE_DIR
               value: /tmp
-
             - name: ApplicationUrl
-              value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"     
-
+              value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"
           volumeMounts:
           - name: truststore
             mountPath: "/opt/kafka/certificates"
@@ -100,8 +85,6 @@ spec:
           envFrom:
             - secretRef:
                 name: keycloak-secrets
-            - secretRef:
-                name: kafkaconfig
           ports:
             - name: http
               containerPort: 8080
@@ -115,14 +98,7 @@ spec:
             periodSeconds: 30
             successThreshold: 1
             failureThreshold: 3
-        #  livenessProbe: //turn this on for TEST and PROD
-         #   httpGet:
-        #      path: /health/liveness
-        #      port: http
-         #   timeoutSeconds: 1
-        #    periodSeconds: 10
-         #   successThreshold: 1
-         #   failureThreshold: 3
+
          # startupProbe:
         #    httpGet:
          #     path: /health/liveness
