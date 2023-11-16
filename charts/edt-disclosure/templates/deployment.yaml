@@ -72,8 +72,6 @@ spec:
           image: "{{ .Values.global.image.registry }}/{{ .Values.image.repository }}:{{ .Values.global.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-            - name: KafkaCluster__ConsumerGroupId
-              value: {{ include "edt-disclosure.fullname" . }}-consumer-group
             - name: DOTNET_BUNDLE_EXTRACT_BASE_DIR
               value: /tmp
             - name: ApplicationUrl

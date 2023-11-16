@@ -10,13 +10,13 @@ dependencies:
   version: 0.2.0
 - name: edt-service
   repository: file://../edt-service
-  version: 0.2.3
+  version: 0.3.0
 - name: edt-casemgmt
   repository: file://../edt-casemgmt
-  version: 0.2.0
+  version: 0.3.0
 - name: edt-disclosure
   repository: file://../edt-disclosure
-  version: 0.8.0
+  version: 0.9.0
 - name: approvalflow
   repository: file://../approvalflow
   version: 0.1.0
@@ -29,5 +29,5 @@ dependencies:
 - name: nginx
   repository: file://../nginx
   version: 9.7.3
-digest: sha256:23f8350ebfff44e98cd63c895e6e3ad7dca34e7b62168bdefc66096dff13171b
-generated: "2023-11-15T14:23:12.5192736-08:00"
+digest: sha256:932e1cdaec153565ef14f108931e1f84ef26d5939c1ab572433292052a21962d
+generated: "2023-11-16T08:46:22.6611384-08:00"
