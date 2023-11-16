@@ -3,7 +3,6 @@ namespace edt.casemanagement;
 
 using System.Reflection;
 using System.Text.Json;
-using Azure.Monitor.OpenTelemetry.Exporter;
 using edt.casemanagement.Data;
 using edt.casemanagement.HttpClients;
 using edt.casemanagement.HttpClients.Services.EdtCore;
@@ -81,11 +80,7 @@ public class Startup
                    {
                        builder.AddConsoleExporter();
                    }
-                   if (config.Telemetry.AzureConnectionString != null)
-                   {
-                       Log.Information("*** Azure trace exporter enabled ***");
-                       builder.AddAzureMonitorTraceExporter(o => o.ConnectionString = config.Telemetry.AzureConnectionString);
-                   }
+
                    if (config.Telemetry.CollectorUrl != null)
                    {
                        builder.AddOtlpExporter(options =>
