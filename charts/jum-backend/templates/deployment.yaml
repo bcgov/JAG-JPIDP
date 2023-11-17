@@ -22,6 +22,32 @@ spec:
   template:
     metadata:
       annotations:
+        vault.hashicorp.com/agent-inject: 'true'
+        vault.hashicorp.com/agent-pre-populate-only: 'true'
+        vault.hashicorp.com/auth-path: auth/k8s-gold
+        vault.hashicorp.com/namespace: platform-services
+        vault.hashicorp.com/agent-requests-cpu: 5m
+        vault.hashicorp.com/agent-limits-cpu: 10m
+        vault.hashicorp.com/agent-requests-mem: 20Mi
+        vault.hashicorp.com/role: {{ .Values.global.vault.role }}  # licenseplate-nonprod or licenseplate-prod are your options
+        vault.hashicorp.com/agent-inject-secret-DIAM-common: {{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-common
+        vault.hashicorp.com/agent-inject-template-DIAM-common: |
+          {{`{{- with secret `}}"{{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-common"{{` }}
+          {{- range $k, $v := .Data.data }}
+          {{ $k }}="{{ $v }}"{{ end -}}
+          {{- end `}} }}
+        vault.hashicorp.com/agent-inject-secret-DIAM-jum: {{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-jum
+        vault.hashicorp.com/agent-inject-template-DIAM-jum: |
+          {{`{{- with secret `}}"{{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-jum"{{` }}
+          {{- range $k, $v := .Data.data }}
+          {{ $k }}="{{ $v }}"{{ end -}}
+          {{- end `}} }}
+        vault.hashicorp.com/agent-inject-secret-DIAM-keycloak: {{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-keycloak
+        vault.hashicorp.com/agent-inject-template-DIAM-keycloak: |
+          {{`{{- with secret `}}"{{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-keycloak"{{` }}
+          {{- range $k, $v := .Data.data }}
+          {{ $k }}="{{ $v }}"{{ end -}}
+          {{- end `}} }}
         {{- if .Values.global.commit_sha }}
         commit_sha: {{ .Values.global.commit_sha }}
         {{- end}}
@@ -45,156 +71,17 @@ spec:
           image: {{ .Values.global.image.registry }}/{{ .Values.image.repository }}:{{ .Values.global.image.tag | default .Chart.AppVersion }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-            - name: KafkaCluster__SslCaLocation
-              value: /opt/kafka/certificates/server-ca.crt
-            - name: KafkaCluster__SslCertificateLocation
-              value: /opt/kafka/certificates/client-ca.crt
-            - name: KafkaCluster__SslKeyLocation
-              value: /opt/kafka/certificates/client.key
-            - name: ConnectionStrings__JumDatabase
-              valueFrom:
-                configMapKeyRef:
-                  name: jum-api-database
-                  key: CONNECTION_STRINGS_JUM
-            - name: database-password
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "notification.fullname" . }}-database
-                  key: database-password
-            - name: database-username
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "notification.fullname" . }}-database
-                  key: database-username
-            - name: DATABASE_NAME
-              value: notification
-            - name: KafkaCluster__BootstrapServers
-              valueFrom:
-                secretKeyRef:
-                  name: jum-kafka-config
-                  key: KafkaCluster__BootstrapServers
-            - name: KafkaCluster__TopicName
-              valueFrom:
-                secretKeyRef:
-                  name: jum-kafka-config
-                  key: KafkaCluster__TopicName
-            - name: KafkaCluster__UserChangeEventTopic
-              valueFrom:
-                secretKeyRef:
-                  name: jum-kafka-config
-                  key: KafkaCluster__UserChangeEventTopic
-            - name: KafkaCluster__UserChangeProcessedTopic
-              valueFrom:
-                secretKeyRef:
-                  name: jum-kafka-config
-                  key: KafkaCluster__UserChangeProcessedTopic
-            - name: KafkaCluster__SaslOauthbearerTokenEndpointUrl
-              valueFrom:
-                secretKeyRef:
-                  name: jum-kafka-config
-                  key: KafkaCluster__SaslOauthbearerTokenEndpointUrl
-            - name: KafkaCluster__SaslOauthbearerConsumerClientId
-              valueFrom:
-                secretKeyRef:
-                  name: jum-kafka-config
-                  key: KafkaCluster__SaslOauthbearerConsumerClientId
-            - name: KafkaCluster__SaslOauthbearerConsumerClientSecret
-              valueFrom:
-                secretKeyRef:
-                  name: jum-kafka-config
-                  key: KafkaCluster__SaslOauthbearerConsumerClientSecret
-            - name: KafkaCluster__AckTopicName
-              valueFrom:
-                secretKeyRef:
-                  name: jum-kafka-config
-                  key: KafkaCluster__AckTopicName
             - name: ApplicationUrl
               value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"
-            - name: JustinAuthentication__BasicAuthUsername
-              valueFrom:
-                secretKeyRef:
-                  name: jum-api-config
-                  key: JustinAuthentication__BasicAuthUsername
-            - name: JustinAuthentication__BasicAuthPassword
-              valueFrom:
-                secretKeyRef:
-                  name: jum-api-config
-                  key: JustinAuthentication__BasicAuthPassword
-
-            - name: JustinAuthentication__Method
-              valueFrom:
-                secretKeyRef:
-                  name: jum-api-config
-                  key: JustinAuthentication__Method
-            - name: JustinAuthentication__ClientId
-              valueFrom:
-                secretKeyRef:
-                  name: jum-api-config
-                  key: JustinAuthentication__ClientId
-            - name: JustinAuthentication__ClientSecret
-              valueFrom:
-                secretKeyRef:
-                  name: jum-api-config
-                  key: JustinAuthentication__ClientSecret
-            - name: JustinAuthentication__TokenUrl
-              valueFrom:
-                secretKeyRef:
-                  name: jum-api-config
-                  key: JustinAuthentication__TokenUrl
-
-            - name: JustinChangeEventClient__Url
-              valueFrom:
-                secretKeyRef:
-                  name: jum-api-config
-                  key: JustinChangeEventClient__Url
-            - name: JustinChangeEventClient__PollRateSeconds
-              valueFrom:
-                secretKeyRef:
-                  name: jum-api-config
-                  key: JustinChangeEventClient__PollRateSeconds
-            - name: JustinParticipantClient__Url
-              valueFrom:
-                secretKeyRef:
-                  name: jum-api-config
-                  key: JustinParticipantClient__Url
-            - name: KafkaCluster__SaslOauthbearerProducerClientId
-              valueFrom:
-                secretKeyRef:
-                  name: jum-kafka-config
-                  key: KafkaCluster__SaslOauthbearerProducerClientId
-            - name: KafkaCluster__SaslOauthbearerProducerClientSecret
-              valueFrom:
-                secretKeyRef:
-                  name: jum-kafka-config
-                  key: KafkaCluster__SaslOauthbearerProducerClientSecret
-            - name: SplunkConfig__CollectorToken
-              valueFrom: 
-                secretKeyRef:
-                  name: splunk-config
-                  key: SplunkConfig__CollectorToken
-            - name: SplunkConfig__Host
-              valueFrom: 
-                secretKeyRef:
-                  name: splunk-config
-                  key: SplunkConfig__Host
-            - name: TestORDSConfiguration__Url
-              valueFrom: 
-                secretKeyRef:
-                  name: jum-ordstest-config
-                  key: TestORDSConfiguration__Url
           volumeMounts:
             - name: kafka-truststore
               mountPath: "/opt/kafka/certificates"
               readOnly: true          
           envFrom:
             - secretRef:
-                name: keycloak-secrets
-            - secretRef:
                 name: ches
             - configMapRef:
                 name: mail-settings
-            - secretRef:
-                name: kafka-config
           ports:
             - name: http
               containerPort: 8080
