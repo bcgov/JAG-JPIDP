@@ -19,15 +19,15 @@ dependencies:
   version: 0.9.0
 - name: approvalflow
   repository: file://../approvalflow
-  version: 0.1.0
+  version: 0.2.0
 - name: jum-backend
   repository: file://../jum-backend
-  version: 0.1.2
+  version: 0.2.0
 - name: jum-notification
   repository: file://../jum-notification
-  version: 0.1.2
+  version: 0.2.0
 - name: nginx
   repository: file://../nginx
   version: 9.7.3
-digest: sha256:81bf86b425b51a523719839e9f2506ca49b26ecbd5583886c15f68c00f04e3b5
-generated: "2023-11-16T09:14:45.9017269-08:00"
+digest: sha256:35656b40b56503954a340bbcf5cda2ee249d1cf5b7bd503515ba06bbaaf228d0
+generated: "2023-11-16T16:36:23.8354107-08:00"
