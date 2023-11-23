@@ -15,7 +15,7 @@ using Pidp.Models;
 namespace Pidp.Data.Migrations
 {
     [DbContext(typeof(PidpDbContext))]
-    [Migration("20231025182529_PublicDisclosure")]
+    [Migration("20231120230012_PublicDisclosure")]
     partial class PublicDisclosure
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -261,34 +261,6 @@ namespace Pidp.Data.Migrations
                     b.HasIndex("PartyId");
 
                     b.ToTable("CourtLocationAccessRequest");
-                });
-
-            modelBuilder.Entity("Pidp.Models.DigitalEvidencePublicDisclosure", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<Instant>("CompletedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("DigitalEvidenceDisclosureId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("KeyData")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Instant>("RequestedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DigitalEvidenceDisclosureId");
-
-                    b.ToTable("DigitalEvidencePublicDisclosure");
                 });
 
             modelBuilder.Entity("Pidp.Models.EmailLog", b =>
@@ -4529,6 +4501,25 @@ namespace Pidp.Data.Migrations
                     b.ToTable("DigitalEvidenceDisclosure");
                 });
 
+            modelBuilder.Entity("Pidp.Models.DigitalEvidencePublicDisclosure", b =>
+                {
+                    b.HasBaseType("Pidp.Models.AccessRequest");
+
+                    b.Property<Instant>("CompletedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DigitalEvidenceDisclosureId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("KeyData")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasIndex("DigitalEvidenceDisclosureId");
+
+                    b.ToTable("DigitalEvidencePublicDisclosure");
+                });
+
             modelBuilder.Entity("Pidp.Models.FacilityAddress", b =>
                 {
                     b.HasBaseType("Pidp.Models.Address");
@@ -4653,17 +4644,6 @@ namespace Pidp.Data.Migrations
                     b.Navigation("CourtSubLocation");
 
                     b.Navigation("Party");
-                });
-
-            modelBuilder.Entity("Pidp.Models.DigitalEvidencePublicDisclosure", b =>
-                {
-                    b.HasOne("Pidp.Models.DigitalEvidenceDisclosure", "DigitalEvidenceDisclosure")
-                        .WithMany("PublicDisclosures")
-                        .HasForeignKey("DigitalEvidenceDisclosureId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("DigitalEvidenceDisclosure");
                 });
 
             modelBuilder.Entity("Pidp.Models.EndorsementRelationship", b =>
@@ -4861,7 +4841,7 @@ namespace Pidp.Data.Migrations
             modelBuilder.Entity("Pidp.Models.UserInfo.PublicUserValidation", b =>
                 {
                     b.HasOne("Pidp.Models.Party", "Party")
-                        .WithMany()
+                        .WithMany("ValidationAttempts")
                         .HasForeignKey("PartyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -4894,6 +4874,23 @@ namespace Pidp.Data.Migrations
                         .HasForeignKey("Pidp.Models.DigitalEvidenceDisclosure", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Pidp.Models.DigitalEvidencePublicDisclosure", b =>
+                {
+                    b.HasOne("Pidp.Models.DigitalEvidenceDisclosure", "DigitalEvidenceDisclosure")
+                        .WithMany()
+                        .HasForeignKey("DigitalEvidenceDisclosureId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pidp.Models.AccessRequest", null)
+                        .WithOne()
+                        .HasForeignKey("Pidp.Models.DigitalEvidencePublicDisclosure", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DigitalEvidenceDisclosure");
                 });
 
             modelBuilder.Entity("Pidp.Models.FacilityAddress", b =>
@@ -4955,16 +4952,13 @@ namespace Pidp.Data.Migrations
                     b.Navigation("LicenceDeclaration");
 
                     b.Navigation("OrgainizationDetail");
+
+                    b.Navigation("ValidationAttempts");
                 });
 
             modelBuilder.Entity("Pidp.Models.SubmittingAgencyRequest", b =>
                 {
                     b.Navigation("AgencyRequestAttachments");
-                });
-
-            modelBuilder.Entity("Pidp.Models.DigitalEvidenceDisclosure", b =>
-                {
-                    b.Navigation("PublicDisclosures");
                 });
 #pragma warning restore 612, 618
         }

@@ -5,7 +5,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { EMPTY, Observable, catchError, map, noop, of, tap } from 'rxjs';
+import { EMPTY, Observable, catchError, interval, map, noop, of, takeWhile, tap } from 'rxjs';
 
 import { APP_CONFIG, AppConfig } from '@app/app.config';
 import { AbstractFormPage } from '@app/core/classes/abstract-form-page.class';
@@ -24,7 +24,7 @@ import { PartyUserTypeResource } from '../../../../features/admin/shared/usertyp
 import { OrganizationUserType } from '../../../../features/admin/shared/usertype-service.model';
 import { BcpsAuthResourceService } from './auth/bcps-auth-resource.service';
 import { DigitalEvidenceCase } from './case-management/digital-evidence-case.model';
-import { AssignedRegion, UserValidationResponse } from './digital-evidence-account.model';
+import { AssignedRegion, PublicDisclosureAccess, UserValidationResponse } from './digital-evidence-account.model';
 import { DigitalEvidenceFormState } from './digital-evidence-form-state';
 import { DigitalEvidenceResource } from './digital-evidence-resource.service';
 import {
@@ -65,11 +65,17 @@ export class DigitalEvidencePage
   public userCodeStatus: string;
   public userValidationMessage?: string;
   public accessRequestFailed: boolean;
+  public refreshCount: number;
   public publicAccessDenied: boolean;
+  public outOfCustodyCodeAlreadyRequested: boolean;
   public digitalEvidenceSupportEmail: string;
   public formControlNames: string[];
+  public outOfCustodyDisclosureListing: PublicDisclosureAccess[] = [];
+  public outOfCustodyDataSource: MatTableDataSource<PublicDisclosureAccess>;
+  public refreshOutOfCustodyEnabled: boolean;
   public selectedOption = 0;
   public displayedColumns: string[] = ['regionName', 'assignedAgency'];
+  public displayedOutOfCustodyColumns: string[] = ['requestStatus', 'keyData', 'created', 'completedOn'];
   public userTypes = [
     { id: 0, name: '--Select User Type--', disable: true },
     { id: 1, name: 'CorrectionService', disable: false },
@@ -104,10 +110,14 @@ export class DigitalEvidencePage
     this.userIsPublic = false;
     this.validatingUser = false;
     this.publicAccessDenied = false;
+    this.refreshOutOfCustodyEnabled = false;
     this.dataSource = new MatTableDataSource();
+    this.outOfCustodyDataSource = new MatTableDataSource(this.outOfCustodyDisclosureListing);
     this.identityProvider$ = this.authorizedUserService.identityProvider$;
     this.result = '';
+    this.refreshCount = 0;
     this.userCodeStatus = '';
+    this.outOfCustodyCodeAlreadyRequested = false;
     this.defenceValidationMessage = '';
     this.policeAgency = accessTokenService
       .decodeToken()
@@ -141,6 +151,8 @@ export class DigitalEvidencePage
         this.organizationType.participantId
       );
 
+
+
       this.identityProvider$.subscribe((idp) => {
         // todo - remove IDIR
         if (idp === IdentityProvider.BCPS || idp === IdentityProvider.IDIR) {
@@ -149,6 +161,8 @@ export class DigitalEvidencePage
           this.formState.OOCUniqueIdValid.clearValidators();
 
           this.userIsBCPS = true;
+
+
           this.userOrgunit
             .getUserOrgUnit(
               partyId,
@@ -163,6 +177,7 @@ export class DigitalEvidencePage
           this.userIsLawyer = true;
         }
         if (idp === IdentityProvider.BCSC) {
+          this.getOutOfCustodyRequests();
           this.userIsPublic = true;
         }
       });
@@ -189,6 +204,17 @@ export class DigitalEvidencePage
   public onBack(): void {
     this.navigateToRoot();
   }
+
+  public refreshOutOfCustodyTable(): void {
+    interval(4000)
+      .pipe(takeWhile(() => this.refreshOutOfCustodyEnabled))
+      .subscribe(() => {
+        this.getOutOfCustodyRequests();
+      });
+  }
+
+
+
   protected performSubmission(): Observable<void> {
     const partyId = this.partyService.partyId;
 
@@ -234,11 +260,40 @@ export class DigitalEvidencePage
     return this.organizationType.isSubmittingAgency;
   }
 
+  public getOutOfCustodyRequests(): void {
+    this.resource
+      .getPublicCaseAccess(this.partyService.partyId)
+      .pipe()
+      .subscribe(
+        (outOfCustodyRequests: PublicDisclosureAccess[]) => {
+          this.outOfCustodyDisclosureListing = outOfCustodyRequests;
+          this.outOfCustodyDataSource = new MatTableDataSource(this.outOfCustodyDisclosureListing);
+          // see if all requests are complete
+          const incompleteRequestResponse = outOfCustodyRequests.filter(req => req.requestStatus !== "Complete");
+          if (incompleteRequestResponse.length == 0) {
+            this.refreshOutOfCustodyEnabled = false;
+
+          }
+
+          this.refreshOutOfCustodyTable();
+          if (this.refreshOutOfCustodyEnabled) {
+            this.refreshCount++;
+            if (this.refreshCount >= 4) {
+              this.refreshOutOfCustodyEnabled = false;
+              this.refreshCount = 0;
+            }
+          }
+        });
+
+  }
+
+
+
   public checkUniqueID(_event: any): void {
 
     if (this.formState.OOCUniqueId.valid) {
-      const codeToCheck = this.formState.OOCUniqueId.value.replace(/.{3}(?!$)/g, '$&-');
-
+      ///const codeToCheck = this.formState.OOCUniqueId.value.replace(/.{3}(?!$)/g, '$&-');
+      const codeToCheck = this.formState.OOCUniqueId.value;
       this.validatingUser = true;
       this.userCodeStatus = '';
       this.resource.validatePublicUniqueID(
@@ -264,13 +319,22 @@ export class DigitalEvidencePage
 
             this.userValidationMessage = 'Too many attempts - please contact BCPS for assistance';
           } else {
-            this.userCodeStatus = res.validated ? 'valid' : 'invalid';
-            if (res.validated) {
-              this.formState.OOCUniqueId.disable();
+            if (res.alreadyActive) {
+              this.formState.OOCUniqueId.patchValue('');
+              this.userCodeStatus = 'valid';
+              this.formState.OOCUniqueId.markAsPristine();
+              this.formState.OOCUniqueId.markAsUntouched();
+              this.userValidationMessage = (res.requestStatus == "Complete") ? 'Code already used and is active - you can login to get your Disclosure package' : `Code used and in status ${res.requestStatus}`;
             }
+            else {
+              this.userCodeStatus = res.validated ? 'valid' : 'invalid';
+              if (res.validated) {
+                this.formState.OOCUniqueId.disable();
+              }
 
-            this.publicAccessDenied = !res.validated;
-            this.userValidationMessage = res.validated ? 'Code is valid - you may submit your request' : 'Please verify your code and retry';
+              this.publicAccessDenied = !res.validated;
+              this.userValidationMessage = res.validated ? 'Your code is good. You can now submit your request.' : 'Check your code to make sure it\'s correct, then try again.';
+            }
           }
         }
       });
@@ -296,6 +360,7 @@ export class DigitalEvidencePage
           this.formState.ParticipantId.value,
           this.formState.OOCUniqueId.value).pipe(
             tap(() => (this.pending = true)),
+
             catchError((error: HttpErrorResponse) => {
               if (error.status === HttpStatusCode.NotFound) {
                 this.navigateToRoot();
@@ -304,7 +369,20 @@ export class DigitalEvidencePage
               return of(noop());
             })
           )
-        .subscribe();
+        .subscribe({
+          complete: () => {
+            this.refreshOutOfCustodyEnabled = true;
+            this.refreshOutOfCustodyTable();
+            this.formState.OOCUniqueId.enable();
+            this.formState.OOCUniqueId.patchValue('');
+            this.formState.OOCUniqueId.markAsPristine();
+            this.formState.OOCUniqueId.markAsUntouched();
+            this.userValidationMessage = '';
+            this.userCodeStatus = '';
+            this.pending = false;
+          },
+        }
+        );
     } else
       if (this.userIsLawyer) {
         this.resource
@@ -389,6 +467,7 @@ export class DigitalEvidencePage
         this.formState.OOCUniqueId.setValidators([
           Validators.required,
         ]);
+
       }
       if (idp === IdentityProvider.BCPS) {
         this.formState.AssignedRegions.setValidators([Validators.required]);

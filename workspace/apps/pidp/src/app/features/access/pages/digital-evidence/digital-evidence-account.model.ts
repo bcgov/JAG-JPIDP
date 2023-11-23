@@ -15,6 +15,16 @@ export interface UserValidationResponse {
   partyId: number;
   key: string;
   message: string;
+  requestStatus: string;
+  alreadyActive: boolean;
   validated: boolean;
   tooManyAttempts: boolean;
+}
+
+
+export interface PublicDisclosureAccess {
+  completedOn: Date;
+  keyData: string;
+  created: Date
+  requestStatus: string;
 }

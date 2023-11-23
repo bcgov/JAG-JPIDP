@@ -3,6 +3,7 @@ namespace Pidp.Features.AccessRequests;
 using System.Diagnostics;
 using Common.Models.Approval;
 using Common.Models.Notification;
+using Confluent.Kafka;
 using DomainResults.Common;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -21,7 +22,7 @@ using Prometheus;
 /// <summary>
 /// Requests to access disclosure portal for accused (public BCSC users)
 /// </summary>
-public class DigitalEvidenceDisclosureHandler
+public class DigitalEvidencePublicDisclosure
 {
 
     private static readonly Counter PublicDisclosureUserCounter = Metrics.CreateCounter("diam_disclosure_public_user_total", "Number of public disclosure users");
@@ -104,8 +105,36 @@ public class DigitalEvidenceDisclosureHandler
                         Serilog.Log.Logger.Information($"User {command.PartyId} is already enrolled [{dto.UserId}]- can be request for additional folio access  Key {command.KeyData}");
                     }
 
+                    // store the access request - public users may request multiple times due to participant merges and multiple unique resulting IDs
+                    var publicRequest = new Models.DigitalEvidencePublicDisclosure
+                    {
+                        RequestedOn = this.clock.GetCurrentInstant(),
+                        PartyId = command.PartyId,
+                        Status = AccessRequestStatus.Pending,
+                        AccessTypeCode = AccessTypeCode.DigitalEvidenceDisclosure,
+                        Created = this.clock.GetCurrentInstant(),
+                        KeyData = command.KeyData
+                    };
+
+                    this.context.DigitalEvidencePublicDisclosures.Add(publicRequest);
 
                     // submit a request to the appropriate topic
+                    await this.context.SaveChangesAsync();
+                    // place a request on the topic
+                    var response = await this.PublishDisclosureAccessRequest(command, dto, publicRequest);
+
+                    if (response.Status == PersistenceStatus.NotPersisted)
+                    {
+                        Serilog.Log.Error($"Failed to publish public disclosure request for out of custody user {dto}");
+                        publicRequest.Status = AccessRequestStatus.Failed;
+                        await trx.RollbackAsync();
+
+                        return DomainResult.Failed($"Failed to publish public disclosure request for out of custody user {dto}");
+                    }
+
+
+
+                    await trx.CommitAsync();
 
 
                     return DomainResult.Success();
@@ -114,6 +143,40 @@ public class DigitalEvidenceDisclosureHandler
             }
         }
 
+
+
+
+        private async Task<DeliveryResult<string, EdtDisclosureUserProvisioning>> PublishDisclosureAccessRequest(Command command, PartyDto dto, Models.DigitalEvidencePublicDisclosure digitalEvidencePublicDisclosure)
+        {
+            var taskId = Guid.NewGuid().ToString();
+            Serilog.Log.Logger.Information("Adding message to topic {0} {1} {2}", this.config.KafkaCluster.DisclosurePublicUserCreationTopic, command.ParticipantId, taskId);
+
+            // use UUIDs for topic keys
+            var delivered = await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.DisclosurePublicUserCreationTopic,
+                taskId,
+                this.GetPublicDisclosureUserModel(command, dto, digitalEvidencePublicDisclosure));
+
+            return delivered;
+        }
+
+        private EdtDisclosureUserProvisioning GetPublicDisclosureUserModel(Command command, PartyDto dto, Models.DigitalEvidencePublicDisclosure digitalEvidencePublicDisclosure)
+        {
+
+            return new EdtDisclosureUserProvisioning
+            {
+                Key = $"{command.ParticipantId}",
+                UserName = dto.Jpdid,
+                Email = dto.Email,
+                FullName = $"{dto.FirstName} {dto.LastName}",
+                AccountType = "Saml",
+                Role = "User",
+                SystemName = AccessTypeCode.DigitalEvidenceDisclosure.ToString(),
+                AccessRequestId = digitalEvidencePublicDisclosure.Id,
+                OrganizationType = "Out-of-custody",
+                OrganizationName = "Public",
+                PersonKey = command.KeyData
+            };
+        }
 
         private async Task<PartyDto> GetPidpUser(Command command)
         {

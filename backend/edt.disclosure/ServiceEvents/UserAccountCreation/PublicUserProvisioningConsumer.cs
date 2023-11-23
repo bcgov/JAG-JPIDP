@@ -1,15 +1,15 @@
+using System.Net;
 using edt.disclosure.HttpClients.Services.EdtDisclosure;
 using edt.disclosure.Kafka.Interfaces;
-using System.Net;
 
 namespace edt.disclosure.ServiceEvents.UserAccountCreation;
 
-public class UserProvisioningConsumer : BackgroundService
+public class PublicUserProvisioningConsumer : BackgroundService
 {
     private readonly IKafkaConsumer<string, EdtDisclosureUserProvisioningModel> consumer;
 
     private readonly EdtDisclosureServiceConfiguration config;
-    public UserProvisioningConsumer(IKafkaConsumer<string, EdtDisclosureUserProvisioningModel> kafkaConsumer, EdtDisclosureServiceConfiguration config)
+    public PublicUserProvisioningConsumer(IKafkaConsumer<string, EdtDisclosureUserProvisioningModel> kafkaConsumer, EdtDisclosureServiceConfiguration config)
     {
         this.consumer = kafkaConsumer;
         this.config = config;
@@ -19,12 +19,12 @@ public class UserProvisioningConsumer : BackgroundService
 
         try
         {
-            Serilog.Log.Information($"Consume from ConsumerTopicName {this.config.KafkaCluster.CreateUserTopic}");
-            await this.consumer.Consume(this.config.KafkaCluster.CreateUserTopic, stoppingToken);
+            Serilog.Log.Information($"Consume from Public User Topic {this.config.KafkaCluster.CreatePublicUserTopic}");
+            await this.consumer.Consume(this.config.KafkaCluster.CreatePublicUserTopic, stoppingToken);
         }
         catch (Exception ex)
         {
-            var errStr = $"{(int)HttpStatusCode.InternalServerError} ConsumeFailedOnTopic - {this.config.KafkaCluster.CreateUserTopic}, {ex}";
+            var errStr = $"{(int)HttpStatusCode.InternalServerError} ConsumeFailedOnTopic - {this.config.KafkaCluster.CreatePublicUserTopic}, {ex}";
             Serilog.Log.Warning(errStr);
             Console.WriteLine(errStr);
         }

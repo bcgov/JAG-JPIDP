@@ -18,6 +18,7 @@ public class EdtDisclosureUserProvisioningModel
     public string? OrganizationType { get; set; }
     public string? OrganizationName { get; set; }
     public override string ToString() => JsonSerializer.Serialize(this);
+    public string PersonKey { get; set; } = string.Empty; // ties to participant unique id in core for disclosure for public users
 
 }
 
