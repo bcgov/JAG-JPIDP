@@ -1,6 +1,4 @@
-namespace edt.service.Features.Person;
-
-using Common.Models.EDT;
+namespace Common.Models.EDT;
 
 public class IdentifierResponseModel
 {

@@ -80,22 +80,52 @@
     <ng-container *ngIf="pending; else notCompleted"> </ng-container>
   </ng-template>
 
+  <ng-container *ngIf="userIsPublic && pending">
+    Once your request is complete you will have access to the Disclosure Portal
+  </ng-container>
+
 
   <ng-container *ngIf="userIsPublic">
     <ui-page-section-subheader heading="Disclosure System Access">
-      <div>
-        Please enter the code that was provided to you by The BC Prosecution Service<br />
-        If you do not have a code please contact your local Court Location<br />
-        Once you have entered a valid code, click Submit to request access to your Disclosure.<p></p>
 
-      </div>
 
       <div class="row form-group">
+        <!-- show current case access requests -->
+        <div class="col-md-12" *ngIf="outOfCustodyDisclosureListing.length > 0">
+          <h4>Current and previous case access requests:</h4>
+          <table mat-table [dataSource]="outOfCustodyDataSource" class="mat-elevation-z4">
+            <ng-container matColumnDef="created">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Created</th>
+              <td *matCellDef="let request" mat-cell>{{ request.created | date: 'MMM-dd-yy hh:mm:ss' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="keyData">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Unique ID</th>
+              <td *matCellDef="let request" mat-cell>{{ request.keyData }}</td>
+            </ng-container>
+            <ng-container matColumnDef="requestStatus">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+              <td *matCellDef="let request" mat-cell>{{ request.requestStatus }}</td>
+            </ng-container>
+            <ng-container matColumnDef="completedOn">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Completed Date</th>
+              <td *matCellDef="let request" mat-cell>{{ request.completedOn | date: 'MMM-dd-yy hh:mm:ss' }}</td>
+            </ng-container>
+            <tr *matHeaderRowDef="displayedOutOfCustodyColumns" mat-header-row></tr>
+            <tr *matRowDef="let row; columns: displayedOutOfCustodyColumns" mat-row></tr>
+          </table>
+        </div>
+        <div>
+          <p></p>
+          Enter the code given by <b>The BC Prosecution Service</b>.<br />
+          If you do not have a code, contact your local <b>Court Location</b> for help.<br />
+          If you have more than one code you may request access multiple times.<br />
+          After entering a valid code, click <b>Submit</b> to request access to your Disclosure.
 
-        <div class="col-md-6 col-sm-12">
+        </div>
+        <div class="col-md-6 col-sm-12 mt-3">
           <mat-form-field class="code-entry mat-elevation-z16">
             <input oninput="this.value = this.value.toUpperCase()" matInput placeholder="Code" class="formControl"
-              formControlName="OOCUniqueId" [readonly]="false" (keyup)="checkUniqueID($event)" mask="SSS-000" />
+              formControlName="OOCUniqueId" [readonly]="false" (keyup)="checkUniqueID($event)" mask="AAAAAA" />
           </mat-form-field>
         </div>
 
@@ -105,7 +135,7 @@
           </div>
           <div *ngIf="userCodeStatus === 'too_many_attempts'">
             <mat-icon>warning</mat-icon>
-            <b>You have entered an invalid code too many times.</b><br />
+            <b class="danger">You have entered an invalid code too many times.</b><br />
             <i>Please contact the BC Prosecution Service for assistance</i>
           </div>
           <div *ngIf="userCodeStatus === 'error'">

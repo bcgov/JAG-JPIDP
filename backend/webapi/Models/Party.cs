@@ -1,8 +1,9 @@
 namespace Pidp.Models;
 
-using NodaTime;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using NodaTime;
+using Pidp.Models.UserInfo;
 
 [Table(nameof(Party))]
 public class Party : BaseAuditable, IOwnedResource
@@ -51,6 +52,8 @@ public class Party : BaseAuditable, IOwnedResource
     public ICollection<UserAccountChange> AccountChanges { get; set; } = new List<UserAccountChange>();
 
     public ICollection<PartyAlternateId> AlternateIds { get; set; } = new List<PartyAlternateId>();
+
+    public ICollection<PublicUserValidation> ValidationAttempts { get; set; } = new List<PublicUserValidation>();
 
 
 }

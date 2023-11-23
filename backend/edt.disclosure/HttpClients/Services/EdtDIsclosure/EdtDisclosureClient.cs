@@ -1,14 +1,14 @@
 namespace edt.disclosure.HttpClients.Services.EdtDisclosure;
+
 using System.Threading.Tasks;
 using AutoMapper;
-
+using Common.Models.EDT;
 using edt.disclosure.Exceptions;
 using edt.disclosure.Features.Cases;
 using edt.disclosure.Infrastructure.Telemetry;
 using edt.disclosure.Kafka.Model;
 using edt.disclosure.Models;
 using edt.disclosure.ServiceEvents.CourtLocation.Models;
-using edt.disclosure.ServiceEvents.Models;
 using edt.disclosure.ServiceEvents.UserAccountCreation.Models;
 using edt.disclosure.ServiceEvents.UserAccountModification.Models;
 using Prometheus;
@@ -70,7 +70,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
     /// <exception cref="EdtServiceException"></exception>
     public async Task<string> GetVersion()
     {
-        var result = await this.GetAsync<EdtVersion?>($"api/v1/version");
+        var result = await this.GetAsync<Common.Models.EDT.EdtVersion?>($"api/v1/version");
 
         if (!result.IsSuccess)
         {
@@ -254,15 +254,17 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             if (newUser != null)
             {
 
-                var groupAddResponse = await this.AddUserToOUGroup(newUser.Id, this.configuration.EdtClient.CounselGroup);
+                var groupToAdd = (accessRequest.OrganizationType == this.configuration.EdtClient.OutOfCustodyOrgType) ? this.configuration.EdtClient.OutOfCustodyGroup : this.configuration.EdtClient.CounselGroup;
+
+                var groupAddResponse = await this.AddUserToOUGroup(newUser.Id, groupToAdd);
                 if (!groupAddResponse)
                 {
                     userModificationResponse.successful = false;
-                    userModificationResponse.Errors.Add($"Failed to add user to group {this.configuration.EdtClient.CounselGroup}");
+                    userModificationResponse.Errors.Add($"Failed to add user to group {groupToAdd}");
                 }
                 else
                 {
-                    Log.Information($"User {newUser.Id} added to {this.configuration.EdtClient.CounselGroup} in EDT");
+                    Log.Information($"User {newUser.Id} added to {groupToAdd} in EDT");
                 }
 
                 //// add user to their folio folder
@@ -340,23 +342,24 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
             // check user has folio and is associated
             var groups = await this.GetUserOUGroups(currentUser.Id);
+            var groupToAdd = (accessRequest.OrganizationType == this.configuration.EdtClient.OutOfCustodyOrgType) ? this.configuration.EdtClient.OutOfCustodyGroup : this.configuration.EdtClient.CounselGroup;
 
-            var inGroup = groups.FirstOrDefault(group => group.Name.Equals(this.configuration.EdtClient.CounselGroup, StringComparison.OrdinalIgnoreCase));
+            var inGroup = groups.FirstOrDefault(group => group.Name.Equals(groupToAdd, StringComparison.OrdinalIgnoreCase));
 
             if (inGroup == null)
             {
-                Log.Information($"User {currentUser.Id} not currently in {this.configuration.EdtClient.CounselGroup} - adding");
-                var addedToGroup = await this.AddUserToOUGroup(currentUser.Id, this.configuration.EdtClient.CounselGroup);
+                Log.Information($"User {currentUser.Id} not currently in {groupToAdd} - adding");
+                var addedToGroup = await this.AddUserToOUGroup(currentUser.Id, groupToAdd);
 
                 if (addedToGroup)
                 {
-                    Log.Information($"Added user {currentUser.Id} to group {this.configuration.EdtClient.CounselGroup}");
+                    Log.Information($"Added user {currentUser.Id} to group {groupToAdd}");
                 }
                 else
                 {
-                    Log.Warning($"Failed to add user {currentUser.Id} to group {this.configuration.EdtClient.CounselGroup}");
+                    Log.Warning($"Failed to add user {currentUser.Id} to group {groupToAdd}");
                     userModificationResponse.successful = false;
-                    userModificationResponse.Errors.Add($"Failed to add user {currentUser.Id} to group {this.configuration.EdtClient.CounselGroup}");
+                    userModificationResponse.Errors.Add($"Failed to add user {currentUser.Id} to group {groupToAdd}");
                 }
             }
 
@@ -705,7 +708,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
 
 
-    public async Task<CaseModel> FindCase(string field, string value)
+    public async Task<Features.Cases.CaseModel> FindCase(string field, string value)
     {
         ProcessedJobCount.Inc();
         var searchString = Uri.EscapeDataString(field) + ':' + Uri.EscapeDataString(value);
@@ -777,7 +780,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         {
             throw new EdtDisclosureServiceException($"Invalid case creation request received");
         }
-        var response = await this.PostAsync<CaseModel>($"api/v1/org-units/1/cases", caseInfo);
+        var response = await this.PostAsync<Features.Cases.CaseModel>($"api/v1/org-units/1/cases", caseInfo);
         if (!response.IsSuccess)
         {
             var msg = $"Case creation failed {caseInfo.Name} {string.Join(",", response.Errors)}";
@@ -847,12 +850,12 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
     }
 
     // include fields by default
-    public async Task<CaseModel> GetCase(int caseID) => await this.GetCase(caseID, true);
+    public async Task<Features.Cases.CaseModel> GetCase(int caseID) => await this.GetCase(caseID, true);
 
 
-    public async Task<CaseModel> GetCase(int caseID, bool includeFields)
+    public async Task<Features.Cases.CaseModel> GetCase(int caseID, bool includeFields)
     {
-        var result = await this.GetAsync<CaseModel?>($"api/v1/cases/{caseID}");
+        var result = await this.GetAsync<Features.Cases.CaseModel?>($"api/v1/cases/{caseID}");
         if (result.IsSuccess)
         {
             if (result != null)
@@ -965,7 +968,6 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             Log.Logger.Error("Failed to determine existing EDT groups for {0} [{1}]", string.Join(", ", result.Errors));
             return null; //invalid
         }
-
         return result.Value;
 
     }
@@ -1006,8 +1008,25 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
     }
 
-    public async Task<CaseModel> FindCaseByKey(string caseKey) => await this.FindCaseByKey(caseKey, true);
+    public async Task<Features.Cases.CaseModel> FindCaseByKey(string caseKey) => await this.FindCaseByKey(caseKey, true);
 
+
+    public async Task<Features.Cases.CaseModel> FindCaseByIdentifier(string identifierType, string identifierValue)
+    {
+        Features.Cases.CaseModel response = null;
+
+        var result = await this.GetAsync<IdentifierResponseModel>($"api/v1/org-units/1/identifiers?filter=IdentifierValue:{identifierValue},IdentifierType:{identifierType},ItemType:Case");
+        if (result.IsSuccess)
+        {
+            Log.Information($"Found {result.Value.Total} case for {identifierValue}");
+            foreach (var identityInfo in result.Value.Items)
+            {
+                response = await this.GetCase(identityInfo.Id);
+            }
+        }
+
+        return response;
+    }
 
     /// <summary>
     ///
@@ -1015,7 +1034,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
     /// </summary>
     /// <param name="caseKey"></param>
     /// <returns></returns>
-    public async Task<CaseModel> FindCaseByKey(string caseKey, bool includeFields)
+    public async Task<Features.Cases.CaseModel> FindCaseByKey(string caseKey, bool includeFields)
     {
         if (caseKey == null)
         {
@@ -1023,7 +1042,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             return null;
         }
 
-        var caseIds = await this.SearchForCase(caseKey);
+        var caseIds = await this.SearchForCase("key:" + caseKey);
         if (caseIds != null && caseIds.Any())
         {
             return await this.GetCase(caseIds.First().Id, includeFields);

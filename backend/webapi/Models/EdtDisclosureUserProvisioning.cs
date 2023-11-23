@@ -14,4 +14,5 @@ public class EdtDisclosureUserProvisioning
     public string? OrganizationName { get; set; }
     public string? SystemName { get; set; } = "DISCLOSURE";
     public int AccessRequestId { get; set; }
+    public string PersonKey { get; set; } // ties to participant unique id in core for disclosure
 }

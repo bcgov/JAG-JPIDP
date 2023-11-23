@@ -18,6 +18,7 @@ using Pidp.Infrastructure.HttpClients.Jum;
 using Pidp.Infrastructure.HttpClients.Plr;
 using Pidp.Models;
 using Pidp.Models.Lookups;
+using Pidp.Models.UserInfo;
 using Prometheus;
 using static Pidp.Features.Parties.ProfileStatus.ProfileStatusDto;
 
@@ -358,6 +359,7 @@ public partial class ProfileStatus
         public string? CorrectionService { get; set; }
         public JusticeSectorCode? JusticeSectorCode { get; set; }
         public SubmittingAgency? SubmittingAgency { get; set; }
+        public PublicUserValidation? CodeValidations { get; set; }
         public string? JusticeSectorService { get; set; }
         public string? EmployeeIdentifier { get; set; }
         //public bool OrganizationDetailEntered { get; set; }
