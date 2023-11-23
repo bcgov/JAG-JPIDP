@@ -12,7 +12,7 @@ if [ -d ${VAULT_SECRETS_DIR} ]; then
   for i in ${VAULT_SECRETS_DIR}/*; do
     echo "[entrypoint] Adding environment variables from ${i}"
     source ${i}
-    env | sort
+    if [ "$DEBUG_ENV" != "" ] ; then env | sort ; fi
   done
   set +a # disable mark variables which are modified or created for export
 else
