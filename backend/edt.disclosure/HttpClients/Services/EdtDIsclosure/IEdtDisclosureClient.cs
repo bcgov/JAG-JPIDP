@@ -1,7 +1,7 @@
 namespace edt.disclosure.HttpClients.Services.EdtDisclosure;
 
 using System.Collections.Generic;
-using edt.disclosure.Features.Cases;
+using Common.Models.EDT;
 using edt.disclosure.Kafka.Model;
 using edt.disclosure.Models;
 using edt.disclosure.ServiceEvents.CourtLocation.Models;

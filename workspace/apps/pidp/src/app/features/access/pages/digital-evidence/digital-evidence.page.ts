@@ -1,6 +1,6 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
-import { AfterViewChecked, Component, Inject, OnInit } from '@angular/core';
-import { FormBuilder, FormControl, Validators } from '@angular/forms';
+import { Component, Inject, OnInit } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -18,7 +18,6 @@ import { AuthorizedUserService } from '@app/features/auth/services/authorized-us
 import { StatusCode } from '@app/features/portal/enums/status-code.enum';
 
 import { FormUtilsService } from '@core/services/form-utils.service';
-import { MatExpansionModule } from '@angular/material/expansion';
 
 import { PartyUserTypeResource } from '../../../../features/admin/shared/usertype-resource.service';
 import { OrganizationUserType } from '../../../../features/admin/shared/usertype-service.model';
@@ -69,6 +68,7 @@ export class DigitalEvidencePage
   public publicAccessDenied: boolean;
   public outOfCustodyCodeAlreadyRequested: boolean;
   public digitalEvidenceSupportEmail: string;
+  public defenceCounselOnboardingNotice: string;
   public formControlNames: string[];
   public outOfCustodyDisclosureListing: PublicDisclosureAccess[] = [];
   public outOfCustodyDataSource: MatTableDataSource<PublicDisclosureAccess>;
@@ -97,7 +97,8 @@ export class DigitalEvidencePage
     documentService: DocumentService,
     accessTokenService: AccessTokenService,
     private authorizedUserService: AuthorizedUserService,
-    fb: FormBuilder
+    fb: FormBuilder,
+
   ) {
     super(dialog, formUtilsService);
     const routeData = this.route.snapshot.data;
@@ -122,7 +123,7 @@ export class DigitalEvidencePage
     this.policeAgency = accessTokenService
       .decodeToken()
       .pipe(map((token) => token?.identity_provider ?? ''));
-
+    this.defenceCounselOnboardingNotice = documentService.getDefenceCounselOnboardingNotice();
     accessTokenService.decodeToken().subscribe((n) => {
       if (n !== null) {
         this.result = n.identity_provider;

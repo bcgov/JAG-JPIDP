@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Common.Models.EDT;
 using edt.disclosure.Exceptions;
-using edt.disclosure.Features.Cases;
 using edt.disclosure.Infrastructure.Telemetry;
 using edt.disclosure.Kafka.Model;
 using edt.disclosure.Models;
@@ -708,7 +707,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
 
 
-    public async Task<Features.Cases.CaseModel> FindCase(string field, string value)
+    public async Task<CaseModel> FindCase(string field, string value)
     {
         ProcessedJobCount.Inc();
         var searchString = Uri.EscapeDataString(field) + ':' + Uri.EscapeDataString(value);
@@ -780,7 +779,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         {
             throw new EdtDisclosureServiceException($"Invalid case creation request received");
         }
-        var response = await this.PostAsync<Features.Cases.CaseModel>($"api/v1/org-units/1/cases", caseInfo);
+        var response = await this.PostAsync<CaseModel>($"api/v1/org-units/1/cases", caseInfo);
         if (!response.IsSuccess)
         {
             var msg = $"Case creation failed {caseInfo.Name} {string.Join(",", response.Errors)}";
@@ -850,12 +849,12 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
     }
 
     // include fields by default
-    public async Task<Features.Cases.CaseModel> GetCase(int caseID) => await this.GetCase(caseID, true);
+    public async Task<CaseModel> GetCase(int caseID) => await this.GetCase(caseID, true);
 
 
-    public async Task<Features.Cases.CaseModel> GetCase(int caseID, bool includeFields)
+    public async Task<CaseModel> GetCase(int caseID, bool includeFields)
     {
-        var result = await this.GetAsync<Features.Cases.CaseModel?>($"api/v1/cases/{caseID}");
+        var result = await this.GetAsync<CaseModel?>($"api/v1/cases/{caseID}");
         if (result.IsSuccess)
         {
             if (result != null)
@@ -1008,12 +1007,12 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
     }
 
-    public async Task<Features.Cases.CaseModel> FindCaseByKey(string caseKey) => await this.FindCaseByKey(caseKey, true);
+    public async Task<CaseModel> FindCaseByKey(string caseKey) => await this.FindCaseByKey(caseKey, true);
 
 
-    public async Task<Features.Cases.CaseModel> FindCaseByIdentifier(string identifierType, string identifierValue)
+    public async Task<CaseModel> FindCaseByIdentifier(string identifierType, string identifierValue)
     {
-        Features.Cases.CaseModel response = null;
+        CaseModel response = null;
 
         var result = await this.GetAsync<IdentifierResponseModel>($"api/v1/org-units/1/identifiers?filter=IdentifierValue:{identifierValue},IdentifierType:{identifierType},ItemType:Case");
         if (result.IsSuccess)
@@ -1034,7 +1033,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
     /// </summary>
     /// <param name="caseKey"></param>
     /// <returns></returns>
-    public async Task<Features.Cases.CaseModel> FindCaseByKey(string caseKey, bool includeFields)
+    public async Task<CaseModel> FindCaseByKey(string caseKey, bool includeFields)
     {
         if (caseKey == null)
         {
@@ -1061,7 +1060,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         public const string CourtAccessProvisionEvent = "digitalevidence-court-case-provision-event";
         public const string CourtAccessDecommissionEvent = "digitalevidence-court-case-decommission-event";
         public const string DisclosureUserProvisionEvent = "digitalevidence-disclosure-provision-event";
-        public const string DisclosureUserDecommissionEvent = "igitalevidence-disclosure-decommission-event";
+        public const string DisclosureUserDecommissionEvent = "digitalevidence-disclosure-decommission-event";
         public const string None = "None";
     }
 

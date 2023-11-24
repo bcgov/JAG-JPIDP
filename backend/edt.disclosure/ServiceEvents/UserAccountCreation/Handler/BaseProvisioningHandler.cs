@@ -1,7 +1,7 @@
 namespace edt.disclosure.ServiceEvents.UserAccountCreation.Handler;
 
+using Common.Models.EDT;
 using edt.disclosure.Exceptions;
-using edt.disclosure.Features.Cases;
 using edt.disclosure.HttpClients.Services.EdtDisclosure;
 using edt.disclosure.Kafka.Model;
 
@@ -36,7 +36,7 @@ public abstract class BaseProvisioningHandler
     protected async Task<CaseModel> CreateUserFolio(EdtDisclosureUserProvisioningModel accessRequestModel)
     {
         // check case isnt present - key changes depending on user type
-        var caseKey = (accessRequestModel.OrganizationType == this.configuration.EdtClient.OutOfCustodyOrgType) ? accessRequestModel.PersonKey : accessRequestModel.Key;
+        var caseKey = (accessRequestModel is EdtDisclosurePublicUserProvisioningModel) ? ((EdtDisclosurePublicUserProvisioningModel)accessRequestModel).PersonKey : accessRequestModel.Key;
 
         var caseModel = await this.edtClient.FindCaseByKey(caseKey);
         if (caseModel != null)
@@ -45,10 +45,10 @@ public abstract class BaseProvisioningHandler
         }
 
         var caseName = (accessRequestModel.OrganizationType == this.configuration.EdtClient.OutOfCustodyOrgType)
-            ? accessRequestModel.FullName + " (Accused Folio)"
-            : accessRequestModel.FullName + " (Defence Folio)";
+            ? accessRequestModel.FullName + "(" + caseKey + " Accused Folio)"
+            : accessRequestModel.FullName + "(" + caseKey + " Defence Folio)";
 
-        var caseCreation = (accessRequestModel.OrganizationType == this.configuration.EdtClient.OutOfCustodyOrgType) ?
+        var caseCreation = (accessRequestModel is EdtDisclosurePublicUserProvisioningModel) ?
             new EdtCaseDto
             {
                 Name = caseName,

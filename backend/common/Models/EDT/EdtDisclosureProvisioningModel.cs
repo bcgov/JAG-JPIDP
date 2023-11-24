@@ -1,9 +1,8 @@
-namespace edt.disclosure.HttpClients.Services.EdtDisclosure;
-
+namespace Common.Models.EDT;
 
 using System.Text.Json;
 
-public class EdtDisclosureUserProvisioningModel
+public abstract class EdtDisclosureUserProvisioningModel
 {
     public string? Id { get; set; }
     public string? Key { get; set; }
@@ -11,14 +10,35 @@ public class EdtDisclosureUserProvisioningModel
     public string? FullName { get; set; }
     public string? Email { get; set; }
     public string? Role { get; set; }
-    public bool? IsActive => true;
+    public bool? IsActive { get; set; } = true;
     public string? AccountType { get; set; }
     public string? SystemName { get; set; } = "DigitalEvidenceDisclosure";
     public int AccessRequestId { get; set; }
     public string? OrganizationType { get; set; }
     public string? OrganizationName { get; set; }
     public override string ToString() => JsonSerializer.Serialize(this);
+
+}
+
+public class EdtDisclosureDefenceUserProvisioningModel : EdtDisclosureUserProvisioningModel
+{
+    public new string? OrganizationType { get; set; } = "Defence";
+    public new string? OrganizationName { get; set; } = "BC Law";
+
+}
+
+public class EdtDisclosurePublicUserProvisioningModel : EdtDisclosureUserProvisioningModel
+{
+    public new string? OrganizationType { get; set; } = "Public";
+    public new string? OrganizationName { get; set; } = "Out-of-custody-accused";
     public string PersonKey { get; set; } = string.Empty; // ties to participant unique id in core for disclosure for public users
+
+}
+
+public class CaseId
+{
+    public int Id { get; set; }
+    public string Key { get; set; } = string.Empty;
 
 }
 
@@ -34,6 +54,4 @@ public class EdtUserGroup
     public override string ToString() => JsonSerializer.Serialize(this);
 
 }
-
-
 

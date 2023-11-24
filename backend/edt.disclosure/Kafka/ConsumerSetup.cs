@@ -1,8 +1,8 @@
 namespace edt.disclosure.Kafka;
 
 using System.Net;
+using Common.Models.EDT;
 using Confluent.Kafka;
-using edt.disclosure.HttpClients.Services.EdtDisclosure;
 using edt.disclosure.Kafka.Interfaces;
 using edt.disclosure.ServiceEvents;
 using edt.disclosure.ServiceEvents.CourtLocation;
@@ -84,8 +84,8 @@ public static class ConsumerSetup
         services.AddSingleton(typeof(IKafkaProducer<,>), typeof(KafkaProducer<,>));
 
         services.AddScoped<IKafkaHandler<string, CourtLocationDomainEvent>, CourtLocationAccessRequestHandler>();
-        services.AddScoped<IKafkaHandler<string, EdtDisclosureUserProvisioningModel>, DefenceUserProvisioningHandler>();
-        services.AddScoped<IKafkaHandler<string, EdtDisclosureUserProvisioningModel>, PublicUserProvisioningHandler>();
+        services.AddScoped<IKafkaHandler<string, EdtDisclosureDefenceUserProvisioningModel>, DefenceUserProvisioningHandler>();
+        services.AddScoped<IKafkaHandler<string, EdtDisclosurePublicUserProvisioningModel>, PublicUserProvisioningHandler>();
 
         services.AddSingleton(typeof(IKafkaConsumer<,>), typeof(KafkaConsumer<,>));
 

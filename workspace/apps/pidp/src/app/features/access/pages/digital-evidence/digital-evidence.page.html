@@ -182,10 +182,7 @@
     <ui-page-section *ngIf="userIsLawyer">
       <div class="col-12 ">
         <ui-page-section-subheader heading="Defence And Duty Counsel">
-          Once your onboarding process has been completed you will have the ability to request access to Court Locations
-          for the purposes of Duty Counsel
-          <p>If you are acting as Defence Counsel for Accused individuals then contact BCPS for case assignment once
-            your DEMS Onboarding is complete</p>
+          <div [innerHTML]="defenceCounselOnboardingNotice"></div>
         </ui-page-section-subheader>
       </div>
     </ui-page-section>
