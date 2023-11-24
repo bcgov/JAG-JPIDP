@@ -3,8 +3,6 @@ namespace Pidp.Infrastructure.HttpClients.Jum;
 using System.Globalization;
 using System.Text.Json;
 using System.Threading.Tasks;
-using System.Web.Http.Controllers;
-using Azure.Core;
 using NodaTime;
 using Pidp.Models;
 

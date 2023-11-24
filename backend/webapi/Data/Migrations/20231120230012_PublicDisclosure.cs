@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
 using NodaTime;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -14,16 +13,20 @@ namespace Pidp.Data.Migrations
                 name: "DigitalEvidencePublicDisclosure",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Id = table.Column<int>(type: "integer", nullable: false),
                     KeyData = table.Column<string>(type: "text", nullable: false),
-                    RequestedOn = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
                     CompletedOn = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
                     DigitalEvidenceDisclosureId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_DigitalEvidencePublicDisclosure", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DigitalEvidencePublicDisclosure_AccessRequest_Id",
+                        column: x => x.Id,
+                        principalTable: "AccessRequest",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_DigitalEvidencePublicDisclosure_DigitalEvidenceDisclosure_D~",
                         column: x => x.DigitalEvidenceDisclosureId,

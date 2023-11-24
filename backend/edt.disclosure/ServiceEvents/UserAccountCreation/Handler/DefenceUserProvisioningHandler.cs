@@ -2,9 +2,8 @@ namespace edt.disclosure.ServiceEvents.UserAccountCreation.Handler;
 
 using System.Diagnostics;
 using AutoMapper;
+using Common.Models.EDT;
 using edt.disclosure.Data;
-using edt.disclosure.Exceptions;
-using edt.disclosure.Features.Cases;
 using edt.disclosure.HttpClients.Services.EdtDisclosure;
 using edt.disclosure.Kafka.Interfaces;
 using edt.disclosure.Kafka.Model;
@@ -13,7 +12,7 @@ using edt.disclosure.ServiceEvents.UserAccountCreation.Models;
 using Microsoft.Extensions.Logging;
 using NodaTime;
 
-public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserProvisioningModel>
+public class DefenceUserProvisioningHandler : BaseProvisioningHandler, IKafkaHandler<string, EdtDisclosureDefenceUserProvisioningModel>
 {
 
 
@@ -27,7 +26,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
     private readonly IKafkaProducer<string, Notification> producer;
     private readonly IKafkaProducer<string, GenericProcessStatusResponse> processResponseProducer;
 
-    public UserProvisioningHandler(
+    public DefenceUserProvisioningHandler(
         EdtDisclosureServiceConfiguration configuration,
         IEdtDisclosureClient edtClient,
         IClock clock,
@@ -35,7 +34,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
         ILogger logger,
         IKafkaProducer<string, Notification> producer,
         IKafkaProducer<string, GenericProcessStatusResponse> processResponseProducer,
-        DisclosureDataStoreDbContext context)
+        DisclosureDataStoreDbContext context) : base(edtClient, configuration)
     {
 
         this.configuration = configuration;
@@ -49,7 +48,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
 
     }
 
-    public async Task<Task> HandleAsync(string consumerName, string key, EdtDisclosureUserProvisioningModel accessRequestModel)
+    public async Task<Task> HandleAsync(string consumerName, string key, EdtDisclosureDefenceUserProvisioningModel accessRequestModel)
     {
 
         // check this message is for us
@@ -181,6 +180,16 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
         catch (Exception ex)
         {
             Serilog.Log.Logger.Error("Exception during EDT Disclosure provisioning {0}", ex.Message);
+            // send error response
+            var sentStatus = this.processResponseProducer.ProduceAsync(this.configuration.KafkaCluster.ProcessResponseTopic, Guid.NewGuid().ToString(), new GenericProcessStatusResponse
+            {
+                DomainEvent = "digitalevidencedisclosure-defence-usercreation-exception",
+                Id = accessRequestModel.AccessRequestId,
+                EventTime = SystemClock.Instance.GetCurrentInstant(),
+                ErrorList = new List<string>() { ex.Message },
+                Status = "Error",
+                TraceId = key
+            });
             return Task.FromException(ex);
         }
 
@@ -188,85 +197,9 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtDisclosureUserPr
     }
 
 
-    private async Task<CaseModel> CreateUserFolio(EdtDisclosureUserProvisioningModel accessRequestModel)
-    {
-        // check case isnt present
-        var caseModel = await this.edtClient.FindCaseByKey(accessRequestModel.Key);
-        if (caseModel != null)
-        {
-            return caseModel;
-        }
-
-        var caseName = accessRequestModel.FullName + " (Defence Folio)";
-        var caseCreation = new EdtCaseDto
-        {
-            Name = caseName,
-            Description = "Folio Case for Defence Counsel",
-            Key = accessRequestModel.Key,
-            TemplateCase = (this.configuration.EdtClient.DefenceFolioTemplateId < 0 && !string.IsNullOrEmpty(this.configuration.EdtClient.DefenceFolioTemplateName)) ? this.configuration.EdtClient.DefenceFolioTemplateName : null,
-            TemplateCaseId = (this.configuration.EdtClient.DefenceFolioTemplateId > -1) ? this.configuration.EdtClient.DefenceFolioTemplateId.ToString() : null,
-
-        };
-
-        Serilog.Log.Information($"Creating new case {caseCreation}");
-
-        var createResponseID = await this.edtClient.CreateCase(caseCreation);
-
-        caseModel = await this.edtClient.GetCase(createResponseID);
 
 
-        return caseModel;
 
-
-    }
-
-    public async Task<bool> LinkUserToFolio(EdtDisclosureUserProvisioningModel accessRequestModel, int caseId)
-    {
-        var addGroupCount = 0;
-
-        var user = await this.edtClient.GetUser(accessRequestModel.Key!) ?? throw new EdtDisclosureServiceException($"User was not found {accessRequestModel.Key}");
-
-
-        if (this.configuration.EdtClient.DefenceCaseGroups.Any())
-        {
-            foreach (var group in this.configuration.EdtClient.DefenceCaseGroups)
-            {
-                if (await this.edtClient.AddUserToCase(user.Id, caseId, group))
-                {
-                    addGroupCount++;
-                }
-                else
-                {
-                    Serilog.Log.Error($"Failed to add group {group} to case {caseId}");
-                }
-
-            }
-        }
-        else
-        {
-            Serilog.Log.Warning($"*** NO case group for defence assigned in configuration - no case group will be assigned for user {user.Id} and case {caseId} ***");
-            if (await this.edtClient.AddUserToCase(user.Id, caseId))
-            {
-                addGroupCount++;
-            }
-            else
-            {
-                Serilog.Log.Warning($"Failed to add user to case {user.Id} {caseId}");
-            }
-        }
-
-        if (addGroupCount == 0)
-        {
-            throw new EdtDisclosureServiceException($"Failed to add user {user.Id} to defence folio");
-        }
-        if (this.configuration.EdtClient.DefenceCaseGroups.Any() && addGroupCount != this.configuration.EdtClient.DefenceCaseGroups.Count)
-        {
-            throw new EdtDisclosureServiceException($"Failed to add user {user.Id} to all case groups for folio {caseId}");
-        }
-
-        Serilog.Log.Information($"Added groups {addGroupCount} to user {user.Id} folio {caseId}");
-        return true;
-    }
 
     private async Task<string> CheckEdtServiceVersion() => await this.edtClient.GetVersion();
 

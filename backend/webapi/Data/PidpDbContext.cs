@@ -50,6 +50,7 @@ public class PidpDbContext : DbContext
     public DbSet<DomainEventProcessStatus> DomainEventProcessStatus { get; set; } = default!;
     public DbSet<DeferredEvent> DeferredEvents { get; set; } = default!;
     public DbSet<PublicUserValidation> PublicUserValidations { get; set; } = default!;
+    public DbSet<DigitalEvidencePublicDisclosure> DigitalEvidencePublicDisclosures { get; set; } = default!;
 
     public override int SaveChanges()
     {

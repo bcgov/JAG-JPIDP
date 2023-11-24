@@ -1,6 +1,7 @@
 export enum CourtRequestStatus {
   NewRequest = 'In Progress',
   RemoveRequested = 'Remove Requested',
+  RemovalPending = 'Removal Pending',
   Submitted = 'Submitted',
   SubmittedFuture = 'Future',
   Active = 'Active',

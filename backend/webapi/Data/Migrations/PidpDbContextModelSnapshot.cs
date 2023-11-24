@@ -4499,6 +4499,17 @@ namespace Pidp.Data.Migrations
                     b.ToTable("DigitalEvidenceDisclosure");
                 });
 
+            modelBuilder.Entity("Pidp.Models.DigitalEvidencePublicDisclosure", b =>
+                {
+                    b.HasBaseType("Pidp.Models.AccessRequest");
+
+                    b.Property<string>("KeyData")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.ToTable("DigitalEvidencePublicDisclosure");
+                });
+
             modelBuilder.Entity("Pidp.Models.FacilityAddress", b =>
                 {
                     b.HasBaseType("Pidp.Models.Address");
@@ -4820,7 +4831,7 @@ namespace Pidp.Data.Migrations
             modelBuilder.Entity("Pidp.Models.UserInfo.PublicUserValidation", b =>
                 {
                     b.HasOne("Pidp.Models.Party", "Party")
-                        .WithMany()
+                        .WithMany("ValidationAttempts")
                         .HasForeignKey("PartyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -4851,6 +4862,15 @@ namespace Pidp.Data.Migrations
                     b.HasOne("Pidp.Models.AccessRequest", null)
                         .WithOne()
                         .HasForeignKey("Pidp.Models.DigitalEvidenceDisclosure", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Pidp.Models.DigitalEvidencePublicDisclosure", b =>
+                {
+                    b.HasOne("Pidp.Models.AccessRequest", null)
+                        .WithOne()
+                        .HasForeignKey("Pidp.Models.DigitalEvidencePublicDisclosure", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -4914,6 +4934,8 @@ namespace Pidp.Data.Migrations
                     b.Navigation("LicenceDeclaration");
 
                     b.Navigation("OrgainizationDetail");
+
+                    b.Navigation("ValidationAttempts");
                 });
 
             modelBuilder.Entity("Pidp.Models.SubmittingAgencyRequest", b =>

@@ -3,34 +3,32 @@ namespace edt.disclosure;
 
 using System.Reflection;
 using System.Text.Json;
+using edt.disclosure.Data;
 using edt.disclosure.HttpClients;
 using edt.disclosure.Infrastructure.Telemetry;
 using edt.disclosure.Kafka;
+using edt.disclosure.ServiceEvents.CourtLocation.Handler;
+using FluentValidation.AspNetCore;
+using MediatR;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using NodaTime;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
+using NodaTime.Serialization.SystemTextJson;
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Prometheus;
 using Serilog;
 using Swashbuckle.AspNetCore.Filters;
-using Azure.Monitor.OpenTelemetry.Exporter;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
-using Prometheus;
-using MediatR;
-using Microsoft.AspNetCore.Mvc.ApplicationModels;
-using FluentValidation.AspNetCore;
-using NodaTime.Serialization.SystemTextJson;
-using Microsoft.Extensions.Hosting;
-using static edt.disclosure.EdtDisclosureServiceConfiguration;
-using edt.disclosure.Data;
-using edt.disclosure.ServiceEvents.CourtLocation.Handler;
 
 public class Startup
 {
@@ -38,7 +36,7 @@ public class Startup
 
     public Startup(IConfiguration configuration)
     {
-        Configuration = configuration;
+        this.Configuration = configuration;
         StaticConfig = configuration;
     }
 
@@ -48,6 +46,7 @@ public class Startup
     public void ConfigureServices(IServiceCollection services)
     {
         var config = this.InitializeConfiguration(services);
+        Log.Information($"Db config {config.ConnectionStrings.DisclosureDataStore}");
 
         if (string.IsNullOrEmpty(config.SchemaRegistry.Url))
         {
@@ -81,11 +80,7 @@ public class Startup
                    {
                        builder.AddConsoleExporter();
                    }
-                   if (config.Telemetry.AzureConnectionString != null)
-                   {
-                       Log.Information("*** Azure trace exporter enabled ***");
-                       builder.AddAzureMonitorTraceExporter(o => o.ConnectionString = config.Telemetry.AzureConnectionString);
-                   }
+
                    if (config.Telemetry.CollectorUrl != null)
                    {
                        builder.AddOtlpExporter(options =>
@@ -207,6 +202,8 @@ public class Startup
         var config = new EdtDisclosureServiceConfiguration();
         this.Configuration.Bind(config);
         services.AddSingleton(config);
+
+        Log.Logger.Information($"Counsel groups : {string.Join("|", config.EdtClient.DefenceCaseGroups.Split(",", StringSplitOptions.TrimEntries))}");
 
         Log.Logger.Information("### EDT Disclosure Service Version:{0} ###", Assembly.GetExecutingAssembly().GetName().Version);
         Log.Logger.Debug("### Edt Disclosure Configuration:{0} ###", System.Text.Json.JsonSerializer.Serialize(config));

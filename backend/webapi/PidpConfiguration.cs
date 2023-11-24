@@ -112,7 +112,8 @@ public class PidpConfiguration
         public string ProducerTopicName { get; set; } = string.Empty;
         public string CaseAccessRequestTopicName { get; set; } = string.Empty;
         public string PersonCreationTopic { get; set; } = string.Empty;
-        public string DisclosureUserCreationTopic { get; set; } = string.Empty;
+        public string DisclosureDefenceUserCreationTopic { get; set; } = string.Empty;
+        public string DisclosurePublicUserCreationTopic { get; set; } = string.Empty;
         public string DisclosureUserModificationTopic { get; set; } = string.Empty;
         public string ApprovalCreationTopic { get; set; } = string.Empty;
         public string ProcessResponseTopic { get; set; } = string.Empty;

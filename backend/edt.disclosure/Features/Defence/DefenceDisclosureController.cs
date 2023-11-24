@@ -1,6 +1,6 @@
 namespace edt.disclosure.Features.Defence;
 
-using edt.disclosure.Features.Cases;
+using Common.Models.EDT;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Prometheus;
@@ -16,7 +16,7 @@ public class DefenceDisclosureController : ControllerBase
 
     public DefenceDisclosureController(IMediator mediator)
     {
-        _mediator = mediator;
+        this._mediator = mediator;
     }
     [HttpGet("folio/{folioID}")]
     [ProducesResponseType(StatusCodes.Status200OK)]

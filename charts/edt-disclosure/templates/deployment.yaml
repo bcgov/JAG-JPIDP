@@ -9,6 +9,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  annotations:
+    #prometheus.io/scrape: 'true'
+    #prometheus.io/port: "9090"
+
   name: {{ include "edt-disclosure.fullname" . }}
   labels:
     {{- include "edt-disclosure.labels" . | nindent 4 }}
@@ -24,6 +28,32 @@ spec:
       annotations:
         prometheus.io/scrape: 'true'
         prometheus.io/port: "8080"
+        vault.hashicorp.com/agent-inject: 'true'
+        vault.hashicorp.com/agent-pre-populate-only: 'true'
+        vault.hashicorp.com/auth-path: auth/k8s-gold
+        vault.hashicorp.com/namespace: platform-services
+        vault.hashicorp.com/agent-requests-cpu: 5m
+        vault.hashicorp.com/agent-limits-cpu: 10m
+        vault.hashicorp.com/agent-requests-mem: 20Mi
+        vault.hashicorp.com/role: {{ .Values.global.vault.role }}  # licenseplate-nonprod or licenseplate-prod are your options
+        vault.hashicorp.com/agent-inject-secret-DIAM-common: {{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-common
+        vault.hashicorp.com/agent-inject-template-DIAM-common: |
+          {{`{{- with secret `}}"{{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-common"{{` }}
+          {{- range $k, $v := .Data.data }}
+          {{ $k }}="{{ $v }}"{{ end -}}
+          {{- end `}} }}
+        vault.hashicorp.com/agent-inject-secret-DIAM-disclosure: {{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-disclosure
+        vault.hashicorp.com/agent-inject-template-DIAM-disclosure: |
+          {{`{{- with secret `}}"{{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-disclosure"{{` }}
+          {{- range $k, $v := .Data.data }}
+          {{ $k }}="{{ $v }}"{{ end -}}
+          {{- end `}} }}
+        vault.hashicorp.com/agent-inject-secret-DIAM-keycloak: {{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-keycloak
+        vault.hashicorp.com/agent-inject-template-DIAM-keycloak: |
+          {{`{{- with secret `}}"{{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-keycloak"{{` }}
+          {{- range $k, $v := .Data.data }}
+          {{ $k }}="{{ $v }}"{{ end -}}
+          {{- end `}} }}
         {{- if .Values.global.commit_sha }}
         commit_sha: {{ .Values.global.commit_sha }}
         {{- end}}
@@ -33,11 +63,11 @@ spec:
       labels:
         {{- include "edt-disclosure.selectorLabels" . | nindent 8 }}
     spec:
+      serviceAccountName: {{ .Values.global.licenseplate }}-vault 
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "edt-disclosure.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
 
@@ -47,200 +77,11 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.global.image.registry }}/{{ .Values.image.repository }}:{{ .Values.global.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-
-
           env:
-            - name: DB_HOST
-              value: jum-database
-            - name: Seq__Url
-              valueFrom:
-                secretKeyRef:
-                  name: datalust-seq
-                  key: url
-            - name: KafkaCluster__SslCaLocation
-              value: /opt/kafka/certificates/server-ca.crt
-            - name: KafkaCluster__SslCertificateLocation
-              value: /opt/kafka/certificates/client-ca.crt
-            - name: KafkaCluster__SslKeyLocation
-              value: /opt/kafka/certificates/client.key
-            - name: KafkaCluster__SaslOauthbearerProducerClientId
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-disclosure
-                  key: KafkaCluster__ProducerClientId
-            - name: KafkaCluster__SaslOauthbearerConsumerClientId
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-disclosure
-                  key: KafkaCluster__ConsumerClientId
-            - name: KafkaCluster__ConsumerGroupId
-              value: {{ include "edt-disclosure.fullname" . }}-consumer-group
-            - name: database-password
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "edt-disclosure.fullname" . }}-database
-                  key: database-password
-            - name: database-username
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "edt-disclosure.fullname" . }}-database
-                  key: database-username
-            - name: DATABASE_NAME
-              value: disclosure
             - name: DOTNET_BUNDLE_EXTRACT_BASE_DIR
               value: /tmp
-            - name: ConnectionStrings__DisclosureDataStore
-              valueFrom:
-                configMapKeyRef:
-                  name: edt-disclosure-api-database
-                  key: CONNECTION_STRINGS_DB    
-            - name: SchemaRegistry__Url
-              valueFrom:
-                secretKeyRef:
-                  name: apicurio-registry
-                  key: SchemaRegistry__Url
-            - name: SchemaRegistry__ClientId
-              valueFrom:
-                secretKeyRef:
-                  name: apicurio-registry
-                  key: SchemaRegistry__ClientId
-            - name: SchemaRegistry__ClientSecret
-              valueFrom:
-                secretKeyRef:
-                  name: apicurio-registry
-                  key: SchemaRegistry__ClientSecret
-            - name: KafkaCluster__BootstrapServers
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-disclosure
-                  key: KafkaCluster__BootstrapServers
-            - name: KafkaCluster__ConsumerTopicName
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-disclosure
-                  key: KafkaCluster__ConsumerTopicName
-            - name: KafkaCluster__CaseAccessRequestTopicName
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-disclosure
-                  key: KafkaCluster__CaseAccessRequestTopicName
-            - name: KafkaCluster__AckTopicName
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-disclosure
-                  key: KafkaCluster__AckTopicName
-            - name: KafkaCluster__ProducerTopicName
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-disclosure
-                  key: KafkaCluster__ProducerTopicName
-            - name: KafkaCluster__NotificationTopicName
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-disclosure
-                  key: KafkaCluster__NotificationTopicName
-            - name: KafkaCluster__UserCreationTopicName
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-disclosure
-                  key: KafkaCluster__UserCreationTopicName
-            - name: KafkaCluster__UserModificationTopicName
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-disclosure
-                  key: KafkaCluster__UserModificationTopicName
-            - name: KafkaCluster__SaslOauthbearerConsumerClientSecret
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-disclosure
-                  key: KafkaCluster__SaslOauthbearerConsumerClientSecret
-            - name: KafkaCluster__SaslOauthbearerProducerClientSecret
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-disclosure
-                  key: KafkaCluster__SaslOauthbearerProducerClientSecret
-
-            - name: KafkaCluster__SaslOauthbearerTokenEndpointUrl
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-disclosure
-                  key: KafkaCluster__SaslOauthbearerTokenEndpointUrl
-            - name: KafkaCluster__CreateUserTopic
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-disclosure
-                  key: KafkaCluster__CreateUserTopic
-            - name: KafkaCluster__CourtLocationAccessRequestTopic
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-disclosure
-                  key: KafkaCluster__CourtLocationAccessRequestTopic
             - name: ApplicationUrl
-              value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"     
-            - name: EdtClient__Apikey
-              valueFrom:
-                secretKeyRef:
-                  name: edt-disclosure-client
-                  key: EdtClient__Apikey
-
-            - name: EdtClient__Url
-              valueFrom:
-                secretKeyRef:
-                  name: edt-disclosure-client
-                  key: EdtClient__Url
-
-            - name: EdtClient__DefenceFolioTemplateName
-              valueFrom:
-                secretKeyRef:
-                  name: edt-disclosure-client
-                  key: EdtClient__DefenceFolioTemplateName
-            - name: EdtClient__DefenceFolioTemplateId
-              valueFrom:
-                secretKeyRef:
-                  name: edt-disclosure-client
-                  key: EdtClient__DefenceFolioTemplateId
-
-            - name: EdtClient__DefenceCaseGroups
-              valueFrom:
-                secretKeyRef:
-                  name: edt-disclosure-client
-                  key: EdtClient__DefenceCaseGroups
-
-            - name: Telemetry__CollectorUrl
-              valueFrom: 
-                secretKeyRef:
-                  name: telemetry-pidp
-                  key: Telemetry__CollectorUrl
-            - name: Telemetry__AzureConnectionString
-              valueFrom: 
-                secretKeyRef:
-                  name: telemetry-pidp
-                  key: Telemetry__AzureConnectionString
-            - name: SplunkConfig__CollectorToken
-              valueFrom: 
-                secretKeyRef:
-                  name: splunk-config
-                  key: SplunkConfig__CollectorToken
-            - name: SplunkConfig__Host
-              valueFrom: 
-                secretKeyRef:
-                  name: splunk-config
-                  key: SplunkConfig__Host
-            - name: KafkaCluster__ProcessResponseTopic
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-disclosure
-                  key: KafkaCluster__ProcessResponseTopic
-            - name: EdtClient__CounselGroup
-              valueFrom:
-                secretKeyRef:
-                  name: edt-disclosure-client
-                  key: EdtClient__CounselGroup
-            - name: EdtClient__CreateCourtLocations
-              valueFrom:
-                secretKeyRef:
-                  name: edt-disclosure-client
-                  key: EdtClient__CreateCourtLocations
+              value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"
           volumeMounts:
           - name: truststore
             mountPath: "/opt/kafka/certificates"
@@ -248,8 +89,6 @@ spec:
           envFrom:
             - secretRef:
                 name: keycloak-secrets
-            - secretRef:
-                name: kafkaconfig
           ports:
             - name: http
               containerPort: 8080
@@ -263,14 +102,7 @@ spec:
             periodSeconds: 30
             successThreshold: 1
             failureThreshold: 3
-        #  livenessProbe: //turn this on for TEST and PROD
-         #   httpGet:
-        #      path: /health/liveness
-        #      port: http
-         #   timeoutSeconds: 1
-        #    periodSeconds: 10
-         #   successThreshold: 1
-         #   failureThreshold: 3
+
          # startupProbe:
         #    httpGet:
          #     path: /health/liveness

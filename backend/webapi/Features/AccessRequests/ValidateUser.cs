@@ -36,7 +36,7 @@ public class ValidateUser
     public class CommandHandler : ICommandHandler<Command, IDomainResult<UserValidationResponse>>
     {
         private readonly PidpDbContext dbContext;
-        private readonly IEdtCoreClient edtService;
+        private readonly IEdtCoreClient edtCoreClient;
         private readonly IClock clock;
         private readonly IKeycloakAdministrationClient keycloakAdministrationClient;
         private readonly PidpConfiguration configuration;
@@ -51,7 +51,7 @@ public class ValidateUser
             )
         {
             this.dbContext = dbContext;
-            this.edtService = edtService;
+            this.edtCoreClient = edtService;
             this.configuration = configuration;
             this.clock = clock;
             this.keycloakAdministrationClient = keycloakAdministrationClient;
@@ -60,6 +60,24 @@ public class ValidateUser
 
         public async Task<IDomainResult<UserValidationResponse>> HandleAsync(Command command)
         {
+
+            // see if this code is already active and complete
+            var priorAccessRequest = this.dbContext.DigitalEvidencePublicDisclosures.Where(req => req.KeyData == command.Code).FirstOrDefault();
+
+            if (priorAccessRequest != null)
+            {
+                Serilog.Log.Information($"User {command.PartyId} is attempting to use code {command.Code} previously submitted");
+                return DomainResult.Success(new UserValidationResponse
+                {
+                    AlreadyActive = true,
+                    Message = "You have already requested access using this code",
+                    PartyId = command.PartyId,
+                    RequestStatus = priorAccessRequest.Status,
+                    Key = command.Code,
+                    Validated = true
+                });
+
+            }
 
             // store request
             using var transaction = this.dbContext.Database.BeginTransaction();
@@ -80,8 +98,10 @@ public class ValidateUser
                     throw new DIAMAuthException($"Keycloak user {command.PartyId} {party.UserId} was not found - request ignored");
                 }
 
+
+
                 // see if we've had previous requests
-                var priorRequests = this.dbContext.PublicUserValidations.Where(x => x.PartyId == command.PartyId).OrderBy(x => x.Created).ToList();
+                var priorRequests = this.dbContext.PublicUserValidations.Where(x => x.PartyId == command.PartyId && !x.IsValid).OrderBy(x => x.Created).ToList();
 
                 var retries = 0;
                 foreach (var attempt in priorRequests)
@@ -114,6 +134,10 @@ public class ValidateUser
                     var eventData = new Dictionary<string, string>
                     {
                         { "attempts", "" + priorRequests.Count },
+                        { "firstName", party.FirstName },
+                        { "partyId", party.Jpdid},
+                        { "lastName", party.LastName },
+                        { "dob",  party.Birthdate.ToString() },
                         { "codes", string.Join(",", codesTried) }
                     };
 
@@ -122,9 +146,9 @@ public class ValidateUser
                     var produceResponse = await this.kafkaNotificationProducer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopicName, Guid.NewGuid().
                         ToString(), new Notification
                         {
-                            DomainEvent = "bcsc-too-many-validation-attempts",
+                            DomainEvent = "digitalevidence-bcsc-too-many-validation-attempts",
                             To = "lee.wright@nttdata.com",
-                            Subject = $"{party.Jpdid} Too Many Validation Attempts",
+                            Subject = $"BCSC DIAM User {party.LastName} had too many code validation attempts",
                             EventData = eventData
 
                         });
@@ -150,11 +174,18 @@ public class ValidateUser
                     IsValid = false
                 };
 
-                if (priorRequests != null && priorRequests.Any() && priorRequests.Last() != null)
+                if (priorRequests != null && priorRequests.Any())
                 {
-                    if (!priorRequests.Last().Code.Equals(command.Code, StringComparison.OrdinalIgnoreCase))
+                    var sameCodeAttempt = priorRequests.Where(req => req.Party == party && req.Code == command.Code).FirstOrDefault();
+                    if (sameCodeAttempt != null)
+                    {
+                        Serilog.Log.Information($"User {party.Id} entered duplicated code");
+                        sameCodeAttempt.Modified = this.clock.GetCurrentInstant();
+                    }
+                    else
                     {
                         this.dbContext.PublicUserValidations.Add(validation);
+
                     }
                 }
                 else
@@ -163,10 +194,9 @@ public class ValidateUser
                 }
 
 
+
                 // get the user info from the EdtService
-                var userInfoResponse = await this.edtService.GetPersonsByIdentifier("EdtExternalId", command.Code);
-
-
+                var userInfoResponse = await this.edtCoreClient.GetPersonsByIdentifier("EdtExternalId", command.Code);
 
                 if (userInfoResponse != null && userInfoResponse.Count > 0)
                 {
@@ -220,7 +250,8 @@ public class ValidateUser
                     response.Message = "Invalid code provided";
                 }
 
-                await this.dbContext.SaveChangesAsync();
+                var updates = await this.dbContext.SaveChangesAsync();
+                Serilog.Log.Debug($"{updates} public request records added");
 
 
                 await transaction.CommitAsync();

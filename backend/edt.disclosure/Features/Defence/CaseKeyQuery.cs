@@ -1,6 +1,6 @@
 namespace edt.disclosure.Features.Defence;
 
-using edt.disclosure.Features.Cases;
+using Common.Models.EDT;
 using edt.disclosure.HttpClients.Services.EdtDisclosure;
 using MediatR;
 

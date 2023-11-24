@@ -45,6 +45,7 @@ import {
   CourtRequestStatus,
 } from './digital-evidence-counsel-model';
 import { DigitalEvidenceCounselResource } from './digital-evidence-counsel-resource.service';
+import { DocumentService } from '@app/core/services/document.service';
 
 export const CUSTOM_DATE_FORMATS = {
   parse: {
@@ -66,8 +67,7 @@ export const CUSTOM_DATE_FORMATS = {
 })
 export class DigitalEvidenceCounselPage
   extends AbstractFormPage<DigitalEvidenceCounselFormState>
-  implements OnInit, AfterViewInit
-{
+  implements OnInit, AfterViewInit {
   public formState: DigitalEvidenceCounselFormState;
   public title: string;
   public minDate: Date = new Date();
@@ -75,7 +75,7 @@ export class DigitalEvidenceCounselPage
   private MAX_DAYS_OUT = 90;
   public refreshEnabled: boolean;
   public refreshCount: number;
-
+  public defenceCounselDutyNotice: string;
   public courtLocations!: CourtLocation[];
   public filteredOptions!: CourtLocation[];
   public formControlNames: string[];
@@ -106,7 +106,9 @@ export class DigitalEvidenceCounselPage
     private partyService: PartyService,
     private toastService: ToastService,
     private dateAdapter: DateAdapter<Date>,
-    fb: FormBuilder
+    fb: FormBuilder,
+    documentService: DocumentService,
+
   ) {
     super(dialog, formUtilsService);
     const routeData = this.route.snapshot.data;
@@ -117,6 +119,7 @@ export class DigitalEvidenceCounselPage
     this.refreshEnabled = false;
     this.refreshCount = 0;
     this.title = routeData.title;
+    this.defenceCounselDutyNotice = documentService.getDefenceCounselDutyNotice();
     this.formState = new DigitalEvidenceCounselFormState(fb);
     this.maxDate.setDate(this.minDate.getDate() + this.MAX_DAYS_OUT);
     this.formControlNames = [
@@ -176,15 +179,17 @@ export class DigitalEvidenceCounselPage
         // Set the sorting and pagination properties of the dataSource
         this.dataSource.data = this.courtListing;
         this.dataSource.sort = this.sort;
-        const pending = results.filter(
-          (location) => location.requestStatus == CourtRequestStatus.Submitted
-        );
-
+        const pending = results ? results.filter(
+          (location) => location.requestStatus == CourtRequestStatus.Submitted || location.requestStatus == CourtRequestStatus.RemovalPending || location.requestStatus == CourtRequestStatus.RemoveRequested
+        ) : [];
         if (this.refreshEnabled && pending.length > 0) {
           this.refreshCount++;
           if (this.refreshCount >= 4) {
             this.refreshEnabled = false;
             this.refreshCount = 0;
+          }
+          else {
+            this.refreshTable();
           }
         } else {
           this.refreshEnabled = false;
@@ -238,7 +243,6 @@ export class DigitalEvidenceCounselPage
   }
 
   public onRemoveAccess(request: CourtLocationRequest): void {
-    this.toastService.openInfoToast('Removing ' + request.requestId);
     const partyId = this.partyService.partyId;
 
     const data: DialogOptions = {
@@ -260,6 +264,7 @@ export class DigitalEvidenceCounselPage
       )
       .subscribe({
         complete: () => {
+          this.refreshEnabled = true;
           this.loadExistingRequests();
         },
       });

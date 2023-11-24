@@ -250,6 +250,12 @@ public partial class ProfileStatus
                     return;
                 }
 
+                if (profile.UserIsBcServicesCard)
+                {
+                    // see if they have exceeded number of code attempts
+                    var attempts = profile.CodeValidations;
+                }
+
                 // if a lawyer then they'll have two access requests pending (disclosure and core)
                 if (profile.UserIsInLawSociety)
                 {

@@ -373,7 +373,7 @@ public class DigitalEvidenceDefence
         private async Task<DeliveryResult<string, EdtDisclosureUserProvisioning>> PublishDisclosureAccessRequest(Command command, PartyDto dto, DigitalEvidenceDisclosure digitalEvidenceDisclosure)
         {
             var taskId = Guid.NewGuid().ToString();
-            Serilog.Log.Logger.Information("Adding message to topic {0} {1} {2}", this.config.KafkaCluster.DisclosureUserCreationTopic, command.ParticipantId, taskId);
+            Serilog.Log.Logger.Information("Adding message to topic {0} {1} {2}", this.config.KafkaCluster.DisclosureDefenceUserCreationTopic, command.ParticipantId, taskId);
 
             var systemType = digitalEvidenceDisclosure.OrganizationType.Equals(this.LAW_SOCIETY, StringComparison.Ordinal)
                 ? AccessTypeCode.DigitalEvidenceDisclosure.ToString()
@@ -381,7 +381,7 @@ public class DigitalEvidenceDefence
 
 
             // use UUIDs for topic keys
-            var delivered = await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.DisclosureUserCreationTopic,
+            var delivered = await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.DisclosureDefenceUserCreationTopic,
                 taskId,
                 this.GetDisclosureUserModel(command, dto, digitalEvidenceDisclosure));
 

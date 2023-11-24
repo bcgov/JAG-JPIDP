@@ -58,6 +58,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
             case "digitalevidencedisclosure-defence-usercreation-complete":
             case "digitalevidencedisclosure-defence-usermodification-complete":
             case "digitalevidencedisclosure-defence-usermodification-error":
+            case "digitalevidencedisclosure-defence-usercreation-exception":
             case "digitalevidencedisclosure-defence-usercreation-error":
             case "digitalevidence-defence-personmodification-complete":
             case "digitalevidence-defence-personmodification-error":
@@ -67,6 +68,18 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
                 Serilog.Log.Information($"Handling {value.DomainEvent} for Id {value.Id}");
                 // todo - this should move to a generic service
                 await this.MarkDefenceProcessComplete(value);
+                break;
+            }
+
+            case "digitalevidencedisclosure-bcsc-usercreation-complete":
+            case "digitalevidencedisclosure-bcsc-usercreation-error":
+            case "digitalevidencedisclosure-bcsc-usermodification-complete":
+            case "digitalevidencedisclosure-bcsc-usermodification-error":
+            case "digitalevidencedisclosure-bcsc-exception": // maybe this needs to become a generic exception type?
+            {
+                Serilog.Log.Information($"Handling {value.DomainEvent} for Public User Id {value.Id}");
+                // todo - this should move to a generic service
+                await this.MarkPublicUserProcessComplete(value);
                 break;
             }
 
@@ -195,6 +208,37 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
 
     }
 
+    private async Task MarkPublicUserProcessComplete(GenericProcessStatusResponse processResponse)
+    {
+        var accessRequest = this.context.AccessRequests.Where(req => req.Id == processResponse.Id).FirstOrDefault();
+
+        if (accessRequest == null)
+        {
+            Serilog.Log.Warning($"Message received for non-existent access request {processResponse.Id} - ignoring");
+            return;
+        }
+
+        accessRequest.Modified = processResponse.EventTime;
+        // todo - fix these to be constant/and consistent types - need grafana updates too
+        if (processResponse.ErrorList != null && processResponse.ErrorList.Count > 0)
+        {
+            accessRequest.Status = "Error";
+            accessRequest.Details = string.Join(",", processResponse.ErrorList);
+
+
+        }
+        else
+        {
+            accessRequest.Status = "Complete";
+        }
+
+
+
+        var updated = await this.context.SaveChangesAsync();
+
+
+    }
+
 
     private async Task MarkDefenceProcessComplete(GenericProcessStatusResponse processResponse)
     {
@@ -211,6 +255,24 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
         {
             accessRequest.Status = "Error";
             accessRequest.Details = string.Join(",", processResponse.ErrorList);
+            var duration = accessRequest.Modified - processResponse.EventTime;
+            var messageKey = Guid.NewGuid().ToString();
+
+            var eventData = new Dictionary<string, string>
+                    {
+                        { "FirstName", accessRequest.Party!.FirstName },
+                        { "BCSC Id", accessRequest.Party.Jpdid },
+                        { "PartyId", "" + accessRequest.Party.Id },
+                        { "Errors", accessRequest.Details },
+                        { "Duration (s)","" + duration.TotalSeconds }
+
+                    };
+            var published = await this.notificationProducer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopicName, messageKey, new Notification
+            {
+                DomainEvent = "digitalevidence-bcsc-usercreation-error",
+                To = "lee.wright@nttdata.com",
+                EventData = eventData
+            });
         }
         else
         {
@@ -447,7 +509,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
                                 {
                                     var payload = JsonConvert.DeserializeObject<EdtDisclosureUserProvisioning>(deferredDisclosureUserCreation.EventPayload);
 
-                                    var delivered = await this.ResubmitRequest(this.configuration.KafkaCluster.DisclosureUserCreationTopic, payload);
+                                    var delivered = await this.ResubmitRequest(this.configuration.KafkaCluster.DisclosureDefenceUserCreationTopic, payload);
                                     if (delivered.Status == PersistenceStatus.Persisted)
                                     {
                                         dbRequest.Status = "Pending";

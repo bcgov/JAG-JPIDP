@@ -24,6 +24,32 @@ spec:
       annotations:
         prometheus.io/scrape: 'true'
         prometheus.io/port: "8080"
+        vault.hashicorp.com/agent-inject: 'true'
+        vault.hashicorp.com/agent-pre-populate-only: 'true'
+        vault.hashicorp.com/auth-path: auth/k8s-gold
+        vault.hashicorp.com/namespace: platform-services
+        vault.hashicorp.com/agent-requests-cpu: 5m
+        vault.hashicorp.com/agent-limits-cpu: 10m
+        vault.hashicorp.com/agent-requests-mem: 20Mi
+        vault.hashicorp.com/role: {{ .Values.global.vault.role }}  # licenseplate-nonprod or licenseplate-prod are your options
+        vault.hashicorp.com/agent-inject-secret-DIAM-common: {{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-common
+        vault.hashicorp.com/agent-inject-template-DIAM-common: |
+          {{`{{- with secret `}}"{{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-common"{{` }}
+          {{- range $k, $v := .Data.data }}
+          {{ $k }}="{{ $v }}"{{ end -}}
+          {{- end `}} }}
+        vault.hashicorp.com/agent-inject-secret-DIAM-approvalflow: {{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-approvalflow
+        vault.hashicorp.com/agent-inject-template-DIAM-approvalflow: |
+          {{`{{- with secret `}}"{{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-approvalflow"{{` }}
+          {{- range $k, $v := .Data.data }}
+          {{ $k }}="{{ $v }}"{{ end -}}
+          {{- end `}} }}
+        vault.hashicorp.com/agent-inject-secret-DIAM-keycloak: {{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-keycloak
+        vault.hashicorp.com/agent-inject-template-DIAM-keycloak: |
+          {{`{{- with secret `}}"{{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-keycloak"{{` }}
+          {{- range $k, $v := .Data.data }}
+          {{ $k }}="{{ $v }}"{{ end -}}
+          {{- end `}} }}
         {{- if .Values.global.commit_sha }}
         commit_sha: {{ .Values.global.commit_sha }}
         {{- end}}
@@ -37,7 +63,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "approvalflow.serviceAccountName" . }}
+      serviceAccountName: {{ .Values.global.licenseplate }}-vault
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
 
@@ -47,135 +73,15 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.global.image.registry }}/{{ .Values.image.repository }}:{{ .Values.global.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-
-
           env:
-
-            - name: Seq__Url
-              valueFrom:
-                secretKeyRef:
-                  name: datalust-seq
-                  key: url
-            - name: KafkaCluster__SslCaLocation
-              value: /opt/kafka/certificates/server-ca.crt
-            - name: KafkaCluster__SslCertificateLocation
-              value: /opt/kafka/certificates/client-ca.crt
-            - name: KafkaCluster__SslKeyLocation
-              value: /opt/kafka/certificates/client.key
-
-            - name: KafkaCluster__ConsumerGroupId
-              value: {{ include "approvalflow.fullname" . }}-consumer-group
-            - name: database-password
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "approvalflow.fullname" . }}-database
-                  key: database-password
-            - name: database-username
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "approvalflow.fullname" . }}-database
-                  key: database-username
-            - name: DATABASE_NAME
-              value: approvalflow
             - name: DOTNET_BUNDLE_EXTRACT_BASE_DIR
               value: /tmp
-            - name: ConnectionStrings__ApprovalFlowDataStore
-              valueFrom:
-                configMapKeyRef:
-                  name: approvalflow-api-database
-                  key: CONNECTION_STRINGS_DB    
-            - name: SchemaRegistry__Url
-              valueFrom:
-                secretKeyRef:
-                  name: apicurio-registry
-                  key: SchemaRegistry__Url
-            - name: SchemaRegistry__ClientId
-              valueFrom:
-                secretKeyRef:
-                  name: apicurio-registry
-                  key: SchemaRegistry__ClientId
-            - name: SchemaRegistry__ClientSecret
-              valueFrom:
-                secretKeyRef:
-                  name: apicurio-registry
-                  key: SchemaRegistry__ClientSecret
-            - name: KafkaCluster__BootstrapServers
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-common
-                  key: KafkaCluster__BootstrapServers
-            - name: KafkaCluster__SaslOauthbearerProducerClientId
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-common
-                  key: KafkaCluster__ProducerClientId
-            - name: KafkaCluster__SaslOauthbearerConsumerClientId
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-common
-                  key: KafkaCluster__ConsumerClientId
-            - name: KafkaCluster__SaslOauthbearerConsumerClientSecret
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-common
-                  key: KafkaCluster__SaslOauthbearerConsumerClientSecret
-            - name: KafkaCluster__SaslOauthbearerProducerClientSecret
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-common
-                  key: KafkaCluster__SaslOauthbearerProducerClientSecret
-
-            - name: KafkaCluster__SaslOauthbearerTokenEndpointUrl
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-common
-                  key: KafkaCluster__SaslOauthbearerTokenEndpointUrl
             - name: ApplicationUrl
               value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"     
-
-
-            - name: KafkaCluster__IncomingApprovalCreationTopic
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-approvalflow
-                  key: KafkaCluster__IncomingApprovalCreationTopic
-            - name: KafkaCluster__ApprovalResponseTopic
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-approvalflow
-                  key: KafkaCluster__ApprovalResponseTopic
-
-            - name: KafkaCluster__NotificationTopic
-              valueFrom:
-                secretKeyRef:
-                  name: kafkaconfig-approvalflow
-                  key: KafkaCluster__NotificationTopic
-
-            - name: Telemetry__CollectorUrl
-              valueFrom: 
-                secretKeyRef:
-                  name: telemetry-pidp
-                  key: Telemetry__CollectorUrl
-
-            - name: SplunkConfig__CollectorToken
-              valueFrom: 
-                secretKeyRef:
-                  name: splunk-config
-                  key: SplunkConfig__CollectorToken
-            - name: SplunkConfig__Host
-              valueFrom: 
-                secretKeyRef:
-                  name: splunk-config
-                  key: SplunkConfig__Host
           volumeMounts:
           - name: truststore
             mountPath: "/opt/kafka/certificates"
             readOnly: true
-          envFrom:
-            - secretRef:
-                name: keycloak-secrets
-            - secretRef:
-                name: kafkaconfig
           ports:
             - name: http
               containerPort: 8080
