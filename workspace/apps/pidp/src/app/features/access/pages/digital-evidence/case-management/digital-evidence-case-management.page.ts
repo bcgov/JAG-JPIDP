@@ -135,6 +135,7 @@ export class DigitalEvidenceCaseManagementPage
     this.identityProvider$ = this.authorizedUserService.identityProvider$;
     this.result = '';
     this.caseTooltip = 'test';
+    this.isFindDisabled = true;
     this.policeAgency = accessTokenService
       .decodeToken()
       .pipe(map((token) => token?.identity_provider ?? ''));
@@ -201,11 +202,13 @@ export class DigitalEvidenceCaseManagementPage
   }
 
   public checkCaseInput(): boolean {
-    this.isFindDisabled =
-      this.formState.caseName.value &&
-      this.formState.caseName?.value.length < 6;
     if (this.formState.caseName.value)
       this.formState.caseName.setValue(this.formState.caseName.value.trim());
+
+    this.isFindDisabled =
+      this.formState.caseName.value &&
+        this.formState.caseName?.value.length >= 6 && this.formState.agencyCode.value && this.formState.agencyCode.value.length >= 2 ? false : true;
+
     return this.isFindDisabled;
   }
 

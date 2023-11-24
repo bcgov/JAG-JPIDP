@@ -58,6 +58,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
             case "digitalevidencedisclosure-defence-usercreation-complete":
             case "digitalevidencedisclosure-defence-usermodification-complete":
             case "digitalevidencedisclosure-defence-usermodification-error":
+            case "digitalevidencedisclosure-defence-usercreation-exception":
             case "digitalevidencedisclosure-defence-usercreation-error":
             case "digitalevidence-defence-personmodification-complete":
             case "digitalevidence-defence-personmodification-error":
@@ -262,7 +263,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
                         { "FirstName", accessRequest.Party!.FirstName },
                         { "BCSC Id", accessRequest.Party.Jpdid },
                         { "PartyId", "" + accessRequest.Party.Id },
-                        {  "Errors", accessRequest.Details },
+                        { "Errors", accessRequest.Details },
                         { "Duration (s)","" + duration.TotalSeconds }
 
                     };

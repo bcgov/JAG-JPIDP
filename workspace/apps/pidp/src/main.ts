@@ -38,7 +38,6 @@ fetch('/assets/environment.json')
       appConfig.applicationUrl = window.location.origin;
       appConfig.configEndpoint = window.location.origin;
       appConfig.apiEndpoint = window.location.origin + '/api/v1';
-      console.log("App config %o", appConfig);
     }
 
     platformBrowserDynamic([

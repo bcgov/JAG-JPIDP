@@ -2,6 +2,7 @@ namespace edt.disclosure.ServiceEvents.UserAccountCreation.Handler;
 
 using System.Diagnostics;
 using AutoMapper;
+using Common.Models.EDT;
 using edt.disclosure.Data;
 using edt.disclosure.HttpClients.Services.EdtDisclosure;
 using edt.disclosure.Kafka.Interfaces;
@@ -11,7 +12,7 @@ using edt.disclosure.ServiceEvents.UserAccountCreation.Models;
 using Microsoft.Extensions.Logging;
 using NodaTime;
 
-public class DefenceUserProvisioningHandler : BaseProvisioningHandler, IKafkaHandler<string, EdtDisclosureUserProvisioningModel>
+public class DefenceUserProvisioningHandler : BaseProvisioningHandler, IKafkaHandler<string, EdtDisclosureDefenceUserProvisioningModel>
 {
 
 
@@ -47,7 +48,7 @@ public class DefenceUserProvisioningHandler : BaseProvisioningHandler, IKafkaHan
 
     }
 
-    public async Task<Task> HandleAsync(string consumerName, string key, EdtDisclosureUserProvisioningModel accessRequestModel)
+    public async Task<Task> HandleAsync(string consumerName, string key, EdtDisclosureDefenceUserProvisioningModel accessRequestModel)
     {
 
         // check this message is for us
@@ -179,6 +180,16 @@ public class DefenceUserProvisioningHandler : BaseProvisioningHandler, IKafkaHan
         catch (Exception ex)
         {
             Serilog.Log.Logger.Error("Exception during EDT Disclosure provisioning {0}", ex.Message);
+            // send error response
+            var sentStatus = this.processResponseProducer.ProduceAsync(this.configuration.KafkaCluster.ProcessResponseTopic, Guid.NewGuid().ToString(), new GenericProcessStatusResponse
+            {
+                DomainEvent = "digitalevidencedisclosure-defence-usercreation-exception",
+                Id = accessRequestModel.AccessRequestId,
+                EventTime = SystemClock.Instance.GetCurrentInstant(),
+                ErrorList = new List<string>() { ex.Message },
+                Status = "Error",
+                TraceId = key
+            });
             return Task.FromException(ex);
         }
 

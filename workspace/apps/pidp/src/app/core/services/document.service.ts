@@ -130,6 +130,23 @@ export class DocumentService {
     }
   }
 
+  public getDefenceCounselOnboardingNotice(): string {
+    return `
+      By entering your BC Law Society Verified Credential you are requesting access to the BCPS Disclosure Portal.<br/>
+      You will be provided with a folio which will be an access point for you to view and retrieve disclosure for your clients.<br/>
+      By registering for access and using the Disclosure Portal you acknowledge that you are bound by the implied undertakings which attach to disclosure: to safeguard the disclosure and not to use it for any other purpose or in any other context other than for the purpose of making full answer and defence in the criminal case for which it was provided.<br/>
+      You will also notify BCPS if you no longer represent a client for whom you have been given disclosure or if disclosure has been erroneously given to you.
+    `;
+  }
+
+  public getDefenceCounselDutyNotice(): string {
+    return `
+      By entering your BC Law Society Verified Credential and requesting access to a Duty Counsel disclosure folio you acknowledge that you are assigned as Duty Counsel for the location and on the date(s) you have provided, or that you need temporary access to represent a client prior to full disclosure being made.<br/>
+      You acknowledge that you are bound by the implied undertakings which attach to disclosure: to safeguard the Duty Counsel disclosure and not to use it for any other purpose or in any other context other than for the purpose of making full answer and defence in the criminal case for which it was provided.<br/>
+      You will limit your access to the Duty Counsel folio to those times when you are acting as Duty Counsel, and you will be responsible for ensuring that you do not access disclosure for individuals with whom you may have a conflict.
+    `;
+  }
+
   public getPIdPCollectionNotice(): string {
     return `
       The Digital Identity Access Management Portal collects personal information for the purposes of verification and access

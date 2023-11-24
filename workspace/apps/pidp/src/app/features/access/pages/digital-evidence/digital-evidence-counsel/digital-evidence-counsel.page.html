@@ -3,7 +3,7 @@
   <ui-page-section>
     <ui-page-section-subheader icon="assignment" heading="Digital Evidence and Disclosure Duty Case Access">
       <ng-container uiPageSectionSubheaderDesc>
-        Request access to courts and cases for duration of duty.
+        <div class="small-text" [innerHTML]="defenceCounselDutyNotice"></div>
       </ng-container>
 
     </ui-page-section-subheader>
@@ -27,13 +27,14 @@
         <mat-form-field>
           <mat-label>Request access for the following time period (max 90 days)</mat-label>
           <mat-date-range-input [rangePicker]="picker" [min]="minDate" [max]="maxDate" required>
-            <input matStartDate formControlName="dateFrom" placeholder="Start Date" (click)="picker.open()">
-            <input matEndDate formControlName="dateTo" placeholder="End Date" (click)="picker.open()">
+            <input matStartDate formControlName="dateFrom" placeholder="Start Date">
+            <input matEndDate formControlName="dateTo" placeholder="End Date">
           </mat-date-range-input>
           <mat-hint>DD MMM YYYY – DD MMM YYYY</mat-hint>
           <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
           <mat-date-range-picker #picker></mat-date-range-picker>
         </mat-form-field>
+
 
       </div>
       <button mat-stroked-button type="button" tabindex="3" style="margin-left: 10px;" color="primary"

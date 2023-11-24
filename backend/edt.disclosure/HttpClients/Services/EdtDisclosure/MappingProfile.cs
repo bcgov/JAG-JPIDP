@@ -1,7 +1,7 @@
 namespace edt.disclosure.HttpClients.Services.EdtDisclosure;
 
 using AutoMapper;
-using edt.disclosure.HttpClients.Services.EdtDisclosure;
+using Common.Models.EDT;
 
 public class MappingProfile : Profile
 {

@@ -1,15 +1,16 @@
-using edt.disclosure.HttpClients.Services.EdtDisclosure;
-using edt.disclosure.Kafka.Interfaces;
-using System.Net;
-
 namespace edt.disclosure.ServiceEvents.UserAccountCreation;
+
+using System.Net;
+using Common.Models.EDT;
+using edt.disclosure.Kafka.Interfaces;
+
 
 public class DefenceUserProvisioningConsumer : BackgroundService
 {
-    private readonly IKafkaConsumer<string, EdtDisclosureUserProvisioningModel> consumer;
+    private readonly IKafkaConsumer<string, EdtDisclosureDefenceUserProvisioningModel> consumer;
 
     private readonly EdtDisclosureServiceConfiguration config;
-    public DefenceUserProvisioningConsumer(IKafkaConsumer<string, EdtDisclosureUserProvisioningModel> kafkaConsumer, EdtDisclosureServiceConfiguration config)
+    public DefenceUserProvisioningConsumer(IKafkaConsumer<string, EdtDisclosureDefenceUserProvisioningModel> kafkaConsumer, EdtDisclosureServiceConfiguration config)
     {
         this.consumer = kafkaConsumer;
         this.config = config;
@@ -19,7 +20,7 @@ public class DefenceUserProvisioningConsumer : BackgroundService
 
         try
         {
-            Serilog.Log.Information($"Consume from Defence User Topic {this.config.KafkaCluster.CreateDefenceUserTopic}");
+            Serilog.Log.Information($"Starting consumer from Defence User Topic {this.config.KafkaCluster.CreateDefenceUserTopic}");
             await this.consumer.Consume(this.config.KafkaCluster.CreateDefenceUserTopic, stoppingToken);
         }
         catch (Exception ex)

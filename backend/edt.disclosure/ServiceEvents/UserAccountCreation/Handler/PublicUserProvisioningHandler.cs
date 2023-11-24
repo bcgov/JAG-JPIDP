@@ -2,6 +2,7 @@ namespace edt.disclosure.ServiceEvents.DefenceUserAccountCreation.Handler;
 
 using System.Diagnostics;
 using AutoMapper;
+using Common.Models.EDT;
 using edt.disclosure.Data;
 using edt.disclosure.HttpClients.Services.EdtDisclosure;
 using edt.disclosure.Kafka.Interfaces;
@@ -12,7 +13,7 @@ using edt.disclosure.ServiceEvents.UserAccountCreation.Models;
 using Microsoft.Extensions.Logging;
 using NodaTime;
 
-public class PublicUserProvisioningHandler : BaseProvisioningHandler, IKafkaHandler<string, EdtDisclosureUserProvisioningModel>
+public class PublicUserProvisioningHandler : BaseProvisioningHandler, IKafkaHandler<string, EdtDisclosurePublicUserProvisioningModel>
 {
 
     private readonly EdtDisclosureServiceConfiguration configuration;
@@ -45,7 +46,7 @@ public class PublicUserProvisioningHandler : BaseProvisioningHandler, IKafkaHand
         this.processResponseProducer = processResponseProducer;
     }
 
-    public async Task<Task> HandleAsync(string consumerName, string key, EdtDisclosureUserProvisioningModel accessRequestModel)
+    public async Task<Task> HandleAsync(string consumerName, string key, EdtDisclosurePublicUserProvisioningModel accessRequestModel)
     {
 
         // check this message is for us
