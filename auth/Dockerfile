@@ -1,4 +1,4 @@
-FROM registry.redhat.io/rh-sso-7/sso76-openshift-rhel8:7.6-32
+FROM registry.redhat.io/rh-sso-7/sso76-openshift-rhel8:7.6-5
 
 MAINTAINER lee.wright@gov.bc.ca
 
