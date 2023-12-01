@@ -225,7 +225,24 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
             accessRequest.Status = "Error";
             accessRequest.Details = string.Join(",", processResponse.ErrorList);
 
+            var duration = accessRequest.Modified - processResponse.EventTime;
+            var messageKey = Guid.NewGuid().ToString();
 
+            var eventData = new Dictionary<string, string>
+                    {
+                        { "FirstName", accessRequest.Party!.FirstName },
+                        { "BCSC Id", accessRequest.Party.Jpdid },
+                        { "PartyId", "" + accessRequest.Party.Id },
+                        { "Errors", accessRequest.Details },
+                        { "Duration (s)","" + duration.TotalSeconds }
+
+                    };
+            var published = await this.notificationProducer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopicName, messageKey, new Notification
+            {
+                DomainEvent = "digitalevidence-bcsc-usercreation-error",
+                To = "lee.wright@nttdata.com",
+                EventData = eventData
+            });
         }
         else
         {
@@ -255,24 +272,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
         {
             accessRequest.Status = "Error";
             accessRequest.Details = string.Join(",", processResponse.ErrorList);
-            var duration = accessRequest.Modified - processResponse.EventTime;
-            var messageKey = Guid.NewGuid().ToString();
 
-            var eventData = new Dictionary<string, string>
-                    {
-                        { "FirstName", accessRequest.Party!.FirstName },
-                        { "BCSC Id", accessRequest.Party.Jpdid },
-                        { "PartyId", "" + accessRequest.Party.Id },
-                        { "Errors", accessRequest.Details },
-                        { "Duration (s)","" + duration.TotalSeconds }
-
-                    };
-            var published = await this.notificationProducer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopicName, messageKey, new Notification
-            {
-                DomainEvent = "digitalevidence-bcsc-usercreation-error",
-                To = "lee.wright@nttdata.com",
-                EventData = eventData
-            });
         }
         else
         {
