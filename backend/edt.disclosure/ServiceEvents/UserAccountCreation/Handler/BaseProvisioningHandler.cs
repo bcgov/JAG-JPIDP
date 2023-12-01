@@ -54,8 +54,8 @@ public abstract class BaseProvisioningHandler
                 Name = caseName,
                 Description = "Folio Case for Accused",
                 Key = caseKey,
-                TemplateCase = (this.configuration.EdtClient.OutOfCustodyTemplateId < 0 && !string.IsNullOrEmpty(this.configuration.EdtClient.OutOfCustodyTemplateName)) ? this.configuration.EdtClient.OutOfCustodyTemplateName : null,
-                TemplateCaseId = (this.configuration.EdtClient.OutOfCustodyTemplateId > -1) ? this.configuration.EdtClient.OutOfCustodyTemplateId.ToString() : null,
+                //  TemplateCase = (this.configuration.EdtClient.OutOfCustodyTemplateId < 0 && !string.IsNullOrEmpty(this.configuration.EdtClient.OutOfCustodyTemplateName)) ? this.configuration.EdtClient.OutOfCustodyTemplateName : null,
+                TemplateCase = (this.configuration.EdtClient.OutOfCustodyTemplateId > -1) ? "" + this.configuration.EdtClient.OutOfCustodyTemplateId : "",
 
             } :
 
@@ -64,12 +64,12 @@ public abstract class BaseProvisioningHandler
                 Name = caseName,
                 Description = "Folio Case for Defence Counsel",
                 Key = caseKey,
-                TemplateCase = (this.configuration.EdtClient.DefenceFolioTemplateId < 0 && !string.IsNullOrEmpty(this.configuration.EdtClient.DefenceFolioTemplateName)) ? this.configuration.EdtClient.DefenceFolioTemplateName : null,
-                TemplateCaseId = (this.configuration.EdtClient.DefenceFolioTemplateId > -1) ? this.configuration.EdtClient.DefenceFolioTemplateId.ToString() : null,
+                //  TemplateCase = (this.configuration.EdtClient.DefenceFolioTemplateId < 0 && !string.IsNullOrEmpty(this.configuration.EdtClient.DefenceFolioTemplateName)) ? this.configuration.EdtClient.DefenceFolioTemplateName : null,
+                TemplateCase = (this.configuration.EdtClient.DefenceFolioTemplateId > -1) ? "" + this.configuration.EdtClient.DefenceFolioTemplateId : "",
 
             };
 
-        Serilog.Log.Information($"Creating new case {caseCreation}");
+        Serilog.Log.Information($"Creating new case {caseCreation.Name} Template {caseCreation.TemplateCase}");
 
         var createResponseID = await this.edtClient.CreateCase(caseCreation);
 

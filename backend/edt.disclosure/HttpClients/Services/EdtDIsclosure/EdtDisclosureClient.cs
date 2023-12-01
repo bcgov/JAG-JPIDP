@@ -168,7 +168,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             Key = this.configuration.EdtClient.CourtLocationKeyPrefix + accessRequest.CourtLocationKey,
             Name = accessRequest.CourtLocationName,
             Description = "Court Location Folio",
-            TemplateCaseId = "" + this.configuration.EdtClient.CourtLocationTemplateId
+            TemplateCase = "" + this.configuration.EdtClient.CourtLocationTemplateId
         };
 
         var created = await this.CreateCase(courtLocation);
@@ -775,7 +775,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
     public async Task<int> CreateCase(EdtCaseDto caseInfo)
     {
         Log.Logger.Information($"Case creation request {caseInfo.Name}");
-        if (caseInfo.Key == null || caseInfo.Name == null)
+        if (string.IsNullOrEmpty(caseInfo.Key) || string.IsNullOrEmpty(caseInfo.Name) || string.IsNullOrEmpty(caseInfo.TemplateCase))
         {
             throw new EdtDisclosureServiceException($"Invalid case creation request received");
         }
