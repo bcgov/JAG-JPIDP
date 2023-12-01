@@ -272,6 +272,23 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
         {
             accessRequest.Status = "Error";
             accessRequest.Details = string.Join(",", processResponse.ErrorList);
+            var duration = accessRequest.Modified - processResponse.EventTime;
+            var messageKey = Guid.NewGuid().ToString();
+
+            var eventData = new Dictionary<string, string>
+                    {
+                        { "FirstName", accessRequest.Party!.FirstName },
+                        { "PartyId", "" + accessRequest.Party.Id },
+                        { "Errors", accessRequest.Details },
+                        { "Duration (s)","" + duration.TotalSeconds }
+
+                    };
+            var published = await this.notificationProducer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopicName, messageKey, new Notification
+            {
+                DomainEvent = "digitalevidence-bclaw-usercreation-error",
+                To = accessRequest.Party!.Email,
+                EventData = eventData
+            });
 
         }
         else
