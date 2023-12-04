@@ -1,4 +1,5 @@
-namespace Pidp.Models;
+namespace Common.Models.EDT;
+
 
 public class EdtPersonProvisioningModel
 {
@@ -10,16 +11,10 @@ public class EdtPersonProvisioningModel
     public string? Role { get; set; } = "Participant";
     public bool? IsActive => true;
     public string? SystemName { get; set; } = "DigitalEvidenceDefence";
+    public int ManuallyAddedParticipantId { get; set; } = -1;
+    public string EdtExternalIdentifier { get; set; } = string.Empty;
     public int AccessRequestId { get; set; }
     public string? OrganizationType { get; set; }
     public string? OrganizationName { get; set; }
     public List<EdtField> Fields { get; set; } = new List<EdtField>();
 }
-
-public class EdtPersonAddress
-{
-    public string? Email { get; set; }
-    public string? Mobile { get; set; }
-    public string? Phone { get; set; }
-}
-

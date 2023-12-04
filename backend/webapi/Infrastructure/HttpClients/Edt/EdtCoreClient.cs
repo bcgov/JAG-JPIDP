@@ -1,5 +1,6 @@
 namespace Pidp.Infrastructure.HttpClients.Edt;
 
+using System.Net;
 using System.Threading.Tasks;
 using Common.Exceptions;
 using Common.Models.EDT;
@@ -10,8 +11,47 @@ public class EdtCoreClient : BaseClient, IEdtCoreClient
 
     public EdtCoreClient(HttpClient httpClient, ILogger<EdtCoreClient> logger) : base(httpClient, logger) { }
 
+    private static readonly Histogram PersonLookupByKey = Metrics.CreateHistogram("edt_user_lookup_by_key_duration", "Histogram of person key searches.");
     private static readonly Counter MergedUsersCounter = Metrics.CreateCounter("edt_merged_users_total", "Number of user queries returning merged users");
     private static readonly Counter NonMatchedUsersCount = Metrics.CreateCounter("edt_user_lookup_missing_total", "Number of user queries returning no users");
+    private static readonly Counter PreExistingPersonsCount = Metrics.CreateCounter("edt_user_lookup_by_key_total", "Number of user queries returning a user from a key");
+
+    public async Task<EdtPersonDto?> GetPersonByKey(string key)
+    {
+        if (string.IsNullOrEmpty(key))
+            return null;
+
+        if (key.Length > 100)
+        {
+            throw new DIAMGeneralException($"Key too long for query GetPersonByKey({key})");
+        }
+
+        using (PersonLookupByKey.NewTimer())
+        {
+            Serilog.Log.Information($"Edt Person search requested by key {key}");
+
+            var result = await this.GetAsync<EdtPersonDto?>($"person/key/{WebUtility.UrlEncode(key)}");
+
+            if (result.IsSuccess)
+            {
+
+                Serilog.Log.Information($"Person found {result.Value.Id} for key {key}");
+                PreExistingPersonsCount.Inc();
+                return result.Value;
+            }
+            else
+            {
+                if (result.Status == DomainResults.Common.DomainOperationStatus.CriticalDependencyError)
+                {
+                    var errorMsg = $"Failed to lookup user by key [{string.Join(",", result.Errors)}";
+                    Serilog.Log.Error(errorMsg);
+                    throw new DIAMGeneralException(errorMsg);
+                }
+                Serilog.Log.Information($"No user found for key {key}");
+                return null;
+            }
+        }
+    }
 
 
     public async Task<List<EdtPersonDto>?> GetPersonsByIdentifier(string identitiferType, string identifierValue)

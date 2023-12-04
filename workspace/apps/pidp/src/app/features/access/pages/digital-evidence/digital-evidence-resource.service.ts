@@ -71,10 +71,6 @@ export class DigitalEvidenceResource {
       .pipe(
         NoContentResponse,
         catchError((error: HttpErrorResponse) => {
-          if (error.status === HttpStatusCode.BadRequest) {
-            return of(void 0);
-          }
-
           return throwError(() => error);
         })
       );
