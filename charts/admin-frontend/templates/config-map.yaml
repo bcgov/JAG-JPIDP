@@ -32,3 +32,12 @@ data:
         }
       }
     }
+  keycloak.json: |-
+    {
+      "realm": "BCPS",
+      "auth-server-url": "https://dev.common-sso.justice.gov.bc.ca/auth",
+      "ssl-required": "external",
+      "resource": "DIAM-BCPS-ADMIN",
+      "public-client": true,
+      "confidential-port": 0
+    }
