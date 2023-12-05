@@ -44,7 +44,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "admin-frontend.serviceAccountName" . }}
+      serviceAccountName: {{ .Values.global.licenseplate }}-vault
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       volumes:
