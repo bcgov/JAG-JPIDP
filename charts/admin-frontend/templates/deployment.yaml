@@ -24,9 +24,9 @@ spec:
         vault.hashicorp.com/agent-limits-cpu: 10m
         vault.hashicorp.com/agent-requests-mem: 20Mi
         vault.hashicorp.com/role: {{ .Values.global.vault.role }}  # licenseplate-nonprod or licenseplate-prod are your options
-        vault.hashicorp.com/agent-inject-secret-ApprovalFlow: {{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-ApprovalFlow
-        vault.hashicorp.com/agent-inject-template-ApprovalFlow: |
-          {{`{{- with secret `}}"{{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}ApprovalFlow"{{` }}
+        vault.hashicorp.com/agent-inject-secret-DIAM-Admin-Client: {{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-Admin-Client
+        vault.hashicorp.com/agent-inject-template-DIAM-Admin-Client: |
+          {{`{{- with secret `}}"{{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-Admin-Client"{{` }}
           {{- range $k, $v := .Data.data }}
           {{ $k }}="{{ $v }}"{{ end -}}
           {{- end `}} }}
