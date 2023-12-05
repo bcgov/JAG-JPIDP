@@ -2,6 +2,7 @@ namespace edt.service.ServiceEvents.UserAccountCreation.Handler;
 
 using System.Diagnostics;
 using edt.service.Data;
+using edt.service.Exceptions;
 using edt.service.HttpClients.Services.EdtCore;
 using edt.service.Kafka.Interfaces;
 using edt.service.Kafka.Model;
@@ -137,19 +138,38 @@ public class DefenceParticipantHandler : IKafkaHandler<string, EdtPersonProvisio
     {
         Serilog.Log.Information($"Handling request to add/update participant {accessRequestModel.FirstName} {accessRequestModel.LastName} {accessRequestModel.Id}");
 
-        var user = await this.edtClient.GetPerson(accessRequestModel.Key!);
-
-        if (user == null)
+        if (accessRequestModel.ManuallyAddedParticipantId > 0)
         {
-            Serilog.Log.Information($"Adding {accessRequestModel.LastName} as a new person");
-            return await this.edtClient.CreatePerson(accessRequestModel);
-
-
+            Serilog.Log.Information($"Participant {accessRequestModel.LastName} {accessRequestModel.ManuallyAddedParticipantId} was added manually - updating");
+            var user = await this.edtClient.GetPersonById(accessRequestModel.ManuallyAddedParticipantId);
+            if (user != null)
+            {
+                return await this.edtClient.ModifyPerson(accessRequestModel, user);
+            }
+            else
+            {
+                var errorMsg = $"Manually added {accessRequestModel.ManuallyAddedParticipantId} id was not found";
+                Serilog.Log.Error(errorMsg);
+                throw new EdtServiceException(errorMsg);
+            }
         }
         else
         {
-            Serilog.Log.Information($"Modifying person {accessRequestModel.LastName}");
-            return await this.edtClient.ModifyPerson(accessRequestModel, user);
+
+            var user = await this.edtClient.GetPerson(accessRequestModel.Key!);
+
+            if (user == null)
+            {
+                Serilog.Log.Information($"Adding {accessRequestModel.LastName} as a new person");
+                return await this.edtClient.CreatePerson(accessRequestModel);
+
+
+            }
+            else
+            {
+                Serilog.Log.Information($"Modifying person {accessRequestModel.LastName}");
+                return await this.edtClient.ModifyPerson(accessRequestModel, user);
+            }
         }
 
     }

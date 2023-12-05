@@ -91,9 +91,23 @@ public class DefenceUserProvisioningHandler : BaseProvisioningHandler, IKafkaHan
                 await this.context.IdempotentConsumer(messageId: key, consumer: consumerName, consumeDate: this.clock.GetCurrentInstant());
 
                 await this.context.SaveChangesAsync();
+                CaseModel existingFolio = null;
 
-                // get the folio for the user (if present)
-                var existingFolio = await this.edtClient.FindCaseByKey(accessRequestModel.Key);
+                if (!string.IsNullOrEmpty(accessRequestModel.EdtExternalIdentifier))
+                {
+                    Serilog.Log.Information($"User {accessRequestModel.ManuallyAddedParticipantId} was manually added - checking for folio with identifier {accessRequestModel.EdtExternalIdentifier}");
+                    existingFolio = await this.edtClient.FindCaseByKey(accessRequestModel.EdtExternalIdentifier);
+                    if (existingFolio == null)
+                    {
+                        Serilog.Log.Information($"No folio was found for {accessRequestModel.FullName} - folio will be created");
+                    }
+                }
+
+                if (existingFolio == null)
+                {
+                    // get the folio for the user (if present)
+                    existingFolio = await this.edtClient.FindCaseByKey(accessRequestModel.Key);
+                }
 
                 // we'll track the created case Id so that we can later notify core if necessary to add as LinkDicsloureCaseId to the participant in core
                 var processResponseData = new Dictionary<string, string>();

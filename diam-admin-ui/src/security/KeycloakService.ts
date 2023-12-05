@@ -1,7 +1,6 @@
 import Keycloak from "keycloak-js";
 
 const client = import.meta.env.VITE_KEYCLOAK_CLIENT;
-debugger;
 
 const keycloakInstance = new Keycloak();
 interface CallbackOneParam<T1 = void, T2 = void> {
@@ -20,8 +19,12 @@ const Login = (onAuthenticatedCallback: CallbackOneParam) => {
       const environ = import.meta.env;
       console.log("Env %o", environ);
       const client = import.meta.env.VITE_KEYCLOAK_CLIENT;
+      if (!keycloakInstance.resourceAccess?.[client])
+      {
+        alert("You do not have sufficent rights to access this site");
+      }
       const roles = keycloakInstance.resourceAccess?.[client].roles;
-      console.log(roles);
+
       if (! (roles?.includes('ADMIN') || roles?.includes('APPROVER')))
       {
         alert("unauthorized");
@@ -31,6 +34,7 @@ const Login = (onAuthenticatedCallback: CallbackOneParam) => {
       authenticated ? onAuthenticatedCallback() : alert("non authenticated");
 
       }
+    
 
     })
     .catch((e) => {
