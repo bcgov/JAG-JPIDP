@@ -600,7 +600,6 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         else
         {
 
-
             var addUserToCaseGroup = await this.AddUserToCaseGroup(userKey, caseId, caseGroupId);
             if (!addUserToCaseGroup)
             {
@@ -642,7 +641,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
     private async Task<IEnumerable<UserCaseGroup>> GetUserCaseGroups(string userKey, int caseId)
     {
         var result = await this.GetAsync<IEnumerable<UserCaseGroup>>($"api/v1/cases/{caseId}/users/{userKey}/groups");
-        Log.Logger.Information("Got #{0} user cases  user {1}", result.Value.Count(), userKey);
+        Log.Logger.Information($"Got {result.Value.Count()} user cases for user {userKey}");
 
         if (result.IsSuccess)
         {

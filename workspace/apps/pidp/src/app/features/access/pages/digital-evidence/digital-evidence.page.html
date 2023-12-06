@@ -143,12 +143,14 @@
 
             We are unable to check your code at this time, please try again later
           </div>
-          <div *ngIf="userCodeStatus !== 'error' && userCodeStatus !== 'too_many_attempts' ">
-            <mat-icon [class]="userCodeStatus === 'valid' ? 'valid-icon' : 'error-icon'">
-              {{ userCodeStatus === '' ? '' : userCodeStatus === 'valid' ? 'check_circle_outline' :
-              'block' }}
-            </mat-icon>
-            {{userValidationMessage}}
+          <div *ngIf="userValidationMessage && userCodeStatus !== 'error' && userCodeStatus !== 'too_many_attempts' ">
+            <div class="user-notification field-highlight">
+              <mat-icon [class]="userCodeStatus === 'valid' ? 'valid-icon' : 'error-icon'">
+                {{ userCodeStatus === '' ? '' : userCodeStatus === 'valid' ? 'check_circle_outline' :
+                'block' }}
+              </mat-icon>
+              {{userValidationMessage}}
+            </div>
           </div>
         </div>
 
@@ -182,7 +184,7 @@
     <ui-page-section *ngIf="userIsLawyer">
       <div class="col-12 ">
         <ui-page-section-subheader heading="Defence And Duty Counsel">
-          <div [innerHTML]="defenceCounselOnboardingNotice"></div>
+          <div class="small-text" [innerHTML]="defenceCounselOnboardingNotice"></div>
         </ui-page-section-subheader>
       </div>
     </ui-page-section>

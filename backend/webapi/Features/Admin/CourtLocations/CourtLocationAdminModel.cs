@@ -1,6 +1,6 @@
 namespace Pidp.Features.Admin.CourtLocations;
 
-using Pidp.Models;
+using Common.Models.EDT;
 using Pidp.Models.Lookups;
 
 public class CourtLocationAdminModel : CourtLocation

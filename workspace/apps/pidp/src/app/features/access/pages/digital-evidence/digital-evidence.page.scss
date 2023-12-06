@@ -7,6 +7,10 @@
   margin-bottom: 6rem;
 }
 
+div.user-notification {
+  line-height: normal;
+}
+
 .submitting-agency {
   border-radius: 5px;
   border: 2px black solid;
@@ -42,6 +46,11 @@
 
 .valid-icon {
   color: green;
+}
+
+div.small-text {
+  font-size: small;
+  line-height: normal;
 }
 
 .code-entry {

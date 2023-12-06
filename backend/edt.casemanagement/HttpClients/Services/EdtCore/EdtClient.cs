@@ -170,7 +170,7 @@ public class EdtClient : BaseClient, IEdtClient
 
                 if (existing)
                 {
-                    Log.Information($"User {userKey} already assigned to case {caseId}");
+                    Log.Information($"User {userKey} already assigned to case {caseId} with group {caseGroupId}");
                 }
                 else
                 {

@@ -1,5 +1,6 @@
 namespace Pidp.Features.AccessRequests;
 
+using System.Net;
 using System.Threading.Tasks;
 using Common.Exceptions;
 using Common.Kafka;
@@ -18,6 +19,7 @@ public class ValidateUser
 
     public class Command : ICommand<IDomainResult<UserValidationResponse>>
     {
+        public IPAddress? IPAddress { get; set; }
         public int PartyId { get; set; }
         public string Code { get; set; }
     }
@@ -213,22 +215,74 @@ public class ValidateUser
                             var edtLastName = info.LastName;
                             if (info.Fields.Any())
                             {
-
                                 var edtDOBField = info.Fields.First(field => field.Name.Equals("Date of Birth"));
                                 var d = DateTimeOffset.Parse(edtDOBField.Value);
-                                var dateonly = d.Date.ToShortDateString();
+                                var edtDOBFieldDate = d.Date.ToShortDateString();
 
                                 // we'll check against keycloak user as this will be sync with BCSC
                                 var keycloakDOB = keycloakUser.Attributes.First(attr => attr.Key.Equals("birthdate"));
                                 if (keycloakDOB.Value != null)
                                 {
-                                    if (keycloakDOB.Value.Length == 1 && keycloakDOB.Value[0].Equals(dateonly) &&
+                                    if (keycloakDOB.Value.Length == 1 && keycloakDOB.Value[0].Equals(edtDOBFieldDate) &&
                                      keycloakUser.FirstName.Equals(edtFirstName, StringComparison.OrdinalIgnoreCase) &&
                                      keycloakUser.LastName.Equals(edtLastName, StringComparison.OrdinalIgnoreCase))
                                     {
                                         Serilog.Log.Information($"User info matches {keycloakUser.LastName} ({edtLastName})");
                                         response.Validated = true;
                                         validation.IsValid = true;
+                                    }
+                                    else
+                                    {
+                                        // if at least one item matches then we'll notify BCPS
+                                        if (keycloakUser.LastName.Equals(edtLastName, StringComparison.OrdinalIgnoreCase) ||
+                                            keycloakUser.LastName.Equals(edtLastName, StringComparison.OrdinalIgnoreCase) ||
+                                            (keycloakDOB.Value.Length == 1 && keycloakDOB.Value[0].Equals(edtDOBFieldDate)))
+                                        {
+                                            Serilog.Log.Information($"User {keycloakUser.FirstName} {keycloakUser.LastName} was a potential match with one or more issues found");
+
+                                            // publish a message for BCPS
+                                            var codesTried = priorRequests.Select(req => req.Code).ToList();
+
+                                            var eventData = new Dictionary<string, string>
+                                            {
+                                                { "attempts", "" + priorRequests.Count },
+                                                { "bcscFirstName", party.FirstName },
+                                                { "bcpsFirstName", edtFirstName },
+                                                { "bcpsLastName", edtLastName },
+                                                { "requestDateTime", DateTime.Now.ToString() },
+                                                { "bcpsdob", edtDOBFieldDate },
+                                                { "partyId", party.Jpdid},
+                                                { "bcscLastName", party.LastName },
+                                                { "ipAddress", command.IPAddress.ToString() },
+                                                { "bcscdob",  keycloakDOB.Value[0] },
+                                                { "codes", string.Join(",", codesTried) }
+                                            };
+
+                                            response.DataMismatch = true;
+                                            response.Message = "Data mismatch";
+
+                                            // send a notification to the message topic
+                                            var produceResponse = await this.kafkaNotificationProducer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopicName, Guid.NewGuid().
+                                                ToString(), new Notification
+                                                {
+                                                    DomainEvent = "digitalevidence-bcsc-data-mismatch",
+                                                    To = "lee.wright@nttdata.com",
+                                                    Subject = $"BCSC DIAM User {party.LastName} EDT/JUSTIN info does not match credentials",
+                                                    EventData = eventData
+
+                                                });
+
+                                            if (produceResponse.Status == Confluent.Kafka.PersistenceStatus.Persisted)
+                                            {
+                                                Serilog.Log.Information($"Published notification for {party.LastName} data mismatch event");
+                                            }
+                                            else
+                                            {
+                                                await transaction.RollbackAsync();
+                                                throw new DIAMGeneralException("Failed to publish BCPS event - transaction will rollback");
+                                            }
+
+                                        }
                                     }
                                 }
                             }

@@ -3,6 +3,7 @@ namespace Pidp.Kafka.Consumer.Responses;
 using System;
 using System.Collections.Generic;
 using Common.Models.Approval;
+using Common.Models.EDT;
 using Common.Models.Notification;
 using Confluent.Kafka;
 using Microsoft.EntityFrameworkCore;
@@ -210,7 +211,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
 
     private async Task MarkPublicUserProcessComplete(GenericProcessStatusResponse processResponse)
     {
-        var accessRequest = this.context.AccessRequests.Where(req => req.Id == processResponse.Id).FirstOrDefault();
+        var accessRequest = this.context.AccessRequests.Include(req => req.Party).Where(req => req.Id == processResponse.Id).FirstOrDefault();
 
         if (accessRequest == null)
         {
@@ -225,7 +226,24 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
             accessRequest.Status = "Error";
             accessRequest.Details = string.Join(",", processResponse.ErrorList);
 
+            var duration = accessRequest.Modified - processResponse.EventTime;
+            var messageKey = Guid.NewGuid().ToString();
 
+            var eventData = new Dictionary<string, string>
+                    {
+                        { "FirstName", accessRequest.Party!.FirstName },
+                        { "BCSC Id", accessRequest.Party.Jpdid },
+                        { "PartyId", "" + accessRequest.Party.Id },
+                        { "Errors", accessRequest.Details },
+                        { "Duration (s)","" + duration.TotalSeconds }
+
+                    };
+            var published = await this.notificationProducer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopicName, messageKey, new Notification
+            {
+                DomainEvent = "digitalevidence-bcsc-usercreation-error",
+                To = "lee.wright@nttdata.com",
+                EventData = eventData
+            });
         }
         else
         {
@@ -261,7 +279,6 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
             var eventData = new Dictionary<string, string>
                     {
                         { "FirstName", accessRequest.Party!.FirstName },
-                        { "BCSC Id", accessRequest.Party.Jpdid },
                         { "PartyId", "" + accessRequest.Party.Id },
                         { "Errors", accessRequest.Details },
                         { "Duration (s)","" + duration.TotalSeconds }
@@ -269,10 +286,11 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
                     };
             var published = await this.notificationProducer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopicName, messageKey, new Notification
             {
-                DomainEvent = "digitalevidence-bcsc-usercreation-error",
-                To = "lee.wright@nttdata.com",
+                DomainEvent = "digitalevidence-bclaw-usercreation-error",
+                To = accessRequest.Party!.Email,
                 EventData = eventData
             });
+
         }
         else
         {

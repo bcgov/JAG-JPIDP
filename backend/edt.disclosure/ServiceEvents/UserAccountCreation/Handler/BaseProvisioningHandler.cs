@@ -36,7 +36,20 @@ public abstract class BaseProvisioningHandler
     protected async Task<CaseModel> CreateUserFolio(EdtDisclosureUserProvisioningModel accessRequestModel)
     {
         // check case isnt present - key changes depending on user type
-        var caseKey = (accessRequestModel is EdtDisclosurePublicUserProvisioningModel) ? ((EdtDisclosurePublicUserProvisioningModel)accessRequestModel).PersonKey : accessRequestModel.Key;
+        string? caseKey;
+        if (accessRequestModel is EdtDisclosurePublicUserProvisioningModel)
+        {
+            caseKey = ((EdtDisclosurePublicUserProvisioningModel)accessRequestModel).PersonKey;
+            Serilog.Log.Information($"Public user {accessRequestModel.UserName} - creating folio with key: {caseKey}");
+
+        }
+        else
+        {
+
+            caseKey = accessRequestModel.Key;
+            Serilog.Log.Information($"Defence user {accessRequestModel.UserName} - creating folio with key: {caseKey}");
+
+        }
 
         var caseModel = await this.edtClient.FindCaseByKey(caseKey);
         if (caseModel != null)
@@ -44,7 +57,7 @@ public abstract class BaseProvisioningHandler
             return caseModel;
         }
 
-        var caseName = (accessRequestModel.OrganizationType == this.configuration.EdtClient.OutOfCustodyOrgType)
+        var caseName = (accessRequestModel is EdtDisclosurePublicUserProvisioningModel)
             ? accessRequestModel.FullName + "(" + caseKey + " Accused Folio)"
             : accessRequestModel.FullName + "(" + caseKey + " Defence Folio)";
 
@@ -54,9 +67,7 @@ public abstract class BaseProvisioningHandler
                 Name = caseName,
                 Description = "Folio Case for Accused",
                 Key = caseKey,
-                //  TemplateCase = (this.configuration.EdtClient.OutOfCustodyTemplateId < 0 && !string.IsNullOrEmpty(this.configuration.EdtClient.OutOfCustodyTemplateName)) ? this.configuration.EdtClient.OutOfCustodyTemplateName : null,
                 TemplateCase = (this.configuration.EdtClient.OutOfCustodyTemplateId > -1) ? "" + this.configuration.EdtClient.OutOfCustodyTemplateId : "",
-
             } :
 
             new EdtCaseDto
@@ -64,9 +75,7 @@ public abstract class BaseProvisioningHandler
                 Name = caseName,
                 Description = "Folio Case for Defence Counsel",
                 Key = caseKey,
-                //  TemplateCase = (this.configuration.EdtClient.DefenceFolioTemplateId < 0 && !string.IsNullOrEmpty(this.configuration.EdtClient.DefenceFolioTemplateName)) ? this.configuration.EdtClient.DefenceFolioTemplateName : null,
                 TemplateCase = (this.configuration.EdtClient.DefenceFolioTemplateId > -1) ? "" + this.configuration.EdtClient.DefenceFolioTemplateId : "",
-
             };
 
         Serilog.Log.Information($"Creating new case {caseCreation.Name} Template {caseCreation.TemplateCase}");

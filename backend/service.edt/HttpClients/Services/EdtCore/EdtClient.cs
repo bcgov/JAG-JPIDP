@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Common.Models.EDT;
 using edt.service.Exceptions;
-using edt.service.Features.Person;
 using edt.service.Infrastructure.Telemetry;
 using edt.service.Kafka.Model;
 using edt.service.ServiceEvents.UserAccountModification.Models;

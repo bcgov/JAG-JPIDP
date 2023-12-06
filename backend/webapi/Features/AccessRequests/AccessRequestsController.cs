@@ -28,8 +28,14 @@ public class AccessRequestsController : PidpControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ValidatePublicUserCode([FromServices] ICommandHandler<ValidateUser.Command, IDomainResult<UserValidationResponse>> handler,
                                                           [FromRoute] ValidateUser.Command command)
-        => await this.AuthorizePartyBeforeHandleAsync(command.PartyId, handler, command)
-            .ToActionResult();
+    {
+
+        var remoteIpAddress = this.Request.HttpContext.Connection.RemoteIpAddress;
+        command.IPAddress = remoteIpAddress;
+        return await this.AuthorizePartyBeforeHandleAsync(command.PartyId, handler, command)
+
+             .ToActionResult();
+    }
 
 
     [HttpPost("driver-fitness")]
