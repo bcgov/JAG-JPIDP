@@ -24,16 +24,23 @@ public abstract class EdtDisclosureUserProvisioningModel
 
 public class EdtDisclosureDefenceUserProvisioningModel : EdtDisclosureUserProvisioningModel
 {
-    public new string? OrganizationType { get; set; } = "Defence";
-    public new string? OrganizationName { get; set; } = "BC Law";
 
+    public EdtDisclosureDefenceUserProvisioningModel()
+    {
+        this.OrganizationName = "Defence";
+        this.OrganizationName = "BC Law";
+    }
 }
 
 public class EdtDisclosurePublicUserProvisioningModel : EdtDisclosureUserProvisioningModel
 {
-    public new string? OrganizationType { get; set; } = "Public";
-    public new string? OrganizationName { get; set; } = "Out-of-custody-accused";
     public string PersonKey { get; set; } = string.Empty; // ties to participant unique id in core for disclosure for public users
+
+    public EdtDisclosurePublicUserProvisioningModel()
+    {
+        this.OrganizationName = "Public";
+        this.OrganizationName = "Out-of-custody";
+    }
 
 }
 

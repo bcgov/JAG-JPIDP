@@ -18,6 +18,7 @@ export interface UserValidationResponse {
   requestStatus: string;
   alreadyActive: boolean;
   validated: boolean;
+  dataMismatch: boolean;
   tooManyAttempts: boolean;
 }
 

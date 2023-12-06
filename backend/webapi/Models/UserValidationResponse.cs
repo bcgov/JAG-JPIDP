@@ -9,6 +9,6 @@ public class UserValidationResponse
     public bool TooManyAttempts { get; set; }
     public bool AlreadyActive { get; set; }
     public string RequestStatus { get; set; } = string.Empty;
-
+    public bool DataMismatch { get; set; }
 }
 

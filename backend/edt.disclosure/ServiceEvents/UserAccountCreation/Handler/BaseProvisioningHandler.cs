@@ -37,7 +37,7 @@ public abstract class BaseProvisioningHandler
     {
         // check case isnt present - key changes depending on user type
         string? caseKey;
-        if ((accessRequestModel is EdtDisclosurePublicUserProvisioningModel))
+        if (accessRequestModel is EdtDisclosurePublicUserProvisioningModel)
         {
             caseKey = ((EdtDisclosurePublicUserProvisioningModel)accessRequestModel).PersonKey;
             Serilog.Log.Information($"Public user {accessRequestModel.UserName} - creating folio with key: {caseKey}");
@@ -57,7 +57,7 @@ public abstract class BaseProvisioningHandler
             return caseModel;
         }
 
-        var caseName = (accessRequestModel.OrganizationType == this.configuration.EdtClient.OutOfCustodyOrgType)
+        var caseName = (accessRequestModel is EdtDisclosurePublicUserProvisioningModel)
             ? accessRequestModel.FullName + "(" + caseKey + " Accused Folio)"
             : accessRequestModel.FullName + "(" + caseKey + " Defence Folio)";
 
