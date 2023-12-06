@@ -104,7 +104,7 @@ public class PublicUserProvisioningHandler : BaseProvisioningHandler, IKafkaHand
                 }
                 else
                 {
-                    Serilog.Log.Information($"User with key {accessRequestModel.Key} has a folio - adding user to folio if not already linked");
+                    Serilog.Log.Information($"User with key {accessRequestModel.Key} has a folio - adding public user to folio if not already linked");
                     var linked = await this.LinkUserToFolio(accessRequestModel, existingFolio.Id);
                     processResponseData.Add("caseID", "" + existingFolio.Id);
                 }
@@ -155,6 +155,7 @@ public class PublicUserProvisioningHandler : BaseProvisioningHandler, IKafkaHand
                     DomainEvent = (result.eventType == UserModificationEvent.UserEvent.Create) ? "digitalevidencedisclosure-bcsc-usercreation-error" : "digitalevidencedisclosure-bcsc-usermodification-error",
                     Id = accessRequestModel.AccessRequestId,
                     EventTime = SystemClock.Instance.GetCurrentInstant(),
+                    PartId = accessRequestModel.Id,
                     ErrorList = result.Errors,
                     Status = "Error",
                     TraceId = key
@@ -170,6 +171,7 @@ public class PublicUserProvisioningHandler : BaseProvisioningHandler, IKafkaHand
             {
                 DomainEvent = "digitalevidencedisclosure-bcsc-exception",
                 Id = accessRequestModel.AccessRequestId,
+                PartId = accessRequestModel.Id,
                 EventTime = SystemClock.Instance.GetCurrentInstant(),
                 ErrorList = new List<string> { ex.Message },
                 Status = "Error",

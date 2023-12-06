@@ -122,7 +122,7 @@ public class DefenceUserProvisioningHandler : BaseProvisioningHandler, IKafkaHan
                 }
                 else
                 {
-                    Serilog.Log.Information($"User with key {accessRequestModel.Key} has a folio - adding user to folio if not already linked");
+                    Serilog.Log.Information($"User with key {accessRequestModel.Key} has a folio - adding defence user to folio if not already linked");
                     var linked = await this.LinkUserToFolio(accessRequestModel, existingFolio.Id);
                     processResponseData.Add("caseID", "" + existingFolio.Id);
                 }

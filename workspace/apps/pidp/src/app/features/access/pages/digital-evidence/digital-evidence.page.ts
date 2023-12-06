@@ -327,8 +327,16 @@ export class DigitalEvidencePage
               this.formState.OOCUniqueId.markAsUntouched();
               this.userValidationMessage = (res.requestStatus == "Complete") ? 'Code already used and is active - you can login to get your Disclosure package' : `Code used and in status ${res.requestStatus}`;
             }
+            else if (res.dataMismatch) {
+              this.userCodeStatus = 'invalid';
+              this.userValidationMessage = 'Your login information does not match what we have on record for your case. Please visit your local BCPS office for your disclosure. BCPS has been notified of this attempt';
+              this.formState.OOCUniqueId.patchValue('');
+              this.formState.OOCUniqueId.disable();
+              this.publicAccessDenied = true;
+
+            }
             else {
-              this.userCodeStatus = res.validated ? 'valid' : 'invalid';
+              this.userCodeStatus = (res.dataMismatch) ? 'invalid' : res.validated ? 'valid' : 'invalid';
               if (res.validated) {
                 this.formState.OOCUniqueId.disable();
               }

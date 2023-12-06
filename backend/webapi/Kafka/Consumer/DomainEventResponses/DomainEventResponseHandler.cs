@@ -211,7 +211,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
 
     private async Task MarkPublicUserProcessComplete(GenericProcessStatusResponse processResponse)
     {
-        var accessRequest = this.context.AccessRequests.Where(req => req.Id == processResponse.Id).FirstOrDefault();
+        var accessRequest = this.context.AccessRequests.Include(req => req.Party).Where(req => req.Id == processResponse.Id).FirstOrDefault();
 
         if (accessRequest == null)
         {
