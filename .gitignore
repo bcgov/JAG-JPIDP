@@ -383,3 +383,5 @@ FodyWeavers.xsd
 /diam-admin-ui/.vscode/extensions.json
 /diam-admin-ui/src/generated/openapi/.openapi-generator/FILES
 /diam-config/.idea/workspace.xml
+/diam-admin-react
+/Infra/terraform/keycloak
