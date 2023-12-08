@@ -850,6 +850,10 @@ public class EdtClient : BaseClient, IEdtClient
                     }
                 }
             }
+            else
+            {
+                Log.Information($"Person [{request.PersonKey} was not found for folio [{request.DisclosureCaseIdentifier}] linkage - will attempt later");
+            }
 
             return response;
         }
