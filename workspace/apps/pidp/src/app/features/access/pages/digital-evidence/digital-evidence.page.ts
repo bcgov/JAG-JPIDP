@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ViewEncapsulation } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatTableDataSource } from '@angular/material/table';
@@ -34,8 +34,7 @@ import {
 @Component({
   selector: 'app-digital-evidence',
   templateUrl: './digital-evidence.page.html',
-  styleUrls: ['./digital-evidence.page.scss'],
-
+  styleUrls: ['./digital-evidence.page.scss']
 })
 export class DigitalEvidencePage
   extends AbstractFormPage<DigitalEvidenceFormState>
@@ -58,12 +57,14 @@ export class DigitalEvidencePage
   public result: string;
   public userIsBCPS?: boolean;
   public userIsLawyer?: boolean;
+  public showDataMismatchError: boolean;
   public userIsPublic?: boolean;
   public folioId?: number;
   public validatingUser: boolean;
   public userCodeStatus: string;
   public userValidationMessage?: string;
   public accessRequestFailed: boolean;
+  public OOCCodeInvalid: boolean;
   public refreshCount: number;
   public publicAccessDenied: boolean;
   public outOfCustodyCodeAlreadyRequested: boolean;
@@ -98,7 +99,6 @@ export class DigitalEvidencePage
     accessTokenService: AccessTokenService,
     private authorizedUserService: AuthorizedUserService,
     fb: FormBuilder,
-
   ) {
     super(dialog, formUtilsService);
     const routeData = this.route.snapshot.data;
@@ -112,7 +112,9 @@ export class DigitalEvidencePage
     this.validatingUser = false;
     this.publicAccessDenied = false;
     this.refreshOutOfCustodyEnabled = false;
+    this.OOCCodeInvalid = false;
     this.dataSource = new MatTableDataSource();
+    this.showDataMismatchError = false;
     this.outOfCustodyDataSource = new MatTableDataSource(this.outOfCustodyDisclosureListing);
     this.identityProvider$ = this.authorizedUserService.identityProvider$;
     this.result = '';
@@ -179,6 +181,7 @@ export class DigitalEvidencePage
         }
         if (idp === IdentityProvider.BCSC) {
           this.getOutOfCustodyRequests();
+          this.OOCCodeInvalid = true;
           this.userIsPublic = true;
         }
       });
@@ -288,14 +291,25 @@ export class DigitalEvidencePage
 
   }
 
+  public pad(input: string, size: number): string {
 
+    while (input.length < size) input = "0" + input;
+    return input;
+  }
 
-  public checkUniqueID(_event: any): void {
+  public checkUniqueID(): void {
 
     if (this.formState.OOCUniqueId.valid) {
       ///const codeToCheck = this.formState.OOCUniqueId.value.replace(/.{3}(?!$)/g, '$&-');
+      // pad code
+      const codeValue = this.formState.OOCUniqueId.value;
+      if (this.formState.OOCUniqueId.value.length < 6) {
+        this.formState.OOCUniqueId.patchValue(this.pad(codeValue, 6))
+      }
       const codeToCheck = this.formState.OOCUniqueId.value;
       this.validatingUser = true;
+      this.OOCCodeInvalid = true;
+
       this.userCodeStatus = '';
       this.resource.validatePublicUniqueID(
         this.partyService.partyId,
@@ -317,19 +331,21 @@ export class DigitalEvidencePage
             this.userCodeStatus = 'too_many_attempts';
             this.formState.OOCUniqueId.patchValue('');
             this.formState.OOCUniqueId.disable();
+            this.publicAccessDenied = true;
 
             this.userValidationMessage = 'Too many attempts - please contact BCPS for assistance';
           } else {
             if (res.alreadyActive) {
               this.formState.OOCUniqueId.patchValue('');
               this.userCodeStatus = 'valid';
+              this.OOCCodeInvalid = false;
               this.formState.OOCUniqueId.markAsPristine();
               this.formState.OOCUniqueId.markAsUntouched();
               this.userValidationMessage = (res.requestStatus == "Complete") ? 'Code already used and is active - you can login to get your Disclosure package' : `Code used and in status ${res.requestStatus}`;
             }
             else if (res.dataMismatch) {
               this.userCodeStatus = 'invalid';
-              this.userValidationMessage = 'Your login information does not match what we have on record for your case. Please visit your local BCPS office for your disclosure. BCPS has been notified of this attempt';
+              this.showDataMismatchError = true;
               this.formState.OOCUniqueId.patchValue('');
               this.formState.OOCUniqueId.disable();
               this.publicAccessDenied = true;
@@ -339,9 +355,16 @@ export class DigitalEvidencePage
               this.userCodeStatus = (res.dataMismatch) ? 'invalid' : res.validated ? 'valid' : 'invalid';
               if (res.validated) {
                 this.formState.OOCUniqueId.disable();
+                this.OOCCodeInvalid = false;
+              }
+              else {
+                this.formState.OOCUniqueId.patchValue('');
+                this.formState.OOCUniqueId.markAsPristine();
+                this.formState.OOCUniqueId.markAsUntouched();
+                this.publicAccessDenied = false;
+
               }
 
-              this.publicAccessDenied = !res.validated;
               this.userValidationMessage = res.validated ? 'Your code is good. You can now submit your request.' : 'Check your code to make sure it\'s correct, then try again.';
             }
           }
@@ -352,6 +375,8 @@ export class DigitalEvidencePage
     }
 
   }
+
+
 
   public validationEntryDisabled(): boolean {
     return true;
