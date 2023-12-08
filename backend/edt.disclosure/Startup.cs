@@ -46,7 +46,6 @@ public class Startup
     public void ConfigureServices(IServiceCollection services)
     {
         var config = this.InitializeConfiguration(services);
-        Log.Information($"Db config {config.ConnectionStrings.DisclosureDataStore}");
 
         if (string.IsNullOrEmpty(config.SchemaRegistry.Url))
         {
