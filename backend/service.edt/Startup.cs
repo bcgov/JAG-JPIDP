@@ -8,6 +8,7 @@ using edt.service.HttpClients;
 using edt.service.Infrastructure.Auth;
 using edt.service.Infrastructure.Telemetry;
 using edt.service.Kafka;
+using edt.service.ServiceEvents.PersonFolioLinkageHandler;
 using edt.service.ServiceEvents.UserAccountCreation.ConsumerRetry;
 using edt.service.ServiceEvents.UserAccountCreation.Handler;
 using edt.service.ServiceEvents.UserAccountModification.Handler;
@@ -30,6 +31,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Prometheus;
+using Quartz;
 using Serilog;
 using Swashbuckle.AspNetCore.Filters;
 
@@ -154,6 +156,7 @@ public class Startup
 
         services.AddSingleton<OtelMetrics>();
         services.AddSingleton<IAuthorizationHandler, RealmAccessRoleHandler>();
+        services.AddScoped<IFolioLinkageService, FolioLinkageService>();
 
 
         //services.AddSingleton<ProblemDetailsFactory, UserManagerProblemDetailsFactory>();
@@ -219,6 +222,35 @@ public class Startup
             }
         }
 
+        services.AddQuartz(q =>
+        {
+            Log.Information("Starting scheduler..");
+            q.SchedulerId = "Folio-Linkage-Scheduler";
+            q.SchedulerName = "DIAM Scheduler";
+            q.UseMicrosoftDependencyInjectionJobFactory();
+            q.UseSimpleTypeLoader();
+            q.UseInMemoryStore();
+            q.UseDefaultThreadPool(tp =>
+            {
+                tp.MaxConcurrency = 2;
+            });
+
+            q.ScheduleJob<FolioLinkageJob>(trigger => trigger
+              .WithIdentity("Folio linkage process")
+              .StartNow()
+              .WithDailyTimeIntervalSchedule(x => x.WithInterval(config.FolioLinkageBackgroundService.PollSeconds, IntervalUnit.Second))
+              .WithDescription("Court access scheduled event")
+            );
+
+
+        });
+
+
+        services.AddQuartzServer(options =>
+        {
+            options.WaitForJobsToComplete = true;
+        });
+
         Log.Logger.Information("### EDT Service Configuration complete");
 
 
@@ -274,6 +306,7 @@ public class Startup
             endpoints.MapMetrics();
             endpoints.MapHealthChecks("/health/liveness").AllowAnonymous();
         });
+
 
     }
 }

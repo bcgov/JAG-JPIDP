@@ -6,6 +6,7 @@ using Common.Models.EDT;
 using edt.service.Exceptions;
 using edt.service.Infrastructure.Telemetry;
 using edt.service.Kafka.Model;
+using edt.service.ServiceEvents.PersonCreationHandler.Models;
 using edt.service.ServiceEvents.UserAccountModification.Models;
 using Prometheus;
 using Serilog;
@@ -22,6 +23,7 @@ public class EdtClient : BaseClient, IEdtClient
     private static readonly Histogram GetUserDuration = Metrics.CreateHistogram("edt_get_user_duration", "Histogram of edt account lookups.");
     private static readonly Histogram ParticipantCreationDuration = Metrics.CreateHistogram("edt_participant_creation_duration", "Histogram of edt participant creations.");
     private static readonly Histogram ParticipantModificationDuration = Metrics.CreateHistogram("edt_participant_modification_duration", "Histogram of edt participant modifications.");
+    private static readonly Histogram DisclosureLinkageDuration = Metrics.CreateHistogram("edt_person_disclosure_linkage", "Histogram of edt participant to folio linkage events.");
 
 
 
@@ -816,6 +818,42 @@ public class EdtClient : BaseClient, IEdtClient
     }
 
 
+    /// <summary>
+    /// Link a person to their disclosure folio in the disclosure portal
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    public async Task<bool> LinkPersonToDisclosureFolio(PersonFolioLinkage request)
+    {
+        using (DisclosureLinkageDuration.NewTimer())
+        {
+            var response = false;
+            Log.Logger.Information($"Linking {request.DisclosureCaseIdentifier} to {request.PersonKey}");
+            // get the person by key
+            var person = await this.GetPerson(request.PersonKey);
+            if (person != null)
+            {
+                // check no existing disc person identifier
+                var existingIdentifier = person.Identifiers.FirstOrDefault(identifier => identifier.IdentifierType == "DisclosurePortalCase");
+                if (existingIdentifier != null)
+                {
+                    Log.Information($"Found existing DisclosurePortalCase {existingIdentifier.IdentifierValue} for person {request.PersonKey}");
+                    response = true;
+                }
+                else
+                {
+                    var added = await this.AddPersonIdentifier((int)person.Id, "DisclosurePortalCase", request.DisclosureCaseIdentifier);
+                    if (added > 0)
+                    {
+                        Log.Information($"Added new person identifier {added} {person.Id} {request.PersonKey} {request.DisclosureCaseIdentifier}");
+                        response = true;
+                    }
+                }
+            }
+
+            return response;
+        }
+    }
 
     public class AddUserToOuGroup
     {

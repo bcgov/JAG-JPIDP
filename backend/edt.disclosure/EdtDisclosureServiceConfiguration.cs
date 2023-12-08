@@ -118,6 +118,7 @@ public class EdtDisclosureServiceConfiguration
         public string Scope { get; set; } = "openid";
         public string ConsumerGroupId { get; set; } = "disclosure-consumer-group";
         public string RetryConsumerGroupId { get; set; } = "disclosure-retry-consumer-group";
+        public string CoreFolioCreationNotificationTopic { get; set; } = string.Empty;
 
 
     }

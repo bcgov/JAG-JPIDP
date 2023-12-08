@@ -74,7 +74,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
             //check whether this message has been processed before   
             if (await this.context.HasBeenProcessed(key, consumerName))
             {
-                //await trx.RollbackAsync();
+                await trx.RollbackAsync();
                 return Task.CompletedTask;
             }
             ///check whether edt service api is available before making any http request

@@ -24,6 +24,8 @@ public class PublicUserProvisioningHandler : BaseProvisioningHandler, IKafkaHand
     private readonly ILogger logger;
     private readonly DisclosureDataStoreDbContext context;
     private readonly IKafkaProducer<string, Notification> producer;
+    private readonly IKafkaProducer<string, PersonFolioLinkageModel> folioLinkageProducer;
+
     private readonly IKafkaProducer<string, GenericProcessStatusResponse> processResponseProducer;
 
     public PublicUserProvisioningHandler(
@@ -32,9 +34,10 @@ public class PublicUserProvisioningHandler : BaseProvisioningHandler, IKafkaHand
         IClock clock,
         IMapper mapper,
         ILogger logger,
+        IKafkaProducer<string, PersonFolioLinkageModel> folioLinkageProducer,
         IKafkaProducer<string, Notification> producer,
         IKafkaProducer<string, GenericProcessStatusResponse> processResponseProducer,
-        DisclosureDataStoreDbContext context) : base(edtClient, configuration)
+        DisclosureDataStoreDbContext context) : base(edtClient, configuration, folioLinkageProducer)
     {
         this.configuration = configuration;
         this.context = context;

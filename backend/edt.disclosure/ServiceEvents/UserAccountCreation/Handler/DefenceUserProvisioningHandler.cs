@@ -12,7 +12,8 @@ using edt.disclosure.ServiceEvents.UserAccountCreation.Models;
 using Microsoft.Extensions.Logging;
 using NodaTime;
 
-public class DefenceUserProvisioningHandler : BaseProvisioningHandler, IKafkaHandler<string, EdtDisclosureDefenceUserProvisioningModel>
+public class DefenceUserProvisioningHandler : BaseProvisioningHandler,
+    IKafkaHandler<string, EdtDisclosureDefenceUserProvisioningModel>
 {
 
 
@@ -24,6 +25,8 @@ public class DefenceUserProvisioningHandler : BaseProvisioningHandler, IKafkaHan
     private readonly ILogger logger;
     private readonly DisclosureDataStoreDbContext context;
     private readonly IKafkaProducer<string, Notification> producer;
+    private readonly IKafkaProducer<string, PersonFolioLinkageModel> folioLinkageProducer;
+
     private readonly IKafkaProducer<string, GenericProcessStatusResponse> processResponseProducer;
 
     public DefenceUserProvisioningHandler(
@@ -34,7 +37,9 @@ public class DefenceUserProvisioningHandler : BaseProvisioningHandler, IKafkaHan
         ILogger logger,
         IKafkaProducer<string, Notification> producer,
         IKafkaProducer<string, GenericProcessStatusResponse> processResponseProducer,
-        DisclosureDataStoreDbContext context) : base(edtClient, configuration)
+                IKafkaProducer<string, PersonFolioLinkageModel> folioLinkageProducer,
+
+        DisclosureDataStoreDbContext context) : base(edtClient, configuration, folioLinkageProducer)
     {
 
         this.configuration = configuration;
@@ -45,7 +50,7 @@ public class DefenceUserProvisioningHandler : BaseProvisioningHandler, IKafkaHan
         this.edtClient = edtClient;
         this.producer = producer;
         this.processResponseProducer = processResponseProducer;
-
+        this.folioLinkageProducer = folioLinkageProducer;
     }
 
     public async Task<Task> HandleAsync(string consumerName, string key, EdtDisclosureDefenceUserProvisioningModel accessRequestModel)
@@ -148,7 +153,7 @@ public class DefenceUserProvisioningHandler : BaseProvisioningHandler, IKafkaHan
                         DomainEvent = (result.eventType == UserModificationEvent.UserEvent.Create) ? "digitalevidencedisclosure-defence-usercreation-complete" : "digitalevidencedisclosure-defence-usermodification-complete",
                         Id = accessRequestModel.AccessRequestId,
                         EventTime = SystemClock.Instance.GetCurrentInstant(),
-                        Status = "Complete",
+                        Status = "Complete-Pending-Folio-Linkage",
                         ResponseData = processResponseData,
                         TraceId = key
                     });

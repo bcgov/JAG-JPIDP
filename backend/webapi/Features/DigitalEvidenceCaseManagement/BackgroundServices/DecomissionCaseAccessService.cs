@@ -28,7 +28,7 @@ public class DecomissionCaseAccessService : BackgroundService
     }
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        this.logger.LogDebug($"{nameof(DecomissionCaseAccessService)} in starting");
+        this.logger.LogDebug($"{nameof(DecomissionCaseAccessService)} is starting");
 
         var period = TimeSpan.FromHours(this.config.BackGroundServices.DecomissionCaseAccessService.PeriodicTimer);
         stoppingToken.Register(() => this.logger.LogDebug("#1 DecomissionCaseAccessService background task is stopping."));

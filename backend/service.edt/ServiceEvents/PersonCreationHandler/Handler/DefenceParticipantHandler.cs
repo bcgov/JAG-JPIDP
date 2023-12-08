@@ -1,6 +1,7 @@
 namespace edt.service.ServiceEvents.UserAccountCreation.Handler;
 
 using System.Diagnostics;
+using Common.Models.EDT;
 using edt.service.Data;
 using edt.service.Exceptions;
 using edt.service.HttpClients.Services.EdtCore;
