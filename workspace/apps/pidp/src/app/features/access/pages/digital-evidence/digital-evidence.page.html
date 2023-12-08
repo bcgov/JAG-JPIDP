@@ -116,24 +116,35 @@
         </div>
         <div>
           <p></p>
-          Enter the code given by <b>The BC Prosecution Service</b>.<br />
-          If you do not have a code, contact your local <b>Court Location</b> for help.<br />
+          Enter the 6 digit code given by <b>The BC Prosecution Service</b>.<br />
+          If you do not have a code, contact your local <b>Crown Office location</b> for help.<br />
           If you have more than one code you may request access multiple times.<br />
           After entering a valid code, click <b>Submit</b> to request access to your Disclosure.
 
         </div>
         <div class="col-md-6 col-sm-12 mt-3">
-          <mat-form-field class="code-entry mat-elevation-z16">
-            <input oninput="this.value = this.value.toUpperCase()" matInput placeholder="Code" class="formControl"
-              formControlName="OOCUniqueId" [readonly]="false" (keyup)="checkUniqueID($event)" mask="AAAAAA" />
-          </mat-form-field>
+          <div>
+            <mat-form-field class="code-entry mat-elevation-z16">
+              <input oninput="this.value = this.value.toUpperCase()" matInput placeholder="Code" class="formControl"
+                formControlName="OOCUniqueId" [readonly]="false" mask="0*" />
+            </mat-form-field>
+
+          </div>
+        </div>
+        <div class="col-md-6 col-sm-12 align-middle my-auto">
+          <button mat-flat-button uiPageFooterAction type="button" color="primary"
+            [disabled]="!formState.form.valid || publicAccessDenied" (click)="checkUniqueID()">
+            Validate Code
+          </button>
         </div>
 
-        <div class="col-md-6 col-sm-12 align-middle my-auto">
+      </div>
+      <div>
+        <div class="col-12 align-middle my-auto ">
           <div *ngIf="validatingUser">
             <mat-spinner class="spinner" [diameter]="60"></mat-spinner>
           </div>
-          <div *ngIf="userCodeStatus === 'too_many_attempts'">
+          <div *ngIf="userCodeStatus === 'too_many_attempts'" class="user-notification mt-3 field-highlight">
             <mat-icon>warning</mat-icon>
             <b class="danger">You have entered an invalid code too many times.</b><br />
             <i>Please contact the BC Prosecution Service for assistance</i>
@@ -143,18 +154,30 @@
 
             We are unable to check your code at this time, please try again later
           </div>
-          <div *ngIf="userValidationMessage && userCodeStatus !== 'error' && userCodeStatus !== 'too_many_attempts' ">
-            <div class="user-notification field-highlight">
+          <div
+            *ngIf="!showDataMismatchError && userValidationMessage && userCodeStatus !== 'error' && userCodeStatus !== 'too_many_attempts' ">
+            <div class="user-notification field-highlight  mt-3">
               <mat-icon [class]="userCodeStatus === 'valid' ? 'valid-icon' : 'error-icon'">
                 {{ userCodeStatus === '' ? '' : userCodeStatus === 'valid' ? 'check_circle_outline' :
                 'block' }}
               </mat-icon>
-              {{userValidationMessage}}
+              <div>{{userValidationMessage}}</div>
             </div>
           </div>
         </div>
+        <div *ngIf="showDataMismatchError === true" class="col-md-12 mt-3 user-notification field-highlight">
+          NOTICE: <b class="danger">Your account cannot be created</b> due to mismatched information between your case
+          identifier and your BC Services Card.<br /> Please
+          ensure you have entered all information correctly. <br />If you are still unable to create an account you must
+          attend at the
+          Crown office <b>as soon as possible</b> to obtain your disclosure.<br /> If you are represented by counsel,
+          you can
+          also receive
+          your disclosure from them.<br /><b class="danger">It is your obligation to arrange to receive your disclosure
+            in a
+            timely fashion.</b>
 
-
+        </div>
       </div>
 
     </ui-page-section-subheader>
@@ -220,7 +243,7 @@
     </button>
 
     <button *ngIf="!(completed || pending)" mat-flat-button uiPageFooterAction type="button" color="primary"
-      [disabled]="!formState.form.valid || publicAccessDenied" (click)="onRequestAccess()">
+      [disabled]="!formState.form.valid || publicAccessDenied || OOCCodeInvalid" (click)="onRequestAccess()">
       Submit
     </button>
   </ui-page-footer>
