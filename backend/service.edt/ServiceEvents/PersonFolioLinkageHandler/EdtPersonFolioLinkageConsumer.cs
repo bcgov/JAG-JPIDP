@@ -4,12 +4,12 @@ using System.Net;
 using Common.Models.EDT;
 using edt.service.Kafka.Interfaces;
 
-public class EdtPersonCreationConsumer : BackgroundService
+public class EdtPersonFolioLinkageConsumer : BackgroundService
 {
-    private readonly IKafkaConsumer<string, EdtPersonProvisioningModel> consumer;
+    private readonly IKafkaConsumer<string, PersonFolioLinkageModel> consumer;
 
     private readonly EdtServiceConfiguration config;
-    public EdtPersonCreationConsumer(IKafkaConsumer<string, EdtPersonProvisioningModel> kafkaConsumer, EdtServiceConfiguration config)
+    public EdtPersonFolioLinkageConsumer(IKafkaConsumer<string, PersonFolioLinkageModel> kafkaConsumer, EdtServiceConfiguration config)
     {
         this.consumer = kafkaConsumer;
         this.config = config;
@@ -18,8 +18,8 @@ public class EdtPersonCreationConsumer : BackgroundService
     {
         try
         {
-            Serilog.Log.Information($"Consume from ConsumerTopicName {this.config.KafkaCluster.PersonCreationTopic}");
-            await this.consumer.Consume(this.config.KafkaCluster.PersonCreationTopic, stoppingToken);
+            Serilog.Log.Information($"Consume from ConsumerTopicName {this.config.KafkaCluster.CoreFolioCreationNotificationTopic}");
+            await this.consumer.Consume(this.config.KafkaCluster.CoreFolioCreationNotificationTopic, stoppingToken);
         }
         catch (Exception ex)
         {

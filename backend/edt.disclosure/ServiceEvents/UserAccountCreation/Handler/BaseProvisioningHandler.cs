@@ -3,17 +3,20 @@ namespace edt.disclosure.ServiceEvents.UserAccountCreation.Handler;
 using Common.Models.EDT;
 using edt.disclosure.Exceptions;
 using edt.disclosure.HttpClients.Services.EdtDisclosure;
+using edt.disclosure.Kafka.Interfaces;
 using edt.disclosure.Kafka.Model;
 
 public abstract class BaseProvisioningHandler
 {
     protected IEdtDisclosureClient edtClient { get; set; }
     protected readonly EdtDisclosureServiceConfiguration configuration;
+    protected readonly IKafkaProducer<string, PersonFolioLinkageModel> folioLinkageProducer;
 
-    protected BaseProvisioningHandler(IEdtDisclosureClient edtClient, EdtDisclosureServiceConfiguration configuration)
+    protected BaseProvisioningHandler(IEdtDisclosureClient edtClient, EdtDisclosureServiceConfiguration configuration, IKafkaProducer<string, PersonFolioLinkageModel> producer)
     {
         this.edtClient = edtClient;
         this.configuration = configuration;
+        this.folioLinkageProducer = producer;
     }
 
     protected async Task<string> CheckEdtServiceVersion() => await this.edtClient.GetVersion();
@@ -137,6 +140,19 @@ public abstract class BaseProvisioningHandler
         }
 
         Serilog.Log.Information($"Added groups {addGroupCount} to user {user.Id} folio {caseId}");
+
+        // once linkage is complete we need to publish back to core the ID for the folio and the user info
+        var msgKey = Guid.NewGuid().ToString();
+        var produced = await this.folioLinkageProducer.ProduceAsync(this.configuration.KafkaCluster.CoreFolioCreationNotificationTopic, msgKey, new PersonFolioLinkageModel
+        {
+            DisclosureCaseIdentifier = "1-" + caseId,
+            PersonKey = user.Key,
+            AccessRequestId = accessRequestModel.AccessRequestId,
+            PersonType = (accessRequestModel is EdtDisclosureDefenceUserProvisioningModel) ? "Counsel" : "Public",
+            Status = "Pending"
+        });
+
+
         return true;
     }
 

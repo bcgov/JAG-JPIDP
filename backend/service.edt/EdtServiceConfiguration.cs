@@ -19,7 +19,7 @@ public class EdtServiceConfiguration
     public RetryPolicyConfiguration RetryPolicy { get; set; } = new();
     public EdtClientConfiguration EdtClient { get; set; } = new();
     public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
-
+    public BackgroundServiceConfig FolioLinkageBackgroundService { get; set; } = new BackgroundServiceConfig();
     public SchemaRegistryConfiguration SchemaRegistry { get; set; } = new();
     public TelemeteryConfiguration Telemetry { get; set; } = new TelemeteryConfiguration();
 
@@ -32,6 +32,11 @@ public class EdtServiceConfiguration
         public string AzureConnectionString { get; set; } = string.Empty;
         public bool LogToConsole { get; set; }
 
+    }
+
+    public class BackgroundServiceConfig
+    {
+        public int PollSeconds { get; set; } = 120; // default to every 2 minutes
     }
 
     public class AddressAutocompleteClientConfiguration
@@ -110,6 +115,7 @@ public class EdtServiceConfiguration
         public string Scope { get; set; } = "openid";
         public string ConsumerGroupId { get; set; } = "accessrequest-consumer-group";
         public string RetryConsumerGroupId { get; set; } = "accessrequest-retry-consumer-group";
+        public string CoreFolioCreationNotificationTopic { get; set; } = string.Empty;
 
     }
 

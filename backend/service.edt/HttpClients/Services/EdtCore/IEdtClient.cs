@@ -2,6 +2,7 @@ namespace edt.service.HttpClients.Services.EdtCore;
 
 using Common.Models.EDT;
 using edt.service.Kafka.Model;
+using edt.service.ServiceEvents.PersonCreationHandler.Models;
 using edt.service.ServiceEvents.UserAccountModification.Models;
 
 public interface IEdtClient
@@ -13,6 +14,7 @@ public interface IEdtClient
     Task<UserModificationEvent> ModifyPerson(IncomingUserModification modificationInfo);
     Task<int> AddPersonIdentifier(int personId, string identifierType, string identifierValue);
     Task<UserModificationEvent> UpdateUserDetails(EdtUserDto userDetails);
+    Task<bool> LinkPersonToDisclosureFolio(PersonFolioLinkage request);
 
 
     Task<int> GetOuGroupId(string regionName);

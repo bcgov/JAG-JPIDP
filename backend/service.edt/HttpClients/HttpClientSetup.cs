@@ -4,7 +4,6 @@ using System.Net.Http.Headers;
 using edt.service.HttpClients.Services.EdtCore;
 using EdtService.Extensions;
 using IdentityModel.Client;
-using Microsoft.AspNetCore.Http.Json;
 using Serilog;
 
 public static class HttpClientSetup
@@ -32,7 +31,7 @@ public static class HttpClientSetup
     {
         builder.Services.AddSingleton(credentials)
             .AddTransient<BearerTokenHandler<T>>();
-   
+
         builder.AddHttpMessageHandler<BearerTokenHandler<T>>();
 
         return builder;
