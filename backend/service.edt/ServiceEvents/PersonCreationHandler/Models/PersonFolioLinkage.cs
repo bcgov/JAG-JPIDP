@@ -19,4 +19,6 @@ public class PersonFolioLinkage : UserAccountCreation.Models.BaseAuditable
     public string PersonType { get; set; } = string.Empty;
 
     public int RetryCount { get; set; }
+
+    public string EdtExternalId { get; set; } = string.Empty;
 }

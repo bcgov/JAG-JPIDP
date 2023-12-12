@@ -7,6 +7,6 @@ public class PersonFolioLinkageModel
     public string Status { get; set; } = string.Empty;
     public string PersonType { get; set; } = string.Empty;
     public int AccessRequestId { get; set; }
-
+    public string EdtExternalId { get; set; } = string.Empty;
 
 }

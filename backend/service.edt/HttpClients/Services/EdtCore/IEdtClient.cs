@@ -103,4 +103,14 @@ public interface IEdtClient
     /// <param name="identifierValue"></param>
     /// <returns></returns>
     Task<List<EdtPersonDto>> GetPersonsByIdentifier(string identifierType, string identifierValue);
+
+    /// <summary>
+    /// Currently an identifier should be unique across the type (e.g. Person) so if any are found
+    /// it should always be a single return value
+    /// </summary>
+    /// <param name="identifierType"></param>
+    /// <param name="identifierValue"></param>
+    /// <returns></returns>
+    Task<EdtPersonDto> GetPersonByIdentifier(string identifierType, string identifierValue);
+
 }

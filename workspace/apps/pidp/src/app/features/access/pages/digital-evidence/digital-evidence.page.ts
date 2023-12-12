@@ -300,13 +300,12 @@ export class DigitalEvidencePage
   public checkUniqueID(): void {
 
     if (this.formState.OOCUniqueId.valid) {
-      ///const codeToCheck = this.formState.OOCUniqueId.value.replace(/.{3}(?!$)/g, '$&-');
+      const codeToCheck = this.formState.OOCUniqueId.value.replace(/\D/g, '');
       // pad code
       const codeValue = this.formState.OOCUniqueId.value;
       if (this.formState.OOCUniqueId.value.length < 6) {
         this.formState.OOCUniqueId.patchValue(this.pad(codeValue, 6))
       }
-      const codeToCheck = this.formState.OOCUniqueId.value;
       this.validatingUser = true;
       this.OOCCodeInvalid = true;
 

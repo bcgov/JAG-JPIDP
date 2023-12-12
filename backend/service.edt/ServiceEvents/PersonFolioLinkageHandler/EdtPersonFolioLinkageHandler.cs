@@ -55,7 +55,8 @@ public class EdtPersonFolioLinkageHandler : IKafkaHandler<string, PersonFolioLin
                     PersonKey = accessRequestModel.PersonKey,
                     PersonType = accessRequestModel.PersonType,
                     Status = accessRequestModel.Status,
-                    DisclosureCaseIdentifier = accessRequestModel.DisclosureCaseIdentifier
+                    DisclosureCaseIdentifier = accessRequestModel.DisclosureCaseIdentifier,
+                    EdtExternalId = accessRequestModel.EdtExternalId
                 });
 
                 // store idempotent record
