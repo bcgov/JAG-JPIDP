@@ -14,4 +14,9 @@
   </ItemGroup>
 
 
+  <ItemGroup>
+    <Folder Include="ServiceEvents\UserAccountModification\Models\" />
+  </ItemGroup>
+
+
 </Project>

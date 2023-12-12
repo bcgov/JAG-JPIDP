@@ -2,17 +2,16 @@ namespace Pidp.Features.Parties;
 
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Common.Models;
 using FluentValidation;
 using HybridModelBinding;
 using Microsoft.EntityFrameworkCore;
-
+using Newtonsoft.Json;
 using Pidp.Data;
+using Pidp.Helpers.Serializers;
 using Pidp.Infrastructure.HttpClients.Keycloak;
 using Pidp.Kafka.Interfaces;
 using Pidp.Models;
-using Newtonsoft.Json;
-
-using Pidp.Helpers.Serializers;
 
 public class Demographics
 {
@@ -46,7 +45,7 @@ public class Demographics
         {
             this.RuleFor(x => x.Id).GreaterThan(0);
             this.RuleFor(x => x.Email).NotEmpty().EmailAddress(); // TODO Custom email validation?
-           // this.RuleFor(x => x.Phone).NotEmpty();
+                                                                  // this.RuleFor(x => x.Phone).NotEmpty();
         }
     }
 
@@ -78,7 +77,8 @@ public class Demographics
         private readonly IKafkaProducer<string, UserChangeModel> producer;
 
 
-        public CommandHandler(PidpDbContext context, IKafkaProducer<string, UserChangeModel> producer, PidpConfiguration configuration, IKeycloakAdministrationClient administrationClient) {
+        public CommandHandler(PidpDbContext context, IKafkaProducer<string, UserChangeModel> producer, PidpConfiguration configuration, IKeycloakAdministrationClient administrationClient)
+        {
             this.context = context;
             this.administrationClient = administrationClient;
             this.producer = producer;
@@ -88,7 +88,7 @@ public class Demographics
 
         public async Task HandleAsync(Command command)
         {
-            var party = await this.context.Parties.Include(party => party.OrgainizationDetail).Include( org => org.OrgainizationDetail.Organization)
+            var party = await this.context.Parties.Include(party => party.OrgainizationDetail).Include(org => org.OrgainizationDetail.Organization)
                 .SingleAsync(party => party.Id == command.Id);
 
             var currentEmail = party.Email ?? "";
@@ -108,7 +108,7 @@ public class Demographics
             {
                 Serilog.Log.Information($"Updating {party.Id} email to {command.Email} from {currentEmail}");
                 var messageId = Guid.NewGuid().ToString();
-           
+
                 var userInfo = await this.administrationClient.GetUser(party.UserId);
                 if (userInfo != null)
                 {

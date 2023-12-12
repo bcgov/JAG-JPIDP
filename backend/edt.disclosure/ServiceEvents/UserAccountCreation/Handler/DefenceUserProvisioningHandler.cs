@@ -98,38 +98,43 @@ public class DefenceUserProvisioningHandler : BaseProvisioningHandler,
                 await this.context.SaveChangesAsync();
                 CaseModel existingFolio = null;
 
-                if (!string.IsNullOrEmpty(accessRequestModel.EdtExternalIdentifier))
-                {
-                    Serilog.Log.Information($"User {accessRequestModel.ManuallyAddedParticipantId} was manually added - checking for folio with identifier {accessRequestModel.EdtExternalIdentifier}");
-                    existingFolio = await this.edtClient.FindCaseByKey(accessRequestModel.EdtExternalIdentifier);
-                    if (existingFolio == null)
-                    {
-                        Serilog.Log.Information($"No folio was found for {accessRequestModel.FullName} - folio will be created");
-                    }
-                }
-
-                if (existingFolio == null)
-                {
-                    // get the folio for the user (if present)
-                    existingFolio = await this.edtClient.FindCaseByKey(accessRequestModel.Key);
-                }
-
                 // we'll track the created case Id so that we can later notify core if necessary to add as LinkDicsloureCaseId to the participant in core
                 var processResponseData = new Dictionary<string, string>();
 
-                if (existingFolio == null)
+                if (this.configuration.EdtClient.CreateUserFolios)
                 {
-                    Serilog.Log.Information($"User with key {accessRequestModel.Key} does not currently have a folio - adding folio");
-                    var folio = await this.CreateUserFolio(accessRequestModel);
-                    var linked = await this.LinkUserToFolio(accessRequestModel, folio.Id);
-                    processResponseData.Add("caseID", "" + folio.Id);
+                    if (!string.IsNullOrEmpty(accessRequestModel.EdtExternalIdentifier))
+                    {
+                        Serilog.Log.Information($"User {accessRequestModel.ManuallyAddedParticipantId} was manually added - checking for folio with identifier {accessRequestModel.EdtExternalIdentifier}");
+                        existingFolio = await this.edtClient.FindCaseByKey(accessRequestModel.EdtExternalIdentifier);
+                        if (existingFolio == null)
+                        {
+                            Serilog.Log.Information($"No folio was found for {accessRequestModel.FullName} - folio will be created");
+                        }
+                    }
 
-                }
-                else
-                {
-                    Serilog.Log.Information($"User with key {accessRequestModel.Key} has a folio - adding defence user to folio if not already linked");
-                    var linked = await this.LinkUserToFolio(accessRequestModel, existingFolio.Id);
-                    processResponseData.Add("caseID", "" + existingFolio.Id);
+                    if (existingFolio == null)
+                    {
+                        // get the folio for the user (if present)
+                        existingFolio = await this.edtClient.FindCaseByKey(accessRequestModel.Key);
+                    }
+
+
+
+                    if (existingFolio == null)
+                    {
+                        Serilog.Log.Information($"User with key {accessRequestModel.Key} does not currently have a folio - adding folio");
+                        var folio = await this.CreateUserFolio(accessRequestModel);
+                        var linked = await this.LinkUserToFolio(accessRequestModel, folio.Id);
+                        processResponseData.Add("caseID", "" + folio.Id);
+
+                    }
+                    else
+                    {
+                        Serilog.Log.Information($"User with key {accessRequestModel.Key} has a folio - adding defence user to folio if not already linked");
+                        var linked = await this.LinkUserToFolio(accessRequestModel, existingFolio.Id);
+                        processResponseData.Add("caseID", "" + existingFolio.Id);
+                    }
                 }
 
                 try

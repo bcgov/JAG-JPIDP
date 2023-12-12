@@ -76,6 +76,7 @@ public enum ChangeType
     PASSWORD,
     EMAIL,
     REGIONS,
+    PHONE,
     ROLES,
     ACTIVATION,
     LASTNAME,

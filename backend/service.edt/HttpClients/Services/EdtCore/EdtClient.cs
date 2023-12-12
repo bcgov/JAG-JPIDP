@@ -278,6 +278,8 @@ public class EdtClient : BaseClient, IEdtClient
 
     }
 
+
+
     /// <summary>
     /// Add an identifier to a person
     /// </summary>
@@ -742,6 +744,7 @@ public class EdtClient : BaseClient, IEdtClient
         {
             this.meters.UpdatePerson();
 
+            var hasChange = false;
             var person = await this.GetPerson(modificationInfo.Key);
 
             if (person == null)
@@ -751,31 +754,62 @@ public class EdtClient : BaseClient, IEdtClient
                 throw new EdtServiceException(msg);
             }
 
-            var emailChange = modificationInfo.SingleChangeTypes.FirstOrDefault(change => change.Key == ChangeType.EMAIL);
-            var changeValue = emailChange.Value;
-
-            if (changeValue == null || changeValue.To == null || (changeValue.From == changeValue.To))
+            foreach (var changeEvent in modificationInfo.SingleChangeTypes)
             {
-                throw new EdtServiceException($"Unable to update user {modificationInfo.Key} with invalid email info");
+                var changeValue = changeEvent.Value;
+
+                if (changeValue != null)
+                {
+                    switch (changeEvent.Key)
+                    {
+                        case ChangeType.EMAIL:
+                        {
+                            person.Address.Email = changeValue.To;
+                            Log.Information($"Email address change for {modificationInfo.ChangeId} to {changeValue.To}");
+                            hasChange = true;
+                            break;
+                        }
+                        case ChangeType.PHONE:
+                        {
+                            person.Address.Phone = changeValue.To;
+                            Log.Information($"Phone change for {modificationInfo.ChangeId} to {changeValue.To}");
+                            hasChange = true;
+                            break;
+                        }
+
+                    }
+                }
+                else
+                {
+                    throw new EdtServiceException($"Unable to update user {modificationInfo.Key} with invalid {changeEvent.Key} info");
+
+                }
             }
 
-            person.Address.Email = changeValue.To;
-
-
-            var result = await this.PutAsync($"api/v1/org-units/1/persons/" + person.Id, person);
             var userModificationResponse = new UserModificationEvent
             {
                 partId = modificationInfo.Key,
                 eventType = UserModificationEvent.UserEvent.Modify,
                 eventTime = DateTime.Now,
-                accessRequestId = modificationInfo.ChangeId,
-                successful = true
+                accessRequestId = modificationInfo.ChangeId
             };
 
-            if (!result.IsSuccess)
+            if (hasChange)
             {
-                Log.Logger.Error("Failed to update EDT person {0}", string.Join(",", result.Errors));
-                userModificationResponse.successful = false;
+                var result = await this.PutAsync($"api/v1/org-units/1/persons/" + person.Id, person);
+                userModificationResponse.successful = true;
+
+                if (!result.IsSuccess)
+                {
+                    Log.Logger.Error("Failed to update EDT person {0}", string.Join(",", result.Errors));
+                    userModificationResponse.successful = false;
+                }
+            }
+            else
+            {
+                Log.Information($"No valid changes in modification request {modificationInfo.ChangeId} - request ignored");
+                userModificationResponse.successful = true;
+
             }
 
 

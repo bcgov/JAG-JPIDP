@@ -55,6 +55,7 @@ public class EdtDisclosureServiceConfiguration
         public string OutOfCustodyOrgType { set; get; } = "Out-of-custody";
         public string OutOfCustodyTemplateName { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
+        public bool CreateUserFolios { get; set; } = true;
     }
 
     public class CustomDisplayField

@@ -134,7 +134,7 @@ public static class AuthenticationSetup
 
     private static Task OnAuthenticationFailure(AuthenticationFailedContext context)
     {
-        Serilog.Log.Warning($"Authentication failure");
+        Serilog.Log.Warning($"Authentication failure {context.HttpContext.Request.Path}");
         return Task.CompletedTask;
     }
 
