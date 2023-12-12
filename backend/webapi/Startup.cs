@@ -32,6 +32,7 @@ using Pidp.Features.CourtLocations.Jobs;
 using Pidp.Features.Monitor;
 using Pidp.Features.Organization.OrgUnitService;
 using Pidp.Features.Organization.UserTypeService;
+using Pidp.Features.Parties;
 using Pidp.Helpers.Middleware;
 using Pidp.Infrastructure;
 using Pidp.Infrastructure.Auth;
@@ -150,6 +151,8 @@ public class Startup
         services.AddScoped<IUserTypeService, UserTypeService>();
         services.AddScoped<IOrgUnitService, OrgUnitService>();
         services.AddScoped<ICourtAccessService, CourtAccessService>();
+        services.AddScoped<IProfileUpdateService, ProfileUpdateServiceImpl>();
+
         services.AddSingleton(typeof(IKafkaProducer<,>), typeof(KafkaProducer<,>));
 
 

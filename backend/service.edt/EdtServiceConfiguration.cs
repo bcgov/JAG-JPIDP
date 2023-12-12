@@ -37,6 +37,7 @@ public class EdtServiceConfiguration
     public class BackgroundServiceConfig
     {
         public int PollSeconds { get; set; } = 120; // default to every 2 minutes
+        public int MaxRetriesForLinking { get; set; } = 10;
     }
 
     public class AddressAutocompleteClientConfiguration

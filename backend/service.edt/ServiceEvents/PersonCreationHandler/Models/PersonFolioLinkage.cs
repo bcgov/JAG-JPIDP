@@ -17,4 +17,6 @@ public class PersonFolioLinkage : UserAccountCreation.Models.BaseAuditable
     public string Status { get; set; } = string.Empty;
 
     public string PersonType { get; set; } = string.Empty;
+
+    public int RetryCount { get; set; }
 }

@@ -49,7 +49,18 @@ public class FolioLinkageService : IFolioLinkageService
 
                 processedCount++;
             }
+            else
+            {
+                request.Modified = this.clock.GetCurrentInstant();
+                request.RetryCount++;
 
+                if (request.RetryCount > this.config.FolioLinkageBackgroundService.MaxRetriesForLinking)
+                {
+                    this.logger.LogMaxRetriesExceeded(request.PersonKey, request.DisclosureCaseIdentifier);
+                    request.Status = "Max Retries";
+
+                }
+            }
         }
 
         await this.context.SaveChangesAsync();
@@ -64,4 +75,6 @@ public static partial class FolioLinkageServiceLoggingExtensions
     public static partial void LogProcessingPending(this ILogger logger, int count);
     [LoggerMessage(2, LogLevel.Information, "Processing folio link {key} {discId}")]
     public static partial void LogPendingRequestItem(this ILogger logger, string key, string discId);
+    [LoggerMessage(3, LogLevel.Error, "Max retries for folio link {key} {discId} - check particpant info")]
+    public static partial void LogMaxRetriesExceeded(this ILogger logger, string key, string discId);
 }

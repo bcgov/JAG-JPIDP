@@ -1,14 +1,12 @@
-using System;
 using AutoMapper;
-using edt.disclosure.Data;
+using Common.Models;
 using edt.disclosure;
-using edt.disclosure.Kafka.Interfaces;
-using NodaTime;
-using edt.disclosure.HttpClients.Services.EdtDisclosure;
-using edt.disclosure.ServiceEvents.UserAccountCreation.Models;
-using edt.disclosure.Models;
-using edt.disclosure.ServiceEvents.UserAccountModification.Models;
+using edt.disclosure.Data;
 using edt.disclosure.Exceptions;
+using edt.disclosure.HttpClients.Services.EdtDisclosure;
+using edt.disclosure.Kafka.Interfaces;
+using edt.disclosure.Models;
+using NodaTime;
 
 public class UserChangeHandler : IKafkaHandler<string, UserChangeModel>
 {
@@ -43,30 +41,46 @@ public class UserChangeHandler : IKafkaHandler<string, UserChangeModel>
 
     public async Task<Task> HandleAsync(string consumerName, string key, UserChangeModel userChangeEvent)
     {
-
-        var response = await this.edtClient.UpdateUser(userChangeEvent);
-        var responseID = Guid.NewGuid().ToString();
-        var processResponse = new GenericProcessStatusResponse
+        using var trx = this.context.Database.BeginTransaction();
+        try
         {
-            DomainEvent = response.successful ? "digitalevidencedisclosure-usermodification-complete" : "digitalevidencedisclosure-usermodification-error",
-            EventTime = clock.GetCurrentInstant(),
-            PartId = userChangeEvent.UserID,
-            Status = response.successful ? "Complete" : "Error",
-            ErrorList = response.Errors,
-            TraceId = responseID
-        };
+            //check whether this message has been processed before   
+            if (await this.context.HasBeenProcessed(key, consumerName))
+            {
+                await trx.RollbackAsync();
+                return Task.CompletedTask;
+            }
 
-        var publishResult = await this.processResponseProducer.ProduceAsync(this.configuration.KafkaCluster.ProcessResponseTopic, responseID, processResponse);
-        if ( publishResult.Status == Confluent.Kafka.PersistenceStatus.Persisted )
-        {
-            Serilog.Log.Information($"Process response {responseID} for update request {userChangeEvent.ChangeId}");
-            return Task.CompletedTask;
+
+            var response = await this.edtClient.UpdateUser(userChangeEvent);
+            var responseID = Guid.NewGuid().ToString();
+            var processResponse = new GenericProcessStatusResponse
+            {
+                DomainEvent = response.successful ? "digitalevidencedisclosure-usermodification-complete" : "digitalevidencedisclosure-usermodification-error",
+                EventTime = this.clock.GetCurrentInstant(),
+                PartId = userChangeEvent.UserID,
+                Status = response.successful ? "Complete" : "Error",
+                ErrorList = response.Errors,
+                TraceId = responseID
+            };
+
+            var publishResult = await this.processResponseProducer.ProduceAsync(this.configuration.KafkaCluster.ProcessResponseTopic, responseID, processResponse);
+            if (publishResult.Status == Confluent.Kafka.PersistenceStatus.Persisted)
+            {
+                Serilog.Log.Information($"Process response {responseID} for update request {userChangeEvent.ChangeId}");
+                return Task.CompletedTask;
+            }
+            else
+            {
+                Serilog.Log.Error($"Failed to create response {responseID} for update request {userChangeEvent.ChangeId}");
+                return Task.FromException(new EdtDisclosureServiceException($"Failed to create response {responseID} for update request {userChangeEvent.ChangeId}"));
+            }
         }
-        else
+        catch (Exception ex)
         {
-            Serilog.Log.Error($"Failed to create response {responseID} for update request {userChangeEvent.ChangeId}");
-            return Task.FromException(new EdtDisclosureServiceException($"Failed to create response {responseID} for update request {userChangeEvent.ChangeId}"));
-        }
+            await trx.RollbackAsync();
+            return Task.FromException(ex);
 
+        }
     }
 }
