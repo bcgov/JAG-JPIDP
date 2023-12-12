@@ -246,6 +246,16 @@ public class EdtClient : BaseClient, IEdtClient
         return returnPersons;
     }
 
+    public async Task<EdtPersonDto> GetPersonByIdentifier(string identifierType, string identifierValue)
+    {
+        var persons = await this.GetPersonsByIdentifier(identifierType, identifierValue);
+        if (persons.Count == 1)
+        {
+            return persons.First();
+        }
+        return null;
+    }
+
     private async Task<bool> AddUserToSubmittingAgencyGroup(EdtUserProvisioningModel accessRequest, string userId)
     {
         if (accessRequest == null)
@@ -863,8 +873,11 @@ public class EdtClient : BaseClient, IEdtClient
         {
             var response = false;
             Log.Logger.Information($"Linking {request.DisclosureCaseIdentifier} to {request.PersonKey}");
+
             // get the person by key
-            var person = await this.GetPerson(request.PersonKey);
+            var person = (request.PersonType == "Counsel") ? await this.GetPerson(request.PersonKey) : await this.GetPersonByIdentifier("edtExternalid", request.EdtExternalId);
+
+
             if (person != null)
             {
                 // check no existing disc person identifier

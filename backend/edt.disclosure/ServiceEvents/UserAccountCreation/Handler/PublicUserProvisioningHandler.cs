@@ -94,8 +94,6 @@ public class PublicUserProvisioningHandler : BaseProvisioningHandler, IKafkaHand
                     { "OOCUniqueId", accessRequestModel.PersonKey }
                 };
 
-                // attempt folio lookup by identifier
-                //existingFolio ??= await this.edtClient.FindCaseByIdentifier("edtExternalId", accessRequestModel.PersonKey);
 
                 if (existingFolio == null)
                 {
