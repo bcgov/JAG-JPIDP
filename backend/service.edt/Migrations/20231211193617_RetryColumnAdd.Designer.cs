@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NodaTime;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,10 @@ using edt.service.Data;
 namespace edt.service.Migrations
 {
     [DbContext(typeof(EdtDataStoreDbContext))]
-    partial class EdtDataStoreDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231211193617_RetryColumnAdd")]
+    partial class RetryColumnAdd
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -1,9 +1,8 @@
 namespace edt.disclosure.ServiceEvents.UserAccountModification;
 
 using System.Net;
-using edt.disclosure.HttpClients.Services.EdtDisclosure;
+using Common.Models;
 using edt.disclosure.Kafka.Interfaces;
-using edt.disclosure.ServiceEvents.UserAccountModification.Models;
 
 public class UserModificationConsumer : BackgroundService
 {

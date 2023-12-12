@@ -2,6 +2,7 @@ namespace edt.disclosure.HttpClients.Services.EdtDisclosure;
 
 using System.Threading.Tasks;
 using AutoMapper;
+using Common.Models;
 using Common.Models.EDT;
 using edt.disclosure.Exceptions;
 using edt.disclosure.Infrastructure.Telemetry;
@@ -9,7 +10,6 @@ using edt.disclosure.Kafka.Model;
 using edt.disclosure.Models;
 using edt.disclosure.ServiceEvents.CourtLocation.Models;
 using edt.disclosure.ServiceEvents.UserAccountCreation.Models;
-using edt.disclosure.ServiceEvents.UserAccountModification.Models;
 using Prometheus;
 using Serilog;
 
@@ -380,7 +380,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         using (AccountUpdateDuration.NewTimer())
         {
 
-
+            var hasChanges = false;
             // check the user exists
             var currentUser = await this.GetUser(changeEvent.Key);
             if (currentUser == null)
@@ -402,23 +402,34 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             {
                 foreach (var changeType in changeEvent.SingleChangeTypes)
                 {
-                    switch (changeType.Key)
+                    if (changeType.Value != null && !string.IsNullOrEmpty(changeType.Value.To))
                     {
-                        case ChangeType.EMAIL:
+                        switch (changeType.Key)
                         {
-                            Log.Information($"Handling email change event for {changeEvent.Key} to {changeType.Value.To}");
-                            currentUser.Email = changeType.Value.To;
-                            break;
-                        }
+                            case ChangeType.EMAIL:
+                            {
+                                Log.Information($"Handling email change event for {changeEvent.Key} to {changeType.Value.To}");
+                                currentUser.Email = changeType.Value.To;
+                                hasChanges = true;
+                                break;
+                            }
+                            case ChangeType.PHONE:
+                            {
+                                Log.Information($"Handling email change event for {changeEvent.Key} to {changeType.Value.To}");
+                                currentUser.Email = changeType.Value.To;
+                                hasChanges = true;
 
-                        default:
-                        {
-                            Log.Warning($"Ignoring change event {changeType.Key} for {changeEvent.UserID} ({changeType.Value.To})");
-                            break;
-                        }
+                                break;
+                            }
 
+                            default:
+                            {
+                                Log.Warning($"Ignoring change event {changeType.Key} for {changeEvent.UserID} ({changeType.Value.To})");
+                                break;
+                            }
+
+                        }
                     }
-
                 }
             }
             if (changeEvent.BooleanChangeTypes.Any())
@@ -431,6 +442,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
                         {
                             Log.Information($"Handling activation change event for {changeEvent.Key} to {changeType.Value.To}");
                             currentUser.IsActive = changeType.Value.To;
+                            hasChanges = true;
                             break;
                         }
 
@@ -444,12 +456,20 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
                 }
             }
 
-            var result = await this.PutAsync($"api/v1/users", currentUser);
-
-            if (!result.IsSuccess)
+            if (hasChanges)
             {
-                userModificationResponse.successful = false;
-                userModificationResponse.Errors.AddRange(result.Errors);
+                var result = await this.PutAsync($"api/v1/users", currentUser);
+
+                if (!result.IsSuccess)
+                {
+                    userModificationResponse.successful = false;
+                    userModificationResponse.Errors.AddRange(result.Errors);
+                }
+            }
+            else
+            {
+                Log.Information($"No changes detected for {changeEvent.Key}");
+                userModificationResponse.successful = true;
             }
 
             return userModificationResponse;

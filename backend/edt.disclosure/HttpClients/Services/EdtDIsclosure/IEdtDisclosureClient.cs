@@ -1,11 +1,10 @@
 namespace edt.disclosure.HttpClients.Services.EdtDisclosure;
 
 using System.Collections.Generic;
+using Common.Models;
 using Common.Models.EDT;
 using edt.disclosure.Kafka.Model;
-using edt.disclosure.Models;
 using edt.disclosure.ServiceEvents.CourtLocation.Models;
-using edt.disclosure.ServiceEvents.UserAccountModification.Models;
 
 public interface IEdtDisclosureClient
 {

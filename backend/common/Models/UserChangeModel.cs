@@ -1,4 +1,6 @@
-namespace Pidp.Models;
+namespace Common.Models;
+
+
 
 using System.Collections.Generic;
 using Newtonsoft.Json;
@@ -33,6 +35,7 @@ public enum ChangeType
     ROLES,
     ACTIVATION,
     LASTNAME,
+    PHONE,
     FIRSTNAME
 }
 
