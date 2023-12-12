@@ -7,7 +7,6 @@ using Common.Models.EDT;
 using edt.disclosure.Exceptions;
 using edt.disclosure.Infrastructure.Telemetry;
 using edt.disclosure.Kafka.Model;
-using edt.disclosure.Models;
 using edt.disclosure.ServiceEvents.CourtLocation.Models;
 using edt.disclosure.ServiceEvents.UserAccountCreation.Models;
 using Prometheus;
@@ -142,7 +141,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             else
             {
                 Log.Information($"Adding user {user.Id} to court location {courtLocation.Id} {courtLocation.Key}");
-                var addedOk = await this.AddUserToCase(user.Id, courtLocation.Id, "Reviewers");
+                var addedOk = await this.AddUserToCase(user.Id, courtLocation.Id, this.configuration.EdtClient.CourtLocationGroup);
                 if (addedOk)
                 {
                     Log.Information($"Added user {user.Id} to court location {courtLocation.Id} {courtLocation.Key}");

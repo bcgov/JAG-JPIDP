@@ -23,6 +23,7 @@ public class PidpConfiguration
     public EdtClientConfiguration EdtClient { get; set; } = new EdtClientConfiguration();
     public EdtCaseManagementClientConfiguration EdtCaseManagementClient { get; set; } = new EdtCaseManagementClientConfiguration();
     public EdtClientConfiguration EdtDisclosureClient { get; set; } = new EdtClientConfiguration();
+    public EnvironmentConfiguration EnvironmentConfig { get; set; } = new EnvironmentConfiguration();
 
     public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
     public CourtAccessConfiguration CourtAccess { get; set; } = new();
@@ -148,6 +149,11 @@ public class PidpConfiguration
     {
         public string Url { get; set; } = string.Empty;
         public int Port { get; set; }
+    }
+
+    public class EnvironmentConfiguration
+    {
+        public string SupportEmail { get; set; } = "jpsprovideridentityportal@gov.bc.ca";
     }
 
     public class EdtClientConfiguration
