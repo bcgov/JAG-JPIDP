@@ -143,10 +143,13 @@ public abstract class BaseProvisioningHandler
 
         // once linkage is complete we need to publish back to core the ID for the folio and the user info
         var msgKey = Guid.NewGuid().ToString();
+        var edtKey = (accessRequestModel is EdtDisclosurePublicUserProvisioningModel model) ? model.PersonKey : "";
+
         var produced = await this.folioLinkageProducer.ProduceAsync(this.configuration.KafkaCluster.CoreFolioCreationNotificationTopic, msgKey, new PersonFolioLinkageModel
         {
             DisclosureCaseIdentifier = "1-" + caseId,
             PersonKey = user.Key,
+            EdtExternalId = edtKey,
             AccessRequestId = accessRequestModel.AccessRequestId,
             PersonType = (accessRequestModel is EdtDisclosureDefenceUserProvisioningModel) ? "Counsel" : "Public",
             Status = "Pending"
