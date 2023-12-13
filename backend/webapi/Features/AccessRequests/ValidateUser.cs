@@ -149,7 +149,7 @@ public class ValidateUser
                         ToString(), new Notification
                         {
                             DomainEvent = "digitalevidence-bcsc-too-many-validation-attempts",
-                            To = "lee.wright@nttdata.com",
+                            To = this.configuration.EnvironmentConfig.SupportEmail,
                             Subject = $"BCSC DIAM User {party.LastName} had too many code validation attempts",
                             EventData = eventData
 
@@ -266,7 +266,7 @@ public class ValidateUser
                                                 ToString(), new Notification
                                                 {
                                                     DomainEvent = "digitalevidence-bcsc-data-mismatch",
-                                                    To = "lee.wright@nttdata.com",
+                                                    To = this.configuration.EnvironmentConfig.SupportEmail,
                                                     Subject = $"BCSC DIAM User {party.LastName} EDT/JUSTIN info does not match credentials",
                                                     EventData = eventData
 

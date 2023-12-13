@@ -241,7 +241,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
             var published = await this.notificationProducer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopicName, messageKey, new Notification
             {
                 DomainEvent = "digitalevidence-bcsc-usercreation-error",
-                To = "lee.wright@nttdata.com",
+                To = this.configuration.EnvironmentConfig.SupportEmail,
                 EventData = eventData
             });
         }
