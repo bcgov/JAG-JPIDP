@@ -15,6 +15,9 @@ using Prometheus;
 
 public class CourtAccessRequest
 {
+    private readonly TimeZoneInfo timeZone;
+
+
     public class Command : ICommand<IDomainResult>
     {
         public int PartyId { get; set; }
@@ -40,6 +43,8 @@ public class CourtAccessRequest
         private readonly IClock clock;
         private readonly ILogger logger;
         private readonly PidpConfiguration config;
+        private readonly DateTime utcDateTime;
+        private readonly TimeZoneInfo timeZone;
         private readonly ICourtAccessService courtAccessService;
         private readonly PidpDbContext context;
         private static readonly Histogram CourtLocationRequestDuration = Metrics
@@ -53,13 +58,14 @@ public class CourtAccessRequest
             this.context = context;
             this.courtAccessService = courtAccessService;
         }
+        public DateTime UniversalTime { get { return this.utcDateTime; } }
 
 
         public async Task<IDomainResult> HandleAsync(Command command)
         {
             using (CourtLocationRequestDuration.NewTimer())
             {
-                command.ValidFrom = command.ValidFrom;
+                command.ValidFrom = TimeZoneInfo.ConvertTimeToUtc(command.ValidFrom);
                 command.ValidUntil.Date.AddDays(1);
 
                 var dto = await this.GetPidpUser(command);
