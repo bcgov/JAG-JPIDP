@@ -1,17 +1,14 @@
 namespace Pidp.Features.CourtLocations.Commands;
 
 using System;
-using Confluent.Kafka;
+using Common.Helpers.Utils;
 using DomainResults.Common;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using NodaTime;
 using Pidp.Data;
-using Pidp.Data.Migrations;
-using Pidp.Exceptions;
 using Pidp.Features.AccessRequests;
 using Pidp.Features.DigitalEvidenceCaseManagement.Commands;
-using Pidp.Kafka.Interfaces;
 using Pidp.Models;
 using Pidp.Models.Lookups;
 using Prometheus;
@@ -57,11 +54,12 @@ public class CourtAccessRequest
             this.courtAccessService = courtAccessService;
         }
 
+
         public async Task<IDomainResult> HandleAsync(Command command)
         {
             using (CourtLocationRequestDuration.NewTimer())
             {
-                command.ValidFrom.Date.AddDays(1);
+                command.ValidFrom = command.ValidFrom;
                 command.ValidUntil.Date.AddDays(1);
 
                 var dto = await this.GetPidpUser(command);
@@ -82,7 +80,7 @@ public class CourtAccessRequest
 
                     if (location != null)
                     {
-                        var today = DateTime.Now;
+                        var today = DateTime.Now.ChangeTime(0, 0, 0, 1);
 
                         // check if this is already requested
                         var existingRequests = this.context.CourtLocationAccessRequests.Where(clar => clar.PartyId == command.PartyId && clar.CourtLocation == location).ToList();
@@ -126,7 +124,7 @@ public class CourtAccessRequest
                         {
                             Serilog.Log.Information($"Updating request {courtLocationRequest.RequestId}");
                             // request has been moved to today from a future date
-                            if (command.ValidFrom.DayOfYear == today.DayOfYear && courtLocationRequest.RequestStatus == CourtLocationAccessStatus.SubmittedFuture )
+                            if (command.ValidFrom.DayOfYear == today.DayOfYear && courtLocationRequest.RequestStatus == CourtLocationAccessStatus.SubmittedFuture)
                             {
                                 courtLocationRequest.RequestStatus = CourtLocationAccessStatus.Submitted;
                                 newRequest = true;
