@@ -154,6 +154,7 @@ public class PidpConfiguration
     public class EnvironmentConfiguration
     {
         public string SupportEmail { get; set; } = "jpsprovideridentityportal@gov.bc.ca";
+        public string Environment { get; set; } = string.Empty;
     }
 
     public class EdtClientConfiguration
