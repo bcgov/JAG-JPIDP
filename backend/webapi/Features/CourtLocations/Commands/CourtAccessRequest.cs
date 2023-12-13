@@ -1,7 +1,6 @@
 namespace Pidp.Features.CourtLocations.Commands;
 
 using System;
-using Common.Helpers.Utils;
 using DomainResults.Common;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -86,7 +85,7 @@ public class CourtAccessRequest
 
                     if (location != null)
                     {
-                        var today = DateTime.Now.ChangeTime(0, 0, 0, 1);
+                        var today = DateTime.Now;
 
                         // check if this is already requested
                         var existingRequests = this.context.CourtLocationAccessRequests.Where(clar => clar.PartyId == command.PartyId && clar.CourtLocation == location).ToList();
@@ -149,9 +148,9 @@ public class CourtAccessRequest
 
 
 
-                        if (command.ValidFrom.DayOfYear == today.DayOfYear && newRequest)
+                        if (command.ValidFrom.DayOfYear == today.ToLocalTime().DayOfYear && newRequest)
                         {
-                            Serilog.Log.Information($"Request {courtLocationRequest.RequestId} is for today - adding to event topic");
+                            Serilog.Log.Information($"Request {courtLocationRequest.RequestId} is for today {today.ToLocalTime().DayOfYear} - adding to event topic");
                             var response = this.courtAccessService.CreateAddCourtAccessDomainEvent(courtLocationRequest);
 
                         }
