@@ -75,7 +75,7 @@ public class PidpConfiguration
 
     public class CourtAccessConfiguration
     {
-        public int PollSeconds { get; set; } = 600;
+        public string PollCron { get; set; } = "0 * * * * ?";
     }
 
     public class ChesClientConfiguration
@@ -96,6 +96,7 @@ public class PidpConfiguration
         public string AdministrationClientId { get; set; } = string.Empty;
         public string AdministrationClientSecret { get; set; } = string.Empty;
         public string HcimClientId { get; set; } = string.Empty;
+        public string BirthdateField { get; set; } = "birthdate";
     }
 
     public class LdapClientConfiguration
@@ -164,6 +165,7 @@ public class PidpConfiguration
         public string ClientId { get; set; } = string.Empty;
         public string ClientSecret { get; set; } = string.Empty;
         public int MaxClientValidations { get; set; } = 5;
+        public string DateOfBirthField { get; set; } = "Date of Birth";
     }
 
 

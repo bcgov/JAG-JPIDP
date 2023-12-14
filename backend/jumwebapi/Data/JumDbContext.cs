@@ -1,9 +1,10 @@
 namespace jumwebapi.Data;
 
+using AppAny.Quartz.EntityFrameworkCore.Migrations;
+using AppAny.Quartz.EntityFrameworkCore.Migrations.PostgreSQL;
 using jumwebapi.Data.ef;
 using jumwebapi.Features.UserChangeManagement.Data;
 using jumwebapi.Models;
-using jumwebapi.Models.Lookups;
 using Microsoft.EntityFrameworkCore;
 using NodaTime;
 
@@ -13,7 +14,7 @@ public class JumDbContext : DbContext
 
     public JumDbContext(DbContextOptions<JumDbContext> options, IClock clock) : base(options) => this.clock = clock;
 
-    public DbSet<JustinUser> Users { get; set; } = default!; 
+    public DbSet<JustinUser> Users { get; set; } = default!;
 
     //public DbSet<ParticipantModel> Participants { get; set; } = default!;
     public DbSet<JustinRole> Roles { get; set; } = default!;
@@ -44,6 +45,9 @@ public class JumDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Adds Quartz.NET PostgreSQL schema to EntityFrameworkCore
+        modelBuilder.AddQuartz(builder => builder.UsePostgreSql());
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(JumDbContext).Assembly);
     }

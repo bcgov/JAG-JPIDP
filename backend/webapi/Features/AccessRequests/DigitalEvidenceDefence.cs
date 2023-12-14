@@ -290,7 +290,7 @@ public class DigitalEvidenceDefence
 
             }
 
-            if (!string.Join(" ", BCFamilyName).Equals(keycloakUser.LastName, StringComparison.OrdinalIgnoreCase))
+            if (!string.Join(" ", BCFamilyName).Equals(keycloakUser.LastName.Trim(), StringComparison.OrdinalIgnoreCase))
             {
                 Serilog.Log.Error($"User family name does not match between BCSC [{string.Join(" ", BCFamilyName)}] and BCLaw [{keycloakUser.LastName}] {keycloakUser}");
                 errors.Add($"User family name does not match between BCSC [{string.Join(" ", BCFamilyName)}] and BCLaw [{keycloakUser.LastName}]");
@@ -298,7 +298,7 @@ public class DigitalEvidenceDefence
             }
 
 
-            if (!string.Join(" ", BCFirstName).Equals(keycloakUser.FirstName, StringComparison.OrdinalIgnoreCase))
+            if (!string.Join(" ", BCFirstName).Equals(keycloakUser.FirstName.Trim(), StringComparison.OrdinalIgnoreCase))
             {
                 Serilog.Log.Error($"User first name does not match between BCSC [{string.Join(" ", BCFirstName)}] and BCLaw [{keycloakUser.FirstName}] {keycloakUser}");
                 errors.Add($"User first name does not match between BCSC [{string.Join(" ", BCFirstName)}] and BCLaw [{keycloakUser.FirstName}]");
@@ -326,7 +326,7 @@ public class DigitalEvidenceDefence
             return delivered;
         }
 
-        private EdtDisclosureDefenceUserProvisioningModel GetDisclosureUserModel(Command command, PartyDto dto, Models.DigitalEvidenceDisclosure digitalEvidenceDisclosure, Models.DigitalEvidenceDefence digitalEvidenceDefence
+        private EdtDisclosureDefenceUserProvisioningModel GetDisclosureUserModel(Command command, PartyDto dto, DigitalEvidenceDisclosure digitalEvidenceDisclosure, Models.DigitalEvidenceDefence digitalEvidenceDefence
             )
         {
             var systemType = digitalEvidenceDisclosure.OrganizationType.Equals(this.LAW_SOCIETY, StringComparison.Ordinal) ? AccessTypeCode.DigitalEvidenceDisclosure.ToString() : AccessTypeCode.DigitalEvidence.ToString();

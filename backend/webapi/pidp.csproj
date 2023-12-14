@@ -14,11 +14,13 @@
     <None Remove="logs\**" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="AppAny.Quartz.EntityFrameworkCore.Migrations.PostgreSQL" Version="0.4.0" />
+    <PackageReference Include="Quartz.Serialization.Json" Version="3.8.0" />
     <ProjectReference Include="..\common\Common.csproj" />
     <PackageReference Include="HybridModelBinding" Version="0.18.0" />
-    <PackageReference Include="Quartz" Version="3.6.2" />
-    <PackageReference Include="Quartz.AspNetCore" Version="3.6.2" />
-    <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.6.2" />
+    <PackageReference Include="Quartz" Version="3.8.0" />
+    <PackageReference Include="Quartz.AspNetCore" Version="3.8.0" />
+    <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.8.0" />
     <PackageReference Include="Keycloak.Net" Version="1.0.18" />
     <PackageReference Include="SendGrid" Version="9.28.1" />
 
