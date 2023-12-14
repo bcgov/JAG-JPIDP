@@ -215,12 +215,12 @@ public class ValidateUser
                             var edtLastName = info.LastName;
                             if (info.Fields.Any())
                             {
-                                var edtDOBField = info.Fields.First(field => field.Name.Equals("Date of Birth"));
+                                var edtDOBField = info.Fields.First(field => field.Name.Equals(this.configuration.EdtClient.DateOfBirthField));
                                 var d = DateTimeOffset.Parse(edtDOBField.Value);
                                 var edtDOBFieldDate = d.Date.ToShortDateString();
 
                                 // we'll check against keycloak user as this will be sync with BCSC
-                                var keycloakDOB = keycloakUser.Attributes.First(attr => attr.Key.Equals("birthdate"));
+                                var keycloakDOB = keycloakUser.Attributes.First(attr => attr.Key.Equals(this.configuration.Keycloak.BirthdateField));
                                 if (keycloakDOB.Value != null)
                                 {
                                     if (keycloakDOB.Value.Length == 1 && keycloakDOB.Value[0].Equals(edtDOBFieldDate) &&

@@ -238,7 +238,8 @@
   </ng-container>
 
   <ui-page-footer [mode]="completed ? 'reverse' : 'normal'">
-    <button mat-stroked-button uiPageFooterAction type="button" color="secondary" (click)="onBack()">
+    <button mat-stroked-button uiPageFooterAction type="button"
+      [color]="(completed || pending) ? 'primary' : 'secondary'" (click)="onBack()">
       {{ completed || pending ? 'Back' : 'Back' }}
     </button>
 

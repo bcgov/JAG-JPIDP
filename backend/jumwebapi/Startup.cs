@@ -35,6 +35,8 @@ using NodaTime;
 using NodaTime.Serialization.SystemTextJson;
 using Prometheus;
 using Quartz;
+using Quartz.AspNetCore;
+using Quartz.Impl.AdoJobStore;
 using Serilog;
 using Swashbuckle.AspNetCore.Filters;
 
@@ -185,20 +187,44 @@ public class Startup
                 Log.Information("Starting ORDS Test scheduler..");
                 q.SchedulerId = "JUM-ORDS-TEST";
                 q.SchedulerName = "ORDS Test Scheduler";
-                q.UseMicrosoftDependencyInjectionJobFactory();
-                q.UseSimpleTypeLoader();
-                q.UseInMemoryStore();
-                q.UseDefaultThreadPool(tp =>
+
+                q.UsePersistentStore(store =>
                 {
-                    tp.MaxConcurrency = 2;
+                    // Use for PostgresSQL database
+                    store.UsePostgres(pgOptions =>
+                    {
+                        pgOptions.UseDriverDelegate<PostgreSQLDelegate>();
+                        pgOptions.ConnectionString = config.ConnectionStrings.JumDatabase;
+                        pgOptions.TablePrefix = "quartz.qrtz_";
+                    });
+                    store.UseJsonSerializer();
                 });
 
-                q.ScheduleJob<ORDSTestJob>(trigger => trigger
-                  .WithIdentity("JUM Test ORDS trigger")
-                  .StartNow()
-                  .WithDailyTimeIntervalSchedule(x => x.WithInterval(10, IntervalUnit.Second))
-                  .WithDescription("JUM Test scheduled event")
-              );
+                // q.UseMicrosoftDependencyInjectionJobFactory();
+                //q.UseSimpleTypeLoader();
+                //q.UseInMemoryStore();
+                //q.UseDefaultThreadPool(tp =>
+                //{
+                //    tp.MaxConcurrency = 2;
+                //});
+                var jobKey = new JobKey("JUM Test ORDS");
+                q.AddJob<ORDSTestJob>(opts => opts.WithIdentity(jobKey));
+
+                Log.Information($"Scheduling JUM Test ORDS with params [{config.TestORDSConfiguration.PollCron}]");
+
+                // Create a trigger for the job
+                q.AddTrigger(opts => opts
+                    .ForJob(jobKey) // link to the HelloWorldJob
+                    .WithIdentity("JUM Test ORDS trigger") // give the trigger a unique name
+                    .WithDescription("JUM Test scheduled event for ORDS")
+                    .WithCronSchedule(config.TestORDSConfiguration.PollCron));
+
+
+                //q.ScheduleJob<ORDSTestJob>(trigger => trigger
+                //  .WithIdentity("JUM Test ORDS trigger")
+                //  .StartNow()
+                //  .WithDailyTimeIntervalSchedule(x => x.WithInterval(10, IntervalUnit.Second))
+                //  .WithDescription("JUM Test scheduled event")
             });
 
             services.AddQuartzServer(options =>

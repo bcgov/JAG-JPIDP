@@ -32,6 +32,8 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Prometheus;
 using Quartz;
+using Quartz.AspNetCore;
+using Quartz.Impl.AdoJobStore;
 using Serilog;
 using Swashbuckle.AspNetCore.Filters;
 
@@ -222,25 +224,53 @@ public class Startup
             }
         }
 
+
+
         services.AddQuartz(q =>
         {
             Log.Information("Starting scheduler..");
             q.SchedulerId = "Folio-Linkage-Scheduler";
             q.SchedulerName = "DIAM Scheduler";
-            q.UseMicrosoftDependencyInjectionJobFactory();
-            q.UseSimpleTypeLoader();
-            q.UseInMemoryStore();
-            q.UseDefaultThreadPool(tp =>
+
+            q.UsePersistentStore(store =>
             {
-                tp.MaxConcurrency = 2;
+                // Use for PostgresSQL database
+                store.UsePostgres(pgOptions =>
+                {
+                    pgOptions.UseDriverDelegate<PostgreSQLDelegate>();
+                    pgOptions.ConnectionString = config.ConnectionStrings.EdtDataStore;
+                    pgOptions.TablePrefix = "quartz.qrtz_";
+                });
+                store.UseJsonSerializer();
             });
 
-            q.ScheduleJob<FolioLinkageJob>(trigger => trigger
-              .WithIdentity("Folio linkage process")
-              .StartNow()
-              .WithDailyTimeIntervalSchedule(x => x.WithInterval(config.FolioLinkageBackgroundService.PollSeconds, IntervalUnit.Second))
-              .WithDescription("Court access scheduled event")
-            );
+
+            // q.UseMicrosoftDependencyInjectionJobFactory();
+            //q.UseSimpleTypeLoader();
+            //q.UseInMemoryStore();
+            //q.UseDefaultThreadPool(tp =>
+            //{
+            //    tp.MaxConcurrency = 2;
+            //});
+
+
+            var jobKey = new JobKey("Folio Linkage Jon");
+
+            q.AddJob<FolioLinkageJob>(opts => opts.WithIdentity(jobKey));
+            Log.Information($"Scheduling FolioLinkageBackgroundService with params [{config.FolioLinkageBackgroundService.PollCron}]");
+
+            q.AddTrigger(opts => opts
+                .ForJob(jobKey) // link to the HelloWorldJob
+                .WithIdentity("Folio-linkage-trigger") // give the trigger a unique name
+                .WithDescription("Court access scheduled event")
+                .WithCronSchedule(config.FolioLinkageBackgroundService.PollCron));
+
+            //q.ScheduleJob<FolioLinkageJob>(trigger => trigger
+            //  .WithIdentity("Folio linkage process")
+            //  .StartNow()
+            //  .WithDailyTimeIntervalSchedule(x => x.WithInterval(config.FolioLinkageBackgroundService.PollSeconds, IntervalUnit.Second))
+            //  .WithDescription("Court access scheduled event")
+            //);
 
 
         });
