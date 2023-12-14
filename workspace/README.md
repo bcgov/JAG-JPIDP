@@ -16,10 +16,10 @@ The following list includes the required software needed to run the application,
 
 [Download](https://git-scm.com/downloads) and install the Git version control system, and optionally [download](https://www.gitkraken.com) and install the free GitKraken Git GUI client.
 
-Clone the PIdP repository into a project directory GitKraken or the terminal by typing:
+Clone the JAG-JPIdP repository into a project directory GitKraken or the terminal by typing:
 
 ```bash
-git clone https://github.com/bcgov/moh-pidp
+git clone https://github.com/bcgov/JAG-JPIDP
 ```
 
 #### Node
