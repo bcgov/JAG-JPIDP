@@ -1,4 +1,7 @@
 namespace edt.service.Data;
+
+using AppAny.Quartz.EntityFrameworkCore.Migrations;
+using AppAny.Quartz.EntityFrameworkCore.Migrations.PostgreSQL;
 using edt.service.ServiceEvents.PersonCreationHandler.Models;
 using edt.service.ServiceEvents.UserAccountCreation.Models;
 using Microsoft.EntityFrameworkCore;
@@ -42,6 +45,9 @@ public class EdtDataStoreDbContext : DbContext
         modelBuilder.Entity<NotificationAckModel>()
             .ToTable("Notifications")
             .HasKey(x => new { x.NotificationId, x.EmailAddress });
+
+        // Adds Quartz.NET PostgreSQL schema to EntityFrameworkCore
+        modelBuilder.AddQuartz(builder => builder.UsePostgreSql());
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(EdtDataStoreDbContext).Assembly);
     }

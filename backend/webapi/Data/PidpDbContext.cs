@@ -1,5 +1,7 @@
 namespace Pidp.Data;
 
+using AppAny.Quartz.EntityFrameworkCore.Migrations;
+using AppAny.Quartz.EntityFrameworkCore.Migrations.PostgreSQL;
 using Microsoft.EntityFrameworkCore;
 using NodaTime;
 using Pidp.Models;
@@ -67,7 +69,6 @@ public class PidpDbContext : DbContext
     }
 
 
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -83,9 +84,10 @@ public class PidpDbContext : DbContext
         modelBuilder.Entity<ExportedEvent>()
             .ToTable("OutBoxedExportedEvent");
 
+        // Adds Quartz.NET PostgreSQL schema to EntityFrameworkCore
+        modelBuilder.AddQuartz(builder => builder.UsePostgreSql());
+
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(PidpDbContext).Assembly);
-
-
 
     }
 

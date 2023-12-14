@@ -38,6 +38,8 @@ public class EdtServiceConfiguration
     {
         public int PollSeconds { get; set; } = 120; // default to every 2 minutes
         public int MaxRetriesForLinking { get; set; } = 10;
+        public string PollCron { get; set; } = "0/30 * * ? * * *";
+
     }
 
     public class AddressAutocompleteClientConfiguration
