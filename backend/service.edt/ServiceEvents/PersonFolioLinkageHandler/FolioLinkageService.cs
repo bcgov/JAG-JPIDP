@@ -35,7 +35,7 @@ public class FolioLinkageService : IFolioLinkageService
     public async Task<int> ProcessPendingRequests()
     {
         var processedCount = 0;
-        var pending = this.context.FolioLinkageRequests.Where(req => req.Status == "Pending");
+        var pending = this.context.FolioLinkageRequests.Where(req => req.Status == "Pending").ToList();
         this.logger.LogProcessingPending(pending.Count());
         foreach (var request in pending)
         {
