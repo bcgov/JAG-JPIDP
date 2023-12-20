@@ -225,37 +225,39 @@ public class ValidateUser
                                 }
                                 else
                                 {
-
-                                    var edtDOBDateOnly = (edtDOBField.Value.Contains(" ")) ? DateOnly.Parse(edtDOBField.Value.Split(" ")[0]) : DateOnly.Parse(edtDOBField.Value);
-
-                                    // we'll check against keycloak user as this will be sync with BCSC
-                                    var keycloakDOB = keycloakUser.Attributes.First(attr => attr.Key.Equals(this.configuration.Keycloak.BirthdateField));
-                                    if (keycloakDOB.Value != null)
+                                    if (edtDOBField.Value is string)
                                     {
-                                        var keycloakDOBString = (keycloakDOB.Value.Length == 1) ? keycloakDOB.Value[0] : "";
-                                        var pattern = LocalDatePattern.CreateWithInvariantCulture("yyyy-MM-dd");
+                                        var DOBFieldString = edtDOBField.Value.ToString();
+                                        var edtDOBDateOnly = (DOBFieldString.Contains(" ")) ? DateOnly.Parse(DOBFieldString.Split(" ")[0]) : DateOnly.Parse(DOBFieldString);
 
-                                        var keyCloakDateOnly = DateOnly.Parse(keycloakDOBString);
-                                        var datesMatch = keyCloakDateOnly != null ? keyCloakDateOnly.CompareTo(edtDOBDateOnly) == 0 : false;
-                                        var firstNameMatch = keycloakUser.FirstName.Equals(edtFirstName, StringComparison.OrdinalIgnoreCase);
-                                        var lastNameMatch = keycloakUser.LastName.Equals(edtLastName, StringComparison.OrdinalIgnoreCase);
+                                        // we'll check against keycloak user as this will be sync with BCSC
+                                        var keycloakDOB = keycloakUser.Attributes.First(attr => attr.Key.Equals(this.configuration.Keycloak.BirthdateField));
+                                        if (keycloakDOB.Value != null)
+                                        {
+                                            var keycloakDOBString = (keycloakDOB.Value.Length == 1) ? keycloakDOB.Value[0] : "";
+                                            var pattern = LocalDatePattern.CreateWithInvariantCulture("yyyy-MM-dd");
 
-                                        if (datesMatch && firstNameMatch && lastNameMatch)
-                                        {
-                                            Serilog.Log.Information($"User info matches {keycloakUser.LastName} ({edtLastName})");
-                                            response.Validated = true;
-                                            validation.IsValid = true;
-                                        }
-                                        else
-                                        {
-                                            // if at least one item matches then we'll notify BCPS
-                                            if (firstNameMatch || lastNameMatch || datesMatch)
+                                            var keyCloakDateOnly = DateOnly.Parse(keycloakDOBString);
+                                            var datesMatch = keyCloakDateOnly != null ? keyCloakDateOnly.CompareTo(edtDOBDateOnly) == 0 : false;
+                                            var firstNameMatch = keycloakUser.FirstName.Equals(edtFirstName, StringComparison.OrdinalIgnoreCase);
+                                            var lastNameMatch = keycloakUser.LastName.Equals(edtLastName, StringComparison.OrdinalIgnoreCase);
+
+                                            if (datesMatch && firstNameMatch && lastNameMatch)
                                             {
-                                                Serilog.Log.Information($"User {keycloakUser.FirstName} {keycloakUser.LastName} was a potential match [FN={firstNameMatch}] [LN={lastNameMatch}] [DOB={datesMatch}] with one or more issues found");
-                                                // publish a message for BCPS
-                                                var codesTried = priorRequests.Select(req => req.Code).ToList();
+                                                Serilog.Log.Information($"User info matches {keycloakUser.LastName} ({edtLastName})");
+                                                response.Validated = true;
+                                                validation.IsValid = true;
+                                            }
+                                            else
+                                            {
+                                                // if at least one item matches then we'll notify BCPS
+                                                if (firstNameMatch || lastNameMatch || datesMatch)
+                                                {
+                                                    Serilog.Log.Information($"User {keycloakUser.FirstName} {keycloakUser.LastName} was a potential match [FN={firstNameMatch}] [LN={lastNameMatch}] [DOB={datesMatch}] with one or more issues found");
+                                                    // publish a message for BCPS
+                                                    var codesTried = priorRequests.Select(req => req.Code).ToList();
 
-                                                var eventData = new Dictionary<string, string>
+                                                    var eventData = new Dictionary<string, string>
                                             {
                                                 { "attempts", "" + priorRequests.Count },
                                                 { "bcscFirstName", party.FirstName },
@@ -270,30 +272,31 @@ public class ValidateUser
                                                 { "codes", string.Join(",", codesTried) }
                                             };
 
-                                                response.DataMismatch = true;
-                                                response.Message = "Data mismatch";
+                                                    response.DataMismatch = true;
+                                                    response.Message = "Data mismatch";
 
-                                                // send a notification to the message topic
-                                                var produceResponse = await this.kafkaNotificationProducer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopicName, Guid.NewGuid().
-                                                    ToString(), new Notification
+                                                    // send a notification to the message topic
+                                                    var produceResponse = await this.kafkaNotificationProducer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopicName, Guid.NewGuid().
+                                                        ToString(), new Notification
+                                                        {
+                                                            DomainEvent = "digitalevidence-bcsc-data-mismatch",
+                                                            To = this.configuration.EnvironmentConfig.SupportEmail,
+                                                            Subject = $"BCSC DIAM User {party.LastName} EDT/JUSTIN info does not match credentials",
+                                                            EventData = eventData
+
+                                                        });
+
+                                                    if (produceResponse.Status == Confluent.Kafka.PersistenceStatus.Persisted)
                                                     {
-                                                        DomainEvent = "digitalevidence-bcsc-data-mismatch",
-                                                        To = this.configuration.EnvironmentConfig.SupportEmail,
-                                                        Subject = $"BCSC DIAM User {party.LastName} EDT/JUSTIN info does not match credentials",
-                                                        EventData = eventData
+                                                        Serilog.Log.Information($"Published notification for {party.LastName} data mismatch event");
+                                                    }
+                                                    else
+                                                    {
+                                                        await transaction.RollbackAsync();
+                                                        throw new DIAMGeneralException("Failed to publish BCPS event - transaction will rollback");
+                                                    }
 
-                                                    });
-
-                                                if (produceResponse.Status == Confluent.Kafka.PersistenceStatus.Persisted)
-                                                {
-                                                    Serilog.Log.Information($"Published notification for {party.LastName} data mismatch event");
                                                 }
-                                                else
-                                                {
-                                                    await transaction.RollbackAsync();
-                                                    throw new DIAMGeneralException("Failed to publish BCPS event - transaction will rollback");
-                                                }
-
                                             }
                                         }
                                     }
