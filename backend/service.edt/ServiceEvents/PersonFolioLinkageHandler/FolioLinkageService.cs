@@ -36,9 +36,11 @@ public class FolioLinkageService : IFolioLinkageService
     {
         var processedCount = 0;
         var pending = this.context.FolioLinkageRequests.Where(req => req.Status == "Pending").ToList();
-        this.logger.LogProcessingPending(pending.Count());
+        this.logger.LogProcessingPending(pending.Count);
         foreach (var request in pending)
         {
+            this.context.FolioLinkageRequests.Attach(request);
+
             this.logger.LogPendingRequestItem(request.PersonKey, request.DisclosureCaseIdentifier);
             var complete = await this.edtClient.LinkPersonToDisclosureFolio(request);
             if (complete)
@@ -46,7 +48,6 @@ public class FolioLinkageService : IFolioLinkageService
                 // mark the request as done
                 request.Status = "Complete";
                 request.Modified = this.clock.GetCurrentInstant();
-
                 processedCount++;
             }
             else
@@ -58,12 +59,11 @@ public class FolioLinkageService : IFolioLinkageService
                 {
                     this.logger.LogMaxRetriesExceeded(request.PersonKey, request.DisclosureCaseIdentifier);
                     request.Status = "Max Retries";
-
                 }
             }
-        }
 
-        await this.context.SaveChangesAsync();
+            await this.context.SaveChangesAsync();
+        }
 
         return processedCount;
     }
