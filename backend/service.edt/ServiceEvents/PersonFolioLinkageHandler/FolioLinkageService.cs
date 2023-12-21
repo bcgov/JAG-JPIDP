@@ -44,7 +44,7 @@ public class FolioLinkageService : IFolioLinkageService
             Serilog.Log.Debug($"Before Changes {db.ChangeTracker.DebugView.LongView}");
 
             var pending = db.FolioLinkageRequests.Where(req => req.Status == "Pending").ToList();
-
+            Serilog.Log.Information($"Found {pending.Count} pending folio linkage requests");
             var tasks = pending.Select(p => this.LinkFolio(p));
             await Task.WhenAll(tasks);
 
