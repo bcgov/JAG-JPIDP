@@ -40,11 +40,11 @@ public class FolioLinkageService : IFolioLinkageService
         foreach (var request in pending)
         {
             var updateEntity = this.context.FolioLinkageRequests.Where(context => context.Id == request.Id).FirstOrDefault();
-            this.logger.LogPendingRequestItem(request.PersonKey, request.DisclosureCaseIdentifier);
-            var complete = await this.edtClient.LinkPersonToDisclosureFolio(request);
+            this.logger.LogPendingRequestItem(updateEntity.PersonKey, updateEntity.DisclosureCaseIdentifier);
+            var complete = await this.edtClient.LinkPersonToDisclosureFolio(updateEntity);
             if (complete)
             {
-                Serilog.Log.Information($"Marking folio link request complete {request.PersonKey} {request.DisclosureCaseIdentifier}");
+                Serilog.Log.Information($"Marking folio link request complete {updateEntity.PersonKey} {updateEntity.DisclosureCaseIdentifier}");
                 // mark the request as done
                 updateEntity.Status = "Complete";
                 updateEntity.Modified = this.clock.GetCurrentInstant();
@@ -52,15 +52,15 @@ public class FolioLinkageService : IFolioLinkageService
             }
             else
             {
-                Serilog.Log.Information($"Folio request incomplete - {updateEntity.RetryCount} {request.PersonKey} {request.DisclosureCaseIdentifier}");
+                Serilog.Log.Information($"Folio request incomplete - {updateEntity.RetryCount} {updateEntity.PersonKey} {updateEntity.DisclosureCaseIdentifier}");
 
                 updateEntity.Modified = this.clock.GetCurrentInstant();
                 updateEntity.RetryCount++;
 
-                if (request.RetryCount > this.config.FolioLinkageBackgroundService.MaxRetriesForLinking)
+                if (updateEntity.RetryCount > this.config.FolioLinkageBackgroundService.MaxRetriesForLinking)
                 {
-                    this.logger.LogMaxRetriesExceeded(request.PersonKey, request.DisclosureCaseIdentifier);
-                    request.Status = "Max Retries";
+                    this.logger.LogMaxRetriesExceeded(updateEntity.PersonKey, updateEntity.DisclosureCaseIdentifier);
+                    updateEntity.Status = "Max Retries";
                 }
             }
 
