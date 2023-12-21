@@ -29,6 +29,7 @@ public class FolioLinkageJob : IJob
         }
         catch (Exception ex)
         {
+            Serilog.Log.Error($"Folio Linkage Error {ex.Message}");
             return Task.FromException(ex);
         }
         finally
