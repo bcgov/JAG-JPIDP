@@ -2,75 +2,89 @@ namespace edt.service.ServiceEvents.PersonFolioLinkageHandler;
 
 using edt.service.Data;
 using edt.service.HttpClients.Services.EdtCore;
+using edt.service.ServiceEvents.PersonCreationHandler.Models;
+using Microsoft.EntityFrameworkCore;
 using NodaTime;
+using Quartz;
 
 /// <summary>
 /// This class will process the actual linkage between particpants and folios over in disclosure
 /// It will also clean up any completed requests
 /// </summary>
+[DisallowConcurrentExecution]
 public class FolioLinkageService : IFolioLinkageService
 {
 
     private readonly EdtServiceConfiguration config;
     private readonly ILogger<FolioLinkageJob> logger;
     private readonly IEdtClient edtClient;
-    private readonly EdtDataStoreDbContext context;
+    private readonly DbContextOptions<EdtDataStoreDbContext> dbOptions;
     private readonly IClock clock;
 
 
     public FolioLinkageService(
         EdtServiceConfiguration config,
-        EdtDataStoreDbContext context,
-        IEdtClient edtClient,
+        IEdtClient edtClient, DbContextOptions<EdtDataStoreDbContext> dbOptions,
         ILogger<FolioLinkageJob> logger,
         IClock clock)
     {
         this.config = config;
         this.logger = logger;
-        this.context = context;
         this.edtClient = edtClient;
+        this.dbOptions = dbOptions;
         this.clock = clock;
     }
 
     public async Task<int> ProcessPendingRequests()
     {
-        var processedCount = 0;
-        var pending = this.context.FolioLinkageRequests.Where(req => req.Status == "Pending").ToList();
-        this.logger.LogProcessingPending(pending.Count);
-        foreach (var request in pending)
+
+        using (var db = new EdtDataStoreDbContext(this.dbOptions, this.clock))
         {
-            var updateEntity = this.context.FolioLinkageRequests.Where(context => context.Id == request.Id).FirstOrDefault();
-            this.logger.LogPendingRequestItem(updateEntity.PersonKey, updateEntity.DisclosureCaseIdentifier);
-            var complete = await this.edtClient.LinkPersonToDisclosureFolio(updateEntity);
-            if (complete)
+
+            Serilog.Log.Debug($"Before Changes {db.ChangeTracker.DebugView.LongView}");
+
+            var pending = db.FolioLinkageRequests.Where(req => req.Status == "Pending").ToList();
+
+            var tasks = pending.Select(p => this.LinkFolio(p));
+            await Task.WhenAll(tasks);
+
+            Serilog.Log.Debug($"After Changes {db.ChangeTracker.DebugView.LongView}");
+
+            return await db.SaveChangesAsync();
+        }
+    }
+
+
+    public async Task<PersonFolioLinkage> LinkFolio(PersonFolioLinkage request)
+    {
+        this.logger.LogPendingRequestItem(request.PersonKey, request.DisclosureCaseIdentifier);
+        var complete = await this.edtClient.LinkPersonToDisclosureFolio(request);
+        if (complete)
+        {
+            Serilog.Log.Information($"Marking folio link request complete {request.PersonKey} {request.DisclosureCaseIdentifier}");
+            // mark the request as done
+            request.Status = "Complete";
+            request.Modified = this.clock.GetCurrentInstant();
+
+        }
+        else
+        {
+            Serilog.Log.Information($"Folio request incomplete - {request.RetryCount} {request.PersonKey} {request.DisclosureCaseIdentifier}");
+
+            request.Modified = this.clock.GetCurrentInstant();
+            request.RetryCount++;
+
+            if (request.RetryCount > this.config.FolioLinkageBackgroundService.MaxRetriesForLinking)
             {
-                Serilog.Log.Information($"Marking folio link request complete {updateEntity.PersonKey} {updateEntity.DisclosureCaseIdentifier}");
-                // mark the request as done
-                updateEntity.Status = "Complete";
-                updateEntity.Modified = this.clock.GetCurrentInstant();
-                processedCount++;
-            }
-            else
-            {
-                Serilog.Log.Information($"Folio request incomplete - {updateEntity.RetryCount} {updateEntity.PersonKey} {updateEntity.DisclosureCaseIdentifier}");
-
-                updateEntity.Modified = this.clock.GetCurrentInstant();
-                updateEntity.RetryCount++;
-
-                if (updateEntity.RetryCount > this.config.FolioLinkageBackgroundService.MaxRetriesForLinking)
-                {
-                    this.logger.LogMaxRetriesExceeded(updateEntity.PersonKey, updateEntity.DisclosureCaseIdentifier);
-                    updateEntity.Status = "Max Retries";
-                }
+                this.logger.LogMaxRetriesExceeded(request.PersonKey, request.DisclosureCaseIdentifier);
+                request.Status = "Max Retries";
             }
 
-            await this.context.SaveChangesAsync();
         }
 
-        return processedCount;
+        return request;
     }
 }
-
 public static partial class FolioLinkageServiceLoggingExtensions
 {
     [LoggerMessage(1, LogLevel.Debug, "Folio linkage service processing pending {count} requests")]
