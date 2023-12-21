@@ -39,21 +39,23 @@ public class FolioLinkageService : IFolioLinkageService
         this.logger.LogProcessingPending(pending.Count);
         foreach (var request in pending)
         {
-            this.context.FolioLinkageRequests.Attach(request);
-
+            var updateEntity = this.context.FolioLinkageRequests.Where(context => context.Id == request.Id).FirstOrDefault();
             this.logger.LogPendingRequestItem(request.PersonKey, request.DisclosureCaseIdentifier);
             var complete = await this.edtClient.LinkPersonToDisclosureFolio(request);
             if (complete)
             {
+                Serilog.Log.Information($"Marking folio link request complete {request.PersonKey} {request.DisclosureCaseIdentifier}");
                 // mark the request as done
-                request.Status = "Complete";
-                request.Modified = this.clock.GetCurrentInstant();
+                updateEntity.Status = "Complete";
+                updateEntity.Modified = this.clock.GetCurrentInstant();
                 processedCount++;
             }
             else
             {
-                request.Modified = this.clock.GetCurrentInstant();
-                request.RetryCount++;
+                Serilog.Log.Information($"Folio request incomplete - {updateEntity.RetryCount} {request.PersonKey} {request.DisclosureCaseIdentifier}");
+
+                updateEntity.Modified = this.clock.GetCurrentInstant();
+                updateEntity.RetryCount++;
 
                 if (request.RetryCount > this.config.FolioLinkageBackgroundService.MaxRetriesForLinking)
                 {
