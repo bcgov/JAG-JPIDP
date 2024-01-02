@@ -5,7 +5,6 @@ using System.Linq;
 using common.Constants.Auth;
 using Common.Models.Approval;
 using Common.Models.EDT;
-using Common.Models.Notification;
 using Confluent.Kafka;
 using DomainResults.Common;
 using FluentValidation;
@@ -16,7 +15,6 @@ using NodaTime;
 using OpenTelemetry.Trace;
 using Pidp.Data;
 using Pidp.Exceptions;
-using Pidp.Features.Organization.OrgUnitService;
 using Pidp.Infrastructure.HttpClients.Edt;
 using Pidp.Infrastructure.HttpClients.Keycloak;
 using Pidp.Kafka.Interfaces;
@@ -56,15 +54,12 @@ public class DigitalEvidenceDefence
         private readonly ILogger logger;
         private readonly PidpConfiguration config;
         private readonly PidpDbContext context;
-        private readonly IOrgUnitService orgUnitService;
         private readonly IEdtCoreClient coreClient;
         private readonly IKafkaProducer<string, EdtDisclosureDefenceUserProvisioningModel> kafkaProducer;
         private readonly IKafkaProducer<string, ApprovalRequestModel> approvalKafkaProducer;
 
         private readonly IKafkaProducer<string, EdtPersonProvisioningModel> kafkaDefenceCoreProducer;
 
-        private readonly IKafkaProducer<string, Notification> kafkaNotificationProducer;
-        private readonly string SUBMITTING_AGENCY = "SubmittingAgency";
         private readonly string LAW_SOCIETY = "LawSociety";
 
         // EdtDisclosureUserProvisioning
@@ -74,13 +69,11 @@ public class DigitalEvidenceDefence
             IKeycloakAdministrationClient keycloakClient,
             ILogger<CommandHandler> logger,
             PidpConfiguration config,
-            IOrgUnitService orgUnitService,
             IEdtCoreClient coreClient,
             PidpDbContext context,
             IKafkaProducer<string, EdtDisclosureDefenceUserProvisioningModel> kafkaProducer,
             IKafkaProducer<string, ApprovalRequestModel> approvalKafkaProducer,
-            IKafkaProducer<string, EdtPersonProvisioningModel> kafkaDefenceCoreProducer,
-            IKafkaProducer<string, Notification> kafkaNotificationProducer)
+            IKafkaProducer<string, EdtPersonProvisioningModel> kafkaDefenceCoreProducer)
         {
             this.clock = clock;
             this.keycloakClient = keycloakClient;
@@ -91,8 +84,6 @@ public class DigitalEvidenceDefence
             this.approvalKafkaProducer = approvalKafkaProducer;
             this.kafkaDefenceCoreProducer = kafkaDefenceCoreProducer;
             this.config = config;
-            this.kafkaNotificationProducer = kafkaNotificationProducer;
-            this.orgUnitService = orgUnitService;
         }
 
         public async Task<IDomainResult> HandleAsync(Command command)
@@ -341,6 +332,7 @@ public class DigitalEvidenceDefence
                 AccountType = "Saml",
                 Role = "User",
                 SystemName = systemType,
+                Telephone = dto.Phone,
                 AccessRequestId = digitalEvidenceDisclosure.Id,
                 ManuallyAddedParticipantId = digitalEvidenceDefence.ManuallyAddedParticipantId,
                 EdtExternalIdentifier = digitalEvidenceDefence.EdtExternalIdentifier,
