@@ -2,6 +2,7 @@ namespace edt.disclosure.HttpClients.Services.EdtDisclosure;
 
 using System.Threading.Tasks;
 using AutoMapper;
+using common.Constants.Auth;
 using Common.Models;
 using Common.Models.EDT;
 using edt.disclosure.Exceptions;
@@ -414,8 +415,8 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
                             }
                             case ChangeType.PHONE:
                             {
-                                Log.Information($"Handling email change event for {changeEvent.Key} to {changeType.Value.To}");
-                                currentUser.Email = changeType.Value.To;
+                                Log.Information($"Handling phone change event for {changeEvent.Key} to {changeType.Value.To}");
+                                currentUser.Phone = changeType.Value.To;
                                 hasChanges = true;
 
                                 break;
@@ -457,6 +458,18 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
             if (hasChanges)
             {
+                if (string.IsNullOrEmpty(currentUser.AccountType))
+                {
+                    // should always be SAML2 (at least until EDT supports OIDC)
+                    currentUser.AccountType = AccountTypes.EdtSaml2;
+                }
+
+                if (string.IsNullOrEmpty(currentUser.Role))
+                {
+                    // role should always be user (admins will be handled separately)
+                    currentUser.Role = "User";
+                }
+
                 var result = await this.PutAsync($"api/v1/users", currentUser);
 
                 if (!result.IsSuccess)

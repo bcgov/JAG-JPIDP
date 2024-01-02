@@ -1,6 +1,7 @@
 namespace edt.disclosure.Kafka;
 
 using System.Net;
+using Common.Models;
 using Common.Models.EDT;
 using Confluent.Kafka;
 using edt.disclosure.Kafka.Interfaces;
@@ -11,6 +12,7 @@ using edt.disclosure.ServiceEvents.CourtLocation.Models;
 using edt.disclosure.ServiceEvents.DefenceUserAccountCreation.Handler;
 using edt.disclosure.ServiceEvents.UserAccountCreation;
 using edt.disclosure.ServiceEvents.UserAccountCreation.Handler;
+using edt.disclosure.ServiceEvents.UserAccountModification;
 using EdtDisclosureService.Extensions;
 
 public static class ConsumerSetup
@@ -86,12 +88,14 @@ public static class ConsumerSetup
         services.AddScoped<IKafkaHandler<string, CourtLocationDomainEvent>, CourtLocationAccessRequestHandler>();
         services.AddScoped<IKafkaHandler<string, EdtDisclosureDefenceUserProvisioningModel>, DefenceUserProvisioningHandler>();
         services.AddScoped<IKafkaHandler<string, EdtDisclosurePublicUserProvisioningModel>, PublicUserProvisioningHandler>();
+        services.AddScoped<IKafkaHandler<string, UserChangeModel>, UserChangeHandler>();
 
         services.AddSingleton(typeof(IKafkaConsumer<,>), typeof(KafkaConsumer<,>));
 
         services.AddHostedService<CourtLocationConsumer>();
         services.AddHostedService<DefenceUserProvisioningConsumer>();
         services.AddHostedService<PublicUserProvisioningConsumer>();
+        services.AddHostedService<UserModificationConsumer>();
 
         return services;
     }
