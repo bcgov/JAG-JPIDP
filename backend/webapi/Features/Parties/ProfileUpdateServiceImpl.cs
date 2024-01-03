@@ -60,11 +60,11 @@ public class ProfileUpdateServiceImpl : IProfileUpdateService
             changesDetected = true;
         }
 
-        if (keycloakUserInfo.Attributes.ContainsKey("phone"))
+        if (keycloakUserInfo.Attributes.ContainsKey("phone") && keycloakUserInfo.Attributes["phone"].Length > 0)
         {
-            Serilog.Log.Information($"Updating {party.UserId} phone to [{updatePerson.Phone}] from [{keycloakUserInfo.Attributes["phone"]}]");
+            Serilog.Log.Information($"Updating {party.UserId} phone to [{updatePerson.Phone}] from [{keycloakUserInfo.Attributes["phone"][0]}]");
             var fromPhone = keycloakUserInfo.Attributes.ContainsKey("phone") ? keycloakUserInfo.Attributes["phone"][0] : "";
-            if (fromPhone != updatePerson.Phone)
+            if (fromPhone != updatePerson.Phone && !string.IsNullOrEmpty(updatePerson.Phone))
             {
                 keycloakUserInfo.Attributes["phone"][0] = updatePerson.Phone;
                 changes.Add(ChangeType.PHONE, new SingleChangeType(fromPhone, updatePerson.Phone));
