@@ -20,6 +20,11 @@ public static class Claims
     public const string MembershipStatusCode = "membership_status_code";
 }
 
+public static class AccountTypes
+{
+    public const string EdtSaml2 = "SAML";
+}
+
 public static class DefaultRoles
 {
     public const string Bcps = "BCPS";
