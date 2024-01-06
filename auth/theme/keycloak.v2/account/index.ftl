@@ -43,9 +43,8 @@
                 isEditUserNameAllowed : ${realm.editUsernameAllowed?c},
                 isInternationalizationEnabled : ${realm.isInternationalizationEnabled()?c},
                 isLinkedAccountsEnabled : ${realm.identityFederationEnabled?c},
-                isEventsEnabled : ${isEventsEnabled?c},
+                isEventsEnabled : ${realm.isEventsEnabled()?c},
                 isMyResourcesEnabled : ${(realm.userManagedAccessAllowed && isAuthorizationEnabled)?c},
-                isTotpConfigured : ${isTotpConfigured?c},
                 deleteAccountAllowed : ${deleteAccountAllowed?c}
             }
 
