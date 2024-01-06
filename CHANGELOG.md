@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [versionize](https://github.com/versionize/versionize) for commit guidelines.
 
+<a name="1.0.8"></a>
+## [1.0.8](https://www.github.com/bcgov/JAG-JPIDP/releases/tag/v1.0.8) (2023-12-13)
+
+<a name="1.0.7"></a>
+## [1.0.7](https://www.github.com/bcgov/JAG-JPIDP/releases/tag/v1.0.7) (2023-12-8)
+
+<a name="1.0.6"></a>
+## [1.0.6](https://www.github.com/bcgov/JAG-JPIDP/releases/tag/v1.0.6) (2023-11-23)
+
 <a name="1.0.5"></a>
 ## [1.0.5](https://www.github.com/bcgov/JAG-JPIDP/releases/tag/v1.0.5) (2023-11-2)
 

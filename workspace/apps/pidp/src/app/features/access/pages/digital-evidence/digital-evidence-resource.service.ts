@@ -10,7 +10,7 @@ import { ProfileStatus } from '@app/features/portal/models/profile-status.model'
 import { PortalResource } from '@app/features/portal/portal-resource.service';
 
 import { DigitalEvidenceCase } from './case-management/digital-evidence-case.model';
-import { DemsAccount, UserValidationResponse } from './digital-evidence-account.model';
+import { DemsAccount, PublicDisclosureAccess, UserValidationResponse } from './digital-evidence-account.model';
 
 @Injectable({
   providedIn: 'root',
@@ -49,6 +49,12 @@ export class DigitalEvidenceResource {
     return this.apiResource.get(`defence-counsel/${partyID}/${defenceID}`);
   }
 
+  public getPublicCaseAccess(
+    partyID: number
+  ): Observable<PublicDisclosureAccess[]> {
+    return this.apiResource.get(`access-requests/digital-evidence-disclosure/cases/${partyID}`);
+  }
+
   public requestDefenceCounselAccess(
     partyId: number,
     organizationType: DemsAccount,
@@ -65,10 +71,6 @@ export class DigitalEvidenceResource {
       .pipe(
         NoContentResponse,
         catchError((error: HttpErrorResponse) => {
-          if (error.status === HttpStatusCode.BadRequest) {
-            return of(void 0);
-          }
-
           return throwError(() => error);
         })
       );

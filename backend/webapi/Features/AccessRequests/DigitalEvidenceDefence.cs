@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using common.Constants.Auth;
 using Common.Models.Approval;
-using Common.Models.Notification;
+using Common.Models.EDT;
 using Confluent.Kafka;
 using DomainResults.Common;
 using FluentValidation;
@@ -15,7 +15,7 @@ using NodaTime;
 using OpenTelemetry.Trace;
 using Pidp.Data;
 using Pidp.Exceptions;
-using Pidp.Features.Organization.OrgUnitService;
+using Pidp.Infrastructure.HttpClients.Edt;
 using Pidp.Infrastructure.HttpClients.Keycloak;
 using Pidp.Kafka.Interfaces;
 using Pidp.Models;
@@ -54,40 +54,36 @@ public class DigitalEvidenceDefence
         private readonly ILogger logger;
         private readonly PidpConfiguration config;
         private readonly PidpDbContext context;
-        private readonly IOrgUnitService orgUnitService;
-        private readonly IKafkaProducer<string, EdtDisclosureUserProvisioning> kafkaProducer;
+        private readonly IEdtCoreClient coreClient;
+        private readonly IKafkaProducer<string, EdtDisclosureDefenceUserProvisioningModel> kafkaProducer;
         private readonly IKafkaProducer<string, ApprovalRequestModel> approvalKafkaProducer;
 
         private readonly IKafkaProducer<string, EdtPersonProvisioningModel> kafkaDefenceCoreProducer;
 
-        private readonly IKafkaProducer<string, Notification> kafkaNotificationProducer;
-        private readonly string SUBMITTING_AGENCY = "SubmittingAgency";
         private readonly string LAW_SOCIETY = "LawSociety";
 
         // EdtDisclosureUserProvisioning
         // we'll track the request in access requests and then push the request to a topic for disclosure service to handle
         public CommandHandler(
-    IClock clock,
-    IKeycloakAdministrationClient keycloakClient,
-    ILogger<CommandHandler> logger,
-    PidpConfiguration config,
-    IOrgUnitService orgUnitService,
-    PidpDbContext context,
-        IKafkaProducer<string, EdtDisclosureUserProvisioning> kafkaProducer,
-    IKafkaProducer<string, ApprovalRequestModel> approvalKafkaProducer,
-        IKafkaProducer<string, EdtPersonProvisioningModel> kafkaDefenceCoreProducer,
-    IKafkaProducer<string, Notification> kafkaNotificationProducer)
+            IClock clock,
+            IKeycloakAdministrationClient keycloakClient,
+            ILogger<CommandHandler> logger,
+            PidpConfiguration config,
+            IEdtCoreClient coreClient,
+            PidpDbContext context,
+            IKafkaProducer<string, EdtDisclosureDefenceUserProvisioningModel> kafkaProducer,
+            IKafkaProducer<string, ApprovalRequestModel> approvalKafkaProducer,
+            IKafkaProducer<string, EdtPersonProvisioningModel> kafkaDefenceCoreProducer)
         {
             this.clock = clock;
             this.keycloakClient = keycloakClient;
             this.logger = logger;
+            this.coreClient = coreClient;
             this.context = context;
             this.kafkaProducer = kafkaProducer;
             this.approvalKafkaProducer = approvalKafkaProducer;
             this.kafkaDefenceCoreProducer = kafkaDefenceCoreProducer;
             this.config = config;
-            this.kafkaNotificationProducer = kafkaNotificationProducer;
-            this.orgUnitService = orgUnitService;
         }
 
         public async Task<IDomainResult> HandleAsync(Command command)
@@ -142,6 +138,22 @@ public class DigitalEvidenceDefence
                         ignoreBCServiceCard = true;
                     }
 
+                    // check if this user already exists as a defence participant in code
+                    var existingParticipant = await this.coreClient.GetPersonByKey(dto.Email);
+
+                    if (existingParticipant != null)
+                    {
+                        userValidationErrors = ValidateExistingParticipant(dto, existingParticipant);
+                        defenceUser.ManuallyAddedParticipantId = (int)existingParticipant.Id;
+                        var externalId = existingParticipant.Identifiers.FirstOrDefault(identifier => identifier.IdentifierType == "EdtExternalId");
+                        if (externalId != null)
+                        {
+                            defenceUser.EdtExternalIdentifier = externalId.IdentifierValue;
+                        }
+                        Serilog.Log.Information($"Participant for defence {command.ParticipantId} {dto.Email} exists with external id {externalId.IdentifierValue}");
+
+                    }
+
                     if (userValidationErrors.Count > 0 && !ignoreBCServiceCard)
                     {
                         Serilog.Log.Warning($"User {keycloakUser} has errors {string.Join(",", userValidationErrors)}");
@@ -159,7 +171,7 @@ public class DigitalEvidenceDefence
                                 Serilog.Log.Information($"Published {result.Key} to {result.Partition}");
 
                                 // store the original requests for later
-                                if (await this.CreateDefenceDeferredPublishRequest(command, dto, defenceUser) && await this.CreateDisclosureDeferredPublishRequest(command, dto, disclosureUser))
+                                if (await this.CreateDefenceDeferredPublishRequest(command, dto, defenceUser) && await this.CreateDisclosureDeferredPublishRequest(command, dto, disclosureUser, defenceUser))
                                 {
                                     Serilog.Log.Information($"Stored requests for later use");
                                 }
@@ -185,10 +197,12 @@ public class DigitalEvidenceDefence
                             Serilog.Log.Warning($"User {keycloakUser} has errors {string.Join(",", userValidationErrors)} - but we are going to ignore these due to env flag PERMIT_MISMATCH_VC_CREDS");
                         }
 
-                        // publish message for disclosure access
-                        var publishedDisclosureRequest = await this.PublishDisclosureAccessRequest(command, dto, disclosureUser);
+
 
                         // publish message for disclosure access
+                        var publishedDisclosureRequest = await this.PublishDisclosureAccessRequest(command, dto, disclosureUser, defenceUser);
+
+                        // publish message for defence participa access
                         var publishedDefenceRequest = await this.PublishDefenceAccessRequest(command, dto, defenceUser);
 
                         if (publishedDisclosureRequest.Status == PersistenceStatus.NotPersisted)
@@ -215,11 +229,30 @@ public class DigitalEvidenceDefence
                 catch (Exception ex)
                 {
                     this.logger.LogDigitalEvidenceAccessTrxFailed(ex.Message.ToString());
-                    return DomainResult.Failed();
+                    return DomainResult.Failed(ex.Message);
                 }
 
 
             }
+        }
+
+        private static List<string> ValidateExistingParticipant(PartyDto dto, EdtPersonDto existingParticipant)
+        {
+            var errors = new List<string>();
+            Serilog.Log.Information($"Validating user information is correct for exsting core person {dto.Email} - {existingParticipant.Id}");
+            if (!dto.FirstName.Trim().Equals(existingParticipant.FirstName.Trim(), StringComparison.OrdinalIgnoreCase))
+            {
+                errors.Add($"Existing core defence user first name incorrect [{dto.FirstName}] [{existingParticipant.FirstName}]");
+            }
+            if (!dto.LastName.Trim().Equals(existingParticipant.LastName.Trim(), StringComparison.OrdinalIgnoreCase))
+            {
+                errors.Add($"Existing core defence user last name incorrect [{dto.LastName}] [{existingParticipant.LastName}]");
+            }
+
+            // todo - compare role once this is set in EDT
+
+            return errors;
+
         }
 
         /// <summary>
@@ -248,7 +281,7 @@ public class DigitalEvidenceDefence
 
             }
 
-            if (!string.Join(" ", BCFamilyName).Equals(keycloakUser.LastName, StringComparison.OrdinalIgnoreCase))
+            if (!string.Join(" ", BCFamilyName).Equals(keycloakUser.LastName.Trim(), StringComparison.OrdinalIgnoreCase))
             {
                 Serilog.Log.Error($"User family name does not match between BCSC [{string.Join(" ", BCFamilyName)}] and BCLaw [{keycloakUser.LastName}] {keycloakUser}");
                 errors.Add($"User family name does not match between BCSC [{string.Join(" ", BCFamilyName)}] and BCLaw [{keycloakUser.LastName}]");
@@ -256,7 +289,7 @@ public class DigitalEvidenceDefence
             }
 
 
-            if (!string.Join(" ", BCFirstName).Equals(keycloakUser.FirstName, StringComparison.OrdinalIgnoreCase))
+            if (!string.Join(" ", BCFirstName).Equals(keycloakUser.FirstName.Trim(), StringComparison.OrdinalIgnoreCase))
             {
                 Serilog.Log.Error($"User first name does not match between BCSC [{string.Join(" ", BCFirstName)}] and BCLaw [{keycloakUser.FirstName}] {keycloakUser}");
                 errors.Add($"User first name does not match between BCSC [{string.Join(" ", BCFirstName)}] and BCLaw [{keycloakUser.FirstName}]");
@@ -284,22 +317,25 @@ public class DigitalEvidenceDefence
             return delivered;
         }
 
-        private EdtDisclosureUserProvisioning GetDisclosureUserModel(Command command, PartyDto dto, DigitalEvidenceDisclosure digitalEvidenceDisclosure)
+        private EdtDisclosureDefenceUserProvisioningModel GetDisclosureUserModel(Command command, PartyDto dto, DigitalEvidenceDisclosure digitalEvidenceDisclosure, Models.DigitalEvidenceDefence digitalEvidenceDefence
+            )
         {
             var systemType = digitalEvidenceDisclosure.OrganizationType.Equals(this.LAW_SOCIETY, StringComparison.Ordinal) ? AccessTypeCode.DigitalEvidenceDisclosure.ToString() : AccessTypeCode.DigitalEvidence.ToString();
 
 
-            return new EdtDisclosureUserProvisioning
+            return new EdtDisclosureDefenceUserProvisioningModel
             {
                 Key = $"{command.ParticipantId}",
                 UserName = dto.Jpdid,
                 Email = dto.Email,
-                PhoneNumber = dto.Phone!,
                 FullName = $"{dto.FirstName} {dto.LastName}",
                 AccountType = "Saml",
                 Role = "User",
                 SystemName = systemType,
+                Telephone = dto.Phone,
                 AccessRequestId = digitalEvidenceDisclosure.Id,
+                ManuallyAddedParticipantId = digitalEvidenceDefence.ManuallyAddedParticipantId,
+                EdtExternalIdentifier = digitalEvidenceDefence.EdtExternalIdentifier,
                 OrganizationType = command.OrganizationType,
                 OrganizationName = command.OrganizationName,
             };
@@ -314,7 +350,8 @@ public class DigitalEvidenceDefence
                 Key = $"{command.ParticipantId}",
                 Address =
                 {
-                    Email = dto.Email ?? "Not set"
+                    Email = dto.Email ?? "Not set",
+                    Phone = dto.Phone ?? "",
                 },
                 Fields = new List<EdtField> { },
                 FirstName = dto.FirstName,
@@ -322,16 +359,18 @@ public class DigitalEvidenceDefence
                 Role = "Participant",
                 SystemName = AccessTypeCode.DigitalEvidenceDefence.ToString(),
                 AccessRequestId = digitalEvidenceDefence.Id,
+                ManuallyAddedParticipantId = digitalEvidenceDefence.ManuallyAddedParticipantId,
+                EdtExternalIdentifier = digitalEvidenceDefence.EdtExternalIdentifier,
                 OrganizationType = command.OrganizationType,
                 OrganizationName = command.OrganizationName,
             };
         }
 
-        private async Task<bool> CreateDisclosureDeferredPublishRequest(Command command, PartyDto party, DigitalEvidenceDisclosure digitalEvidenceDisclosure)
+        private async Task<bool> CreateDisclosureDeferredPublishRequest(Command command, PartyDto party, Models.DigitalEvidenceDisclosure digitalEvidenceDisclosure, Models.DigitalEvidenceDefence digitalEvidenceDefence)
         {
             Serilog.Log.Information($"Storing deferred request for publishing later if needed");
 
-            var payload = JsonConvert.SerializeObject(this.GetDisclosureUserModel(command, party, digitalEvidenceDisclosure));
+            var payload = JsonConvert.SerializeObject(this.GetDisclosureUserModel(command, party, digitalEvidenceDisclosure, digitalEvidenceDefence));
 
 
             this.context.DeferredEvents.Add(new Models.OutBoxEvent.DeferredEvent
@@ -366,24 +405,23 @@ public class DigitalEvidenceDefence
 
             var addedRows = await this.context.SaveChangesAsync();
 
-
             return addedRows > 0;
         }
 
-        private async Task<DeliveryResult<string, EdtDisclosureUserProvisioning>> PublishDisclosureAccessRequest(Command command, PartyDto dto, DigitalEvidenceDisclosure digitalEvidenceDisclosure)
+        private async Task<DeliveryResult<string, EdtDisclosureDefenceUserProvisioningModel>> PublishDisclosureAccessRequest(Command command, PartyDto dto, Models.DigitalEvidenceDisclosure digitalEvidenceDisclosure, Models.DigitalEvidenceDefence defenceUser)
         {
             var taskId = Guid.NewGuid().ToString();
-            Serilog.Log.Logger.Information("Adding message to topic {0} {1} {2}", this.config.KafkaCluster.DisclosureUserCreationTopic, command.ParticipantId, taskId);
+            Serilog.Log.Logger.Information("Adding message to topic {0} {1} {2}", this.config.KafkaCluster.DisclosureDefenceUserCreationTopic, command.ParticipantId, taskId);
 
             var systemType = digitalEvidenceDisclosure.OrganizationType.Equals(this.LAW_SOCIETY, StringComparison.Ordinal)
-                ? AccessTypeCode.DigitalEvidenceDisclosure.ToString()
-                : AccessTypeCode.DigitalEvidence.ToString();
+                      ? AccessTypeCode.DigitalEvidenceDisclosure.ToString()
+                      : AccessTypeCode.DigitalEvidence.ToString();
 
 
             // use UUIDs for topic keys
-            var delivered = await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.DisclosureUserCreationTopic,
+            var delivered = await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.DisclosureDefenceUserCreationTopic,
                 taskId,
-                this.GetDisclosureUserModel(command, dto, digitalEvidenceDisclosure));
+                this.GetDisclosureUserModel(command, dto, digitalEvidenceDisclosure, defenceUser));
 
             return delivered;
         }

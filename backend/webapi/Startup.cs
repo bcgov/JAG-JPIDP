@@ -2,7 +2,6 @@ namespace Pidp;
 
 using System.Reflection;
 using System.Text.Json;
-using Azure.Monitor.OpenTelemetry.Exporter;
 using Common.Kafka;
 using FluentValidation.AspNetCore;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
@@ -23,6 +22,7 @@ using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
+
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Pidp.Data;
@@ -30,9 +30,9 @@ using Pidp.Extensions;
 using Pidp.Features;
 using Pidp.Features.CourtLocations;
 using Pidp.Features.CourtLocations.Jobs;
-using Pidp.Features.Monitor;
 using Pidp.Features.Organization.OrgUnitService;
 using Pidp.Features.Organization.UserTypeService;
+using Pidp.Features.Parties;
 using Pidp.Helpers.Middleware;
 using Pidp.Infrastructure;
 using Pidp.Infrastructure.Auth;
@@ -41,6 +41,8 @@ using Pidp.Infrastructure.Services;
 using Pidp.Infrastructure.Telemetry;
 using Prometheus;
 using Quartz;
+using Quartz.AspNetCore;
+using Quartz.Impl.AdoJobStore;
 using Serilog;
 using Swashbuckle.AspNetCore.Filters;
 using static Pidp.Models.Lookups.CourtLocation;
@@ -90,10 +92,6 @@ public class Startup
                     if (config.Telemetry.LogToConsole)
                     {
                         builder.AddConsoleExporter();
-                    }
-                    if (config.Telemetry.AzureConnectionString != null)
-                    {
-                        builder.AddAzureMonitorTraceExporter(o => o.ConnectionString = config.Telemetry.AzureConnectionString);
                     }
                     if (config.Telemetry.CollectorUrl != null)
                     {
@@ -155,6 +153,8 @@ public class Startup
         services.AddScoped<IUserTypeService, UserTypeService>();
         services.AddScoped<IOrgUnitService, OrgUnitService>();
         services.AddScoped<ICourtAccessService, CourtAccessService>();
+        services.AddScoped<IProfileUpdateService, ProfileUpdateServiceImpl>();
+
         services.AddSingleton(typeof(IKafkaProducer<,>), typeof(KafkaProducer<,>));
 
 
@@ -222,27 +222,48 @@ public class Startup
             Log.Information("Starting scheduler..");
             q.SchedulerId = "Court-Access-Core";
             q.SchedulerName = "DIAM Scheduler";
-            q.UseMicrosoftDependencyInjectionJobFactory();
-            q.UseSimpleTypeLoader();
-            q.UseInMemoryStore();
-            q.UseDefaultThreadPool(tp =>
+
+            q.UsePersistentStore(store =>
             {
-                tp.MaxConcurrency = 5;
+                // Use for PostgresSQL database
+                store.UsePostgres(pgOptions =>
+                {
+                    pgOptions.UseDriverDelegate<PostgreSQLDelegate>();
+                    pgOptions.ConnectionString = config.ConnectionStrings.PidpDatabase;
+                    pgOptions.TablePrefix = "quartz.qrtz_";
+                });
+                store.UseJsonSerializer();
             });
+            //q.UseInMemoryStore();
 
-            q.ScheduleJob<CourtAccessScheduledJob>(trigger => trigger
-              .WithIdentity("Court access trigger")
-              .StartNow()
-              .WithDailyTimeIntervalSchedule(x => x.WithInterval(config.CourtAccess.PollSeconds, IntervalUnit.Second))
-              .WithDescription("Court access scheduled event")
-            );
+            //q.UseMicrosoftDependencyInjectionScopedJobFactory();
+            // q.UseSimpleTypeLoader();
+            // Create a "key" for the job
+            var jobKey = new JobKey("Court access trigger");
 
-            q.ScheduleJob<OnboardingMonitorJob>(monitoring => monitoring
-                .WithIdentity("Onboarding monitoring")
-                .StartNow()
-                .WithDailyTimeIntervalSchedule(x => x.WithInterval(30, IntervalUnit.Second))
-                .WithDescription("Monitor for onboarding events")
-            );
+            q.AddJob<CourtAccessScheduledJob>(opts => opts.WithIdentity(jobKey));
+
+            Log.Information($"Scheduling CourtAccessScheduledJob with params [{config.CourtAccess.PollCron}]");
+
+            // Create a trigger for the job
+            q.AddTrigger(opts => opts
+                .ForJob(jobKey) // link to the HelloWorldJob
+                .WithIdentity("CourtAccess-trigger") // give the trigger a unique name
+                .WithCronSchedule(config.CourtAccess.PollCron));
+
+            //q.ScheduleJob<CourtAccessScheduledJob>(trigger => trigger
+            //  .WithIdentity("Court access trigger")
+            //  .StartNow()
+            //  .WithDailyTimeIntervalSchedule(x => x.WithInterval(config.CourtAccess.PollSeconds, IntervalUnit.Second))
+            //  .WithDescription("Court access scheduled event")
+            //);
+
+            //q.ScheduleJob<OnboardingMonitorJob>(monitoring => monitoring
+            //    .WithIdentity("Onboarding monitoring")
+            //    .StartNow()
+            //    .WithDailyTimeIntervalSchedule(x => x.WithInterval(30, IntervalUnit.Second))
+            //    .WithDescription("Monitor for onboarding events")
+            //);
         });
 
 

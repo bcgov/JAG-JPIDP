@@ -1,23 +1,22 @@
 namespace Pidp.Features.CourtLocations.Commands;
 
 using System;
-using Confluent.Kafka;
 using DomainResults.Common;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using NodaTime;
 using Pidp.Data;
-using Pidp.Data.Migrations;
-using Pidp.Exceptions;
 using Pidp.Features.AccessRequests;
 using Pidp.Features.DigitalEvidenceCaseManagement.Commands;
-using Pidp.Kafka.Interfaces;
 using Pidp.Models;
 using Pidp.Models.Lookups;
 using Prometheus;
 
 public class CourtAccessRequest
 {
+    private readonly TimeZoneInfo timeZone;
+
+
     public class Command : ICommand<IDomainResult>
     {
         public int PartyId { get; set; }
@@ -43,6 +42,8 @@ public class CourtAccessRequest
         private readonly IClock clock;
         private readonly ILogger logger;
         private readonly PidpConfiguration config;
+        private readonly DateTime utcDateTime;
+        private readonly TimeZoneInfo timeZone;
         private readonly ICourtAccessService courtAccessService;
         private readonly PidpDbContext context;
         private static readonly Histogram CourtLocationRequestDuration = Metrics
@@ -56,12 +57,14 @@ public class CourtAccessRequest
             this.context = context;
             this.courtAccessService = courtAccessService;
         }
+        public DateTime UniversalTime { get { return this.utcDateTime; } }
+
 
         public async Task<IDomainResult> HandleAsync(Command command)
         {
             using (CourtLocationRequestDuration.NewTimer())
             {
-                command.ValidFrom.Date.AddDays(1);
+                command.ValidFrom = TimeZoneInfo.ConvertTimeToUtc(command.ValidFrom);
                 command.ValidUntil.Date.AddDays(1);
 
                 var dto = await this.GetPidpUser(command);
@@ -126,7 +129,7 @@ public class CourtAccessRequest
                         {
                             Serilog.Log.Information($"Updating request {courtLocationRequest.RequestId}");
                             // request has been moved to today from a future date
-                            if (command.ValidFrom.DayOfYear == today.DayOfYear && courtLocationRequest.RequestStatus == CourtLocationAccessStatus.SubmittedFuture )
+                            if (command.ValidFrom.DayOfYear == today.DayOfYear && courtLocationRequest.RequestStatus == CourtLocationAccessStatus.SubmittedFuture)
                             {
                                 courtLocationRequest.RequestStatus = CourtLocationAccessStatus.Submitted;
                                 newRequest = true;
@@ -145,9 +148,9 @@ public class CourtAccessRequest
 
 
 
-                        if (command.ValidFrom.DayOfYear == today.DayOfYear && newRequest)
+                        if (command.ValidFrom.DayOfYear == today.ToLocalTime().DayOfYear && newRequest)
                         {
-                            Serilog.Log.Information($"Request {courtLocationRequest.RequestId} is for today - adding to event topic");
+                            Serilog.Log.Information($"Request {courtLocationRequest.RequestId} is for today {today.ToLocalTime().DayOfYear} - adding to event topic");
                             var response = this.courtAccessService.CreateAddCourtAccessDomainEvent(courtLocationRequest);
 
                         }

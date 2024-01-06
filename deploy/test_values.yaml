@@ -4,8 +4,11 @@ global:
   commit_sha: ""
   licenseplate: "e27db1"
   environment: "test"
+  vault:
+    role: e27db1-nonprod
+    path: test/
   image:
-    tag: test-test-v1.0.0
+    tag: test
 
 pidp-sso:
   keycloak:
@@ -58,8 +61,6 @@ keycloak:
   base: https://test.common-sso.justice.gov.bc.ca/auth
 
 edt-service:
-  image:
-    tag: develop
   migrations:
     enabled: false
 

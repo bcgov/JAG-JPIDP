@@ -4,9 +4,9 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Common.Models.EDT;
 using edt.service.Exceptions;
-using edt.service.Features.Person;
 using edt.service.Infrastructure.Telemetry;
 using edt.service.Kafka.Model;
+using edt.service.ServiceEvents.PersonCreationHandler.Models;
 using edt.service.ServiceEvents.UserAccountModification.Models;
 using Prometheus;
 using Serilog;
@@ -23,6 +23,7 @@ public class EdtClient : BaseClient, IEdtClient
     private static readonly Histogram GetUserDuration = Metrics.CreateHistogram("edt_get_user_duration", "Histogram of edt account lookups.");
     private static readonly Histogram ParticipantCreationDuration = Metrics.CreateHistogram("edt_participant_creation_duration", "Histogram of edt participant creations.");
     private static readonly Histogram ParticipantModificationDuration = Metrics.CreateHistogram("edt_participant_modification_duration", "Histogram of edt participant modifications.");
+    private static readonly Histogram DisclosureLinkageDuration = Metrics.CreateHistogram("edt_person_disclosure_linkage", "Histogram of edt participant to folio linkage events.");
 
 
 
@@ -245,6 +246,16 @@ public class EdtClient : BaseClient, IEdtClient
         return returnPersons;
     }
 
+    public async Task<EdtPersonDto> GetPersonByIdentifier(string identifierType, string identifierValue)
+    {
+        var persons = await this.GetPersonsByIdentifier(identifierType, identifierValue);
+        if (persons.Count == 1)
+        {
+            return persons.First();
+        }
+        return null;
+    }
+
     private async Task<bool> AddUserToSubmittingAgencyGroup(EdtUserProvisioningModel accessRequest, string userId)
     {
         if (accessRequest == null)
@@ -277,6 +288,8 @@ public class EdtClient : BaseClient, IEdtClient
 
     }
 
+
+
     /// <summary>
     /// Add an identifier to a person
     /// </summary>
@@ -292,7 +305,7 @@ public class EdtClient : BaseClient, IEdtClient
             return -1;
         }
 
-        var result = await this.PostAsync<IdentifierModel>($"api/v1/users", new IdentifierCreationInputModel
+        var result = await this.PostAsync<IdentifierModel>($"api/v1/org-units/1/identifiers", new IdentifierCreationInputModel
         {
             EntityId = personId,
             IdentifierType = identifierType,
@@ -714,9 +727,11 @@ public class EdtClient : BaseClient, IEdtClient
             }
             else
             {
+                var newParticipant = await this.GetPerson(edtPersonDto.Key!);
+
                 Log.Logger.Information($"Successfully added {accessRequest.LastName} as a participant");
                 // add external Id
-                var createdIdentifer = await this.AddPersonIdentifier((int)edtPersonDto.Id!, "EdtExternalId", edtPersonDto.Key!);
+                var createdIdentifer = await this.AddPersonIdentifier((int)newParticipant.Id, this.configuration.EdtClient.DefenceParticipantAdditionalId, edtPersonDto.Key!);
 
             }
 
@@ -739,6 +754,7 @@ public class EdtClient : BaseClient, IEdtClient
         {
             this.meters.UpdatePerson();
 
+            var hasChange = false;
             var person = await this.GetPerson(modificationInfo.Key);
 
             if (person == null)
@@ -748,31 +764,62 @@ public class EdtClient : BaseClient, IEdtClient
                 throw new EdtServiceException(msg);
             }
 
-            var emailChange = modificationInfo.SingleChangeTypes.FirstOrDefault(change => change.Key == ChangeType.EMAIL);
-            var changeValue = emailChange.Value;
-
-            if (changeValue == null || changeValue.To == null || (changeValue.From == changeValue.To))
+            foreach (var changeEvent in modificationInfo.SingleChangeTypes)
             {
-                throw new EdtServiceException($"Unable to update user {modificationInfo.Key} with invalid email info");
+                var changeValue = changeEvent.Value;
+
+                if (changeValue != null)
+                {
+                    switch (changeEvent.Key)
+                    {
+                        case ChangeType.EMAIL:
+                        {
+                            person.Address.Email = changeValue.To;
+                            Log.Information($"Email address change for {modificationInfo.ChangeId} to {changeValue.To}");
+                            hasChange = true;
+                            break;
+                        }
+                        case ChangeType.PHONE:
+                        {
+                            person.Address.Phone = changeValue.To;
+                            Log.Information($"Phone change for {modificationInfo.ChangeId} to {changeValue.To}");
+                            hasChange = true;
+                            break;
+                        }
+
+                    }
+                }
+                else
+                {
+                    throw new EdtServiceException($"Unable to update user {modificationInfo.Key} with invalid {changeEvent.Key} info");
+
+                }
             }
 
-            person.Address.Email = changeValue.To;
-
-
-            var result = await this.PutAsync($"api/v1/org-units/1/persons/" + person.Id, person);
             var userModificationResponse = new UserModificationEvent
             {
                 partId = modificationInfo.Key,
                 eventType = UserModificationEvent.UserEvent.Modify,
                 eventTime = DateTime.Now,
-                accessRequestId = modificationInfo.ChangeId,
-                successful = true
+                accessRequestId = modificationInfo.ChangeId
             };
 
-            if (!result.IsSuccess)
+            if (hasChange)
             {
-                Log.Logger.Error("Failed to update EDT person {0}", string.Join(",", result.Errors));
-                userModificationResponse.successful = false;
+                var result = await this.PutAsync($"api/v1/org-units/1/persons/" + person.Id, person);
+                userModificationResponse.successful = true;
+
+                if (!result.IsSuccess)
+                {
+                    Log.Logger.Error("Failed to update EDT person {0}", string.Join(",", result.Errors));
+                    userModificationResponse.successful = false;
+                }
+            }
+            else
+            {
+                Log.Information($"No valid changes in modification request {modificationInfo.ChangeId} - request ignored");
+                userModificationResponse.successful = true;
+
             }
 
 
@@ -815,6 +862,49 @@ public class EdtClient : BaseClient, IEdtClient
     }
 
 
+    /// <summary>
+    /// Link a person to their disclosure folio in the disclosure portal
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    public async Task<bool> LinkPersonToDisclosureFolio(PersonFolioLinkage request)
+    {
+        using (DisclosureLinkageDuration.NewTimer())
+        {
+            var response = false;
+            Log.Logger.Information($"Linking {request.DisclosureCaseIdentifier} to {request.PersonKey}");
+
+            // get the person by key
+            var person = (request.PersonType == "Counsel") ? await this.GetPerson(request.PersonKey) : await this.GetPersonByIdentifier("edtExternalid", request.EdtExternalId);
+
+
+            if (person != null)
+            {
+                // check no existing disc person identifier
+                var existingIdentifier = person.Identifiers.FirstOrDefault(identifier => identifier.IdentifierType == "DisclosurePortalCase");
+                if (existingIdentifier != null)
+                {
+                    Log.Information($"Found existing DisclosurePortalCase {existingIdentifier.IdentifierValue} for person {request.PersonKey}");
+                    response = true;
+                }
+                else
+                {
+                    var added = await this.AddPersonIdentifier((int)person.Id, "DisclosurePortalCase", request.DisclosureCaseIdentifier);
+                    if (added > 0)
+                    {
+                        Log.Information($"Added new person identifier {added} {person.Id} {request.PersonKey} {request.DisclosureCaseIdentifier}");
+                        response = true;
+                    }
+                }
+            }
+            else
+            {
+                Log.Information($"Person [{request.PersonKey} was not found for folio [{request.DisclosureCaseIdentifier}] linkage - will attempt later");
+            }
+
+            return response;
+        }
+    }
 
     public class AddUserToOuGroup
     {

@@ -23,6 +23,7 @@ public class PidpConfiguration
     public EdtClientConfiguration EdtClient { get; set; } = new EdtClientConfiguration();
     public EdtCaseManagementClientConfiguration EdtCaseManagementClient { get; set; } = new EdtCaseManagementClientConfiguration();
     public EdtClientConfiguration EdtDisclosureClient { get; set; } = new EdtClientConfiguration();
+    public EnvironmentConfiguration EnvironmentConfig { get; set; } = new EnvironmentConfiguration();
 
     public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
     public CourtAccessConfiguration CourtAccess { get; set; } = new();
@@ -74,7 +75,7 @@ public class PidpConfiguration
 
     public class CourtAccessConfiguration
     {
-        public int PollSeconds { get; set; } = 600;
+        public string PollCron { get; set; } = "0 * * * * ?";
     }
 
     public class ChesClientConfiguration
@@ -95,6 +96,7 @@ public class PidpConfiguration
         public string AdministrationClientId { get; set; } = string.Empty;
         public string AdministrationClientSecret { get; set; } = string.Empty;
         public string HcimClientId { get; set; } = string.Empty;
+        public string BirthdateField { get; set; } = "birthdate";
     }
 
     public class LdapClientConfiguration
@@ -112,7 +114,8 @@ public class PidpConfiguration
         public string ProducerTopicName { get; set; } = string.Empty;
         public string CaseAccessRequestTopicName { get; set; } = string.Empty;
         public string PersonCreationTopic { get; set; } = string.Empty;
-        public string DisclosureUserCreationTopic { get; set; } = string.Empty;
+        public string DisclosureDefenceUserCreationTopic { get; set; } = string.Empty;
+        public string DisclosurePublicUserCreationTopic { get; set; } = string.Empty;
         public string DisclosureUserModificationTopic { get; set; } = string.Empty;
         public string ApprovalCreationTopic { get; set; } = string.Empty;
         public string ProcessResponseTopic { get; set; } = string.Empty;
@@ -149,6 +152,12 @@ public class PidpConfiguration
         public int Port { get; set; }
     }
 
+    public class EnvironmentConfiguration
+    {
+        public string SupportEmail { get; set; } = "jpsprovideridentityportal@gov.bc.ca";
+        public string Environment { get; set; } = string.Empty;
+    }
+
     public class EdtClientConfiguration
     {
         public string Url { get; set; } = string.Empty;
@@ -156,6 +165,7 @@ public class PidpConfiguration
         public string ClientId { get; set; } = string.Empty;
         public string ClientSecret { get; set; } = string.Empty;
         public int MaxClientValidations { get; set; } = 5;
+        public string DateOfBirthField { get; set; } = "Date of Birth";
     }
 
 

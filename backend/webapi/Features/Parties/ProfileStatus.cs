@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Text.Json.Serialization;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Common.Models.EDT;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
@@ -18,8 +19,8 @@ using Pidp.Infrastructure.HttpClients.Jum;
 using Pidp.Infrastructure.HttpClients.Plr;
 using Pidp.Models;
 using Pidp.Models.Lookups;
+using Pidp.Models.UserInfo;
 using Prometheus;
-using static Pidp.Features.Parties.ProfileStatus.ProfileStatusDto;
 
 public partial class ProfileStatus
 {
@@ -103,19 +104,22 @@ public partial class ProfileStatus
         private readonly IJumClient jumClient;
         private readonly PidpDbContext context;
         private readonly IHttpContextAccessor httpContextAccessor;
+        private readonly IProfileUpdateService profileUpdateService;
 
         public CommandHandler(
             IMapper mapper,
             IPlrClient client,
             IJumClient jumClient,
             PidpDbContext context,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor,
+            IProfileUpdateService profileUpdateService)
         {
             this.mapper = mapper;
             this.client = client;
             this.context = context;
             this.jumClient = jumClient;
             this.httpContextAccessor = httpContextAccessor;
+            this.profileUpdateService = profileUpdateService;
         }
 
         public async Task<Model> HandleAsync(Command command)
@@ -123,12 +127,29 @@ public partial class ProfileStatus
 
             using (ProfileDuration.NewTimer())
             {
-                var profile = await this.context.Parties
-                   .Where(party => party.Id == command.Id)
-                   .ProjectTo<ProfileStatusDto>(this.mapper.ConfigurationProvider)
-                   .SingleAsync();
-
                 var party = await this.context.Parties.Where(party => party.Id == command.Id).SingleAsync();
+
+                var profile = await this.context.Parties
+                    .Where(party => party.Id == command.Id)
+                    .ProjectTo<ProfileStatusDto>(this.mapper.ConfigurationProvider)
+                    .SingleAsync();
+
+                // if user if a lawyer they may update email and phone number
+                if (profile.OrganizationDetailEntered && profile.Organization?.IdpHint == ClaimValues.VerifiedCredentials)
+                {
+
+                    await this.profileUpdateService.UpdateUserProfile(new UpdatePersonContactInfoModel
+                    {
+                        PartyId = party.Id,
+                        EMail = party.Email,
+                        Phone = party.Phone,
+                        KeycloakUserId = party.UserId.ToString(),
+                        Key = party.Jpdid,
+                        Idp = profile.Organization.IdpHint,
+                        Organization = profile.Organization.Name
+                    });
+
+                }
 
                 var orgCorrectionDetail = profile.OrganizationCode == OrganizationCode.CorrectionService
                     ? await this.context.CorrectionServiceDetails
@@ -148,16 +169,6 @@ public partial class ProfileStatus
                     .FirstOrDefaultAsync()
                     : null;
 
-
-
-
-                //if (profile.CollegeCertificationEntered && profile.Ipc == null)
-                if (profile.HasDeclaredLicence
-                    && string.IsNullOrWhiteSpace(profile.Cpn))
-                {
-                    // Cert has been entered but no CPN found, likely due to a transient error or delay in PLR record updates. Retry once.
-                    profile.Cpn = await this.RecheckCpn(command.Id, profile.LicenceDeclaration, profile.Birthdate);
-                }
 
                 // if the user is a BCPS user then we'll flag this portion as completed
                 if (profile.OrganizationDetailEntered && profile.OrganizationCode == OrganizationCode.CorrectionService && orgCorrectionDetail != null)
@@ -199,6 +210,7 @@ public partial class ProfileStatus
                 }
 
 
+
                 // if an agency account then we'll mark as complete to prevent any changes
                 var submittingAgency = await this.GetSubmittingAgency(command.User);
                 if (submittingAgency != null)
@@ -225,8 +237,6 @@ public partial class ProfileStatus
                     });
                 }
 
-                //profile.PlrRecordStatus = await this.client.GetRecordStatus(profile.Ipc);
-                profile.PlrStanding = await this.client.GetStandingsDigestAsync(profile.Cpn);
                 profile.User = command.User;
 
                 // if the user is not a card user then we shouldnt need more profile info
@@ -244,18 +254,13 @@ public partial class ProfileStatus
                     Status = new List<Model.ProfileSection>
                 {
                     new Model.AccessAdministrator(profile),
-                   // new Model.CollegeCertification(profile),
                     new Model.OrganizationDetails(profile),
                     new Model.Demographics(profile),
-                   // new Model.DriverFitness(profile),
-                  //  new Model.HcimAccountTransfer(profile),
-                  //  new Model.HcimEnrolment(profile),
+
                     new Model.DigitalEvidence(profile),
                     new Model.DigitalEvidenceCaseManagement(profile),
                     new Model.DefenseAndDutyCounsel(profile),
-                  //  new Model.MSTeams(profile),
-                  //  new Model.SAEforms(profile),
-                    new Model.Uci(profile),
+                    //new Model.Uci(profile),
                     new Model.SubmittingAgencyCaseManagement(profile),
                 }
                     .ToDictionary(section => section.SectionName, section => section)
@@ -298,25 +303,7 @@ public partial class ProfileStatus
             }
         }
 
-        private async Task<string?> RecheckCpn(int partyId, LicenceDeclarationDto declaration, LocalDate? birthdate)
-        {
-            if (declaration.HasNoLicence
-                || birthdate == null)
-            {
-                return null;
-            }
 
-            var newCpn = await this.client.FindCpnAsync(declaration.CollegeCode.Value, declaration.LicenceNumber, birthdate.Value);
-            if (newCpn != null)
-            {
-                var party = await this.context.Parties
-                    .SingleAsync(party => party.Id == partyId);
-                party.Cpn = newCpn;
-                await this.context.SaveChangesAsync();
-            }
-
-            return newCpn;
-        }
 
         private async Task<SubmittingAgency> GetSubmittingAgency(ClaimsPrincipal user)
         {
@@ -368,6 +355,7 @@ public partial class ProfileStatus
         public string? CorrectionService { get; set; }
         public JusticeSectorCode? JusticeSectorCode { get; set; }
         public SubmittingAgency? SubmittingAgency { get; set; }
+        public PublicUserValidation? CodeValidations { get; set; }
         public string? JusticeSectorService { get; set; }
         public string? EmployeeIdentifier { get; set; }
         //public bool OrganizationDetailEntered { get; set; }
@@ -389,6 +377,7 @@ public partial class ProfileStatus
         public bool DemographicsEntered => this.User.GetIdentityProvider() is ClaimValues.Bcps or
                                             ClaimValues.Idir or
                                             ClaimValues.Adfs or
+                                            ClaimValues.AzureAd or
                                             ClaimValues.BCServicesCard or
                                             ClaimValues.VerifiedCredentials ? this.Email != null : this.Email != null && this.Phone != null;
         //[MemberNotNullWhen(true, nameof(CollegeCode), nameof(LicenceNumber))]
@@ -400,11 +389,11 @@ public partial class ProfileStatus
         public bool UserIsBcServicesCard => this.User.GetIdentityProvider() == ClaimValues.BCServicesCard;
         //public bool UserIsPhsa => this.User.GetIdentityProvider() == ClaimValues.Phsa;
         //public bool UserIsBcps => this.User.GetIdentityProvider() == ClaimValues.Bcps;
-        public bool UserIsBcps => this.User.GetIdentityProvider() == ClaimValues.Bcps && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpApi).Contains(DefaultRoles.Bcps) || (this.PermitIDIRDEMS() && this.User.GetIdentityProvider() == ClaimValues.Idir);
-        public bool UserIsIdir => this.User.GetIdentityProvider() == ClaimValues.Idir;
+        public bool UserIsBcps => this.User.GetIdentityProvider() == ClaimValues.Bcps && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpApi).Contains(DefaultRoles.Bcps) || (this.PermitIDIRDEMS() && (this.User.GetIdentityProvider() == ClaimValues.Idir || this.User.GetIdentityProvider() == ClaimValues.AzureAd));
+        public bool UserIsIdir => this.User.GetIdentityProvider() == ClaimValues.Idir || this.User.GetIdentityProvider() == ClaimValues.AzureAd;
         public bool UserIsIdirCaseManagement => this.User.GetIdentityProvider() == ClaimValues.Idir && this.PermitIDIRDEMS() && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpApi).Contains(Roles.SubmittingAgency);
         public bool UserIsDutyCounsel => (this.User.GetIdentityProvider() == ClaimValues.VerifiedCredentials && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpApi).Contains(Roles.DutyCounsel))
-                  || (this.PermitIDIRDEMS() && this.User.GetIdentityProvider() == ClaimValues.Idir && this.User?.Identity is ClaimsIdentity claimsIdentity && claimsIdentity.GetResourceAccessRoles(Clients.PidpApi).Contains(Roles.DutyCounsel));
+                  || (this.PermitIDIRDEMS() && (this.User.GetIdentityProvider() == ClaimValues.Idir || this.User.GetIdentityProvider() == ClaimValues.AzureAd) && this.User?.Identity is ClaimsIdentity claimsIdentity && claimsIdentity.GetResourceAccessRoles(Clients.PidpApi).Contains(Roles.DutyCounsel));
 
         public bool UserIsInLawSociety => this.User.GetIdentityProvider() == ClaimValues.VerifiedCredentials;
 

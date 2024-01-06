@@ -128,10 +128,10 @@ nginx:
         proxy_pass http://diam-config:8080/api/config/;
       }
 
-      location ^~ /api/v1/PLRHL7 {
-        proxy_pass http://{{ .Release.Name }}-webapi:8080/api/PLRHL7;
-        proxy_set_header  X-SSL-CERT $ssl_client_escaped_cert;
-      }
+      #location ^~ /api/v1/PLRHL7 {
+      #  proxy_pass http://{{ .Release.Name }}-webapi:8080/api/PLRHL7;
+      #  proxy_set_header  X-SSL-CERT $ssl_client_escaped_cert;
+      #}
 
       # Deny all attempts to access hidden files such as .htaccess or .htpasswd
       location ~ /\. {
@@ -167,10 +167,10 @@ nginx:
       add_header X-Content-Type-Options "nosniff" always;
       add_header Referrer-Policy "no-referrer-when-downgrade";
 
-      location ^~ /api/v1/PLRHL7 {
-        proxy_pass http://{{ .Release.Name }}-plr-intake:8080/api/PLRHL7;
-        proxy_set_header  X-SSL-CERT $ssl_client_escaped_cert;
-      }
+      #location ^~ /api/v1/PLRHL7 {
+      #  proxy_pass http://{{ .Release.Name }}-plr-intake:8080/api/PLRHL7;
+      #  proxy_set_header  X-SSL-CERT $ssl_client_escaped_cert;
+      #}
 
       # Deny all attempts to access hidden files such as .htaccess or .htpasswd
       location ~ /\. {

@@ -36,6 +36,21 @@ public class PersonController : ControllerBase
         return this.Ok(c);
     }
 
+    [HttpGet("key/{key}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<EdtPersonDto>> GetUserByKey([FromServices] IRequestHandler<PersonByKeyQuery, EdtPersonDto> handler,
+                                                                   [FromRoute] PersonByKeyQuery query)
+    {
+
+        var c = await this.mediator.Send(query);
+        if (c == null)
+        {
+            return this.NotFound();
+        }
+        return this.Ok(c);
+    }
+
 
     [HttpGet("identifier/{identifierType}/{identifierValue}")]
     [ProducesResponseType(StatusCodes.Status200OK)]

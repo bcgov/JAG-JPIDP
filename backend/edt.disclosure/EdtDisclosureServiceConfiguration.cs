@@ -1,8 +1,4 @@
 namespace edt.disclosure;
-
-
-using System.Text.Json;
-using System.Transactions;
 using edt.disclosure.Infrastructure.Auth;
 
 public class EdtDisclosureServiceConfiguration
@@ -42,18 +38,26 @@ public class EdtDisclosureServiceConfiguration
 
     public class EdtDisclosureClientConfiguration
     {
-        public string ApiKey { get; set; } = string.Empty;
-        public string Url { get; set; } = string.Empty;
-        public string CounselGroup { get; set; } = "Counsel";
-        public string DefenceFolioTemplateName { get; set; } = string.Empty;
-        public int DefenceFolioTemplateId { get; set; } = -1;
-        public string DefenceCaseGroup { get; set; } = string.Empty;
-        public string CourtLocationKeyPrefix { get; set; } = "CH-";
-        public string CourtLocationGroup { get; set; } = string.Empty;
-        public int CourtLocationTemplateId { get; set; }
-        public bool CreateCourtLocations { get; set; }
 
+        public bool CreateCourtLocations { get; set; }
+        public int CourtLocationTemplateId { get; set; }
+        public int DefenceFolioTemplateId { get; set; } = -1;
+        public int OutOfCustodyTemplateId { get; set; } = -1;
+        public string ApiKey { get; set; } = string.Empty;
+        public string CounselGroup { get; set; } = "Counsel";
+        public string CourtLocationGroup { get; set; } = string.Empty;
+        public string CourtLocationKeyPrefix { get; set; } = "CH-";
+        public string DefenceCaseGroups { get; set; } = string.Empty;
+        public string DefenceFolioTemplateName { get; set; } = string.Empty;
+        public string OutOfCustodyCaseGroups { get; set; } = string.Empty;
+        public string OutOfCustodyGroup { get; set; } = string.Empty;
+        public string OutOfCustodyOrgName { set; get; } = "Public";
+        public string OutOfCustodyOrgType { set; get; } = "Out-of-custody";
+        public string OutOfCustodyTemplateName { get; set; } = string.Empty;
+        public string Url { get; set; } = string.Empty;
+        public bool CreateUserFolios { get; set; } = true;
     }
+
     public class CustomDisplayField
     {
         public int Id { get; set; }
@@ -97,7 +101,8 @@ public class EdtDisclosureServiceConfiguration
         public string CaseAccessResponseTopicName { get; set; } = string.Empty;
         public string CourtLocationAccessRequestTopic { get; set; } = string.Empty;
         public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;
-        public string CreateUserTopic { get; set; } = string.Empty;
+        public string CreateDefenceUserTopic { get; set; } = string.Empty;
+        public string CreatePublicUserTopic { get; set; } = string.Empty;
         public string AckTopicName { get; set; } = string.Empty;
         public string UserModificationTopicName { get; set; } = string.Empty;
 
@@ -114,6 +119,7 @@ public class EdtDisclosureServiceConfiguration
         public string Scope { get; set; } = "openid";
         public string ConsumerGroupId { get; set; } = "disclosure-consumer-group";
         public string RetryConsumerGroupId { get; set; } = "disclosure-retry-consumer-group";
+        public string CoreFolioCreationNotificationTopic { get; set; } = string.Empty;
 
 
     }

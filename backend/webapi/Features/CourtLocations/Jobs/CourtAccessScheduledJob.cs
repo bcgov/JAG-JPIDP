@@ -5,6 +5,8 @@ using Pidp.Models;
 using Prometheus;
 using Quartz;
 
+[PersistJobDataAfterExecution]
+[DisallowConcurrentExecution]
 public class CourtAccessScheduledJob : IJob
 {
     private readonly ICourtAccessService courtAccessService;
@@ -12,7 +14,7 @@ public class CourtAccessScheduledJob : IJob
     public CourtAccessScheduledJob(ICourtAccessService courtAccessService) => this.courtAccessService = courtAccessService;
 
 
-    private static readonly Histogram CourtLocationScheduledJobDuration = Prometheus.Metrics
+    private static readonly Histogram CourtLocationScheduledJobDuration = Metrics
          .CreateHistogram("pidp_court_location_scheduled_jobs", "Histogram of court location request job executions");
 
 
@@ -23,6 +25,7 @@ public class CourtAccessScheduledJob : IJob
         {
             // look for any requests due today that are either provision or remove events
             var pendingRequests = this.courtAccessService.GetRequestsDueToday().Result;
+            Serilog.Log.Information($"{pendingRequests.Count} pending requests found for Court Access Scheduler [JOB]");
 
             foreach (var request in pendingRequests)
             {

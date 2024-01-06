@@ -1,11 +1,10 @@
 namespace Pidp.Infrastructure.Services;
 
+using System.Linq.Expressions;
+using System.Security.Claims;
 using DomainResults.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
-using System.Security.Claims;
-
 using Pidp.Data;
 using Pidp.Infrastructure.Auth;
 using Pidp.Models;
@@ -37,6 +36,11 @@ public class PidpAuthorizationService : IPidpAuthorizationService
         }
 
         var result = await this.authService.AuthorizeAsync(user, resourceStub, policy);
+
+        if (!result.Succeeded)
+        {
+            Serilog.Log.Warning($"User auth for {resourceStub} user {user} failed");
+        }
 
         return result.Succeeded
             ? DomainResult.Success()

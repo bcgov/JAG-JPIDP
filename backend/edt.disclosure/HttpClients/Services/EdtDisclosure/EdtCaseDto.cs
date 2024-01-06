@@ -7,7 +7,6 @@ public class EdtCaseDto
     public string Key { get; set; } = string.Empty;
     public string TimeZoneId { get; set; } = "Pacific Standard Time";
     public string TemplateCase { get; set; } = string.Empty;
-    public string TemplateCaseId { get; set; } = string.Empty;
 
     public List<CaseField> Fields { get; set; } = new List<CaseField>();
 }

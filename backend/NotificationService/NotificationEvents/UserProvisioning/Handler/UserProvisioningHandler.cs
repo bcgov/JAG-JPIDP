@@ -117,7 +117,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, Notification>
 
                 //After successful operation, we can produce message for other service's consumption
                 // if its a non-tombstone account then we'll set the status to completed-pending-finalization
-                var ackStatus = value.DomainEvent.Equals("digitalevidence-bcps-usercreation-complete") ? "Completed-Pending-Case-Allocation" : "complete";
+                var ackStatus = value.DomainEvent.Equals("digitalevidence-bcps-usercreation-complete") ? "Completed-Pending-Case-Allocation" : "Complete";
                 await this.producer.ProduceAsync(this.configuration.KafkaCluster.AckTopicName, key: value.NotificationId.ToString()!, new NotificationAckModel
                 {
                     PartId = partId,

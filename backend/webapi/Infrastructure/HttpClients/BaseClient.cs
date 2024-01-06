@@ -1,13 +1,12 @@
 namespace Pidp.Infrastructure.HttpClients;
 
-using DomainResults.Common;
-using Flurl;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-
+using DomainResults.Common;
+using Flurl;
 using Pidp.Extensions;
-using System.Net.Http.Headers;
 
 public enum PropertySerialization
 {
@@ -167,7 +166,7 @@ public class BaseClient
         catch (HttpRequestException exception)
         {
             this.Logger.LogBaseClientException(exception);
-            return DomainResult.Failed<T>("HttpRequestException during call to API");
+            return DomainResult.CriticalDependencyError<T>($"HttpRequestException during call to API [{exception.Message}]");
         }
         catch (TimeoutException exception)
         {
@@ -182,12 +181,12 @@ public class BaseClient
         catch (JsonException exception)
         {
             this.Logger.LogBaseClientException(exception);
-            return DomainResult.Failed<T>("Could not deserialize API response");
+            return DomainResult.Failed<T>($"Could not deserialize API response [{exception.Message}]");
         }
         catch (Exception exception)
         {
             this.Logger.LogBaseClientException(exception);
-            return DomainResult.Failed<T>("Unhandled exception when calling the API");
+            return DomainResult.Failed<T>($"Unhandled exception when calling the API [{exception.Message}]");
         }
     }
     private async Task<IDomainResult<T>> SendCoreInternalAsync<T>(HttpMethod method, string url, string accessToken, HttpContent? content, bool ignoreResponseContent, CancellationToken cancellationToken)

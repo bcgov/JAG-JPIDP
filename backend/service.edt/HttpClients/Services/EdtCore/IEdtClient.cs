@@ -2,6 +2,7 @@ namespace edt.service.HttpClients.Services.EdtCore;
 
 using Common.Models.EDT;
 using edt.service.Kafka.Model;
+using edt.service.ServiceEvents.PersonCreationHandler.Models;
 using edt.service.ServiceEvents.UserAccountModification.Models;
 
 public interface IEdtClient
@@ -13,6 +14,7 @@ public interface IEdtClient
     Task<UserModificationEvent> ModifyPerson(IncomingUserModification modificationInfo);
     Task<int> AddPersonIdentifier(int personId, string identifierType, string identifierValue);
     Task<UserModificationEvent> UpdateUserDetails(EdtUserDto userDetails);
+    Task<bool> LinkPersonToDisclosureFolio(PersonFolioLinkage request);
 
 
     Task<int> GetOuGroupId(string regionName);
@@ -101,4 +103,14 @@ public interface IEdtClient
     /// <param name="identifierValue"></param>
     /// <returns></returns>
     Task<List<EdtPersonDto>> GetPersonsByIdentifier(string identifierType, string identifierValue);
+
+    /// <summary>
+    /// Currently an identifier should be unique across the type (e.g. Person) so if any are found
+    /// it should always be a single return value
+    /// </summary>
+    /// <param name="identifierType"></param>
+    /// <param name="identifierValue"></param>
+    /// <returns></returns>
+    Task<EdtPersonDto> GetPersonByIdentifier(string identifierType, string identifierValue);
+
 }

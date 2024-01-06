@@ -1,16 +1,15 @@
 namespace edt.disclosure.HttpClients.Services.EdtDisclosure;
+
 using System.Threading.Tasks;
 using AutoMapper;
-
+using common.Constants.Auth;
+using Common.Models;
+using Common.Models.EDT;
 using edt.disclosure.Exceptions;
-using edt.disclosure.Features.Cases;
 using edt.disclosure.Infrastructure.Telemetry;
 using edt.disclosure.Kafka.Model;
-using edt.disclosure.Models;
 using edt.disclosure.ServiceEvents.CourtLocation.Models;
-using edt.disclosure.ServiceEvents.Models;
 using edt.disclosure.ServiceEvents.UserAccountCreation.Models;
-using edt.disclosure.ServiceEvents.UserAccountModification.Models;
 using Prometheus;
 using Serilog;
 
@@ -70,7 +69,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
     /// <exception cref="EdtServiceException"></exception>
     public async Task<string> GetVersion()
     {
-        var result = await this.GetAsync<EdtVersion?>($"api/v1/version");
+        var result = await this.GetAsync<Common.Models.EDT.EdtVersion?>($"api/v1/version");
 
         if (!result.IsSuccess)
         {
@@ -113,7 +112,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             }
             else
             {
-                throw new EdtDisclosureServiceException($"Unable to determine court location with key {accessRequest.CourtLocationKey}");
+                throw new EdtDisclosureServiceException($"Court Location Creation not enabled - Unable to determine court location with key {this.configuration.EdtClient.CourtLocationKeyPrefix}{accessRequest.CourtLocationKey}");
 
             }
         }
@@ -143,7 +142,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             else
             {
                 Log.Information($"Adding user {user.Id} to court location {courtLocation.Id} {courtLocation.Key}");
-                var addedOk = await this.AddUserToCase(user.Id, courtLocation.Id, "Reviewers");
+                var addedOk = await this.AddUserToCase(user.Id, courtLocation.Id, this.configuration.EdtClient.CourtLocationGroup);
                 if (addedOk)
                 {
                     Log.Information($"Added user {user.Id} to court location {courtLocation.Id} {courtLocation.Key}");
@@ -169,7 +168,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             Key = this.configuration.EdtClient.CourtLocationKeyPrefix + accessRequest.CourtLocationKey,
             Name = accessRequest.CourtLocationName,
             Description = "Court Location Folio",
-            TemplateCaseId = "" + this.configuration.EdtClient.CourtLocationTemplateId
+            TemplateCase = "" + this.configuration.EdtClient.CourtLocationTemplateId
         };
 
         var created = await this.CreateCase(courtLocation);
@@ -254,15 +253,17 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             if (newUser != null)
             {
 
-                var groupAddResponse = await this.AddUserToOUGroup(newUser.Id, this.configuration.EdtClient.CounselGroup);
+                var groupToAdd = (accessRequest.OrganizationType == this.configuration.EdtClient.OutOfCustodyOrgType) ? this.configuration.EdtClient.OutOfCustodyGroup : this.configuration.EdtClient.CounselGroup;
+
+                var groupAddResponse = await this.AddUserToOUGroup(newUser.Id, groupToAdd);
                 if (!groupAddResponse)
                 {
                     userModificationResponse.successful = false;
-                    userModificationResponse.Errors.Add($"Failed to add user to group {this.configuration.EdtClient.CounselGroup}");
+                    userModificationResponse.Errors.Add($"Failed to add user to group {groupToAdd}");
                 }
                 else
                 {
-                    Log.Information($"User {newUser.Id} added to {this.configuration.EdtClient.CounselGroup} in EDT");
+                    Log.Information($"User {newUser.Id} added to {groupToAdd} in EDT");
                 }
 
                 //// add user to their folio folder
@@ -340,23 +341,24 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
             // check user has folio and is associated
             var groups = await this.GetUserOUGroups(currentUser.Id);
+            var groupToAdd = (accessRequest.OrganizationType == this.configuration.EdtClient.OutOfCustodyOrgType) ? this.configuration.EdtClient.OutOfCustodyGroup : this.configuration.EdtClient.CounselGroup;
 
-            var inGroup = groups.FirstOrDefault(group => group.Name.Equals(this.configuration.EdtClient.CounselGroup, StringComparison.OrdinalIgnoreCase));
+            var inGroup = groups.FirstOrDefault(group => group.Name.Equals(groupToAdd, StringComparison.OrdinalIgnoreCase));
 
             if (inGroup == null)
             {
-                Log.Information($"User {currentUser.Id} not currently in {this.configuration.EdtClient.CounselGroup} - adding");
-                var addedToGroup = await this.AddUserToOUGroup(currentUser.Id, this.configuration.EdtClient.CounselGroup);
+                Log.Information($"User {currentUser.Id} not currently in {groupToAdd} - adding");
+                var addedToGroup = await this.AddUserToOUGroup(currentUser.Id, groupToAdd);
 
                 if (addedToGroup)
                 {
-                    Log.Information($"Added user {currentUser.Id} to group {this.configuration.EdtClient.CounselGroup}");
+                    Log.Information($"Added user {currentUser.Id} to group {groupToAdd}");
                 }
                 else
                 {
-                    Log.Warning($"Failed to add user {currentUser.Id} to group {this.configuration.EdtClient.CounselGroup}");
+                    Log.Warning($"Failed to add user {currentUser.Id} to group {groupToAdd}");
                     userModificationResponse.successful = false;
-                    userModificationResponse.Errors.Add($"Failed to add user {currentUser.Id} to group {this.configuration.EdtClient.CounselGroup}");
+                    userModificationResponse.Errors.Add($"Failed to add user {currentUser.Id} to group {groupToAdd}");
                 }
             }
 
@@ -378,7 +380,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         using (AccountUpdateDuration.NewTimer())
         {
 
-
+            var hasChanges = false;
             // check the user exists
             var currentUser = await this.GetUser(changeEvent.Key);
             if (currentUser == null)
@@ -400,23 +402,34 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             {
                 foreach (var changeType in changeEvent.SingleChangeTypes)
                 {
-                    switch (changeType.Key)
+                    if (changeType.Value != null && !string.IsNullOrEmpty(changeType.Value.To))
                     {
-                        case ChangeType.EMAIL:
+                        switch (changeType.Key)
                         {
-                            Log.Information($"Handling email change event for {changeEvent.Key} to {changeType.Value.To}");
-                            currentUser.Email = changeType.Value.To;
-                            break;
-                        }
+                            case ChangeType.EMAIL:
+                            {
+                                Log.Information($"Handling email change event for {changeEvent.Key} to {changeType.Value.To}");
+                                currentUser.Email = changeType.Value.To;
+                                hasChanges = true;
+                                break;
+                            }
+                            case ChangeType.PHONE:
+                            {
+                                Log.Information($"Handling phone change event for {changeEvent.Key} to {changeType.Value.To}");
+                                currentUser.Phone = changeType.Value.To;
+                                hasChanges = true;
 
-                        default:
-                        {
-                            Log.Warning($"Ignoring change event {changeType.Key} for {changeEvent.UserID} ({changeType.Value.To})");
-                            break;
-                        }
+                                break;
+                            }
 
+                            default:
+                            {
+                                Log.Warning($"Ignoring change event {changeType.Key} for {changeEvent.UserID} ({changeType.Value.To})");
+                                break;
+                            }
+
+                        }
                     }
-
                 }
             }
             if (changeEvent.BooleanChangeTypes.Any())
@@ -429,6 +442,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
                         {
                             Log.Information($"Handling activation change event for {changeEvent.Key} to {changeType.Value.To}");
                             currentUser.IsActive = changeType.Value.To;
+                            hasChanges = true;
                             break;
                         }
 
@@ -442,12 +456,32 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
                 }
             }
 
-            var result = await this.PutAsync($"api/v1/users", currentUser);
-
-            if (!result.IsSuccess)
+            if (hasChanges)
             {
-                userModificationResponse.successful = false;
-                userModificationResponse.Errors.AddRange(result.Errors);
+                if (string.IsNullOrEmpty(currentUser.AccountType))
+                {
+                    // should always be SAML2 (at least until EDT supports OIDC)
+                    currentUser.AccountType = AccountTypes.EdtSaml2;
+                }
+
+                if (string.IsNullOrEmpty(currentUser.Role))
+                {
+                    // role should always be user (admins will be handled separately)
+                    currentUser.Role = "User";
+                }
+
+                var result = await this.PutAsync($"api/v1/users", currentUser);
+
+                if (!result.IsSuccess)
+                {
+                    userModificationResponse.successful = false;
+                    userModificationResponse.Errors.AddRange(result.Errors);
+                }
+            }
+            else
+            {
+                Log.Information($"No changes detected for {changeEvent.Key}");
+                userModificationResponse.successful = true;
             }
 
             return userModificationResponse;
@@ -598,7 +632,6 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         else
         {
 
-
             var addUserToCaseGroup = await this.AddUserToCaseGroup(userKey, caseId, caseGroupId);
             if (!addUserToCaseGroup)
             {
@@ -640,7 +673,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
     private async Task<IEnumerable<UserCaseGroup>> GetUserCaseGroups(string userKey, int caseId)
     {
         var result = await this.GetAsync<IEnumerable<UserCaseGroup>>($"api/v1/cases/{caseId}/users/{userKey}/groups");
-        Log.Logger.Information("Got #{0} user cases  user {1}", result.Value.Count(), userKey);
+        Log.Logger.Information($"Got {result.Value.Count()} user cases for user {userKey}");
 
         if (result.IsSuccess)
         {
@@ -773,7 +806,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
     public async Task<int> CreateCase(EdtCaseDto caseInfo)
     {
         Log.Logger.Information($"Case creation request {caseInfo.Name}");
-        if (caseInfo.Key == null || caseInfo.Name == null)
+        if (string.IsNullOrEmpty(caseInfo.Key) || string.IsNullOrEmpty(caseInfo.Name) || string.IsNullOrEmpty(caseInfo.TemplateCase))
         {
             throw new EdtDisclosureServiceException($"Invalid case creation request received");
         }
@@ -965,7 +998,6 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             Log.Logger.Error("Failed to determine existing EDT groups for {0} [{1}]", string.Join(", ", result.Errors));
             return null; //invalid
         }
-
         return result.Value;
 
     }
@@ -1009,6 +1041,23 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
     public async Task<CaseModel> FindCaseByKey(string caseKey) => await this.FindCaseByKey(caseKey, true);
 
 
+    public async Task<CaseModel> FindCaseByIdentifier(string identifierType, string identifierValue)
+    {
+        CaseModel response = null;
+
+        var result = await this.GetAsync<IdentifierResponseModel>($"api/v1/org-units/1/identifiers?filter=IdentifierValue:{identifierValue},IdentifierType:{identifierType},ItemType:Case");
+        if (result.IsSuccess)
+        {
+            Log.Information($"Found {result.Value.Total} case for {identifierValue}");
+            foreach (var identityInfo in result.Value.Items)
+            {
+                response = await this.GetCase(identityInfo.Id);
+            }
+        }
+
+        return response;
+    }
+
     /// <summary>
     ///
     /// Key is unique within cases
@@ -1023,7 +1072,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             return null;
         }
 
-        var caseIds = await this.SearchForCase(caseKey);
+        var caseIds = await this.SearchForCase("key:" + caseKey);
         if (caseIds != null && caseIds.Any())
         {
             return await this.GetCase(caseIds.First().Id, includeFields);
@@ -1042,7 +1091,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         public const string CourtAccessProvisionEvent = "digitalevidence-court-case-provision-event";
         public const string CourtAccessDecommissionEvent = "digitalevidence-court-case-decommission-event";
         public const string DisclosureUserProvisionEvent = "digitalevidence-disclosure-provision-event";
-        public const string DisclosureUserDecommissionEvent = "igitalevidence-disclosure-decommission-event";
+        public const string DisclosureUserDecommissionEvent = "digitalevidence-disclosure-decommission-event";
         public const string None = "None";
     }
 

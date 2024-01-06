@@ -6,6 +6,9 @@ global:
   environment: "dev"
   image:
     tag: develop
+  vault:
+    role: e27db1-nonprod
+    path: dev/
 
 route:
   enabled: false
@@ -59,6 +62,8 @@ edt-casemgmt:
     enabled: false
 
 edt-disclosure:
+  serviceAccount:
+    name: "e27db1-vault"
   migrations:
     enabled: false
 

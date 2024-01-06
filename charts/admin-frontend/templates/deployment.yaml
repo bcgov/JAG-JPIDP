@@ -14,6 +14,22 @@ spec:
   template:
     metadata:
       annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: "8080"
+        vault.hashicorp.com/agent-inject: 'true'
+        vault.hashicorp.com/agent-pre-populate-only: 'true'
+        vault.hashicorp.com/auth-path: auth/k8s-gold
+        vault.hashicorp.com/namespace: platform-services
+        vault.hashicorp.com/agent-requests-cpu: 5m
+        vault.hashicorp.com/agent-limits-cpu: 10m
+        vault.hashicorp.com/agent-requests-mem: 20Mi
+        vault.hashicorp.com/role: {{ .Values.global.vault.role }}  # licenseplate-nonprod or licenseplate-prod are your options
+        vault.hashicorp.com/agent-inject-secret-DIAM-Admin-Client: {{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-Admin-Client
+        vault.hashicorp.com/agent-inject-template-DIAM-Admin-Client: |
+          {{`{{- with secret `}}"{{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-Admin-Client"{{` }}
+          {{- range $k, $v := .Data.data }}
+          {{ $k }}="{{ $v }}"{{ end -}}
+          {{- end `}} }}
         checksum/config: {{ include (print $.Template.BasePath "/config-map.yaml") . | sha256sum }}
         {{- if .Values.global.commit_sha }}
         commit_sha: {{ quote .Values.global.commit_sha }}
@@ -28,7 +44,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "admin-frontend.serviceAccountName" . }}
+      serviceAccountName: {{ .Values.global.licenseplate }}-vault
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       volumes:
@@ -62,6 +78,9 @@ spec:
             - name: admin-frontend-config
               subPath: environment.json
               mountPath: /app/assets/environment.json
+            - name: admin-frontend-config
+              subPath: keycloak.json
+              mountPath: /app/keycloak.json
             - name: admin-frontend-env
               subPath: .env
               mountPath: /app/.env

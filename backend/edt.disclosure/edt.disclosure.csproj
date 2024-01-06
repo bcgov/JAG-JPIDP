@@ -5,12 +5,17 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <Version>1.0.5</Version>
+    <Version>1.0.8</Version>
   </PropertyGroup>
 
 
   <ItemGroup>
     <ProjectReference Include="..\common\Common.csproj" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <Folder Include="ServiceEvents\UserAccountModification\Models\" />
   </ItemGroup>
 
 

@@ -1,12 +1,10 @@
 namespace edt.disclosure.HttpClients.Services.EdtDisclosure;
 
 using System.Collections.Generic;
-using edt.disclosure.Features.Cases;
-using edt.disclosure.HttpClients.Services.EdtDisclosure;
+using Common.Models;
+using Common.Models.EDT;
 using edt.disclosure.Kafka.Model;
-using edt.disclosure.Models;
 using edt.disclosure.ServiceEvents.CourtLocation.Models;
-using edt.disclosure.ServiceEvents.UserAccountModification.Models;
 
 public interface IEdtDisclosureClient
 {
@@ -22,6 +20,7 @@ public interface IEdtDisclosureClient
 
     Task<CaseModel> FindCaseByKey(string caseKey);
     Task<CaseModel> FindCaseByKey(string caseKey, bool includeFields);
+    Task<CaseModel> FindCaseByIdentifier(string identifierType, string identifierValue);
 
     Task<EdtUserDto?> GetUser(string userKey);
 

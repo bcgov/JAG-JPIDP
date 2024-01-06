@@ -1,8 +1,8 @@
 namespace edt.service.ServiceEvents.DefenceParticipantCreation;
 
-using edt.service.HttpClients.Services.EdtCore;
-using edt.service.Kafka.Interfaces;
 using System.Net;
+using Common.Models.EDT;
+using edt.service.Kafka.Interfaces;
 
 public class EdtPersonCreationConsumer : BackgroundService
 {

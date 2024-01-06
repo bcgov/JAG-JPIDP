@@ -19,7 +19,7 @@ public class EdtServiceConfiguration
     public RetryPolicyConfiguration RetryPolicy { get; set; } = new();
     public EdtClientConfiguration EdtClient { get; set; } = new();
     public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
-
+    public BackgroundServiceConfig FolioLinkageBackgroundService { get; set; } = new BackgroundServiceConfig();
     public SchemaRegistryConfiguration SchemaRegistry { get; set; } = new();
     public TelemeteryConfiguration Telemetry { get; set; } = new TelemeteryConfiguration();
 
@@ -34,6 +34,14 @@ public class EdtServiceConfiguration
 
     }
 
+    public class BackgroundServiceConfig
+    {
+        public int PollSeconds { get; set; } = 120; // default to every 2 minutes
+        public int MaxRetriesForLinking { get; set; } = 10;
+        public string PollCron { get; set; } = "0/30 * * ? * * *";
+
+    }
+
     public class AddressAutocompleteClientConfiguration
     {
         public string ApiKey { get; set; } = string.Empty;
@@ -44,6 +52,7 @@ public class EdtServiceConfiguration
         public string ApiKey { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
         public string AdditionalBCPSGroups { get; set; } = string.Empty;
+        public string DefenceParticipantAdditionalId { get; set; } = "PPID";
         public int SearchFieldId { get; set; }
         public string TombStoneEmailDomain { get; set; } = string.Empty;
     }
@@ -109,6 +118,7 @@ public class EdtServiceConfiguration
         public string Scope { get; set; } = "openid";
         public string ConsumerGroupId { get; set; } = "accessrequest-consumer-group";
         public string RetryConsumerGroupId { get; set; } = "accessrequest-retry-consumer-group";
+        public string CoreFolioCreationNotificationTopic { get; set; } = string.Empty;
 
     }
 

@@ -1,5 +1,7 @@
 namespace Pidp.Data;
 
+using AppAny.Quartz.EntityFrameworkCore.Migrations;
+using AppAny.Quartz.EntityFrameworkCore.Migrations.PostgreSQL;
 using Microsoft.EntityFrameworkCore;
 using NodaTime;
 using Pidp.Models;
@@ -50,6 +52,7 @@ public class PidpDbContext : DbContext
     public DbSet<DomainEventProcessStatus> DomainEventProcessStatus { get; set; } = default!;
     public DbSet<DeferredEvent> DeferredEvents { get; set; } = default!;
     public DbSet<PublicUserValidation> PublicUserValidations { get; set; } = default!;
+    public DbSet<DigitalEvidencePublicDisclosure> DigitalEvidencePublicDisclosures { get; set; } = default!;
 
     public override int SaveChanges()
     {
@@ -64,7 +67,6 @@ public class PidpDbContext : DbContext
 
         return await base.SaveChangesAsync(cancellationToken);
     }
-
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -82,9 +84,10 @@ public class PidpDbContext : DbContext
         modelBuilder.Entity<ExportedEvent>()
             .ToTable("OutBoxedExportedEvent");
 
+        // Adds Quartz.NET PostgreSQL schema to EntityFrameworkCore
+        modelBuilder.AddQuartz(builder => builder.UsePostgreSql());
+
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(PidpDbContext).Assembly);
-
-
 
     }
 

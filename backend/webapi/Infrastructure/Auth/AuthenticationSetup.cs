@@ -1,17 +1,17 @@
 namespace Pidp.Infrastructure.Auth;
 
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-
 using Pidp.Extensions;
 
 public static class AuthenticationSetup
 {
     public static IServiceCollection AddKeycloakAuth(this IServiceCollection services, PidpConfiguration config)
     {
+
         services.ThrowIfNull(nameof(services));
         config.ThrowIfNull(nameof(config));
 
@@ -27,7 +27,10 @@ public static class AuthenticationSetup
             options.MetadataAddress = config.Keycloak.WellKnownConfig;
             options.Events = new JwtBearerEvents
             {
-                OnTokenValidated = async context => await OnTokenValidatedAsync(context)
+                OnTokenValidated = async context => await OnTokenValidatedAsync(context),
+                OnChallenge = async context => await OnChallenge(context),
+                OnForbidden = async context => await OnForbidden(context),
+                OnAuthenticationFailed = async context => await OnAuthenticationFailure(context)
             };
         });
         services.AddScoped<IAuthorizationHandler, UserOwnsResourceHandler>();
@@ -69,7 +72,9 @@ public static class AuthenticationSetup
                                                                     c.Value == ClaimValues.Idir ||
                                                                     c.Value == ClaimValues.Phsa ||
                                                                     c.Value == ClaimValues.Bcps ||
-                                                                    c.Value == ClaimValues.VerifiedCredentials));
+                                                                    c.Value == ClaimValues.VerifiedCredentials ||
+                                                                    c.Value == ClaimValues.AzureAd
+                                                                    ));
 
                         return hasRole || hasClaim;
                     }));
@@ -83,7 +88,9 @@ public static class AuthenticationSetup
                                                                   c.Value == ClaimValues.Idir ||
                                                                   c.Value == ClaimValues.Phsa ||
                                                                   c.Value == ClaimValues.Bcps ||
-                                                                  c.Value == ClaimValues.VerifiedCredentials));
+                                                                  c.Value == ClaimValues.VerifiedCredentials ||
+                                                                  c.Value == ClaimValues.AzureAd
+                                                                    ));
                       return hasSARole || hasClaim;
                   }));
 
@@ -93,7 +100,7 @@ public static class AuthenticationSetup
                     var hasRole = context.User.IsInRole(Roles.Admin);
                     var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider &&
                                                                (
-                                                                c.Value == ClaimValues.Idir || c.Value == ClaimValues.Adfs || 
+                                                                c.Value == ClaimValues.Idir || c.Value == ClaimValues.Adfs ||
                                                                 c.Value == ClaimValues.Bcps));
                     return hasRole || hasClaim;
                 }));
@@ -111,6 +118,24 @@ public static class AuthenticationSetup
         });
 
         return services;
+    }
+
+    private static Task OnForbidden(ForbiddenContext context)
+    {
+        Serilog.Log.Warning($"Authentication challenge");
+        return Task.CompletedTask;
+    }
+
+    private static Task OnChallenge(JwtBearerChallengeContext context)
+    {
+        Serilog.Log.Warning($"Authentication challenge");
+        return Task.CompletedTask;
+    }
+
+    private static Task OnAuthenticationFailure(AuthenticationFailedContext context)
+    {
+        Serilog.Log.Warning($"Authentication failure {context.HttpContext.Request.Path}");
+        return Task.CompletedTask;
     }
 
     private static Task OnTokenValidatedAsync(TokenValidatedContext context)

@@ -1,6 +1,6 @@
 namespace edt.disclosure.Features.Cases;
 
-public class CaseModel
+public class CaseModelx
 {
 
     public string Name { get; set; } = string.Empty;
@@ -11,10 +11,10 @@ public class CaseModel
 
     public string Description { get; set; } = string.Empty;
 
-    public List<Field> Fields { get; set; }
+    public List<Fieldx> Fields { get; set; }
 
 }
-public class Field
+public class Fieldx
 
 {
     public int Id { get; set; }
@@ -23,7 +23,7 @@ public class Field
     public bool Display { get; set; } = true;
 }
 
-public class CaseId
+public class CaseIdx
 {
     public int Id { get; set; }
     public string Key { get; set; } = string.Empty;
