@@ -6,6 +6,9 @@ global:
   environment: "prod"
   image:
     tag: main
+  vault:
+    role: e27db1-prod
+    path: prod/
 
 route:
   enabled: false
@@ -26,8 +29,8 @@ nginx:
   replicaCount: 2
 
 keycloak:
-  realmName: DEMSPROD
-  auth: https://common-sso.justice.gov.bc.ca/auth/realms/DEMSPROD
+  realmName: BCPS
+  auth: https://common-sso.justice.gov.bc.ca/auth/realms/BCPS
   base: https://common-sso.justice.gov.bc.ca/auth
   
 frontend:
@@ -37,7 +40,7 @@ frontend:
     environmentName: prod
     keycloak:
       url: https://common-sso.justice.gov.bc.ca/auth
-      realm: "DEMSPROD"
+      realm: "BCPS"
 
 webapi:
   jumClientURL: https://jum-api-e27db1-prod.apps.gold.devops.gov.bc.ca/api

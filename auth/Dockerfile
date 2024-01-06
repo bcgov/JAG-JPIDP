@@ -1,29 +1,32 @@
-FROM registry.redhat.io/rh-sso-7/sso76-openshift-rhel8:7.6-32
+FROM registry.redhat.io/rhbk/keycloak-rhel9:22-6
 
 MAINTAINER lee.wright@gov.bc.ca
 
 USER root
 
 # custom claim plugins module for wildfly
-COPY okhttp-3.9.0.jar /opt/eap/modules/com/squareup/okhttp3/main/
-COPY module.xml /opt/eap/modules/com/squareup/okhttp3/main/
-COPY okio-1.13.0.jar /opt/eap/modules/com/squareup/okhttp3/main/
+COPY okhttp-3.9.0.jar /opt/keycloak/lib/lib/main/
+COPY module.xml /opt/keycloak/lib/lib/main/
+COPY okio-1.13.0.jar /opt/keycloak/lib/lib/main/
 
 # deployment for Justin REST SPI
-COPY json-graphql-remote-claim.jar /opt/eap/standalone/deployments
+COPY json-graphql-remote-claim.jar /opt/keycloak/providers
 
 # deployment for BCGOV Themes
-COPY theme/ $JBOSS_HOME/themes/
-COPY configuration/standalone-openshift.xml $JBOSS_HOME/standalone/configuration/standalone-openshift.xml
-COPY keycloak-metrics-spi-2.5.3.jar /opt/eap/standalone/deployments
-COPY bcgov-services-1.0.0.jar /opt/eap/standalone/deployments
+COPY theme/ /opt/keycloak/themes/
+##COPY configuration/standalone-openshift.xml $JBOSS_HOME/standalone/configuration/standalone-openshift.xml
+#COPY keycloak-metrics-spi-2.5.3.jar /opt/keycloak/providers
+#COPY bcgov-services-1.0.0.jar /opt/keycloak/providers
 
-RUN touch /opt/eap/standalone/deployments/keycloak-metrics-spi-2.5.3.jar.deploy
-RUN touch /opt/eap/standalone/deployments/bcgov-services-1.0.0.jar.deploy
-RUN touch /opt/eap/standalone/deployments/json-graphql-remote-claim.jar.deploy
+#RUN touch /opt/eap/standalone/deployments/keycloak-metrics-spi-2.5.3.jar.deploy
+#RUN touch /opt/eap/standalone/deployments/bcgov-services-1.0.0.jar.deploy
+#RUN touch /opt/eap/standalone/deployments/json-graphql-remote-claim.jar.deploy
 
-RUN chown -R jboss:jboss $JBOSS_HOME/themes
+#RUN chown -R jboss:jboss $JBOSS_HOME/themes
 
-RUN chmod -R 775 $JBOSS_HOME/themes
+#RUN chmod -R 775 $JBOSS_HOME/themes
+
 
 USER 1000
+
+ENTRYPOINT [ "/opt/keycloak/bin/kc.sh" ]
