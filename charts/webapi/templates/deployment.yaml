@@ -107,7 +107,6 @@ spec:
             httpGet:
               path: /health/liveness
               port: http
-              scheme: HTTP
             timeoutSeconds: 10
             periodSeconds: 30
             successThreshold: 1
@@ -130,10 +129,6 @@ spec:
             periodSeconds: 30
             successThreshold: 1
             failureThreshold: 30
-          # readinessProbe:
-          #   httpGet:
-          #     path: /
-          #     port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
