@@ -21,7 +21,7 @@ public class CaseAccessRequest
         public string AgencyFileNumber { get; set; } = string.Empty;
         public int RequestId { get; set; }
         public int CaseId { get; set; }
-        public string Key { get; set; } = string.Empty;
+        public string? Key { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string CaseGroup { get; set; } = string.Empty;
         public string RequestStatus { get; set; } = string.Empty;
@@ -75,6 +75,12 @@ public class CaseAccessRequest
 
                 try
                 {
+
+                    if (string.IsNullOrEmpty(command.Key))
+                    {
+                        // case has no RCC number - we'll record and move on
+                        this.logger.LogCaseMissingKey(command.CaseId, dto.Jpdid);
+                    }
 
                     var subAgencyRequest = await this.SubmitAgencyCaseRequest(command); //save all trx at once for production(remove this and handle using idempotent)
 
@@ -180,4 +186,6 @@ public static partial class SubmittingAgencyLoggingExtensions
     public static partial void LogSubmittingAgencyAccessRequestDenied(this ILogger logger, int partyId, int caseId);
     [LoggerMessage(2, LogLevel.Information, "Submitting Agency Case Access Request denied due to user {username} is not enroled to DEMS.")]
     public static partial void LogUserNotEnroled(this ILogger logger, string? username);
+    [LoggerMessage(3, LogLevel.Warning, "Case request ID {caseId} - for user {username} does not have a valid key (RCCNumber).")]
+    public static partial void LogCaseMissingKey(this ILogger logger, int caseId, string? username);
 }
