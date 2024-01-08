@@ -48,8 +48,6 @@ public class CaseAccessRequestHandler : IKafkaHandler<string, SubAgencyDomainEve
 
 
 
-        // get the user from keycloak
-
         // get the cases the user currently has access to
         // var currentCases = edtClient.GetUserCases(
         using var trx = this.context.Database.BeginTransaction();
