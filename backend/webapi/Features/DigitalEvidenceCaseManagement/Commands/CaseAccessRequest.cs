@@ -33,7 +33,8 @@ public class CaseAccessRequest
             this.RuleFor(x => x.AgencyFileNumber).NotEmpty();
             this.RuleFor(x => x.PartyId).GreaterThan(0);
             this.RuleFor(x => x.CaseId).GreaterThan(0);
-            this.RuleFor(command => command.Key).NotEmpty();
+            // BCPSDEMS-1655 - case key not necessary
+            // this.RuleFor(command => command.Key).NotEmpty();
 
         }
     }
