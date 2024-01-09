@@ -211,8 +211,6 @@ export class LoginPage implements OnInit {
       redirectUri:
         this.config.applicationUrl +
         (endorsementToken ? `?endorsement-token=${endorsementToken}` : ''),
-    }).pipe(tap((res: any) => {
-      console.log("Login complete %o", res);
-    }));
+    });
   }
 }
