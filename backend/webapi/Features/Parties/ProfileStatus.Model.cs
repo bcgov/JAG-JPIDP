@@ -4,6 +4,7 @@ using NodaTime;
 using Pidp.Extensions;
 using Pidp.Models;
 using Pidp.Models.Lookups;
+using Prometheus;
 using Serilog;
 
 public partial class ProfileStatus
@@ -136,6 +137,7 @@ public partial class ProfileStatus
             public string? EmployeeIdentifier { get; set; }
             public string? orgName { get; set; }
             public string? CorrectionService { get; set; }
+            private readonly Counter VcCredMismatchCounter = Metrics.CreateCounter("vc_cred_mismatch_total", "VC Credentials Mismatch count");
 
             public OrganizationDetails(ProfileStatusDto profile) : base(profile)
             {
@@ -168,21 +170,32 @@ public partial class ProfileStatus
                 if (profile.UserIsInLawSociety)
                 {
 
-                    var hasError = false;
-                    var BCServicesCardLastName = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("BCPerID_last_name"));
-                    var BCServicesCardFirstName = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("BCPerID_first_name"));
-                    var familyName = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("family_name"));
-                    var givenName = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("given_name"));
+                    var bCServicesCardLastName = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("BCPerID_last_name", StringComparison.OrdinalIgnoreCase));
+                    var bCServicesCardFirstName = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("BCPerID_first_name", StringComparison.OrdinalIgnoreCase));
+                    var familyName = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("family_name", StringComparison.OrdinalIgnoreCase));
+                    var givenName = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("given_name", StringComparison.OrdinalIgnoreCase));
 
-                    if (familyName == null || givenName == null || BCServicesCardLastName == null || BCServicesCardLastName.Value != familyName.Value || BCServicesCardFirstName == null || BCServicesCardFirstName.Value != givenName.Value)
+                    if (familyName == null || givenName == null || bCServicesCardLastName == null ||
+                        !bCServicesCardLastName.Value.Equals(familyName.Value, StringComparison.OrdinalIgnoreCase) ||
+                        bCServicesCardFirstName == null || !bCServicesCardFirstName.Value.Equals(givenName.Value, StringComparison.OrdinalIgnoreCase))
                     {
+                        Log.Warning($"VC Credential mismatch for {profile.User.GetUserId()} [{familyName}] [{bCServicesCardLastName}] [{givenName}] [{bCServicesCardFirstName}]");
                         this.Alerts.Add(Alert.VerifiedCredentialMismatch);
+                        this.VcCredMismatchCounter.Inc();
                         this.StatusCode = StatusCode.Error;
                     }
 
-                    var standing = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("membership_status_code"));
+                    var standing = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("membership_status_code", StringComparison.OrdinalIgnoreCase));
                     if (standing == null || standing.Value != "PRAC")
                     {
+                        if (standing == null)
+                        {
+                            Log.Warning($"Lawyer membership code is null for user {profile.User.GetUserId()}");
+                        }
+                        else
+                        {
+                            Log.Warning($"Lawyer membership code is not set to PRAC {profile.User.GetUserId()} [{standing.Value}]");
+                        }
                         this.Alerts.Add(Alert.LawyerStatusError);
                         this.StatusCode = StatusCode.Error;
                     }

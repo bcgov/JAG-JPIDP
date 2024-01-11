@@ -190,7 +190,7 @@ public partial class ProfileStatus
                         Gender = profile.Gender
                     });
 
-                    var justinPartAltId = party.AlternateIds.Where(alt => alt.Name == "JUSTINParticipant").FirstOrDefault();
+                    var justinPartAltId = party.AlternateIds.FirstOrDefault(alt => alt.Name == "JUSTINParticipant");
                     if (justinPartAltId == null)
                     {
                         var participant = profile.JustinUser.participantDetails.FirstOrDefault();
@@ -282,7 +282,7 @@ public partial class ProfileStatus
 
             var idpKey = (agency != null) ? SUBAGENCY : identityProvider;
 
-            var processFlows = this.context.ProcessFlows.Include(flow => flow.ProcessSection).Where(flow => flow.IdentityProvider == idpKey).OrderBy(flow => flow.Sequence).ToList();
+            var processFlows = this.context.ProcessFlows.Include(flow => flow.ProcessSection).AsSplitQuery().Where(flow => flow.IdentityProvider == idpKey).OrderBy(flow => flow.Sequence).ToList();
 
             var order = 0.0;
             foreach (var status in profileStatus.Status)

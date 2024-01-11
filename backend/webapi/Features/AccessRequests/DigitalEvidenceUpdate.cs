@@ -107,7 +107,7 @@ public class DigitalEvidenceUpdate
                 try
                 {
                     // get the user from the original request
-                    var digitalEvidence = this.context.DigitalEvidences.Include(x => x.Party).Where(x => x.ParticipantId == "" + command.UserChangeEvent.PartId).FirstOrDefault();
+                    var digitalEvidence = this.context.DigitalEvidences.Include(x => x.Party).AsSplitQuery().Where(x => x.ParticipantId == "" + command.UserChangeEvent.PartId).FirstOrDefault();
 
                     if (digitalEvidence != null)
                     {
