@@ -1,12 +1,10 @@
 namespace Pidp.Features.CourtLocations.Commands;
 
-using System.Net.WebSockets;
 using DomainResults.Common;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using NodaTime;
 using Pidp.Data;
-using Pidp.Models;
 using Prometheus;
 
 public class RemoveCourtLocationRequest : ICommand<DomainResult>
@@ -50,7 +48,7 @@ public class RemoveCourtLocationRequest : ICommand<DomainResult>
                 {
                     Serilog.Log.Information($"Deleting access to {command.RequestId}");
 
-                    var accessRequest = this.context.CourtLocationAccessRequests.Include(req => req.Party).Where(req => req.RequestId == command.RequestId).FirstOrDefault();
+                    var accessRequest = this.context.CourtLocationAccessRequests.Include(req => req.Party).AsSplitQuery().Where(req => req.RequestId == command.RequestId).FirstOrDefault();
 
 
                     if (accessRequest != null)

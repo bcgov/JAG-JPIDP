@@ -208,6 +208,7 @@ public class Create
                             Party = party,
                             Organization = lawSociety
                         };
+                        Serilog.Log.Information($"Adding {user.GetUserId} to organization {lawSociety.Code}");
                         this.context.PartyOrgainizationDetails.Add(org);
                     }
 
