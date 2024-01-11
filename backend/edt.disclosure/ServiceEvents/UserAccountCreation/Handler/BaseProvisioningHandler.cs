@@ -61,8 +61,8 @@ public abstract class BaseProvisioningHandler
         }
 
         var caseName = (accessRequestModel is EdtDisclosurePublicUserProvisioningModel)
-            ? accessRequestModel.FullName + "(" + caseKey + " Accused Folio)"
-            : accessRequestModel.FullName + "(" + caseKey + " Defence Folio)";
+            ? accessRequestModel.FullName + " (" + caseKey + " Accused Folio)"
+            : accessRequestModel.FullName + " (" + caseKey + " Defence Folio)";
 
         var caseCreation = (accessRequestModel is EdtDisclosurePublicUserProvisioningModel) ?
             new EdtCaseDto
