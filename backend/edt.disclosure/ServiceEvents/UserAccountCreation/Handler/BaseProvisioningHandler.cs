@@ -100,7 +100,7 @@ public abstract class BaseProvisioningHandler
         var user = await this.edtClient.GetUser(accessRequestModel.Key!) ?? throw new EdtDisclosureServiceException($"User was not found {accessRequestModel.Key}");
 
         var caseGroups = (accessRequestModel.OrganizationType == this.configuration.EdtClient.OutOfCustodyOrgType) ? this.configuration.EdtClient.OutOfCustodyCaseGroups : this.configuration.EdtClient.DefenceCaseGroups;
-        var caseGroupArr = caseGroups.Split(",", StringSplitOptions.TrimEntries);
+        var caseGroupArr = caseGroups.Split(",", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
         if (caseGroupArr.Any())
         {
