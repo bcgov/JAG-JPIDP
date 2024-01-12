@@ -37,5 +37,6 @@ export interface CourtLocationRequest {
   courtLocation: CourtLocation;
   validUntil: Date;
   removalRequest?: boolean;
+  timeZoneOffset?: number;
   requestStatus: CourtRequestStatus;
 }
