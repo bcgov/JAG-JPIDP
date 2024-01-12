@@ -216,6 +216,7 @@ export class DigitalEvidenceCounselPage
       partyId: partyId,
       validFrom: dateFrom,
       validUntil: dateTo,
+      timeZoneOffset: new Date().getTimezoneOffset() / 60,
       requestStatus: CourtRequestStatus.NewRequest,
       courtLocation: this.formState.courtLocation.value,
     };
