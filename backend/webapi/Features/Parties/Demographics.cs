@@ -89,7 +89,7 @@ public class Demographics
         public async Task HandleAsync(Command command)
         {
             var party = await this.context.Parties.Include(party => party.OrgainizationDetail).Include(org => org.OrgainizationDetail.Organization)
-                .SingleAsync(party => party.Id == command.Id);
+                .AsSplitQuery().SingleAsync(party => party.Id == command.Id);
 
             var currentEmail = party.Email ?? "";
 

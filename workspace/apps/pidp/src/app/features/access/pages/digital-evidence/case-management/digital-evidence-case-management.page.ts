@@ -361,7 +361,14 @@ export class DigitalEvidenceCaseManagementPage
   }
 
   public onUploadToCase(evidenceCase: DigitalEvidenceCase): void {
-    const url = this.config.demsImportURL + evidenceCase.id;
+    let url = this.config.demsImportURL;
+
+    if (this.config.demsImportURL.indexOf("~~CASEID~~") !== -1) {
+      url = url.replace("~~CASEID~~", "" + evidenceCase.id);
+    }
+    else {
+      url += evidenceCase.id;
+    }
     this.openPopUp(url);
   }
 

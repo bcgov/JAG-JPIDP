@@ -19,8 +19,7 @@ public class SubmittingAgencyRequest : BaseAuditable
     [Required]
     public string AgencyFileNumber { get; set; } = string.Empty;
 
-    [Required]
-    public string RCCNumber { get; set; } = string.Empty;
+    public string? RCCNumber { get; set; } = string.Empty;
     public string Details { get; set; } = string.Empty;
 
     public Instant RequestedOn { get; set; }

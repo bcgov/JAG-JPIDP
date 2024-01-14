@@ -5,7 +5,6 @@ using System.Text;
 using Confluent.Kafka;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using NodaTime.Serialization.JsonNet;
 
 internal sealed class KafkaDeserializer<T> : IDeserializer<T>
 {
@@ -34,7 +33,7 @@ internal sealed class KafkaDeserializer<T> : IDeserializer<T>
         }
 
 
-        Serilog.Log.Information("Case {0}", dataJson);
+        Serilog.Log.Information("Deserialized {0}", dataJson);
 
         var settings = new JsonSerializerSettings
         {

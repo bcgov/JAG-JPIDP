@@ -20,6 +20,7 @@ using Pidp.Infrastructure.HttpClients.Keycloak;
 using Pidp.Kafka.Interfaces;
 using Pidp.Models;
 using Pidp.Models.Lookups;
+using Prometheus;
 
 /// <summary>
 /// Requests to access defence counsel services will generate objects in the disclosure portal and the DEMS core portals.
@@ -57,6 +58,7 @@ public class DigitalEvidenceDefence
         private readonly IEdtCoreClient coreClient;
         private readonly IKafkaProducer<string, EdtDisclosureDefenceUserProvisioningModel> kafkaProducer;
         private readonly IKafkaProducer<string, ApprovalRequestModel> approvalKafkaProducer;
+        private static readonly Histogram DefenceCommandHistogram = Metrics.CreateHistogram("defence_command_timing", "Histogram of defence command executions.");
 
         private readonly IKafkaProducer<string, EdtPersonProvisioningModel> kafkaDefenceCoreProducer;
 
@@ -90,148 +92,152 @@ public class DigitalEvidenceDefence
         {
             using var trx = this.context.Database.BeginTransaction();
 
+
             using (var activity = new Activity("DigitalEvidenceDefence Request").Start())
             {
 
-
-                try
+                using (DefenceCommandHistogram.NewTimer())
                 {
 
-                    var traceId = Tracer.CurrentSpan.Context.TraceId;
-                    Serilog.Log.Logger.Information($"DigitalEvidenceDefence Request {command.ParticipantId}  {command.PartyId} trace: [{traceId}]");
-
-                    Activity.Current?.AddTag("digitalevidence.party.id", command.PartyId);
-
-                    var dto = await this.GetPidpUser(command);
-
-                    if (dto.AlreadyEnroled
-                        || dto.Email == null)
+                    try
                     {
-                        Serilog.Log.Logger.Warning($"DigitalEvidence Request denied for user {command.PartyId} Enrolled {dto.AlreadyEnroled}, Email {dto.Email}");
-                        this.logger.LogDigitalEvidenceDisclosureAccessRequestDenied();
-                        await trx.RollbackAsync();
 
-                        return DomainResult.Failed();
-                    }
+                        var traceId = Tracer.CurrentSpan.Context.TraceId;
+                        Serilog.Log.Logger.Information($"DigitalEvidenceDefence Request {command.ParticipantId}  {command.PartyId} trace: [{traceId}]");
 
-                    // get the user details from keycloak and check they are valid - otherwise will require an approval step
-                    var keycloakUser = await this.keycloakClient.GetUser(dto.UserId);
+                        Activity.Current?.AddTag("digitalevidence.party.id", command.PartyId);
 
-                    if (keycloakUser == null)
-                    {
-                        await trx.RollbackAsync();
+                        var dto = await this.GetPidpUser(command);
 
-                        throw new AccessRequestException($"No keycloak user found with id {dto.UserId}");
-                    }
-
-                    var userValidationErrors = IsKeycloakUserValid(keycloakUser);
-
-                    // create db entry for disclosure access
-                    var disclosureUser = await this.SubmitDigitalEvidenceDisclosureRequest(command);
-                    // create entry for defence (core) access
-                    var defenceUser = await this.SubmitDigitalEvidenceDefenceRequest(command);
-
-                    var permitMismatchedVCCreds = Environment.GetEnvironmentVariable("PERMIT_MISMATCH_VC_CREDS");
-                    var ignoreBCServiceCard = false;
-                    if (permitMismatchedVCCreds != null && permitMismatchedVCCreds.Equals("true", StringComparison.OrdinalIgnoreCase))
-                    {
-                        ignoreBCServiceCard = true;
-                    }
-
-                    // check if this user already exists as a defence participant in code
-                    var existingParticipant = await this.coreClient.GetPersonByKey(dto.Email);
-
-                    if (existingParticipant != null)
-                    {
-                        userValidationErrors = ValidateExistingParticipant(dto, existingParticipant);
-                        defenceUser.ManuallyAddedParticipantId = (int)existingParticipant.Id;
-                        var externalId = existingParticipant.Identifiers.FirstOrDefault(identifier => identifier.IdentifierType == "EdtExternalId");
-                        if (externalId != null)
+                        if (dto.AlreadyEnroled
+                            || dto.Email == null)
                         {
-                            defenceUser.EdtExternalIdentifier = externalId.IdentifierValue;
+                            Serilog.Log.Logger.Warning($"DigitalEvidence Request denied for user {command.PartyId} Enrolled {dto.AlreadyEnroled}, Email {dto.Email}");
+                            this.logger.LogDigitalEvidenceDisclosureAccessRequestDenied();
+                            await trx.RollbackAsync();
+
+                            return DomainResult.Failed();
                         }
-                        Serilog.Log.Information($"Participant for defence {command.ParticipantId} {dto.Email} exists with external id {externalId.IdentifierValue}");
 
-                    }
+                        // get the user details from keycloak and check they are valid - otherwise will require an approval step
+                        var keycloakUser = await this.keycloakClient.GetUser(dto.UserId);
 
-                    if (userValidationErrors.Count > 0 && !ignoreBCServiceCard)
-                    {
-                        Serilog.Log.Warning($"User {keycloakUser} has errors {string.Join(",", userValidationErrors)}");
-                        Serilog.Log.Information("User request will need to go through approval flows");
-                        disclosureUser.Status = AccessRequestStatus.RequiresApproval;
-                        defenceUser.Status = AccessRequestStatus.RequiresApproval;
-
-                        // create approval message
-                        var deliveryResult = await this.PublishApprovalRequest(keycloakUser, command, dto, userValidationErrors, new List<Models.AccessRequest> { defenceUser, disclosureUser });
-
-                        foreach (var result in deliveryResult)
+                        if (keycloakUser == null)
                         {
-                            if (result.Status == PersistenceStatus.Persisted)
-                            {
-                                Serilog.Log.Information($"Published {result.Key} to {result.Partition}");
+                            await trx.RollbackAsync();
 
-                                // store the original requests for later
-                                if (await this.CreateDefenceDeferredPublishRequest(command, dto, defenceUser) && await this.CreateDisclosureDeferredPublishRequest(command, dto, disclosureUser, defenceUser))
+                            throw new AccessRequestException($"No keycloak user found with id {dto.UserId}");
+                        }
+
+                        var userValidationErrors = IsKeycloakUserValid(keycloakUser);
+
+                        // create db entry for disclosure access
+                        var disclosureUser = await this.SubmitDigitalEvidenceDisclosureRequest(command);
+                        // create entry for defence (core) access
+                        var defenceUser = await this.SubmitDigitalEvidenceDefenceRequest(command);
+
+                        var permitMismatchedVCCreds = Environment.GetEnvironmentVariable("PERMIT_MISMATCH_VC_CREDS");
+                        var ignoreBCServiceCard = false;
+                        if (permitMismatchedVCCreds != null && permitMismatchedVCCreds.Equals("true", StringComparison.OrdinalIgnoreCase))
+                        {
+                            ignoreBCServiceCard = true;
+                        }
+
+                        // check if this user already exists as a defence participant in code
+                        var existingParticipant = await this.coreClient.GetPersonByKey(dto.Email);
+
+                        if (existingParticipant != null)
+                        {
+                            userValidationErrors = ValidateExistingParticipant(dto, existingParticipant);
+                            defenceUser.ManuallyAddedParticipantId = (int)existingParticipant.Id;
+                            var externalId = existingParticipant.Identifiers.FirstOrDefault(identifier => identifier.IdentifierType == "EdtExternalId");
+                            if (externalId != null)
+                            {
+                                defenceUser.EdtExternalIdentifier = externalId.IdentifierValue;
+                            }
+                            Serilog.Log.Information($"Participant for defence {command.ParticipantId} {dto.Email} exists with external id {externalId.IdentifierValue}");
+
+                        }
+
+                        if (userValidationErrors.Count > 0 && !ignoreBCServiceCard)
+                        {
+                            Serilog.Log.Warning($"User {keycloakUser} has errors {string.Join(",", userValidationErrors)}");
+                            Serilog.Log.Information("User request will need to go through approval flows");
+                            disclosureUser.Status = AccessRequestStatus.RequiresApproval;
+                            defenceUser.Status = AccessRequestStatus.RequiresApproval;
+
+                            // create approval message
+                            var deliveryResult = await this.PublishApprovalRequest(keycloakUser, command, dto, userValidationErrors, new List<Models.AccessRequest> { defenceUser, disclosureUser });
+
+                            foreach (var result in deliveryResult)
+                            {
+                                if (result.Status == PersistenceStatus.Persisted)
                                 {
-                                    Serilog.Log.Information($"Stored requests for later use");
+                                    Serilog.Log.Information($"Published {result.Key} to {result.Partition}");
+
+                                    // store the original requests for later
+                                    if (await this.CreateDefenceDeferredPublishRequest(command, dto, defenceUser) && await this.CreateDisclosureDeferredPublishRequest(command, dto, disclosureUser, defenceUser))
+                                    {
+                                        Serilog.Log.Information($"Stored requests for later use");
+                                    }
+                                    else
+                                    {
+                                        Serilog.Log.Error($"Failed to store requests for later - we will need to reset this request");
+                                    }
                                 }
                                 else
                                 {
-                                    Serilog.Log.Error($"Failed to store requests for later - we will need to reset this request");
+                                    Serilog.Log.Error($"Failed to publish {result.Key} to {result.Status}");
+
                                 }
+
+
                             }
-                            else
+                        }
+                        else
+                        {
+
+                            if (ignoreBCServiceCard && userValidationErrors.Count > 0)
                             {
-                                Serilog.Log.Error($"Failed to publish {result.Key} to {result.Status}");
-
+                                Serilog.Log.Warning($"User {keycloakUser} has errors {string.Join(",", userValidationErrors)} - but we are going to ignore these due to env flag PERMIT_MISMATCH_VC_CREDS");
                             }
 
 
+
+                            // publish message for disclosure access
+                            var publishedDisclosureRequest = await this.PublishDisclosureAccessRequest(command, dto, disclosureUser, defenceUser);
+
+                            // publish message for defence participa access
+                            var publishedDefenceRequest = await this.PublishDefenceAccessRequest(command, dto, defenceUser);
+
+                            if (publishedDisclosureRequest.Status == PersistenceStatus.NotPersisted)
+                            {
+                                Serilog.Log.Error($"Failed to publish defence disclosure request for Defence Counsel user {defenceUser.Id}");
+                                disclosureUser.Status = "Error";
+                            }
+
+                            if (publishedDefenceRequest.Status == PersistenceStatus.NotPersisted)
+                            {
+                                Serilog.Log.Error($"Failed to publish defence request for Defence Counsel user {defenceUser.Id}");
+                                defenceUser.Status = "Error";
+                            }
+
                         }
+
+                        await this.context.SaveChangesAsync();
+                        await trx.CommitAsync();
+
+                        return DomainResult.Success();
+
+
+
                     }
-                    else
+                    catch (Exception ex)
                     {
-
-                        if (ignoreBCServiceCard && userValidationErrors.Count > 0)
-                        {
-                            Serilog.Log.Warning($"User {keycloakUser} has errors {string.Join(",", userValidationErrors)} - but we are going to ignore these due to env flag PERMIT_MISMATCH_VC_CREDS");
-                        }
-
-
-
-                        // publish message for disclosure access
-                        var publishedDisclosureRequest = await this.PublishDisclosureAccessRequest(command, dto, disclosureUser, defenceUser);
-
-                        // publish message for defence participa access
-                        var publishedDefenceRequest = await this.PublishDefenceAccessRequest(command, dto, defenceUser);
-
-                        if (publishedDisclosureRequest.Status == PersistenceStatus.NotPersisted)
-                        {
-                            Serilog.Log.Error($"Failed to publish defence disclosure request for Defence Counsel user {defenceUser.Id}");
-                            disclosureUser.Status = "Error";
-                        }
-
-                        if (publishedDefenceRequest.Status == PersistenceStatus.NotPersisted)
-                        {
-                            Serilog.Log.Error($"Failed to publish defence request for Defence Counsel user {defenceUser.Id}");
-                            defenceUser.Status = "Error";
-                        }
-
+                        this.logger.LogDigitalEvidenceAccessTrxFailed(ex.Message.ToString());
+                        return DomainResult.Failed(ex.Message);
                     }
-
-                    await this.context.SaveChangesAsync();
-                    await trx.CommitAsync();
-
-                    return DomainResult.Success();
-
-
                 }
-                catch (Exception ex)
-                {
-                    this.logger.LogDigitalEvidenceAccessTrxFailed(ex.Message.ToString());
-                    return DomainResult.Failed(ex.Message);
-                }
-
 
             }
         }

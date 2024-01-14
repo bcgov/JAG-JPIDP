@@ -44,13 +44,13 @@ public class EdtDisclosureServiceConfiguration
         public int DefenceFolioTemplateId { get; set; } = -1;
         public int OutOfCustodyTemplateId { get; set; } = -1;
         public string ApiKey { get; set; } = string.Empty;
-        public string CounselGroup { get; set; } = "Counsel";
+        public string CounselGroups { get; set; } = "Counsel";
         public string CourtLocationGroup { get; set; } = string.Empty;
         public string CourtLocationKeyPrefix { get; set; } = "CH-";
         public string DefenceCaseGroups { get; set; } = string.Empty;
         public string DefenceFolioTemplateName { get; set; } = string.Empty;
         public string OutOfCustodyCaseGroups { get; set; } = string.Empty;
-        public string OutOfCustodyGroup { get; set; } = string.Empty;
+        public string OutOfCustodyGroups { get; set; } = string.Empty;
         public string OutOfCustodyOrgName { set; get; } = "Public";
         public string OutOfCustodyOrgType { set; get; } = "Out-of-custody";
         public string OutOfCustodyTemplateName { get; set; } = string.Empty;

@@ -28,7 +28,7 @@ public class UserTypeService : IUserTypeService
 
         var orgCode = await this.context.PartyOrgainizationDetails
             .Include(p => p.Organization)
-            .Include(p => p.Party)
+            .Include(p => p.Party).AsSplitQuery()
             .Where(p => p.PartyId == partyId)
             .FirstOrDefaultAsync();
 

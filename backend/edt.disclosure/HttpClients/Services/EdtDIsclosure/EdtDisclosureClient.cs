@@ -253,17 +253,20 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             if (newUser != null)
             {
 
-                var groupToAdd = (accessRequest.OrganizationType == this.configuration.EdtClient.OutOfCustodyOrgType) ? this.configuration.EdtClient.OutOfCustodyGroup : this.configuration.EdtClient.CounselGroup;
+                var groupsToAdd = (accessRequest.OrganizationType == this.configuration.EdtClient.OutOfCustodyOrgType) ? this.configuration.EdtClient.OutOfCustodyGroups : this.configuration.EdtClient.CounselGroups;
 
-                var groupAddResponse = await this.AddUserToOUGroup(newUser.Id, groupToAdd);
-                if (!groupAddResponse)
+                foreach (var groupToAdd in groupsToAdd.Split(",", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
                 {
-                    userModificationResponse.successful = false;
-                    userModificationResponse.Errors.Add($"Failed to add user to group {groupToAdd}");
-                }
-                else
-                {
-                    Log.Information($"User {newUser.Id} added to {groupToAdd} in EDT");
+                    var groupAddResponse = await this.AddUserToOUGroup(newUser.Id, groupToAdd);
+                    if (!groupAddResponse)
+                    {
+                        userModificationResponse.successful = false;
+                        userModificationResponse.Errors.Add($"Failed to add user to group {groupToAdd}");
+                    }
+                    else
+                    {
+                        Log.Information($"User {newUser.Id} added to {groupToAdd} in EDT");
+                    }
                 }
 
                 //// add user to their folio folder
@@ -341,24 +344,28 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
             // check user has folio and is associated
             var groups = await this.GetUserOUGroups(currentUser.Id);
-            var groupToAdd = (accessRequest.OrganizationType == this.configuration.EdtClient.OutOfCustodyOrgType) ? this.configuration.EdtClient.OutOfCustodyGroup : this.configuration.EdtClient.CounselGroup;
+            var groupsToAdd = (accessRequest.OrganizationType == this.configuration.EdtClient.OutOfCustodyOrgType) ? this.configuration.EdtClient.OutOfCustodyGroups : this.configuration.EdtClient.CounselGroups;
 
-            var inGroup = groups.FirstOrDefault(group => group.Name.Equals(groupToAdd, StringComparison.OrdinalIgnoreCase));
-
-            if (inGroup == null)
+            foreach (var groupToAdd in groupsToAdd.Split(",", StringSplitOptions.TrimEntries))
             {
-                Log.Information($"User {currentUser.Id} not currently in {groupToAdd} - adding");
-                var addedToGroup = await this.AddUserToOUGroup(currentUser.Id, groupToAdd);
 
-                if (addedToGroup)
+                var inGroup = groups.FirstOrDefault(group => group.Name.Equals(groupToAdd, StringComparison.OrdinalIgnoreCase));
+
+                if (inGroup == null)
                 {
-                    Log.Information($"Added user {currentUser.Id} to group {groupToAdd}");
-                }
-                else
-                {
-                    Log.Warning($"Failed to add user {currentUser.Id} to group {groupToAdd}");
-                    userModificationResponse.successful = false;
-                    userModificationResponse.Errors.Add($"Failed to add user {currentUser.Id} to group {groupToAdd}");
+                    Log.Information($"User {currentUser.Id} not currently in {groupToAdd} - adding");
+                    var addedToGroup = await this.AddUserToOUGroup(currentUser.Id, groupToAdd);
+
+                    if (addedToGroup)
+                    {
+                        Log.Information($"Added user {currentUser.Id} to group {groupToAdd}");
+                    }
+                    else
+                    {
+                        Log.Warning($"Failed to add user {currentUser.Id} to group {groupToAdd}");
+                        userModificationResponse.successful = false;
+                        userModificationResponse.Errors.Add($"Failed to add user {currentUser.Id} to group {groupToAdd}");
+                    }
                 }
             }
 

@@ -23,6 +23,8 @@ public class CourtAccessRequest
         public CourtLocation CourtLocation { get; set; }
         public DateTime ValidFrom { get; set; }
         public DateTime ValidUntil { get; set; }
+        public int TimeZoneOffset { get; set; }
+
 
     }
     public class CommandValidator : AbstractValidator<Command>
@@ -43,7 +45,6 @@ public class CourtAccessRequest
         private readonly ILogger logger;
         private readonly PidpConfiguration config;
         private readonly DateTime utcDateTime;
-        private readonly TimeZoneInfo timeZone;
         private readonly ICourtAccessService courtAccessService;
         private readonly PidpDbContext context;
         private static readonly Histogram CourtLocationRequestDuration = Metrics
@@ -57,7 +58,7 @@ public class CourtAccessRequest
             this.context = context;
             this.courtAccessService = courtAccessService;
         }
-        public DateTime UniversalTime { get { return this.utcDateTime; } }
+        public DateTime UniversalTime => DateTime.Now.ToUniversalTime();
 
 
         public async Task<IDomainResult> HandleAsync(Command command)
@@ -85,7 +86,8 @@ public class CourtAccessRequest
 
                     if (location != null)
                     {
-                        var today = DateTime.Now;
+                        var subtractHours = command.TimeZoneOffset * -1;
+                        var today = this.UniversalTime.AddHours(subtractHours);
 
                         // check if this is already requested
                         var existingRequests = this.context.CourtLocationAccessRequests.Where(clar => clar.PartyId == command.PartyId && clar.CourtLocation == location).ToList();
@@ -148,10 +150,14 @@ public class CourtAccessRequest
 
 
 
-                        if (command.ValidFrom.DayOfYear == today.ToLocalTime().DayOfYear && newRequest)
+                        if (command.ValidFrom.DayOfYear == today.DayOfYear && newRequest)
                         {
                             Serilog.Log.Information($"Request {courtLocationRequest.RequestId} is for today {today.ToLocalTime().DayOfYear} - adding to event topic");
                             var response = this.courtAccessService.CreateAddCourtAccessDomainEvent(courtLocationRequest);
+                        }
+                        else
+                        {
+                            Serilog.Log.Information($"Request {courtLocationRequest.RequestId} is for {courtLocationRequest.ValidFrom.DayOfYear} - today is  {today.ToLocalTime().DayOfYear} - marking future");
 
                         }
 
