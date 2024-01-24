@@ -13,6 +13,10 @@ export interface AppEnvironment extends EnvironmentConfig {
   // Only indicates that Angular has been built
   // using --configuration=production
   production: boolean;
+  caseManagement: {
+    showAUFLink: boolean,
+    showCaseImportLink: boolean
+  },
   emails: {
     providerIdentitySupport: string;
     specialAuthorityEformsSupport: string;
