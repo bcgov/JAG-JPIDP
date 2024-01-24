@@ -85,6 +85,9 @@ export class DigitalEvidenceCaseManagementPage
   public pageIndex: number;
   public requestedCase!: DigitalEvidenceCase | null;
   public isCaseSearchInProgress: boolean;
+  public showAUFLink: boolean;
+  public showCaseImportLink: boolean;
+
   public isCaseFound: boolean;
   public accessRequestFailed: boolean;
   public requestedCaseNotFound: boolean;
@@ -139,7 +142,8 @@ export class DigitalEvidenceCaseManagementPage
     this.policeAgency = accessTokenService
       .decodeToken()
       .pipe(map((token) => token?.identity_provider ?? ''));
-
+    this.showAUFLink = this.config.caseManagement.showAUFLink;
+    this.showCaseImportLink = this.config.caseManagement.showCaseImportLink;
     accessTokenService.decodeToken().subscribe((n) => {
       if (n !== null) {
         this.result = n.identity_provider;
@@ -282,6 +286,10 @@ export class DigitalEvidenceCaseManagementPage
           }
         }
       );
+  }
+
+  public launchAUF(): void {
+    this.openPopUp(this.config.demsImportURL);
   }
 
   public findCase(): void {

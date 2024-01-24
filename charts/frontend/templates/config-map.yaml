@@ -21,6 +21,10 @@ data:
       "apiEndpoint": "https://{{ .Values.global.vanityURL }}/api/v1",
       "configEndpoint": "https://{{ .Values.global.vanityURL }}",
       "applicationUrl": "https://{{ .Values.global.vanityURL }}",
+      "caseManagement": {
+        "showAUFLink": true,
+        "showCaseImportLink": false
+      },
       "demsImportURL": "{{ .Values.settings.edtURL }}/Edt.aspx#/import/",
       "keycloakConfig": {
         "config": {
