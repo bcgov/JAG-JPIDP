@@ -25,7 +25,7 @@ data:
         "showAUFLink": true,
         "showCaseImportLink": false
       },
-      "demsImportURL": "{{ .Values.settings.edtURL }}/Edt.aspx#/import/",
+      "demsImportURL": "{{ .Values.settings.edtURL }}",
       "keycloakConfig": {
         "config": {
           "url": "{{ .Values.settings.keycloak.url }}",
