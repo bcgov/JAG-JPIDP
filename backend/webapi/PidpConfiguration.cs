@@ -135,6 +135,7 @@ public class PidpConfiguration
         public string ConsumerGroupId { get; set; } = "dems-notification-ack";
         public string KafkaAdminClientId { get; set; } = string.Empty;
         public string KafkaAdminClientSecret { get; set; } = string.Empty;
+        public string HostnameVerification { get; set; } = "Https";
 
     }
     public class JumClientConfiguration

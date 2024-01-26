@@ -106,6 +106,8 @@ public class EdtServiceConfiguration
         public string AckTopicName { get; set; } = string.Empty;
         public string ConsumerGroupId { get; set; } = "caseaccess-consumer-group";
         public string RetryConsumerGroupId { get; set; } = "caseaccess-retry-consumer-group";
+        public string HostnameVerification { get; set; } = "Https";
+
     }
 
 

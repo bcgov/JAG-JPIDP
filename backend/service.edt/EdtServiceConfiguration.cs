@@ -119,6 +119,7 @@ public class EdtServiceConfiguration
         public string ConsumerGroupId { get; set; } = "accessrequest-consumer-group";
         public string RetryConsumerGroupId { get; set; } = "accessrequest-retry-consumer-group";
         public string CoreFolioCreationNotificationTopic { get; set; } = string.Empty;
+        public string HostnameVerification { get; set; } = "Https";
 
     }
 

@@ -33,7 +33,7 @@ public class NotificationServiceConfiguration
         public string SslKeyLocation { get; set; } = string.Empty;
         public string Scope { get; set; } = "openid";
         public string ConsumerGroupId { get; set; } = "jum-notification-consumer-group";
-
+        public string HostnameVerification { get; set; } = "Https";
 
     }
 
