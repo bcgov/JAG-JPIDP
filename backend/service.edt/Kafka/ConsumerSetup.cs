@@ -38,7 +38,7 @@ public static class ConsumerSetup
             ConnectionsMaxIdleMs = 2147483647,
             TopicMetadataRefreshIntervalMs = 10000,
             SaslOauthbearerScope = config.KafkaCluster.Scope,
-            SslEndpointIdentificationAlgorithm = SslEndpointIdentificationAlgorithm.Https,
+            SslEndpointIdentificationAlgorithm = (config.KafkaCluster.HostnameVerification == SslEndpointIdentificationAlgorithm.Https.ToString()) ? SslEndpointIdentificationAlgorithm.Https : SslEndpointIdentificationAlgorithm.None,
             SslCaLocation = config.KafkaCluster.SslCaLocation,
             SslCertificateLocation = config.KafkaCluster.SslCertificateLocation,
             SslKeyLocation = config.KafkaCluster.SslKeyLocation
@@ -54,7 +54,7 @@ public static class ConsumerSetup
             SaslOauthbearerScope = config.KafkaCluster.Scope,
             ClientId = Dns.GetHostName(),
             RequestTimeoutMs = 60000,
-            SslEndpointIdentificationAlgorithm = SslEndpointIdentificationAlgorithm.Https,
+            SslEndpointIdentificationAlgorithm = (config.KafkaCluster.HostnameVerification == SslEndpointIdentificationAlgorithm.Https.ToString()) ? SslEndpointIdentificationAlgorithm.Https : SslEndpointIdentificationAlgorithm.None,
             SslCaLocation = config.KafkaCluster.SslCaLocation,
             SaslOauthbearerClientId = config.KafkaCluster.SaslOauthbearerProducerClientId,
             SaslOauthbearerClientSecret = config.KafkaCluster.SaslOauthbearerProducerClientSecret,
