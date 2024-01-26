@@ -120,6 +120,7 @@ public class EdtDisclosureServiceConfiguration
         public string ConsumerGroupId { get; set; } = "disclosure-consumer-group";
         public string RetryConsumerGroupId { get; set; } = "disclosure-retry-consumer-group";
         public string CoreFolioCreationNotificationTopic { get; set; } = string.Empty;
+        public string HostnameVerification { get; set; } = "Https";
 
 
     }

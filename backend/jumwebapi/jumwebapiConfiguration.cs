@@ -65,6 +65,8 @@ public class JumWebApiConfiguration
         public string SslCertificateLocation { get; set; } = string.Empty;
         public string SslKeyLocation { get; set; } = string.Empty;
         public string Scope { get; set; } = "openid";
+        public string HostnameVerification { get; set; } = "Https";
+
     }
     public class JustinClientConfiguration
     {
