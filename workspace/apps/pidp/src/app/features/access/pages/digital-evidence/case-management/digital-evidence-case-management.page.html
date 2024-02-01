@@ -126,7 +126,8 @@
             granted.</sub></i></span><br />
       <span class="legend">
         <mat-icon>info_outline</mat-icon>= Show case info
-        <mat-icon *ngIf="showCaseImportLink" class="ms-2">file_upload</mat-icon>= Access DEMS upload for this case
+        <mat-icon *ngIf="showCaseImportLink" class="ms-2">file_upload</mat-icon>
+        <div *ngIf="showCaseImportLink">= Access DEMS upload for this case</div>
         <mat-icon class="ms-2">delete_outline</mat-icon>= Remove access to case
       </span>
     </ng-container>

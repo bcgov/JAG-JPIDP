@@ -23,7 +23,8 @@ data:
       "applicationUrl": "https://{{ .Values.global.vanityURL }}",
       "caseManagement": {
         "showAUFLink": true,
-        "showCaseImportLink": false
+        "showCaseImportLink": false,
+        "stickyAgencyCodes": [ "RCMP","FAKE"]
       },
       "demsImportURL": "{{ .Values.settings.edtURL }}",
       "keycloakConfig": {

@@ -131,6 +131,7 @@ export class DigitalEvidenceCaseManagementPage
   ) {
     super(dialog, formUtilsService);
     const routeData = this.route.snapshot.data;
+    const AGENCY_CODE = "agencyCode";
     this.title = routeData.title;
     this.organizationType = new OrganizationUserType();
     const partyId = this.partyService.partyId;
@@ -157,9 +158,29 @@ export class DigitalEvidenceCaseManagementPage
       this.organizationType.participantId = data['participantId'];
       this.organizationType.organizationName = data['organizationName'];
       this.organizationType.submittingAgencyCode = data['submittingAgencyCode'];
-      this.formState.agencyCode.patchValue(
-        this.organizationType.submittingAgencyCode
-      );
+
+
+      // sticky agency codes if org in the sticky list
+      if (this.organizationType.submittingAgencyCode && this.config.caseManagement.stickyAgencyCodes.includes(this.organizationType.submittingAgencyCode)) {
+        // no local code set but we have the agency code
+        if (!localStorage.getItem(AGENCY_CODE) && this.organizationType.submittingAgencyCode) {
+          if (this.organizationType.submittingAgencyCode && this.formState.agencyCode.value) {
+            localStorage.setItem(AGENCY_CODE, this.organizationType.submittingAgencyCode);
+          }
+
+        } else if (localStorage.getItem(AGENCY_CODE)) {
+          this.organizationType.submittingAgencyCode = localStorage.getItem(AGENCY_CODE) || "";
+          this.formState.agencyCode.patchValue(
+            this.organizationType.submittingAgencyCode
+          );
+        }
+      } else {
+
+        this.formState.agencyCode.patchValue(
+          this.organizationType.submittingAgencyCode
+        );
+      }
+
     });
     this.collectionNotice =
       documentService.getDigitalEvidenceCollectionNotice();
@@ -204,6 +225,8 @@ export class DigitalEvidenceCaseManagementPage
       data: data,
     });
   }
+
+
 
   public checkCaseInput(): boolean {
     if (this.formState.caseName.value)
@@ -295,6 +318,12 @@ export class DigitalEvidenceCaseManagementPage
   public findCase(): void {
     if (this.isCaseSearchInProgress) {
       return;
+    }
+
+    if (this.organizationType.submittingAgencyCode && this.config.caseManagement.stickyAgencyCodes.includes(this.organizationType.submittingAgencyCode)) {
+      if (this.formState.agencyCode.value) {
+        localStorage.setItem("agencyCode", this.formState.agencyCode.value);
+      }
     }
 
     this.requestedCase = null;
