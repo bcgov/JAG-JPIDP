@@ -33,7 +33,10 @@ export const environment: AppEnvironment = {
   authRealm: 'BCPS',
   caseManagement: {
     showAUFLink: true,
-    showCaseImportLink: false
+    showCaseImportLink: false,
+    stickyAgencyCodes: [
+      "FAKE"
+    ]
   },
   environmentName: EnvironmentName.LOCAL,
   applicationUrl: 'http://localhost:4200',
