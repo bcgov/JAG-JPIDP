@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file. See [versionize](https://github.com/versionize/versionize) for commit guidelines.
 
+<a name="1.0.11"></a>
+## [1.0.11](https://www.github.com/bcgov/JAG-JPIDP/releases/tag/v1.0.11) (2024-1-31)
+
 <a name="1.0.9"></a>
 ## [1.0.9](https://www.github.com/bcgov/JAG-JPIDP/releases/tag/v1.0.9) (2024-1-6)
 

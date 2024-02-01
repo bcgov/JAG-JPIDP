@@ -15,7 +15,8 @@ export interface AppEnvironment extends EnvironmentConfig {
   production: boolean;
   caseManagement: {
     showAUFLink: boolean,
-    showCaseImportLink: boolean
+    showCaseImportLink: boolean,
+    stickyAgencyCodes: string[]
   },
   emails: {
     providerIdentitySupport: string;
