@@ -5,15 +5,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <Version>1.0.11</Version>
+    <Version>1.1.0</Version>
   </PropertyGroup>
   <ItemGroup>
 
-    <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="6.0.2" />
+    <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="8.0.0" />
 
     <PackageReference Include="AutoMapper" Version="12.0.1" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
-    <PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" Version="1.0.0-beta.6" />
     <PackageReference Include="Bogus" Version="35.4.0" />
     <PackageReference Include="Chr.Avro.Confluent" Version="9.6.0" />
     <PackageReference Include="Confluent.Kafka" Version="2.2.0" />
