@@ -3,6 +3,7 @@ namespace Pidp;
 using System.Reflection;
 using System.Text.Json;
 using Common.Kafka;
+using Common.Utils;
 using FluentValidation.AspNetCore;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authorization;
@@ -299,7 +300,7 @@ public class Startup
 
         Log.Logger.Information($"### DIAM Core Version:{Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion} ###");
 
-
+        Log.Logger.Information($"Assembly version: {new AppInfo().GetAssemblyVersion()}");
         if (Environment.GetEnvironmentVariable("JUSTIN_SKIP_USER_EMAIL_CHECK") is not null and "true")
         {
             Log.Logger.Warning("*** JUSTIN EMAIL VERIFICATION IS DISABLED ***");

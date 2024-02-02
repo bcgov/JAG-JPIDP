@@ -18,7 +18,7 @@ public class EdtPersonCreationConsumer : BackgroundService
     {
         try
         {
-            Serilog.Log.Information($"Consume from ConsumerTopicName {this.config.KafkaCluster.PersonCreationTopic}");
+            Serilog.Log.Information($"Consume from PersonCreationTopic [{this.config.KafkaCluster.PersonCreationTopic}]");
             await this.consumer.Consume(this.config.KafkaCluster.PersonCreationTopic, stoppingToken);
         }
         catch (Exception ex)

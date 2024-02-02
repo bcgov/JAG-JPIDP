@@ -18,7 +18,7 @@ public class EdtPersonFolioLinkageConsumer : BackgroundService
     {
         try
         {
-            Serilog.Log.Information($"Consume from ConsumerTopicName {this.config.KafkaCluster.CoreFolioCreationNotificationTopic}");
+            Serilog.Log.Information($"Consume from CoreFolioCreationNotificationTopic [{this.config.KafkaCluster.CoreFolioCreationNotificationTopic}]");
             await this.consumer.Consume(this.config.KafkaCluster.CoreFolioCreationNotificationTopic, stoppingToken);
         }
         catch (Exception ex)

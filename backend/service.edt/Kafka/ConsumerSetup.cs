@@ -80,10 +80,11 @@ public static class ConsumerSetup
         {
             GroupId = config.KafkaCluster.ConsumerGroupId,
             EnableAutoCommit = true,
-            AutoOffsetReset = AutoOffsetReset.Earliest,
+            AutoOffsetReset = AutoOffsetReset.Latest,
+            Debug = "consumer",
             ClientId = Dns.GetHostName(),
             EnableAutoOffsetStore = false,
-            MaxPollIntervalMs = 60000,
+            StatisticsIntervalMs = 60000,
             BootstrapServers = config.KafkaCluster.BootstrapServers,
             SaslOauthbearerClientId = config.KafkaCluster.SaslOauthbearerConsumerClientId,
             SaslOauthbearerClientSecret = config.KafkaCluster.SaslOauthbearerConsumerClientSecret,
