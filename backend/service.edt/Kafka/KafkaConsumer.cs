@@ -1,15 +1,14 @@
 namespace edt.service.Kafka;
 
-using Confluent.Kafka;
-using edt.service.Kafka.Interfaces;
-using edt.service.ServiceEvents.UserAccountCreation.ConsumerRetry;
-using edt.service.ServiceEvents.UserAccountCreation.Handler;
-using IdentityModel.Client;
-using Microsoft.Extensions.DependencyInjection;
-using Serilog;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
+using Confluent.Kafka;
+using edt.service.Kafka.Interfaces;
+using edt.service.ServiceEvents.UserAccountCreation.ConsumerRetry;
+using IdentityModel.Client;
+using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 using static edt.service.EdtServiceConfiguration;
 
 public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TValue : class
@@ -69,8 +68,8 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
     private async Task StartConsumerLoop(CancellationToken cancellationToken)
     {
 
-   
-        Log.Logger.Information("Start consuming from [{0}]", this.topic);
+
+        Log.Logger.Information($"Start consuming from [{this.topic}]");
 
         this.consumer.Subscribe(this.topic);
         while (!cancellationToken.IsCancellationRequested)

@@ -21,7 +21,7 @@ public class UserModificationConsumer : BackgroundService
 
         try
         {
-            Serilog.Log.Information($"Consume from ConsumerTopicName {this.config.KafkaCluster.UserModificationTopicName}");
+            Serilog.Log.Information($"Consume from User Mod Topic {this.config.KafkaCluster.UserModificationTopicName}");
             await this.consumer.Consume(this.config.KafkaCluster.UserModificationTopicName, stoppingToken);
         }
         catch (Exception ex)
