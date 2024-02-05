@@ -1,12 +1,10 @@
 namespace edt.casemanagement.Infrastructure.Auth;
 
+using System.Security.Claims;
+using EdtService.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-
-using EdtService.Extensions;
 
 public static class AuthenticationSetup
 {
@@ -15,7 +13,9 @@ public static class AuthenticationSetup
         services.ThrowIfNull(nameof(services));
         config.ThrowIfNull(nameof(config));
 
-        JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+        Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
+        // JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>

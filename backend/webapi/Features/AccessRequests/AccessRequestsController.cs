@@ -1,10 +1,10 @@
 namespace Pidp.Features.AccessRequests;
 
+using common.Constants.Auth;
 using DomainResults.Common;
 using DomainResults.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Pidp.Infrastructure.Auth;
 using Pidp.Infrastructure.Services;
 using Pidp.Models;
 

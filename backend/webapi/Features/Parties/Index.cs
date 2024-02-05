@@ -23,6 +23,7 @@ public class Index
         public QueryValidator(IHttpContextAccessor accessor)
         {
             var user = accessor?.HttpContext?.User;
+            Serilog.Log.Information($"Checking user {user.GetUserId()}");
             this.RuleFor(x => x.UserId).NotEmpty().Equal(user.GetUserId());
         }
     }

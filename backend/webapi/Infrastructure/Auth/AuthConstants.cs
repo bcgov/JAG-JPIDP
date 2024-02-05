@@ -41,39 +41,3 @@ public static class ClaimValues
 
 }
 
-public static class Policies
-{
-    public const string BcscAuthentication = "bcsc-authentication-policy";
-    public const string IdirAuthentication = "idir-authentication-policy";
-    public const string AnyPartyIdentityProvider = "party-idp-policy";
-    public const string VerifiedCredentialsProvider = "verified-credentials-authentication-policy";
-    public const string SubAgencyIdentityProvider = "subgency-idp-policy";
-    public const string UserOwnsResource = "user-owns-resource-policy";
-    public const string AllDemsIdentityProvider = "dems-idp-policy";
-    public const string BcpsAuthentication = "bcps-authentication-policy";
-    public const string AdminAuthentication = "admin-authentication-policy";
-    public const string VicPdAuthentication = "vicpd-authentication-policy";
-}
-
-public static class Clients
-{
-    public const string PidpApi = "PIDP-SERVICE";
-}
-
-public static class Roles
-{
-    // PIdP Role Placeholders
-    public const string Admin = "ADMIN";
-    public const string User = "USER";
-    // represents agencies that need upload access (e.g. police)
-    public const string SubmittingAgency = "SUBMITTING_AGENCY";
-    public const string SubmittingAgencyClient = "SUBMITTING_AGENCY_CLIENT";
-    // clients lawyer
-    public const string DefenceCounsel = "DEFENCE_COUNSEL";
-    // legal aid appointed counsel
-    public const string DutyCounsel = "DUTY_COUNSEL";
-
-    public const string DisclosureAdmin = "DISCLOSURE_ADMIN";
-
-
-}

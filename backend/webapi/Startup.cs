@@ -141,8 +141,6 @@ public class Startup
             .UseNpgsql(config.ConnectionStrings.PidpDatabase, npg => npg.UseNodaTime())
             .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
 
-
-
         services.Scan(scan => scan
             .FromAssemblyOf<Startup>()
             .AddClasses(classes => classes.AssignableTo<IRequestHandler>())

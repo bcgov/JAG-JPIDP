@@ -1,7 +1,7 @@
 namespace Pidp.Infrastructure.Auth;
 
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using common.Constants.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,15 +15,26 @@ public static class AuthenticationSetup
         services.ThrowIfNull(nameof(services));
         config.ThrowIfNull(nameof(config));
 
-        JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+        // fix for dotnet 8
+        Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
+        //JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
         {
+            options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                ValidateAudience = true,
+                ValidateIssuer = true,
+                ValidAlgorithms = new List<string>() { "RS256" }
+
+            };
             options.Authority = config.Keycloak.RealmUrl;
-            //options.Audience = Resources.PidpApi;
-            options.RequireHttpsMetadata = false;
-            options.Audience = Clients.PidpApi;
+            options.IncludeErrorDetails = true;
+            options.RequireHttpsMetadata = true;
+            options.Audience = Clients.PidpService;
             options.MetadataAddress = config.Keycloak.WellKnownConfig;
             options.Events = new JwtBearerEvents
             {
@@ -35,87 +46,86 @@ public static class AuthenticationSetup
         });
         services.AddScoped<IAuthorizationHandler, UserOwnsResourceHandler>();
 
-        services.AddAuthorization(options =>
+        // BCPS logins
+        services.AddAuthorizationBuilder().AddPolicy(Policies.BcpsAuthentication, policy => policy.RequireAuthenticatedUser()
+                          .RequireClaim(Claims.IdentityProvider, ClaimValues.Bcps));
+
+        // Submitting agency logins
+        services.AddAuthorizationBuilder().AddPolicy(Policies.SubAgencyIdentityProvider, policy => policy.RequireAuthenticatedUser()
+                              .RequireRole(Roles.SubmittingAgency));
+
+        // BC services card policy
+        services.AddAuthorizationBuilder().AddPolicy(Policies.BcscAuthentication, policy => policy.RequireAuthenticatedUser().RequireClaim(Claims.IdentityProvider, ClaimValues.BCServicesCard));
+
+        // access to approvals
+        services.AddAuthorizationBuilder().AddPolicy(Policies.ApprovalAuthorization, policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
         {
-            options.AddPolicy(Policies.BcscAuthentication, policy => policy
-                .RequireAuthenticatedUser()
-                .RequireClaim(Claims.IdentityProvider, ClaimValues.BCServicesCard));
-
-            options.AddPolicy(Policies.IdirAuthentication, policy => policy
-                .RequireAuthenticatedUser()
-                .RequireClaim(Claims.IdentityProvider, ClaimValues.Idir));
-
-            //options.AddPolicy(Policies.VerifiedCredentialsProvider, policy => policy
-            //    .RequireAuthenticatedUser()
-            //    .RequireClaim(Claims.IdentityProvider, ClaimValues.VerifiedCredentials));
-
-            options.AddPolicy(Policies.VerifiedCredentialsProvider, policy => policy
-           .RequireAuthenticatedUser().RequireAssertion(context =>
-           {
-               var hasDutyRole = context.User.IsInRole(Roles.DutyCounsel);
-               var hasDefenceRole = context.User.IsInRole(Roles.DefenceCounsel);
-               var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider && (c.Value == ClaimValues.VerifiedCredentials || c.Value == ClaimValues.Idir));
-               return (hasDutyRole || hasDefenceRole) && hasClaim;
-           }));
+            var hasAdminRole = context.User.IsInRole(Roles.Admin);
+            var hasApprovalRole = context.User.IsInRole(Roles.Approver);
+            var hasReadOnlyApprovalRole = context.User.IsInRole(Roles.ApprovalViewer);
+            var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider && (c.Value == ClaimValues.Idir || c.Value == ClaimValues.Adfs));
+            return (hasAdminRole || hasApprovalRole || hasReadOnlyApprovalRole) && hasClaim;
+        }));
 
 
-            options.AddPolicy(Policies.BcpsAuthentication, policy => policy
-                  .RequireAuthenticatedUser()
-                  .RequireClaim(Claims.IdentityProvider, ClaimValues.Bcps));
+        // requires IDIR login
+        services.AddAuthorizationBuilder().AddPolicy(Policies.IdirAuthentication, policy => policy.RequireAuthenticatedUser()
+                        .RequireClaim(Claims.IdentityProvider, ClaimValues.Idir));
 
-            options.AddPolicy(Policies.AnyPartyIdentityProvider, policy => policy
-                    .RequireAuthenticatedUser().RequireAssertion(context =>
-                    {
-                        var hasRole = context.User.IsInRole(Roles.SubmittingAgency);
-                        var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider &&
-                                                                   (c.Value == ClaimValues.BCServicesCard ||
-                                                                    c.Value == ClaimValues.Idir ||
-                                                                    c.Value == ClaimValues.Phsa ||
-                                                                    c.Value == ClaimValues.Bcps ||
-                                                                    c.Value == ClaimValues.VerifiedCredentials ||
-                                                                    c.Value == ClaimValues.AzureAd
-                                                                    ));
+        // requires VC login (lawyers)
+        services.AddAuthorizationBuilder().AddPolicy(Policies.VerifiedCredentialsProvider, policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
+        {
+            var hasDutyRole = context.User.IsInRole(Roles.DutyCounsel);
+            var hasDefenceRole = context.User.IsInRole(Roles.DefenceCounsel);
+            var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider && (c.Value == ClaimValues.VerifiedCredentials || c.Value == ClaimValues.Idir));
+            return (hasDutyRole || hasDefenceRole) && hasClaim;
+        }));
 
-                        return hasRole || hasClaim;
-                    }));
 
-            options.AddPolicy(Policies.AllDemsIdentityProvider, policy => policy
-                  .RequireAuthenticatedUser().RequireAssertion(context =>
-                  {
-                      var hasSARole = context.User.IsInRole(Roles.SubmittingAgency);
-                      var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider &&
-                                                                 (c.Value == ClaimValues.BCServicesCard ||
-                                                                  c.Value == ClaimValues.Idir ||
-                                                                  c.Value == ClaimValues.Phsa ||
-                                                                  c.Value == ClaimValues.Bcps ||
-                                                                  c.Value == ClaimValues.VerifiedCredentials ||
-                                                                  c.Value == ClaimValues.AzureAd
-                                                                    ));
-                      return hasSARole || hasClaim;
-                  }));
+        // any DEMS possible user (should be more generic!)
+        services.AddAuthorizationBuilder().AddPolicy(Policies.AllDemsIdentityProvider, policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
+        {
+            var hasSARole = context.User.IsInRole(Roles.SubmittingAgency);
+            var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider &&
+                                                       (c.Value == ClaimValues.BCServicesCard ||
+                                                        c.Value == ClaimValues.Idir ||
+                                                        c.Value == ClaimValues.Bcps ||
+                                                        c.Value == ClaimValues.VerifiedCredentials));
+            return hasSARole || hasClaim;
+        }));
 
-            options.AddPolicy(Policies.AdminAuthentication, policy => policy
-               .RequireAuthenticatedUser().RequireAssertion(context =>
-                {
-                    var hasRole = context.User.IsInRole(Roles.Admin);
-                    var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider &&
-                                                               (
-                                                                c.Value == ClaimValues.Idir || c.Value == ClaimValues.Adfs ||
-                                                                c.Value == ClaimValues.Bcps));
-                    return hasRole || hasClaim;
-                }));
+        // any party requirement
+        services.AddAuthorizationBuilder().AddPolicy(Policies.AnyPartyIdentityProvider, policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
+        {
+            var hasRole = context.User.IsInRole(Roles.SubmittingAgency);
+            var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider &&
+                                                       (c.Value == ClaimValues.BCServicesCard ||
+                                                        c.Value == ClaimValues.Idir ||
+                                                        c.Value == ClaimValues.Bcps ||
+                                                        c.Value == ClaimValues.VerifiedCredentials));
 
-            options.AddPolicy(Policies.SubAgencyIdentityProvider, policy => policy
-                        .RequireAuthenticatedUser()
-                        .RequireRole(Roles.SubmittingAgency));
+            return hasRole || hasClaim;
+        }));
 
-            options.AddPolicy(Policies.UserOwnsResource, policy => policy.Requirements.Add(new UserOwnsResourceRequirement()));
+        // admin users
+        services.AddAuthorizationBuilder().AddPolicy(Policies.AdminAuthentication, policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
+        {
+            var hasRole = context.User.IsInRole(Roles.Admin);
+            var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider &&
+                                                       (
+                                                        c.Value == ClaimValues.Bcps));
+            return hasRole && hasClaim;
+        }));
 
-            options.FallbackPolicy = new AuthorizationPolicyBuilder()
-                .RequireAuthenticatedUser()
-                .RequireClaim(Claims.IdentityProvider, ClaimValues.BCServicesCard, ClaimValues.Idir, ClaimValues.Phsa, ClaimValues.Bcps)
-                .Build();
-        });
+        services.AddAuthorizationBuilder().AddPolicy(Policies.UserOwnsResource, policy => policy.Requirements.Add(new UserOwnsResourceRequirement()));
+
+
+        // fallback policy
+        services.AddAuthorizationBuilder().AddFallbackPolicy("fallback", policy => policy.RequireAuthenticatedUser());
+
+
+
+
 
         return services;
     }
@@ -144,7 +154,7 @@ public static class AuthenticationSetup
             && identity.IsAuthenticated)
         {
             // Flatten the Resource Access claim
-            identity.AddClaims(identity.GetResourceAccessRoles(Clients.PidpApi)
+            identity.AddClaims(identity.GetResourceAccessRoles(Clients.PidpService)
                 .Select(role => new Claim(ClaimTypes.Role, role)));
         }
 

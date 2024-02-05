@@ -1,14 +1,12 @@
 namespace Pidp.Features.Admin.SubmittingAgencies;
 
+using common.Constants.Auth;
 using DomainResults.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Pidp.Features.DigitalEvidenceCaseManagement.Commands;
-using Pidp.Infrastructure.Auth;
 using Pidp.Infrastructure.Services;
 using Pidp.Models;
-using Pidp.Models.Lookups;
 
 [Route("api/admin/[controller]")]
 [Authorize(Policy = Policies.AdminAuthentication)]
