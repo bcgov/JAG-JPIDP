@@ -1,12 +1,11 @@
 namespace Pidp.Features.EndorsementRequests;
 
+using common.Constants.Auth;
 using DomainResults.Common;
 using DomainResults.Mvc;
 using HybridModelBinding;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
-using Pidp.Infrastructure.Auth;
 using Pidp.Infrastructure.Services;
 
 [Route("api/Parties/{partyId}/[controller]")]
