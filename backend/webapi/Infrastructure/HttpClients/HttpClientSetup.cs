@@ -68,6 +68,9 @@ public static class HttpClientSetup
 
         services.AddTransient<ISmtpEmailClient, SmtpEmailClient>();
 
+        var hostVerification = (config.KafkaCluster.HostnameVerification == SslEndpointIdentificationAlgorithm.Https.ToString()) ? SslEndpointIdentificationAlgorithm.Https : SslEndpointIdentificationAlgorithm.None;
+        Serilog.Log.Information($"Host verification set to {hostVerification}");
+
         var clientConfig = new ClientConfig()
         {
             BootstrapServers = config.KafkaCluster.BootstrapServers,
@@ -76,7 +79,7 @@ public static class HttpClientSetup
             SaslOauthbearerTokenEndpointUrl = config.KafkaCluster.SaslOauthbearerTokenEndpointUrl,
             SaslOauthbearerMethod = SaslOauthbearerMethod.Oidc,
             SaslOauthbearerScope = config.KafkaCluster.Scope,
-            SslEndpointIdentificationAlgorithm = SslEndpointIdentificationAlgorithm.Https,
+            SslEndpointIdentificationAlgorithm = hostVerification,
             SslCaLocation = config.KafkaCluster.SslCaLocation,
             SslCertificateLocation = config.KafkaCluster.SslCertificateLocation,
             SslKeyLocation = config.KafkaCluster.SslKeyLocation,
@@ -93,7 +96,7 @@ public static class HttpClientSetup
             SaslOauthbearerMethod = SaslOauthbearerMethod.Oidc,
             SaslOauthbearerScope = config.KafkaCluster.Scope,
             ClientId = Dns.GetHostName(),
-            SslEndpointIdentificationAlgorithm = SslEndpointIdentificationAlgorithm.Https,
+            SslEndpointIdentificationAlgorithm = hostVerification,
             SslCaLocation = config.KafkaCluster.SslCaLocation,
             SaslOauthbearerClientId = config.KafkaCluster.SaslOauthbearerProducerClientId,
             SaslOauthbearerClientSecret = config.KafkaCluster.SaslOauthbearerProducerClientSecret,

@@ -1,9 +1,8 @@
 namespace Pidp.Features.Admin.Kafka.Topics;
 
-using AutoMapper;
-using Pidp.Features.Admin.Kafka.Models;
 using Confluent.Kafka;
 using Confluent.Kafka.Admin;
+using Pidp.Features.Admin.Kafka.Models;
 
 public record TopicQuery(string? topicName) : IQuery<List<TopicModel>>;
 
@@ -35,7 +34,7 @@ public class TopicQueryHandler : IQueryHandler<TopicQuery, List<TopicModel>>
             SslCertificateLocation = this.configuration.KafkaCluster.SslCertificateLocation,
             SslCaLocation = this.configuration.KafkaCluster.SslCaLocation,
             SaslOauthbearerScope = this.configuration.KafkaCluster.Scope,
-            SslEndpointIdentificationAlgorithm = SslEndpointIdentificationAlgorithm.Https,
+            SslEndpointIdentificationAlgorithm = (this.configuration.KafkaCluster.HostnameVerification == SslEndpointIdentificationAlgorithm.Https.ToString()) ? SslEndpointIdentificationAlgorithm.Https : SslEndpointIdentificationAlgorithm.None,
             SslKeyLocation = this.configuration.KafkaCluster.SslKeyLocation,
             SaslMechanism = SaslMechanism.OAuthBearer,
             SaslOauthbearerMethod = SaslOauthbearerMethod.Oidc,

@@ -31,9 +31,17 @@ export const environment: AppEnvironment = {
   configEndpoint: 'http://localhost:8080',
   authEndpoint: 'https://dev.common-sso.justice.gov.bc.ca',
   authRealm: 'BCPS',
+  caseManagement: {
+    showAUFLink: true,
+    showCaseImportLink: false,
+    stickyAgencyCodes: [
+      "FAKE"
+    ]
+  },
   environmentName: EnvironmentName.LOCAL,
   applicationUrl: 'http://localhost:4200',
-  demsImportURL: 'https://dems.dev.jag.gov.bc.ca/Edt.aspx#/import/',
+  demsImportURL: 'https://p.zpa-auth.net/IevTunx4Bg/doauth?origurl=https%3A%2F%2Fauf%2Etest%2Ejustice%2Egov%2Ebc%2Eca%2FEdt%2Easpx%23&domain=test.agencies.justice.gov.bc.ca',
+  // demsImportURL: 'https://dems.dev.jag.gov.bc.ca/Edt.aspx#/import/',
   emails: {
     providerIdentitySupport: 'jpsprovideridentityportal@gov.bc.ca',
     specialAuthorityEformsSupport: specialAuthorityEformsSupportEmail,

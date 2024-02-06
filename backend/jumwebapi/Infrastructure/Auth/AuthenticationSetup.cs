@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using Confluent.Kafka;
 using jumwebapi.Extensions;
 using jumwebapi.Kafka.Producer;
@@ -6,7 +7,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
-using System.IdentityModel.Tokens.Jwt;
 
 namespace jumwebapi.Infrastructure.Auth
 {
@@ -26,7 +26,7 @@ namespace jumwebapi.Infrastructure.Auth
                 SaslOauthbearerTokenEndpointUrl = config.KafkaCluster.SaslOauthbearerTokenEndpointUrl,
                 SaslOauthbearerMethod = SaslOauthbearerMethod.Oidc,
                 SaslOauthbearerScope = config.KafkaCluster.Scope,
-                SslEndpointIdentificationAlgorithm = SslEndpointIdentificationAlgorithm.Https,
+                SslEndpointIdentificationAlgorithm = (config.KafkaCluster.HostnameVerification == SslEndpointIdentificationAlgorithm.Https.ToString()) ? SslEndpointIdentificationAlgorithm.Https : SslEndpointIdentificationAlgorithm.None,
                 SslCaLocation = config.KafkaCluster.SslCaLocation,
                 SaslOauthbearerClientId = config.KafkaCluster.SaslOauthbearerProducerClientId,
                 SaslOauthbearerClientSecret = config.KafkaCluster.SaslOauthbearerProducerClientSecret,
@@ -62,7 +62,8 @@ namespace jumwebapi.Infrastructure.Auth
                 };
                 options.Events = new JwtBearerEvents
                 {
-                    OnTokenValidated = context => {
+                    OnTokenValidated = context =>
+                    {
                         return Task.CompletedTask;
                     },
                     OnAuthenticationFailed = context =>
@@ -72,7 +73,7 @@ namespace jumwebapi.Infrastructure.Auth
                             context.NoResult();
                             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                             context.Response.ContentType = "application/json";
-                            string response =
+                            var response =
                             JsonConvert.SerializeObject("The access token provided is not valid.");
                             if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
                             {
@@ -82,7 +83,7 @@ namespace jumwebapi.Infrastructure.Auth
                             }
                             await context.Response.WriteAsync(response);
                         });
-                   
+
                         //context.HandleResponse();
                         //context.Response.WriteAsync(response).Wait();
                         return Task.CompletedTask;
