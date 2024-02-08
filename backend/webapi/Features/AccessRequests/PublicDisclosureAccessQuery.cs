@@ -1,5 +1,6 @@
 namespace Pidp.Features.AccessRequests;
 
+using System.ComponentModel.DataAnnotations;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,6 +11,7 @@ public class PublicDisclosureAccessQuery
 {
     public class Query : IQuery<List<PublicDisclosureAccess>>
     {
+        [Required]
         public int PartyId { get; set; }
     }
 

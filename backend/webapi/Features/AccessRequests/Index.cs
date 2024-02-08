@@ -1,5 +1,6 @@
 namespace Pidp.Features.AccessRequests;
 
+using System.ComponentModel.DataAnnotations;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using NodaTime;
@@ -11,6 +12,7 @@ public class Index
 {
     public class Query : IQuery<List<Model>>
     {
+        [Required]
         public int PartyId { get; set; }
     }
 

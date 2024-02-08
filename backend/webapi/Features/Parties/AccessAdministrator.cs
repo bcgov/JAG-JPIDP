@@ -1,18 +1,19 @@
 namespace Pidp.Features.Parties;
 
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using FluentValidation;
 using HybridModelBinding;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json.Serialization;
-
 using Pidp.Data;
 
 public class AccessAdministrator
 {
     public class Query : IQuery<Command>
     {
+        [Required]
         public int PartyId { get; set; }
     }
 

@@ -26,10 +26,22 @@
     <PackageReference Include="SendGrid" Version="9.28.1" />
 
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="API\v1" />
+  </ItemGroup>
+
+  
   <ItemGroup>
     <Content Update="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+
+
+  <Target Name="OpenAPI" AfterTargets="Build" Condition="$(Configuration)=='Debug'">
+    <Exec Command="dotnet swagger tofile --output ./API/v1/$(AssemblyName).yaml --yaml $(OutputPath)$(AssemblyName).dll v1" WorkingDirectory="$(ProjectDir)" />
+    <Exec Command="dotnet swagger tofile --output ./API/v1/$(AssemblyName).json $(OutputPath)$(AssemblyName).dll v1" WorkingDirectory="$(ProjectDir)" />
+  </Target>
 
 </Project>

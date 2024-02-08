@@ -51,8 +51,6 @@ using static Pidp.Models.Lookups.CourtLocation;
 public class Startup
 {
 
-
-
     public IConfiguration Configuration { get; }
 
     public Startup(IConfiguration configuration)
@@ -163,17 +161,35 @@ public class Startup
 
         services.AddSwaggerGen(options =>
         {
-            options.SwaggerDoc("v1", new OpenApiInfo { Title = "PIdP Web API", Version = "v1" });
-            options.AddSecurityDefinition("OAuth2", new OpenApiSecurityScheme
+            options.SwaggerDoc("v1", new OpenApiInfo { Title = "PIdP Web API", Version = "v1", Description = "DIAM main webapi entrypoint - all UI communication goes through this WebApi service currently" });
+            options.DescribeAllParametersInCamelCase();
+
+            // Configure authentication for Swagger
+            options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
             {
-                Description = "Standard Authorization header using the Bearer scheme. Example: \"bearer {token}\"",
-                In = ParameterLocation.Header,
-                Name = "Authorization",
-                Type = SecuritySchemeType.ApiKey
+                Type = SecuritySchemeType.OAuth2,
+
+                Flows = new OpenApiOAuthFlows
+                {
+                    ClientCredentials = new OpenApiOAuthFlow
+                    {
+                        AuthorizationUrl = new Uri("https://dev.common-sso.justice.gov.bc.ca/auth/realms/BCPS/protocol/openid-connect/auth"),
+                        TokenUrl = new Uri("https://dev.common-sso.justice.gov.bc.ca/auth/realms/BCPS/protocol/openid-connect/token"),
+                        Scopes = new Dictionary<string, string>
+                    {
+                        { "openid" , "DIAM Server HTTP Api" }
+                    },
+                    }
+                },
+                Description = "DIAM Server OpenId Security Scheme"
             });
             options.OperationFilter<SecurityRequirementsOperationFilter>();
-            options.CustomSchemaIds(x => x.FullName);
+            // remove invalid schema characters
+            options.CustomSchemaIds(x => x.FullName.Replace("+", "."));
         });
+
+
+
         services.AddFluentValidationRulesToSwagger();
 
         JsonConvert.DefaultSettings = () => new JsonSerializerSettings
@@ -250,19 +266,7 @@ public class Startup
                 .WithIdentity("CourtAccess-trigger") // give the trigger a unique name
                 .WithCronSchedule(config.CourtAccess.PollCron));
 
-            //q.ScheduleJob<CourtAccessScheduledJob>(trigger => trigger
-            //  .WithIdentity("Court access trigger")
-            //  .StartNow()
-            //  .WithDailyTimeIntervalSchedule(x => x.WithInterval(config.CourtAccess.PollSeconds, IntervalUnit.Second))
-            //  .WithDescription("Court access scheduled event")
-            //);
 
-            //q.ScheduleJob<OnboardingMonitorJob>(monitoring => monitoring
-            //    .WithIdentity("Onboarding monitoring")
-            //    .StartNow()
-            //    .WithDailyTimeIntervalSchedule(x => x.WithInterval(30, IntervalUnit.Second))
-            //    .WithDescription("Monitor for onboarding events")
-            //);
         });
 
 
@@ -270,6 +274,13 @@ public class Startup
         {
             options.WaitForJobsToComplete = true;
         });
+
+        //services.AddApiVersioning(options =>
+        //{
+        //    options.ReportApiVersions = true;
+        //    options.AssumeDefaultVersionWhenUnspecified = true;
+        //    options.ApiVersionReader = new HeaderApiVersionReader("api-version");
+        //}).AddApiExplorer();
 
     }
 
@@ -313,6 +324,8 @@ public class Startup
         if (env.IsDevelopment())
         {
             app.UseDeveloperExceptionPage();
+            app.UseSwagger();
+            app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.yaml", "DIAM Web API"));
         }
 
 
@@ -325,8 +338,7 @@ public class Startup
             }
             );// "/error");
 
-        app.UseSwagger();
-        app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.yaml", "DIAM Web API"));
+
 
         app.UseSerilogRequestLogging(options => options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
         {
