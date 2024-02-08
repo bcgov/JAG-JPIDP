@@ -125,14 +125,34 @@ public class Startup
 
         services.AddSwaggerGen(options =>
         {
-            options.SwaggerDoc("v1", new OpenApiInfo { Title = "JUM Web API", Version = "v1" });
+            options.SwaggerDoc("v1", new OpenApiInfo { Title = "JUM Web API", Version = "v1", Description = "Provides APIs for JUSTIN info relating to DIAM" });
+            options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.OAuth2,
+                Flows = new OpenApiOAuthFlows
+                {
+                    ClientCredentials = new OpenApiOAuthFlow
+                    {
+                        AuthorizationUrl = new Uri("https://dev.common-sso.justice.gov.bc.ca/auth/realms/BCPS/protocol/openid-connect/auth"),
+                        TokenUrl = new Uri("https://dev.common-sso.justice.gov.bc.ca/auth/realms/BCPS/protocol/openid-connect/token"),
+                        Scopes = new Dictionary<string, string>
+                    {
+                        { "openid" , "DIAM Server HTTP Api" }
+                    },
+                    }
+                },
+                Description = "DIAM Server OpenId Security Scheme"
+            });
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
-                Description = "Standard Authorization header using the Bearer scheme. Example: \"bearer {token}\"",
-                In = ParameterLocation.Header,
+                Description = "JWT Authorization header using the Bearer scheme.",
                 Name = "Authorization",
-                Type = SecuritySchemeType.ApiKey
+                In = ParameterLocation.Header,
+                Scheme = "bearer",
+                Type = SecuritySchemeType.Http,
+                BearerFormat = "JWT"
             });
+
             options.AddSecurityRequirement(new OpenApiSecurityRequirement()
                 {
                     {
@@ -258,7 +278,13 @@ public class Startup
         //app.UseMiddleware<ExceptionHandlingMiddleware>();
         app.UseExceptionHandler("/error");
         app.UseSwagger();
-        app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.json", "JUM Web API"));
+        app.UseSwaggerUI(options =>
+        {
+            options.SwaggerEndpoint("/swagger/v1/swagger.yaml", "JUM Web API");
+            options.EnablePersistAuthorization();
+            options.InjectStylesheet("/content/swagger-extras.css");
+        }
+        );
 
         app.UseSerilogRequestLogging(options => options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
         {

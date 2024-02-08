@@ -22,36 +22,36 @@ public class UsersController : ControllerBase
     private readonly JumWebApiConfiguration _config;
     public UsersController(IMediator mediator, IKafkaProducer<string, UserModel> kafkaProducer, JumWebApiConfiguration config)
     {
-        _mediator = mediator;
-        _kafkaProducer = kafkaProducer;
-        _config = config;
+        this._mediator = mediator;
+        this._kafkaProducer = kafkaProducer;
+        this._config = config;
     }
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetUsers()
     {
-        var e =  await _mediator.Send(new AllUsersQuery());
+        var e = await this._mediator.Send(new AllUsersQuery());
         return new JsonResult(e);
     }
 
-    [HttpGet("{username:alpha}")]
+    [HttpGet("/username/{username:alpha}")]
     [Produces("application/json")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetUser(string username)
     {
-        var user = await _mediator.Send(new GetUserQuery(username));
+        var user = await this._mediator.Send(new GetUserQuery(username));
         return new JsonResult(user);
     }
-    [HttpGet("{partId:long}")]
+    [HttpGet("/partid/{partId:long}")]
     [Produces("application/json")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetUser(decimal partId)
     {
-        var user = await _mediator.Send(new GetUserByPartId(partId));
+        var user = await this._mediator.Send(new GetUserByPartId(partId));
         return new JsonResult(user);
     }
     [HttpPost]
@@ -59,29 +59,30 @@ public class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> AddUser([FromBody] UserModel user)
     {
-        var entity = await _mediator.Send(new CreateUserCommand(
-            user.UserName, user.ParticipantId, user.IsDisable, user.FirstName, user.LastName, user.MiddleName,user.PreferredName, user.PhoneNumber, user.Email, user.BirthDate,
-            user.AgencyId, user.PartyTypeCode, user.Roles         
+        var entity = await this._mediator.Send(new CreateUserCommand(
+            user.UserName, user.ParticipantId, user.IsDisable, user.FirstName, user.LastName, user.MiddleName, user.PreferredName, user.PhoneNumber, user.Email, user.BirthDate,
+            user.AgencyId, user.PartyTypeCode, user.Roles
             ));
 
-        await _kafkaProducer.ProduceAsync(_config.KafkaCluster.TopicName, user.ParticipantId.ToString(), entity);
-        return Ok(entity);
+        await this._kafkaProducer.ProduceAsync(this._config.KafkaCluster.TopicName, user.ParticipantId.ToString(), entity);
+        return this.Ok(entity);
     }
     [HttpPut]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UpdateUser(long ParticipantId, [FromBody] UserModel user)
     {
-        if (user == null) throw new ArgumentNullException(nameof(user));
+        if (user == null)
+            throw new ArgumentNullException(nameof(user));
 
-        var update = await _mediator.Send(new UpdateUserCommand(
+        var update = await this._mediator.Send(new UpdateUserCommand(
                 user.UserName, user.ParticipantId, user.IsDisable,
                 user.FirstName, user.LastName, user.MiddleName, user.PreferredName,
                 user.PhoneNumber, user.Email, user.BirthDate, user.AgencyId,
                 user.PartyTypeCode, user.Roles
             ));
 
-        return Ok(update);
+        return this.Ok(update);
     }
 
 

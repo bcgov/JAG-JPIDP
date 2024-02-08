@@ -1,5 +1,6 @@
 namespace Pidp.Features.EndorsementRequests;
 
+using System.ComponentModel.DataAnnotations;
 using DomainResults.Common;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +13,9 @@ public class Approve
 {
     public class Command : ICommand<IDomainResult>
     {
+        [Required]
         public int PartyId { get; set; }
+        [Required]
         public int EndorsementRequestId { get; set; }
     }
 

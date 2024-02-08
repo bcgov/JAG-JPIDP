@@ -1,5 +1,6 @@
 namespace Pidp.Features.Parties;
 
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Security.Claims;
@@ -30,6 +31,7 @@ public partial class ProfileStatus
 
     public class Command : ICommand<Model>
     {
+        [Required]
         public int Id { get; set; }
         [JsonIgnore]
         public ClaimsPrincipal? User { get; set; }

@@ -56,68 +56,70 @@ public class JustinUserChangeService : IJustinUserChangeService
             else
             {
 
-                var txn = this.context.Database.BeginTransaction();
-
-                try
+                using (var txn = this.context.Database.BeginTransaction())
                 {
-                    Log.Information($"Processing change request id {userChangeEvent.EventMessageId} for event {userChangeEvent.EventType} and user {userChangeEvent.PartId}");
-
-                    // track metric
-                    UserUpdateCounter.Inc();
-
-                    // get the latest user info from JUSTIN
-                    var participant = await this.mediator.Send(new GetParticipantByIdQuery(userChangeEvent.PartId));
-
-                    if (participant == null)
+                    try
                     {
-                        Log.Warning($"Failed to find JUSTIN user with partId {userChangeEvent.PartId} request {userChangeEvent.EventMessageId} will be ignored");
-                    }
-                    else
-                    {
+                        Log.Information($"Processing change request id {userChangeEvent.EventMessageId} for event {userChangeEvent.EventType} and user {userChangeEvent.PartId}");
 
-                        // get the current JUSTIN status
-                        var details = participant.participantDetails.First();
+                        // track metric
+                        UserUpdateCounter.Inc();
 
-                        if (details != null)
+                        // get the latest user info from JUSTIN
+                        var participant = await this.mediator.Send(new GetParticipantByIdQuery(userChangeEvent.PartId));
+
+                        if (participant == null)
+                        {
+                            Log.Warning($"Failed to find JUSTIN user with partId {userChangeEvent.PartId} request {userChangeEvent.EventMessageId} will be ignored");
+                        }
+                        else
                         {
 
-                            // store the entry in the Db
-                            var dbChangeEvent = new JustinUserChange
+                            // get the current JUSTIN status
+                            var details = participant.participantDetails.First();
+
+                            if (details != null)
                             {
-                                Created = this.clock.GetCurrentInstant(),
-                                EventMessageId = userChangeEvent.EventMessageId,
-                                PartId = "" + userChangeEvent.PartId,
-                                EventType = userChangeEvent.EventType,
-                                EventTime = userChangeEvent.EventTime,
-                            };
 
-                            var edtUpdate = new JustinUserChangeTarget
-                            {
-                                JustinUserChange = dbChangeEvent,
-                                ServiceName = "EDT",
-                                ChangeStatus = "created",
-                            };
+                                // store the entry in the Db
+                                var dbChangeEvent = new JustinUserChange
+                                {
+                                    Created = this.clock.GetCurrentInstant(),
+                                    EventMessageId = userChangeEvent.EventMessageId,
+                                    PartId = "" + userChangeEvent.PartId,
+                                    EventType = userChangeEvent.EventType,
+                                    EventTime = userChangeEvent.EventTime,
+                                };
 
-                            this.context.JustinUserChange.Add(dbChangeEvent);
-                            var response = await this.context.SaveChangesAsync();
-                            Log.Information($"New change event {response} created");
+                                var edtUpdate = new JustinUserChangeTarget
+                                {
+                                    JustinUserChange = dbChangeEvent,
+                                    ServiceName = "EDT",
+                                    ChangeStatus = "created",
+                                };
 
-                            var topicEntryKey = Guid.NewGuid().ToString();
+                                this.context.JustinUserChange.Add(dbChangeEvent);
+                                var response = await this.context.SaveChangesAsync();
+                                Log.Information($"New change event {response} created");
 
-                            // publish the event to a topic
-                            await this.changeEventProducer.ProduceAsync(this.config.KafkaCluster.UserChangeEventTopic, topicEntryKey, userChangeEvent);
+                                var topicEntryKey = Guid.NewGuid().ToString();
+
+                                // publish the event to a topic
+                                await this.changeEventProducer.ProduceAsync(this.config.KafkaCluster.UserChangeEventTopic, topicEntryKey, userChangeEvent);
+
+
+                            }
 
                             await txn.CommitAsync();
                         }
                     }
-                }
-                catch (Exception ex)
-                {
-                    Log.Error($"Failed to store user change event {userChangeEvent.EventMessageId} [{string.Join(",", ex.Message)}]");
+                    catch (Exception ex)
+                    {
+                        Log.Error($"Failed to store user change event {userChangeEvent.EventMessageId} [{string.Join(",", ex.Message)}]");
 
-                    // requeue the event
+                        // requeue the event
 
-                    await txn.RollbackAsync();
+                    }
                 }
             }
         });

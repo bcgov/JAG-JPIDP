@@ -14,6 +14,8 @@ if [ -d ${VAULT_SECRETS_DIR} ]; then
     source ${i}
   done
   set +a # disable mark variables which are modified or created for export
+  # sleep for a few seconds to let things run
+  sleep 5
   # remove vault files
   for i in ${VAULT_SECRETS_DIR}/*; do
     echo "Removing ${i}"

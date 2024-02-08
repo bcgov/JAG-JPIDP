@@ -1,7 +1,7 @@
 namespace Pidp.Features.DefenceCounsel.Query;
 
+using System.ComponentModel.DataAnnotations;
 using FluentValidation;
-using Pidp.Exceptions;
 using Pidp.Infrastructure.HttpClients.Edt;
 using Pidp.Models;
 
@@ -12,7 +12,23 @@ using Pidp.Models;
 public class DefenceFolioQuery
 {
 
-    public sealed record Query(int PartyId, string DefenceUniqueID) : IQuery<DigitalEvidenceCaseModel>;
+    public sealed record Query : IQuery<DigitalEvidenceCaseModel>
+    {
+        [Required]
+        public int PartyId { get; set; }
+        [Required]
+        public string DefenceUniqueID { get; set; }
+
+        public Query(int partyId, string defenceUniqueID)
+        {
+            this.PartyId = partyId;
+            this.DefenceUniqueID = defenceUniqueID;
+        }
+
+        public Query()
+        {
+        }
+    }
     public class QueryValidator : AbstractValidator<Query>
     {
         public QueryValidator()
@@ -40,7 +56,7 @@ public class DefenceFolioQuery
 
             if (caseInfo == null)
             {
-                this.logger.LogFolioNotFound(query.PartyId,query.DefenceUniqueID);
+                this.logger.LogFolioNotFound(query.PartyId, query.DefenceUniqueID);
                 return null;
             }
 

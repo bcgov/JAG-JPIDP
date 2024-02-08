@@ -1,15 +1,13 @@
 namespace PidpTests.Infrastructure.Services;
 
+using System.Security.Claims;
 using DomainResults.Common;
 using FakeItEasy;
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
-using Xunit;
-
-using Pidp.Infrastructure.Auth;
 using Pidp.Infrastructure.Services;
 using Pidp.Models;
 using PidpTests.TestingExtensions;
+using Xunit;
 
 public class PidpAuthorizationServiceTests : InMemoryDbTest
 {

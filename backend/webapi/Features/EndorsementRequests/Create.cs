@@ -1,15 +1,15 @@
 namespace Pidp.Features.EndorsementRequests;
 
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using FluentValidation;
 using Flurl;
 using HybridModelBinding;
-using System.Text.Json.Serialization;
-
-using Pidp.Data;
-using Pidp.Infrastructure.Services;
-using Pidp.Infrastructure.HttpClients.Mail;
-using Pidp.Models;
 using NodaTime;
+using Pidp.Data;
+using Pidp.Infrastructure.HttpClients.Mail;
+using Pidp.Infrastructure.Services;
+using Pidp.Models;
 
 public class Create
 {
@@ -17,6 +17,7 @@ public class Create
     {
         [JsonIgnore]
         [HybridBindProperty(Source.Route)]
+        [Required]
         public int PartyId { get; set; }
         public string RecipientEmail { get; set; } = string.Empty;
         public string? AdditionalInformation { get; set; }

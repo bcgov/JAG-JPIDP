@@ -1,10 +1,10 @@
-﻿
+namespace jumwebapi.Kafka.Consumers.NotificationConsumer;
+
 
 using Confluent.Kafka;
 using jumwebapi.Kafka.Interfaces;
 using jumwebapi.Kafka.Producer.Interfaces;
 
-namespace jumwebapi.Kafka.Consumers.NotificationConsumer;
 public class NotificationConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TValue : class
 {
     private readonly ConsumerConfig _config;
@@ -16,50 +16,50 @@ public class NotificationConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> w
 
     public NotificationConsumer(ConsumerConfig config, IKafkaHandler<TKey, TValue> handler, IConsumer<TKey, TValue> consumer, string topic, IServiceScopeFactory serviceScopeFactory)
     {
-        _serviceScopeFactory = serviceScopeFactory;
-        _config = config;
-        _consumer = consumer;
-        _handler = handler;
-        _topic = topic;
+        this._serviceScopeFactory = serviceScopeFactory;
+        this._config = config;
+        this._consumer = consumer;
+        this._handler = handler;
+        this._topic = topic;
     }
 
     public async Task Consume(string topic, CancellationToken stoppingToken)
     {
-        using var scope = _serviceScopeFactory.CreateScope();
+        using var scope = this._serviceScopeFactory.CreateScope();
 
-        _handler = scope.ServiceProvider.GetRequiredService<IKafkaHandler<TKey, TValue>>();
-        _consumer = new ConsumerBuilder<TKey, TValue>(_config).SetValueDeserializer(new KafkaDeserializer<TValue>()).Build();
-        _topic = topic;
+        this._handler = scope.ServiceProvider.GetRequiredService<IKafkaHandler<TKey, TValue>>();
+        this._consumer = new ConsumerBuilder<TKey, TValue>(this._config).SetValueDeserializer(new KafkaDeserializer<TValue>()).Build();
+        this._topic = topic;
 
-        await Task.Run(() => StartConsumerLoop(stoppingToken), stoppingToken);
+        await Task.Run(() => this.StartConsumerLoop(stoppingToken), stoppingToken);
     }
     /// <summary>
     /// This will close the consumer, commit offsets and leave the group cleanly.
     /// </summary>
     public void Close()
     {
-        _consumer.Close();
+        this._consumer.Close();
     }
     /// <summary>
     /// Releases all resources used by the current instance of the consumer
     /// </summary>
     public void Dispose()
     {
-        _consumer.Dispose();
+        this._consumer.Dispose();
     }
     private async Task StartConsumerLoop(CancellationToken cancellationToken)
     {
-        _consumer.Subscribe(_topic);
+        this._consumer.Subscribe(this._topic);
 
         while (!cancellationToken.IsCancellationRequested)
         {
             try
             {
-                var result = _consumer.Consume(cancellationToken);
+                var result = this._consumer.Consume(cancellationToken);
 
                 if (result != null)
                 {
-                   await _handler.HandleAsync(result.Message.Key, result.Message.Value);
+                    await this._handler.HandleAsync(result.Message.Key, result.Message.Value);
                 }
             }
             catch (OperationCanceledException)

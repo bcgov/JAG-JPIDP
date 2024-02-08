@@ -154,7 +154,7 @@ public class Startup
 
         services.AddSwaggerGen(options =>
         {
-            options.SwaggerDoc("v1", new OpenApiInfo { Title = "Approval Service API", Version = "v1" });
+            options.SwaggerDoc("v1", new OpenApiInfo { Title = "Approval Service API", Version = "v1", Description = "Requests and responses for Approvals required for DIAM" });
 
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
@@ -162,6 +162,25 @@ public class Startup
                 In = ParameterLocation.Header,
                 Name = "Authorization",
                 Type = SecuritySchemeType.ApiKey
+            });
+            // Configure authentication for Swagger
+            options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.OAuth2,
+
+                Flows = new OpenApiOAuthFlows
+                {
+                    ClientCredentials = new OpenApiOAuthFlow
+                    {
+                        AuthorizationUrl = new Uri("https://dev.common-sso.justice.gov.bc.ca/auth/realms/BCPS/protocol/openid-connect/auth"),
+                        TokenUrl = new Uri("https://dev.common-sso.justice.gov.bc.ca/auth/realms/BCPS/protocol/openid-connect/token"),
+                        Scopes = new Dictionary<string, string>
+                    {
+                        { "openid" , "DIAM Server HTTP Api" }
+                    },
+                    }
+                },
+                Description = "DIAM Server OpenId Security Scheme"
             });
             options.AddSecurityRequirement(new OpenApiSecurityRequirement()
                 {

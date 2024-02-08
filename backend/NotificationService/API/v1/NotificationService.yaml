@@ -1,0 +1,14 @@
+openapi: 3.0.1
+info:
+  title: Notification Service API
+  version: v1
+paths: { }
+components:
+  securitySchemes:
+    Bearer:
+      type: apiKey
+      description: 'Standard Authorization header using the Bearer scheme. Example: "bearer {token}"'
+      name: Authorization
+      in: header
+security:
+  - Bearer: [ ]
