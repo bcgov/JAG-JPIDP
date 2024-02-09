@@ -18,8 +18,8 @@ if [ -d ${VAULT_SECRETS_DIR} ]; then
   sleep 5
   # remove vault files
   for i in ${VAULT_SECRETS_DIR}/*; do
-    echo "Removing ${i}"
-    rm ${i}
+    echo "Changing perms on ${i}"
+    chmod 550 ${i}
   done
 else
   echo "[entrypoint] Vault secrets directory (${VAULT_SECRETS_DIR}) does not exist"
