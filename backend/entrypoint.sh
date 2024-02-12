@@ -14,13 +14,7 @@ if [ -d ${VAULT_SECRETS_DIR} ]; then
     source ${i}
   done
   set +a # disable mark variables which are modified or created for export
-  # sleep for a few seconds to let things run
-  sleep 10
-  # remove vault files
-  for i in ${VAULT_SECRETS_DIR}/*; do
-    echo "Changing perms on ${i}"
-    chmod 500 ${i}
-  done
+
 else
   echo "[entrypoint] Vault secrets directory (${VAULT_SECRETS_DIR}) does not exist"
 fi
