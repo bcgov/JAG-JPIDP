@@ -14,11 +14,7 @@ if [ -d ${VAULT_SECRETS_DIR} ]; then
     source ${i}
   done
   set +a # disable mark variables which are modified or created for export
-  # remove vault files
-  for i in ${VAULT_SECRETS_DIR}/*; do
-    echo "Removing ${i}"
-    rm ${i}
-  done
+
 else
   echo "[entrypoint] Vault secrets directory (${VAULT_SECRETS_DIR}) does not exist"
 fi

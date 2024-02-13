@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [versionize](https://github.com/versionize/versionize) for commit guidelines.
 
+<a name="1.1.0"></a>
+## [1.1.0](https://www.github.com/bcgov/JAG-JPIDP/releases/tag/v1.1.0) (2024-2-2)
+
+### Features
+
+* library updates dotnet core 8 ([847846a](https://www.github.com/bcgov/JAG-JPIDP/commit/847846a01291ac981c97cb88a63dc0baa08673e3))
+
 <a name="1.0.11"></a>
 ## [1.0.11](https://www.github.com/bcgov/JAG-JPIDP/releases/tag/v1.0.11) (2024-1-31)
 

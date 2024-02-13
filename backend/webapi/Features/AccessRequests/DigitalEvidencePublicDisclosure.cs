@@ -1,5 +1,6 @@
 namespace Pidp.Features.AccessRequests;
 
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using Common.Models.Approval;
 using Common.Models.Notification;
@@ -31,8 +32,11 @@ public class DigitalEvidencePublicDisclosure
 
     public class Command : ICommand<IDomainResult>
     {
+        [Required]
         public int PartyId { get; set; }
+        [Required]
         public string ParticipantId { get; set; } = string.Empty;
+        [Required]
         public string KeyData { get; set; } = string.Empty;
 
 

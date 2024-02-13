@@ -1,12 +1,12 @@
 namespace Pidp.Features.Parties;
 
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using FluentValidation;
 using HybridModelBinding;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json.Serialization;
-
 using Pidp.Data;
 using Pidp.Features;
 using Pidp.Models;
@@ -15,6 +15,7 @@ public class WorkSetting
 {
     public class Query : IQuery<Command>
     {
+        [Required]
         public int Id { get; set; }
     }
 

@@ -1,14 +1,14 @@
 namespace Pidp.Features.Parties;
 
+using common.Constants.Auth;
 using DomainResults.Common;
 using DomainResults.Mvc;
 using HybridModelBinding;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
-using Pidp.Infrastructure.Auth;
 using Pidp.Infrastructure.Services;
 using Pidp.Models;
+using Swashbuckle.AspNetCore.Annotations;
 
 [Route("api/[controller]")]
 [Authorize(Policy = Policies.AnyPartyIdentityProvider)]
@@ -16,6 +16,7 @@ public class PartiesController : PidpControllerBase
 {
     public PartiesController(IPidpAuthorizationService authorizationService) : base(authorizationService) { }
 
+    [SwaggerOperation(Summary = "Return all parties known to DIAM")]
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

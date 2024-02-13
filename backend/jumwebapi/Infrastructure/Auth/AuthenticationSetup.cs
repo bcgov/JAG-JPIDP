@@ -1,4 +1,3 @@
-using System.IdentityModel.Tokens.Jwt;
 using Confluent.Kafka;
 using jumwebapi.Extensions;
 using jumwebapi.Kafka.Producer;
@@ -40,7 +39,9 @@ namespace jumwebapi.Infrastructure.Auth
             services.AddSingleton(producerConfig);
             services.AddSingleton(typeof(IKafkaProducer<,>), typeof(KafkaProducer<,>));
 
-            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+            Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
+            //JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
             services.AddAuthentication(option =>
             {

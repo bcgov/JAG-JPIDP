@@ -1,0 +1,1627 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "JUM Web API",
+    "description": "Provides APIs for JUSTIN info relating to DIAM",
+    "version": "v1"
+  },
+  "paths": {
+    "/api/agencies": {
+      "get": {
+        "tags": [
+          "Agencies"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinAgency"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinAgency"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinAgency"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Agencies"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Features.Agencies.Models.Agency"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Features.Agencies.Models.Agency"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Features.Agencies.Models.Agency"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Features.Agencies.Models.Agency"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Agencies"
+        ],
+        "parameters": [
+          {
+            "name": "AgencyId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinAgency"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinAgency"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinAgency"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinAgency"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/digital-participants": {
+      "get": {
+        "tags": [
+          "DigitalParticipants"
+        ],
+        "operationId": "GetIdentityProviders",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinIdentityProvider"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinIdentityProvider"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinIdentityProvider"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "DigitalParticipants"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Features.Participants.Models.DigitalParticipant"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Features.Participants.Models.DigitalParticipant"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Features.Participants.Models.DigitalParticipant"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Features.Participants.Models.DigitalParticipant"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/error": {
+      "put": {
+        "tags": [
+          "Errors"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Errors"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Errors"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/participant": {
+      "get": {
+        "tags": [
+          "Participant"
+        ],
+        "parameters": [
+          {
+            "name": "username",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [ ]
+          }
+        ]
+      }
+    },
+    "/api/participant/{partId}": {
+      "get": {
+        "tags": [
+          "Participant"
+        ],
+        "parameters": [
+          {
+            "name": "partId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [ ]
+          }
+        ]
+      }
+    },
+    "/api/party-type": {
+      "get": {
+        "tags": [
+          "PartyType"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinPartyType"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinPartyType"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinPartyType"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/persons": {
+      "get": {
+        "tags": [
+          "Persons"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinPerson"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinPerson"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinPerson"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Persons"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Features.Persons.Models.Person"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Features.Persons.Models.Person"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Features.Persons.Models.Person"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Features.Persons.Models.Person"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/user-change-management": {
+      "put": {
+        "tags": [
+          "UserChangeManagement"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Features.UserChangeManagement.Models.JustinProcessStatusModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Features.UserChangeManagement.Models.JustinProcessStatusModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Features.UserChangeManagement.Models.JustinProcessStatusModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Features.UserChangeManagement.Models.JustinProcessStatusModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [ ]
+          }
+        ]
+      }
+    },
+    "/api/users": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [ ]
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Features.Users.Models.UserModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Features.Users.Models.UserModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Features.Users.Models.UserModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Features.Users.Models.UserModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [ ]
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "ParticipantId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Features.Users.Models.UserModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Features.Users.Models.UserModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Features.Users.Models.UserModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/jumwebapi.Features.Users.Models.UserModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [ ]
+          }
+        ]
+      }
+    },
+    "/username/{username}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z]*$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [ ]
+          }
+        ]
+      }
+    },
+    "/partid/{partId}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "partId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "double"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [ ]
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Microsoft.AspNetCore.Mvc.ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": { }
+      },
+      "NodaTime.Instant": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "jumwebapi.Data.ef.JustinAddress": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countryCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "country": {
+            "$ref": "#/components/schemas/jumwebapi.Models.Lookups.Country"
+          },
+          "provinceCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "province": {
+            "$ref": "#/components/schemas/jumwebapi.Models.Lookups.Province"
+          },
+          "street": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "postal": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "jumwebapi.Data.ef.JustinAgency": {
+        "required": [
+          "agencyCode",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "created": {
+            "$ref": "#/components/schemas/NodaTime.Instant"
+          },
+          "modified": {
+            "$ref": "#/components/schemas/NodaTime.Instant"
+          },
+          "agencyId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "agencyCode": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinUser"
+            },
+            "nullable": true
+          },
+          "agencyAssignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinAgencyAssignment"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "jumwebapi.Data.ef.JustinAgencyAssignment": {
+        "type": "object",
+        "properties": {
+          "agencyAssignmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "agencyId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "agency": {
+            "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinAgency"
+          }
+        },
+        "additionalProperties": false
+      },
+      "jumwebapi.Data.ef.JustinIdentityProvider": {
+        "required": [
+          "alias",
+          "internalId",
+          "isActive",
+          "name",
+          "providerId"
+        ],
+        "type": "object",
+        "properties": {
+          "created": {
+            "$ref": "#/components/schemas/NodaTime.Instant"
+          },
+          "modified": {
+            "$ref": "#/components/schemas/NodaTime.Instant"
+          },
+          "identityProviderId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "internalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "alias": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "providerId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "tokenUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "authUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "jumwebapi.Data.ef.JustinPartyType": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/jumwebapi.Data.ef.PartyTypeCode"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "jumwebapi.Data.ef.JustinPerson": {
+        "required": [
+          "birthDate",
+          "email",
+          "firstName",
+          "isDisabled",
+          "phone",
+          "surname"
+        ],
+        "type": "object",
+        "properties": {
+          "created": {
+            "$ref": "#/components/schemas/NodaTime.Instant"
+          },
+          "modified": {
+            "$ref": "#/components/schemas/NodaTime.Instant"
+          },
+          "personId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "surname": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          },
+          "firstName": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          },
+          "middleNames": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
+          },
+          "nameSuffix": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
+          },
+          "preferredName": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "gender": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "phone": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "comment": {
+            "maxLength": 2000,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
+          },
+          "addressComment": {
+            "maxLength": 2000,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
+          },
+          "isDisabled": {
+            "type": "boolean"
+          },
+          "address": {
+            "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinAddress"
+          },
+          "user": {
+            "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinUser"
+          }
+        },
+        "additionalProperties": false
+      },
+      "jumwebapi.Data.ef.JustinRole": {
+        "required": [
+          "isDisabled",
+          "isPublic",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "created": {
+            "$ref": "#/components/schemas/NodaTime.Instant"
+          },
+          "modified": {
+            "$ref": "#/components/schemas/NodaTime.Instant"
+          },
+          "roleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
+          },
+          "isPublic": {
+            "type": "boolean"
+          },
+          "isDisabled": {
+            "type": "boolean"
+          },
+          "userRoles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinUserRole"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "jumwebapi.Data.ef.JustinUser": {
+        "required": [
+          "isDisabled",
+          "participantId",
+          "userName"
+        ],
+        "type": "object",
+        "properties": {
+          "created": {
+            "$ref": "#/components/schemas/NodaTime.Instant"
+          },
+          "modified": {
+            "$ref": "#/components/schemas/NodaTime.Instant"
+          },
+          "userId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "userName": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "digitalIdentifier": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "agencyId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "personId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "isDisabled": {
+            "type": "boolean"
+          },
+          "identityProviderId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "person": {
+            "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinPerson"
+          },
+          "partyType": {
+            "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinPartyType"
+          },
+          "userRoles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinUserRole"
+            },
+            "nullable": true
+          },
+          "identityProvider": {
+            "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinIdentityProvider"
+          },
+          "agency": {
+            "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinAgency"
+          }
+        },
+        "additionalProperties": false
+      },
+      "jumwebapi.Data.ef.JustinUserRole": {
+        "type": "object",
+        "properties": {
+          "created": {
+            "$ref": "#/components/schemas/NodaTime.Instant"
+          },
+          "modified": {
+            "$ref": "#/components/schemas/NodaTime.Instant"
+          },
+          "userRoleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "userId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "roleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "isDisabled": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "user": {
+            "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinUser"
+          },
+          "role": {
+            "$ref": "#/components/schemas/jumwebapi.Data.ef.JustinRole"
+          }
+        },
+        "additionalProperties": false
+      },
+      "jumwebapi.Data.ef.PartyTypeCode": {
+        "enum": [
+          1,
+          2,
+          3
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "jumwebapi.Features.Agencies.Models.Agency": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "agencyCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "jumwebapi.Features.Participants.Models.DigitalParticipant": {
+        "type": "object",
+        "properties": {
+          "internalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "alias": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "providerId": {
+            "type": "string",
+            "nullable": true
+          },
+          "tokenUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "authUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "jumwebapi.Features.Persons.Models.Person": {
+        "type": "object",
+        "properties": {
+          "surname": {
+            "type": "string",
+            "nullable": true
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "middleNames": {
+            "type": "string",
+            "nullable": true
+          },
+          "nameSuffix": {
+            "type": "string",
+            "nullable": true
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "preferredName": {
+            "type": "string",
+            "nullable": true
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true
+          },
+          "addressComment": {
+            "type": "string",
+            "nullable": true
+          },
+          "isDisabled": {
+            "type": "boolean",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "jumwebapi.Features.Roles.Models.RoleModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "isPublic": {
+            "type": "boolean"
+          },
+          "isDisable": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "jumwebapi.Features.UserChangeManagement.Models.JustinProcessStatusModel": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "eventMessageId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "jumwebapi.Features.Users.Models.UserModel": {
+        "type": "object",
+        "properties": {
+          "userName": {
+            "type": "string",
+            "nullable": true
+          },
+          "isDisable": {
+            "type": "boolean"
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "middleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "preferredName": {
+            "type": "string",
+            "nullable": true
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "phoneNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "agencyId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "partyTypeCode": {
+            "$ref": "#/components/schemas/jumwebapi.Data.ef.PartyTypeCode"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/jumwebapi.Features.Roles.Models.RoleModel"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "jumwebapi.Models.Lookups.Country": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "jumwebapi.Models.Lookups.Province": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "countryCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "oauth2": {
+        "type": "oauth2",
+        "description": "DIAM Server OpenId Security Scheme",
+        "flows": {
+          "clientCredentials": {
+            "authorizationUrl": "https://dev.common-sso.justice.gov.bc.ca/auth/realms/BCPS/protocol/openid-connect/auth",
+            "tokenUrl": "https://dev.common-sso.justice.gov.bc.ca/auth/realms/BCPS/protocol/openid-connect/token",
+            "scopes": {
+              "openid": "DIAM Server HTTP Api"
+            }
+          }
+        }
+      },
+      "Bearer": {
+        "type": "http",
+        "description": "JWT Authorization header using the Bearer scheme.",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "Bearer": [ ]
+    }
+  ]
+}

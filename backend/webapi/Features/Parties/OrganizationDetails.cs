@@ -1,24 +1,26 @@
 namespace Pidp.Features.Parties;
 
+using System.ComponentModel.DataAnnotations;
+//using Microsoft.AspNetCore.Identity;
+using System.Globalization;
+using System.Text.Json.Serialization;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using FluentValidation;
 using HybridModelBinding;
-using Microsoft.EntityFrameworkCore;
-using System.Text.Json.Serialization;
-
-using Pidp.Data;
-using Pidp.Models.Lookups;
-using Pidp.Infrastructure.HttpClients.Jum;
 using Microsoft.AspNetCore.Authentication;
-//using Microsoft.AspNetCore.Identity;
-using System.Globalization;
+using Microsoft.EntityFrameworkCore;
+using Pidp.Data;
+using Pidp.Infrastructure.HttpClients.Jum;
+using Pidp.Models.Lookups;
+
 //using Pidp.Extensions;
 
 public class OrganizationDetails
 {
     public class Query : IQuery<Command>
     {
+        [Required]
         public int PartyId { get; set; }
     }
 
@@ -197,7 +199,7 @@ public class OrganizationDetails
 
                 // set the alternate ID for the user
                 var justinAlternateId = dto.AlternateIds.Where(a => a.Name == "JUSTINParticipant").FirstOrDefault();
-                if ( justinAlternateId == null)
+                if (justinAlternateId == null)
                 {
                     Serilog.Log.Information($"Adding alternate ID {jpsDetail.ParticipantId} for {dto.Id} Party {dto.Jpdid}");
                     dto.AlternateIds.Add(new Models.PartyAlternateId
@@ -206,7 +208,7 @@ public class OrganizationDetails
                         Name = "JUSTINParticipant",
                         Value = jpsDetail.ParticipantId
                     });
-                } 
+                }
 
                 org.OrganizationCode = command.OrganizationCode;
                 await this.context.SaveChangesAsync();

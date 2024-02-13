@@ -1,0 +1,289 @@
+openapi: 3.0.1
+info:
+  title: Approval Service API
+  description: Requests and responses for Approvals required for DIAM
+  version: v1
+paths:
+  /api/approvals/pending:
+    get:
+      tags:
+        - Approvals
+      parameters:
+        - name: pendingOnly
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Success
+          content:
+            text/plain:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Common.Models.Approval.ApprovalModel'
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Common.Models.Approval.ApprovalModel'
+            text/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Common.Models.Approval.ApprovalModel'
+        '400':
+          description: Bad Request
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - approval-authentication-policy
+  /api/approvals/response:
+    post:
+      tags:
+        - Approvals
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Common.Models.Approval.ApproveDenyInput'
+          text/json:
+            schema:
+              $ref: '#/components/schemas/Common.Models.Approval.ApproveDenyInput'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/Common.Models.Approval.ApproveDenyInput'
+      responses:
+        '200':
+          description: Success
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Common.Models.Approval.ApprovalModel'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Common.Models.Approval.ApprovalModel'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/Common.Models.Approval.ApprovalModel'
+        '400':
+          description: Bad Request
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - approval-authentication-policy
+  /ws:
+    get:
+      tags:
+        - WebSocket
+      responses:
+        '200':
+          description: Success
+components:
+  schemas:
+    Common.Models.Approval.ApprovalHistoryModel:
+      type: object
+      properties:
+        created:
+          $ref: '#/components/schemas/NodaTime.Instant'
+        modified:
+          $ref: '#/components/schemas/NodaTime.Instant'
+        decisionNote:
+          type: string
+          nullable: true
+        approver:
+          type: string
+          nullable: true
+        approvalRequestId:
+          type: integer
+          format: int32
+        deleted:
+          $ref: '#/components/schemas/NodaTime.Instant'
+      additionalProperties: false
+    Common.Models.Approval.ApprovalModel:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        reason:
+          type: string
+          nullable: true
+        requiredAccess:
+          type: string
+          nullable: true
+        noOfApprovalsRequired:
+          type: integer
+          format: int32
+        approved:
+          $ref: '#/components/schemas/NodaTime.Instant'
+        completed:
+          $ref: '#/components/schemas/NodaTime.Instant'
+        deleted:
+          $ref: '#/components/schemas/NodaTime.Instant'
+        created:
+          $ref: '#/components/schemas/NodaTime.Instant'
+        modified:
+          $ref: '#/components/schemas/NodaTime.Instant'
+        emailAddress:
+          type: string
+          nullable: true
+        phoneNumber:
+          type: string
+          nullable: true
+        userId:
+          type: string
+          nullable: true
+        identityProvider:
+          type: string
+          nullable: true
+        personalIdentities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Common.Models.Approval.PersonalIdentityModel'
+          nullable: true
+        requests:
+          type: array
+          items:
+            $ref: '#/components/schemas/Common.Models.Approval.RequestModel'
+          nullable: true
+      additionalProperties: false
+    Common.Models.Approval.ApprovalStatus:
+      enum:
+        - 0
+        - 1
+        - 2
+        - 3
+        - 4
+      type: integer
+      format: int32
+    Common.Models.Approval.ApproveDenyInput:
+      type: object
+      properties:
+        approvalRequestId:
+          type: integer
+          format: int32
+        created:
+          type: string
+          format: date-time
+        decisionNotes:
+          type: string
+          nullable: true
+        approved:
+          type: boolean
+        approverUserId:
+          type: string
+          nullable: true
+      additionalProperties: false
+    Common.Models.Approval.PersonalIdentityModel:
+      type: object
+      properties:
+        source:
+          type: string
+          nullable: true
+        lastName:
+          type: string
+          nullable: true
+        firstName:
+          type: string
+          nullable: true
+        dateOfBirth:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        eMail:
+          type: string
+          nullable: true
+      additionalProperties: false
+    Common.Models.Approval.RequestModel:
+      type: object
+      properties:
+        created:
+          $ref: '#/components/schemas/NodaTime.Instant'
+        modified:
+          $ref: '#/components/schemas/NodaTime.Instant'
+        requestId:
+          type: integer
+          format: int32
+        requestType:
+          type: string
+          nullable: true
+        approvalType:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/Common.Models.Approval.ApprovalStatus'
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/Common.Models.Approval.ApprovalHistoryModel'
+          nullable: true
+      additionalProperties: false
+    Microsoft.AspNetCore.Mvc.ProblemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        status:
+          type: integer
+          format: int32
+          nullable: true
+        detail:
+          type: string
+          nullable: true
+        instance:
+          type: string
+          nullable: true
+      additionalProperties: { }
+    NodaTime.Instant:
+      type: object
+      additionalProperties: false
+  securitySchemes:
+    Bearer:
+      type: apiKey
+      description: 'Standard Authorization header using the Bearer scheme. Example: "bearer {token}"'
+      name: Authorization
+      in: header
+    oauth2:
+      type: oauth2
+      description: DIAM Server OpenId Security Scheme
+      flows:
+        clientCredentials:
+          authorizationUrl: https://dev.common-sso.justice.gov.bc.ca/auth/realms/BCPS/protocol/openid-connect/auth
+          tokenUrl: https://dev.common-sso.justice.gov.bc.ca/auth/realms/BCPS/protocol/openid-connect/token
+          scopes:
+            openid: DIAM Server HTTP Api
+security:
+  - Bearer: [ ]

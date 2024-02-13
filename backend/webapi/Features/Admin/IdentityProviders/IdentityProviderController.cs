@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Pidp.Infrastructure.Services;
 
 [Route("api/admin/[controller]")]
-[Authorize(Policy = Infrastructure.Auth.Policies.AdminAuthentication)]
+[Authorize(Policy = common.Constants.Auth.Policies.AdminAuthentication)]
 public class IdentityProviderController : PidpControllerBase
 {
 

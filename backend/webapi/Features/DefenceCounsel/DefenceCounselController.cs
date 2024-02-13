@@ -1,11 +1,10 @@
 namespace Pidp.Features.DefenceCounsel;
 
-using DomainResults.Common;
-using DomainResults.Mvc;
+
+using common.Constants.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Pidp.Features.DefenceCounsel.Query;
-using Pidp.Infrastructure.Auth;
 using Pidp.Infrastructure.Services;
 using Pidp.Models;
 
@@ -27,7 +26,7 @@ public class DefenceCounselController : PidpControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<DigitalEvidenceCaseModel?>> GetSubAgencyRequests([FromServices] IQueryHandler<DefenceFolioQuery.Query, DigitalEvidenceCaseModel?> handler,
                                                                                        [FromRoute] DefenceFolioQuery.Query query)
-        => await handler.HandleAsync(new DefenceFolioQuery.Query(query.PartyId,query.DefenceUniqueID));
+        => await handler.HandleAsync(new DefenceFolioQuery.Query(query.PartyId, query.DefenceUniqueID));
 
 
 }

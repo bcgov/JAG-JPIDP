@@ -1,12 +1,30 @@
 namespace Pidp.Features.Parties;
 
+using System.ComponentModel.DataAnnotations;
 using FluentValidation;
 using Pidp.Features.Organization.OrgUnitService;
 using Pidp.Models;
 
 public class CrownRegionQuery
 {
-    public sealed record Query(int PartyId, decimal ParticipantId) : IQuery<IEnumerable<OrgUnitModel?>>;
+
+    public sealed record Query : IQuery<IEnumerable<OrgUnitModel?>>
+    {
+        [Required]
+        public required int PartyId { get; set; }
+        [Required]
+        public required decimal ParticipantId { get; set; }
+
+        public Query(int partyId, decimal participantId)
+        {
+            this.PartyId = partyId;
+            this.ParticipantId = participantId;
+        }
+
+        public Query() { }
+
+
+    }
     public class QueryValidator : AbstractValidator<Query>
     {
         public QueryValidator()
@@ -14,6 +32,8 @@ public class CrownRegionQuery
             this.RuleFor(x => x.ParticipantId).GreaterThan(0);
             this.RuleFor(x => x.PartyId).GreaterThan(0);
         }
+
+
     }
     public class QueryHandler : IQueryHandler<Query, IEnumerable<OrgUnitModel?>>
     {

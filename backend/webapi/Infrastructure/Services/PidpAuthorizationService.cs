@@ -2,11 +2,11 @@ namespace Pidp.Infrastructure.Services;
 
 using System.Linq.Expressions;
 using System.Security.Claims;
+using common.Constants.Auth;
 using DomainResults.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Pidp.Data;
-using Pidp.Infrastructure.Auth;
 using Pidp.Models;
 
 public class PidpAuthorizationService : IPidpAuthorizationService
@@ -16,6 +16,7 @@ public class PidpAuthorizationService : IPidpAuthorizationService
 
     public PidpAuthorizationService(IAuthorizationService authService, PidpDbContext context)
     {
+
         this.authService = authService;
         this.context = context;
     }

@@ -39,6 +39,14 @@ public static class ClaimValues
     public const string Adfs = "adfs"; // test
     public const string SubmittingAgency = "SUBMITTING_AGENCY";
     public const string VerifiedCredentials = "verified";
+    public const string AzureAd = "azuread";
+
+}
+
+public static class Clients
+{
+    public const string PidpService = "PIDP-SERVICE";
+    public const string AdminApi = "DIAM-BCPS-ADMIN";
 
 }
 
@@ -61,22 +69,25 @@ public static class Policies
 
 }
 
-public static class Clients
-{
-    public const string AdminApi = "DIAM-BCPS-ADMIN";
-}
+
 
 public static class Roles
 {
+    public const string Approver = "APPROVER";
+    public const string ApprovalViewer = "APPROVAL-VIEWER";
     // PIdP Role Placeholders
     public const string Admin = "ADMIN";
     public const string User = "USER";
-    public const string SubmittingAgency = "SUBMITTING_AGENCY";
-    public const string DefenceCounsel = "DEFENCE_COUNSEL";
-    public const string DutyCounsel = "DUTY_COUNSEL";
-    public const string Approver = "APPROVER";
-    public const string ApprovalViewer = "APPROVAL-VIEWER";
 
+    // represents agencies that need upload access (e.g. police)
+    public const string SubmittingAgency = "SUBMITTING_AGENCY";
+    public const string SubmittingAgencyClient = "SUBMITTING_AGENCY_CLIENT";
+    // clients lawyer
+    public const string DefenceCounsel = "DEFENCE_COUNSEL";
+    // legal aid appointed counsel
+    public const string DutyCounsel = "DUTY_COUNSEL";
+
+    public const string DisclosureAdmin = "DISCLOSURE_ADMIN";
 
 
 }

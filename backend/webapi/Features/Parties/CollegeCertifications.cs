@@ -1,5 +1,6 @@
 namespace Pidp.Features.Parties;
 
+using System.ComponentModel.DataAnnotations;
 using AutoMapper;
 using DomainResults.Common;
 using FluentValidation;
@@ -14,6 +15,7 @@ public class CollegeCertifications
 {
     public class Query : IQuery<IDomainResult<List<Model>>>
     {
+        [Required]
         public int PartyId { get; set; }
     }
 

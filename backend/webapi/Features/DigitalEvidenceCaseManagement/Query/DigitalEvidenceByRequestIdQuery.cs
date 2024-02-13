@@ -1,5 +1,6 @@
 namespace Pidp.Features.DigitalEvidenceCaseManagement.Query;
 
+using System.ComponentModel.DataAnnotations;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Pidp.Data;
@@ -15,7 +16,17 @@ public class DigitalEvidenceByRequestIdQuery
     private static readonly Histogram RCCSearchDuration = Metrics
     .CreateHistogram("case_rcc_active_user_query_duration", "Histogram  of requests to see RCC assigned users.");
 
-    public sealed record Query(int RequestId) : IQuery<DigitalEvidenceCaseModel?>;
+    public sealed record Query : IQuery<DigitalEvidenceCaseModel?>
+    {
+        [Required]
+        public int RequestId { get; set; }
+
+        public Query(int requestId) => this.RequestId = requestId;
+
+        public Query()
+        {
+        }
+    }
     public class QueryValidator : AbstractValidator<Query>
     {
         public QueryValidator() => this.RuleFor(x => x.RequestId).GreaterThan(0);

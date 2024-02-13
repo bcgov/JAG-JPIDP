@@ -1,5 +1,6 @@
 namespace Pidp.Features.Parties;
 
+using System.ComponentModel.DataAnnotations;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Common.Models;
@@ -17,6 +18,7 @@ public class Demographics
 {
     public class Query : IQuery<Command>
     {
+        [Required]
         public int Id { get; set; }
     }
 
