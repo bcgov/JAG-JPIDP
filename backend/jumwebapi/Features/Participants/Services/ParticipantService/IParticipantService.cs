@@ -1,4 +1,4 @@
-﻿using jumwebapi.Features.Participants.Models;
+using Common.Models.JUSTIN;
 
 namespace jumwebapi.Features.Participants.Services.ParticipantService
 {
