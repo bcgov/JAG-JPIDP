@@ -37,7 +37,7 @@ public class DIAMConfigurationDataStoreDbContext(DbContextOptions<DIAMConfigurat
 
 
         modelBuilder.Entity<HostConfig>().HasData(
-        new HostConfig { Id = 1, Created = DateTime.Now, Hostname = "locahost" }
+        new HostConfig { Id = 1, Created = DateTime.Now, Hostname = "localhost" }
 );
 
 

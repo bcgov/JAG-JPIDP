@@ -36,7 +36,18 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddCors(opt =>
+{
+    opt.AddPolicy(name: "CorsPolicy", builder =>
+    {
+        builder.AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
+app.UseCors("CorsPolicy");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -49,6 +60,7 @@ app.MapGet("/", () => $"DIAM Configuration {Assembly.GetExecutingAssembly().GetN
 
 app.MapHealthChecks("/health/liveness");
 app.MapMetrics("/health/metrics");
+
 
 
 app.UseHttpsRedirection();
