@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Text.Json.Serialization;
 using DIAMConfiguration.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using NodaTime;
 using Prometheus;
@@ -16,7 +17,11 @@ builder.Services.AddSingleton<IClock>(SystemClock.Instance);
 
 
 builder.Services.AddDbContext<DIAMConfigurationDataStoreDbContext>(options => options
-    .UseNpgsql(dbConnection, npg => npg.UseNodaTime())
+    .UseNpgsql(dbConnection, npg =>
+    {
+        npg.MigrationsHistoryTable(HistoryRepository.DefaultTableName, "diam-config");
+        npg.UseNodaTime();
+    })
     .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
 
 builder.Services.AddHealthChecks()
