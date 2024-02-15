@@ -1,5 +1,4 @@
-﻿using jumwebapi.Features.Participants.Models;
-using jumwebapi.Infrastructure.HttpClients.JustinParticipant;
+using Common.Models.JUSTIN;
 
 namespace jumwebapi.Features.Participants.Services.ParticipantService;
 public class ParticipantService : IParticipantService

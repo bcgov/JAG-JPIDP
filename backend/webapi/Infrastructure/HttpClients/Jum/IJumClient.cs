@@ -1,5 +1,6 @@
 namespace Pidp.Infrastructure.HttpClients.Jum;
 
+using Common.Models.JUSTIN;
 using Pidp.Models;
 
 public interface IJumClient

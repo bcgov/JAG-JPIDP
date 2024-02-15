@@ -1,0 +1,6 @@
+@DIAMConfiguration_HostAddress = http://localhost:5259
+
+GET {{DIAMConfiguration_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
