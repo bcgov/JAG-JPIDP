@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using NodaTime;
 using Prometheus;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,7 +50,23 @@ app.UseHttpsRedirection();
 
 app.MapControllers();
 
-//app.UseAuthorization();
 
+//app.UseAuthorization();
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<DIAMConfigurationDataStoreDbContext>();
+    try
+    {
+        dbContext.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        Log.Error($"Database migration failure {string.Join(",", ex.Message)}");
+        throw;
+    }
+}
+
+
+Log.Logger.Information("### Approval Flow Configuration complete");
 
 app.Run();

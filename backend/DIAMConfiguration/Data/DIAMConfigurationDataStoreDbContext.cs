@@ -15,6 +15,9 @@ public class DIAMConfigurationDataStoreDbContext(DbContextOptions<DIAMConfigurat
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+
+        modelBuilder.HasDefaultSchema("diam-config");
+
         modelBuilder
             .Entity<LoginConfig>()
             .Property(e => e.Type)
