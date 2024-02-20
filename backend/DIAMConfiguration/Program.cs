@@ -10,6 +10,14 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var name = Assembly.GetExecutingAssembly().GetName();
+var outputTemplate = "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}";
+var path = Environment.GetEnvironmentVariable("LogFilePath") ?? "logs";
+
+
+
+
+
 // Add services to the container.
 
 var dbConnection = builder.Configuration.GetValue<string>("ConfigDatabase");
@@ -23,6 +31,12 @@ builder.Services.AddDbContext<DIAMConfigurationDataStoreDbContext>(options => op
         npg.UseNodaTime();
     })
     .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
+
+builder.Host.UseSerilog((hostContext, services, configuration) =>
+{
+    configuration.ReadFrom.Configuration(hostContext.Configuration);
+});
+
 
 builder.Services.AddHealthChecks()
 .AddCheck("liveness", () => HealthCheckResult.Healthy())
@@ -61,7 +75,14 @@ app.MapGet("/", () => $"DIAM Configuration {Assembly.GetExecutingAssembly().GetN
 app.MapHealthChecks("/health/liveness");
 app.MapMetrics("/health/metrics");
 
-
+app.UseSerilogRequestLogging(options => options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+{
+    //var userId = httpContext.User.GetUserId();
+    //if (!userId.Equals(Guid.Empty))
+    //{
+    //    diagnosticContext.Set("User", userId);
+    //}
+});
 
 app.UseHttpsRedirection();
 
@@ -87,3 +108,5 @@ using (var scope = app.Services.CreateScope())
 Log.Logger.Information("### Approval Flow Configuration complete");
 
 app.Run();
+
+
