@@ -10,6 +10,9 @@ using Microsoft.EntityFrameworkCore;
 [ApiController]
 public class PageContentController : ControllerBase
 {
+
+    const bool PREFER_REFERER = true;
+
     private readonly DIAMConfigurationDataStoreDbContext context;
     public PageContentController(DIAMConfigurationDataStoreDbContext context)
     {
@@ -20,7 +23,7 @@ public class PageContentController : ControllerBase
     public async Task<ActionResult<PageContentModel>> GetPageContents(string pageId)
     {
 
-        var hostname = HttpUtils.GetHostFromHeader(this.HttpContext.Request);
+        var hostname = HttpUtils.GetHostFromHeader(this.HttpContext.Request, PREFER_REFERER);
         if (hostname == null)
         {
             return this.NotFound();
