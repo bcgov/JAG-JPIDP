@@ -62,6 +62,11 @@ export const environment: AppEnvironment = {
     bcpsDemsPortalUrl: 'https://dems.dev.jag.gov.bc.ca/',
     subAgencyAufPortalUrl: 'https://auf.dev.justice.gov.bc.ca/'
   },
+  launch: {
+    bcLawDiscPortalLabel: "Launch DEMS Agency Upload Facility (AUF)",
+    subAgencyAufPortalLabel: "Launch DEMS Agency Upload Facility (AUF)",
+    bcpsDemsPortalLabel: "Launch DEMS"
+  },
   keycloakConfig: {
     config: {
       url: 'https://dev.common-sso.justice.gov.bc.ca/auth',

@@ -84,7 +84,7 @@ export class DigitalEvidencePortalSection
 
     const config = AppInjector.get(APP_CONFIG);
 
-    const label = this.getOrgName() === "Justice Sector" ? "Launch BCPS DEMS" : this.getOrgName() === "BC Law Society" ? "Launch Disclosure Portal" : this.isSubAgency() ? "Launch Agency Upload Portal" : undefined;
+    const label = this.getOrgName() === "Justice Sector" ? config.launch.bcpsDemsPortalLabel : this.getOrgName() === "BC Law Society" ? config.launch.bcLawDiscPortalLabel : this.isSubAgency() ? config.launch.subAgencyAufPortalLabel : undefined;
     const url = this.getOrgName() === "BC Law Society" ? config.urls.bcLawDiscPortalUrl : this.getOrgName() === "Justice Sector" ? config.urls.bcpsDemsPortalUrl : config.urls.subAgencyAufPortalUrl;
     return {
       hidden: false,

@@ -1,7 +1,7 @@
 dependencies:
 - name: frontend
   repository: file://../frontend
-  version: 0.1.3
+  version: 0.1.4
 - name: admin-frontend
   repository: file://../admin-frontend
   version: 0.2.0
@@ -32,5 +32,5 @@ dependencies:
 - name: nginx
   repository: file://../nginx
   version: 9.7.3
-digest: sha256:67ad05c1e1fd89db37ee5a4bfdd1b452f77b30522b98fa3a972630ffc5d3c367
-generated: "2024-02-14T15:19:42.6794688-08:00"
+digest: sha256:a2d1aa4a50e0fd227f50cb6d938bb28865bb1c284eabe0c34671ce0793ccfcce
+generated: "2024-02-21T15:29:56.0018357-08:00"

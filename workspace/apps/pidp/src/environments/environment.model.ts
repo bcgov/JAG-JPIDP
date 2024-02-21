@@ -28,7 +28,12 @@ export interface AppEnvironment extends EnvironmentConfig {
     uciSupport: string;
     msTeamsSupport: string;
     doctorsTechnologyOfficeSupport: string;
-  };
+  },
+  launch: {
+    bcLawDiscPortalLabel: string,
+    subAgencyAufPortalLabel: string,
+    bcpsDemsPortalLabel: string
+  },
   urls: {
     bcscSupport: string;
     bcscMobileSetup: string;
