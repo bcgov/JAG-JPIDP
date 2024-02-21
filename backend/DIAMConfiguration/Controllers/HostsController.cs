@@ -11,6 +11,7 @@ namespace DIAMConfiguration.Controllers
     public class HostsController : ControllerBase
     {
         private readonly DIAMConfigurationDataStoreDbContext _context;
+        private const bool PREFER_REFERER = true;
 
         public HostsController(DIAMConfigurationDataStoreDbContext context)
         {
@@ -23,7 +24,7 @@ namespace DIAMConfiguration.Controllers
         {
 
             var request = this.HttpContext.Request;
-            var hostname = HttpUtils.GetHostFromHeader(request);
+            var hostname = HttpUtils.GetHostFromHeader(request, PREFER_REFERER);
 
             if (string.IsNullOrEmpty(hostname))
             {
