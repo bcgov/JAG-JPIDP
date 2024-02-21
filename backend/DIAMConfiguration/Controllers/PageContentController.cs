@@ -10,8 +10,7 @@ using Microsoft.EntityFrameworkCore;
 [ApiController]
 public class PageContentController : ControllerBase
 {
-
-    const bool PREFER_REFERER = true;
+    private const bool PREFER_REFERER = true;
 
     private readonly DIAMConfigurationDataStoreDbContext context;
     public PageContentController(DIAMConfigurationDataStoreDbContext context)
