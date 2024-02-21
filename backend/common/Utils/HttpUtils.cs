@@ -11,7 +11,7 @@ public class HttpUtils
     /// </summary>
     /// <param name="request"></param>
     /// <returns></returns>
-    public static string GetHostFromHeader(HttpRequest request)
+    public static string GetHostFromHeader(HttpRequest request, bool preferReferer)
     {
         var headers = request.Headers;
         var hasHost = headers.TryGetValue(Microsoft.Net.Http.Headers.HeaderNames.Host, out var hostName);
@@ -21,7 +21,12 @@ public class HttpUtils
         {
             var hostname = hostName.FirstOrDefault();
             Serilog.Log.Information($"Getting host Host={hostName} Referer={referer}");
-            if (hasHost)
+            if (preferReferer)
+            {
+                hostname = referer.FirstOrDefault();
+                hostname = new Uri(referer).Host;
+            }
+            else if (hasHost)
             {
                 hostname = hostname.Contains(":") ? hostname.Split(":")[0] : hostname;
             }
