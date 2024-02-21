@@ -3,6 +3,7 @@ namespace Pidp.Data;
 using AppAny.Quartz.EntityFrameworkCore.Migrations;
 using AppAny.Quartz.EntityFrameworkCore.Migrations.PostgreSQL;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using NodaTime;
 using Pidp.Models;
 using Pidp.Models.Lookups;
@@ -26,9 +27,9 @@ public class PidpDbContext : DbContext
     public DbSet<Facility> Facilities { get; set; } = default!;
     public DbSet<FutureUserChangeEvent> FutureUserChangeEvents { get; set; } = default!;
 
-    public DbSet<Models.HcimAccountTransfer> HcimAccountTransfers { get; set; } = default!;
-    public DbSet<Models.HcimEnrolment> HcimEnrolments { get; set; } = default!;
-    public DbSet<Models.DigitalEvidence> DigitalEvidences { get; set; } = default!;
+    public DbSet<HcimAccountTransfer> HcimAccountTransfers { get; set; } = default!;
+    public DbSet<HcimEnrolment> HcimEnrolments { get; set; } = default!;
+    public DbSet<DigitalEvidence> DigitalEvidences { get; set; } = default!;
     public DbSet<DigitalEvidenceDisclosure> DigitalEvidenceDisclosures { get; set; } = default!;
     public DbSet<Models.DigitalEvidenceDefence> DigitalEvidenceDefences { get; set; } = default!;
 
@@ -69,9 +70,17 @@ public class PidpDbContext : DbContext
     }
 
 
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<DigitalEvidence>().Property(x => x.AssignedRegions).
+            HasConversion(
+                          v => JsonConvert.SerializeObject(v, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }),
+                v => JsonConvert.DeserializeObject<List<AssignedRegion>>(v, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore })
+
+            );
 
         modelBuilder.Entity<IdempotentConsumer>()
             .ToTable("IdempotentConsumers")

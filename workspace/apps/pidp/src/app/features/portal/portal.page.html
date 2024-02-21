@@ -78,6 +78,8 @@
         </ui-page-section-subheader>
 
         <ui-card-summary *ngFor="let section of (state$ | async)?.access" [heading]="section.heading"
+          [launchString]="section.launch?.label" [launchURL]="section.launch?.url"
+          [launchHidden]="section.launch?.hidden" [launchDisabled]="section.launch?.disabled"
           [statusType]="section.statusType" [status]="section.status" [actionLabel]="section.action.label"
           [order]="section.order" [actionDisabled]="section.action.disabled" (action)="onCardAction(section)">
           <ng-container uiCardSummaryHint>{{ section.hint }}</ng-container>
