@@ -1,0 +1,40 @@
+#------------------------------------------------------------------------------------
+# Case Management service Dockerfile
+#------------------------------------------------------------------------------------
+
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine AS base
+WORKDIR /app
+EXPOSE 8080
+ENV ASPNETCORE_URLS=http://*:8080
+ENV ASPNETCORE_ENVIRONMENT="Production"
+ENV \
+    DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 \
+    LC_ALL=en_US.UTF-8 \
+    LANG=en_US.UTF-8
+
+RUN apk add --no-cache icu-libs
+RUN apk add bash
+
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+
+WORKDIR /src
+COPY ["DIAMConfiguration/DIAMConfiguration.csproj", "DIAMConfiguration/"]
+COPY ["common/Common.csproj", "common/"]
+RUN dotnet restore -r linux-musl-x64 "DIAMConfiguration/DIAMConfiguration.csproj"
+COPY . .
+WORKDIR "/src/DIAMConfiguration"
+RUN dotnet build -r linux-musl-x64 "DIAMConfiguration.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish -r linux-musl-x64 "DIAMConfiguration.csproj" -c Release -o /app/publish
+USER root
+COPY entrypoint.sh /app/publish
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+RUN chgrp 0 entrypoint.sh && chmod a+rx,o-rx entrypoint.sh
+
+USER 1001
+
+ENTRYPOINT ["/app/entrypoint.sh","dotnet", "DIAMConfiguration.dll"]

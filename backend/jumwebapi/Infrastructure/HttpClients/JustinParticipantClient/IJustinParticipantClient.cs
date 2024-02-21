@@ -1,5 +1,6 @@
 namespace jumwebapi.Infrastructure.HttpClients.JustinParticipant;
-using jumwebapi.Features.Participants.Models;
+
+using global::Common.Models.JUSTIN;
 
 public interface IJustinParticipantClient
 {

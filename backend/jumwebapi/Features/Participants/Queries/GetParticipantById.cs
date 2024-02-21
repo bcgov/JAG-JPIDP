@@ -1,4 +1,4 @@
-using jumwebapi.Features.Participants.Models;
+using Common.Models.JUSTIN;
 using jumwebapi.Infrastructure.HttpClients.JustinParticipant;
 using MediatR;
 using Prometheus;

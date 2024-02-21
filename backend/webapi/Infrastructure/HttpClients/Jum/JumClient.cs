@@ -3,6 +3,7 @@ namespace Pidp.Infrastructure.HttpClients.Jum;
 using System.Globalization;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Common.Models.JUSTIN;
 using NodaTime;
 using Pidp.Models;
 
@@ -131,14 +132,25 @@ public class JumClient : BaseClient, IJumClient
                 }
                 else
                 {
-                    if (justinUser?.participantDetails?.FirstOrDefault()?.emailAddress.ToUpper(CultureInfo.CurrentCulture) == party.Email!.ToUpper(CultureInfo.CurrentCulture))
+                    var partDetails = justinUser?.participantDetails.FirstOrDefault();
+                    var upn = partDetails.partUpnTxt;
+                    if (string.IsNullOrEmpty(upn))
                     {
-                        return Task.FromResult(true);
+                        this.Logger.LogMissingUPN(partDetails.partId);
+                        return Task.FromResult(false);
+
                     }
                     else
                     {
-                        Serilog.Log.Logger.Information("JUSTIN EMail address does not match {0} != {1}", justinUser?.participantDetails?.FirstOrDefault()?.emailAddress, party.Email);
-                        return Task.FromResult(false);
+                        if (upn.Equals(party.Email, StringComparison.OrdinalIgnoreCase))
+                        {
+                            return Task.FromResult(true);
+                        }
+                        else
+                        {
+                            Serilog.Log.Logger.Information("JUSTIN EMail address does not match {0} != {1}", justinUser?.participantDetails?.FirstOrDefault()?.emailAddress, party.Email);
+                            return Task.FromResult(false);
+                        }
                     }
                 }
 
@@ -206,4 +218,6 @@ public static partial class JumClientLoggingExtensions
     public static partial void LogFailedToMarkProcessComplete(this ILogger logger, decimal eventMessageId);
     [LoggerMessage(10, LogLevel.Information, "JUSTIN change Event flagged as complete {eventMessageId}.")]
     public static partial void LogMarkedProcessComplete(this ILogger logger, decimal eventMessageId);
+    [LoggerMessage(11, LogLevel.Error, "No UPN for user {user}")]
+    public static partial void LogMissingUPN(this ILogger logger, string user);
 }
