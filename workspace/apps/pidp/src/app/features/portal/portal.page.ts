@@ -18,7 +18,7 @@ import { PortalState } from './state/portal-state.builder';
 @Component({
   selector: 'app-portal',
   templateUrl: './portal.page.html',
-  styleUrls: ['./portal.page.scss'],
+  styleUrls: ['./portal.page.scss']
 })
 export class PortalPage implements OnInit {
   /**

@@ -34,5 +34,8 @@ export interface AppEnvironment extends EnvironmentConfig {
     bcscMobileSetup: string;
     specialAuthority: string;
     doctorsTechnologyOffice: string;
+    bcLawDiscPortalUrl: string;
+    subAgencyAufPortalUrl: string;
+    bcpsDemsPortalUrl: string;
   };
 }

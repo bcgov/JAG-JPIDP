@@ -27,6 +27,9 @@ import { CollegeCertificationPortalSection } from './profile/college-certificati
 import { DemographicsPortalSection } from './profile/demographics-portal-section.class';
 import { UserAccessAgreementPortalSection } from './profile/user-access-agreement-portal-section.class';
 import { ComplianceTrainingPortalSection } from './training/compliance-training-portal-section.class';
+import { AuthorizedUserService } from '@app/features/auth/services/authorized-user.service';
+import { Inject } from '@angular/core';
+import { APP_CONFIG, AppConfig } from '@app/app.config';
 
 /**
  * @description

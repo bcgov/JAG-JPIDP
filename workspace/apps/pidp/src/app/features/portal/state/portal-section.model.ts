@@ -5,6 +5,7 @@ import { AlertType } from '@bcgov/shared/ui';
 import { PortalSectionAction } from './portal-section-action.model';
 import { PortalSectionKey } from './portal-section-key.type';
 import { PortalSectionProperty } from './portal-section-property.model';
+import { PortalSectionLaunchAction } from './portal-section-launch-action.model';
 
 /**
  * @description
@@ -32,6 +33,13 @@ export interface IPortalSection {
    * Plain text paragraph summary of the card.
    */
   description: string;
+
+  /**
+   * @description
+   * A url for launching an app once a request is complete
+   */
+  launch?: PortalSectionLaunchAction;
+
 
   /**
    * Order in which processing is required
