@@ -94,6 +94,7 @@ export class DigitalEvidenceCaseManagementPage
   public isFindDisabled: boolean;
   public refreshEnabled: boolean;
   public requestedCaseInactive: boolean;
+  public launchDEMSLabel: string;
   public hasCaseListingResults: boolean;
   public caseTooltip: string;
   public refreshCount: number;
@@ -145,6 +146,7 @@ export class DigitalEvidenceCaseManagementPage
       .pipe(map((token) => token?.identity_provider ?? ''));
     this.showAUFLink = this.config.caseManagement.showAUFLink;
     this.showCaseImportLink = this.config.caseManagement.showCaseImportLink;
+    this.launchDEMSLabel = this.config.launch.subAgencyAufPortalLabel;
     accessTokenService.decodeToken().subscribe((n) => {
       if (n !== null) {
         this.result = n.identity_provider;
