@@ -94,6 +94,13 @@ frontend:
   tag: "develop"
   replicaCount: 1
   settings:
+    launch:
+      subAgencyAufPortalUrl: "https://auf.dev.justice.gov.bc.ca"
+      bcpsDemsPortalUrl: "https://dems.dev.jag.gov.bc.ca/"
+      bcLawDiscPortalUrl: "https://auf.dev.justice.gov.bc.ca"
+      subAgencyAufPortalLabel: "Launch DEMS Agency Upload Facility (AUF)"
+      bcpsDemsPortalLabel: "Launch DEMS"
+      bcLawDiscPortalLabel: "Launch DEMS Agency Upload Facility (AUF)"
     edtURL: https://dems.dev.jag.gov.bc.ca/Edt.aspx#/import/
     environmentName: dev
     keycloak:

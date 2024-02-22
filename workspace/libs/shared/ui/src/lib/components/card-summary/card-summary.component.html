@@ -21,7 +21,7 @@
         <div class="col-md-6 col-sm-12" *ngIf="launchString">
           <button mat-stroked-button type="button" color="primary" [disabled]="launchDisabled" *ngIf="!launchHidden"
             (click)="onLaunch()">
-            {{ launchString }}&nbsp;<mat-icon>launch_outline</mat-icon>
+            {{ launchString }}
           </button>
         </div>
         <div [ngClass]="launchString ? 'col-md-6' : 'col-md-12'" class="text-md-end" *ngIf="hasActions()">
