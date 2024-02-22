@@ -42,7 +42,7 @@ frontend:
       bcLawDiscPortalUrl: "https://p.zpa-auth.net/IevTunx4Bg/doauth?origurl=https%3A%2F%2Fauf%2Ejustice%2Egov%2Ebc%2Eca%2FEdt%2Easpx%23"
       subAgencyAufPortalLabel: "Launch DEMS Agency Upload Facility (AUF)"
       bcpsDemsPortalLabel: "Launch DEMS"
-      bcLawDiscPortalLabel: "Launch DEMS Agency Upload Facility (AUF)"
+      bcLawDiscPortalLabel: "Launch Disclosure Portal"
     edtURL: https://dems.jag.gov.bc.ca
     environmentName: prod
     keycloak:
