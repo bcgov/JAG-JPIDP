@@ -4,4 +4,5 @@ export class BasePortalSection {
   public GetOrder(profileStatus: Section): number {
     return profileStatus.order;
   }
+
 }

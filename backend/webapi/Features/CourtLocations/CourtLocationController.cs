@@ -1,12 +1,12 @@
 namespace Pidp.Features.CourtLocations;
 
+using common.Constants.Auth;
 using DomainResults.Common;
 using DomainResults.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Pidp.Features.CourtLocations.Commands;
 using Pidp.Features.CourtLocations.Query;
-using Pidp.Infrastructure.Auth;
 using Pidp.Infrastructure.Services;
 using Pidp.Models;
 using Pidp.Models.Lookups;
@@ -31,7 +31,7 @@ public class CourtLocationController : PidpControllerBase
                                                                        [FromQuery] CourtLocationQuery.Query query)
     {
         var result = await handler.HandleAsync(query);
-        return Ok(result);
+        return this.Ok(result);
     }
 
     /// <summary>
@@ -94,10 +94,10 @@ public class CourtLocationController : PidpControllerBase
 
         if (result == null || result.Count == 0)
         {
-            return NoContent();
+            return this.NoContent();
         }
 
-        return Ok(result);
+        return this.Ok(result);
     }
 
 

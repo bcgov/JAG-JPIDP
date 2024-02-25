@@ -13,14 +13,19 @@ import { ProfileStatus } from '../../models/profile-status.model';
 import { PortalSectionAction } from '../portal-section-action.model';
 import { PortalSectionKey } from '../portal-section-key.type';
 import { IPortalSection } from '../portal-section.model';
+import { PortalSectionLaunchAction } from '../portal-section-launch-action.model';
+import { AppInjector } from '@app/app.module';
+import { APP_CONFIG } from '@app/app.config';
 
 export class DigitalEvidencePortalSection
   extends BasePortalSection
   implements IPortalSection {
+
   public readonly key: PortalSectionKey;
   public heading: string;
   public description: string;
   public order: number;
+
 
   public constructor(
     private profileStatus: ProfileStatus,
@@ -32,8 +37,6 @@ export class DigitalEvidencePortalSection
     this.heading = 'Digital Evidence and Disclosure Management System (DEMS)';
     this.description = this.getDescription();
     this.order = this.GetOrder(this.profileStatus.status.digitalEvidence);
-
-
   }
 
   public get hint(): string {
@@ -75,6 +78,21 @@ export class DigitalEvidencePortalSection
         this.getStatusCode() !== StatusCode.DENIED
       ),
     };
+  }
+
+  public get launch(): PortalSectionLaunchAction {
+
+    const config = AppInjector.get(APP_CONFIG);
+
+    const label = this.getOrgName() === "Justice Sector" ? config.launch.bcpsDemsPortalLabel : this.getOrgName() === "BC Law Society" ? config.launch.bcLawDiscPortalLabel : this.isSubAgency() ? config.launch.subAgencyAufPortalLabel : undefined;
+    const url = this.getOrgName() === "BC Law Society" ? config.urls.bcLawDiscPortalUrl : this.getOrgName() === "Justice Sector" ? config.urls.bcpsDemsPortalUrl : config.urls.subAgencyAufPortalUrl;
+    return {
+      hidden: false,
+      label: label,
+      newWindow: true,
+      url: url,
+      disabled: this.getStatusCode() !== StatusCode.COMPLETED
+    }
   }
 
   public getDescription(): string {
@@ -147,4 +165,13 @@ export class DigitalEvidencePortalSection
   private getStatusCode(): StatusCode {
     return this.profileStatus.status.digitalEvidence.statusCode;
   }
+
+  private getOrgName(): string {
+    return this.profileStatus.status.organizationDetails.orgName;
+  }
+
+  private isSubAgency(): boolean {
+    return this.profileStatus.status.organizationDetails.submittingAgency;
+  }
+
 }

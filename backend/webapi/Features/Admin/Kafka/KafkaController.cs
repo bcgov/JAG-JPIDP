@@ -1,11 +1,11 @@
 namespace Pidp.Features.Admin.Kafka;
 
+using common.Constants.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Pidp.Features.Admin.Kafka.Models;
 using Pidp.Features.Admin.Kafka.Topics;
-using Pidp.Infrastructure.Auth;
 using Pidp.Infrastructure.Services;
 
 [Route("api/admin/[controller]")]

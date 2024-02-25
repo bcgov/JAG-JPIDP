@@ -19,7 +19,7 @@ public class EdtServiceConsumer : BackgroundService
     {
         try
         {
-            Serilog.Log.Information($"Consume from ConsumerTopicName {this.config.KafkaCluster.ConsumerTopicName}");
+            Serilog.Log.Information($"Consume from Access Request Topic [{this.config.KafkaCluster.ConsumerTopicName}]");
             await this.consumer.Consume(this.config.KafkaCluster.ConsumerTopicName, stoppingToken);
         }
         catch (Exception ex)

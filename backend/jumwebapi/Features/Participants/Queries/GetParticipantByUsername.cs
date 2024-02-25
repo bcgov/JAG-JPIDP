@@ -1,8 +1,6 @@
-using System.Diagnostics.Metrics;
-using jumwebapi.Features.Participants.Models;
+using Common.Models.JUSTIN;
 using jumwebapi.Infrastructure.HttpClients.JustinParticipant;
 using MediatR;
-using Microsoft.AspNetCore.Authentication;
 using Prometheus;
 
 namespace jumwebapi.Features.Participants.Queries;
@@ -19,8 +17,8 @@ public class GetParticipantByUsername : IRequestHandler<GetParticipantByUsername
 
     public GetParticipantByUsername(IJustinParticipantClient justinParticipantClient, IHttpContextAccessor httpContextAccessor)
     {
-        _justinParticipantClient = justinParticipantClient;
-        _httpContextAccessor = httpContextAccessor;
+        this._justinParticipantClient = justinParticipantClient;
+        this._httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<Participant> Handle(GetParticipantByUsernameQuery request, CancellationToken cancellationToken)
@@ -29,7 +27,7 @@ public class GetParticipantByUsername : IRequestHandler<GetParticipantByUsername
         {
             JumRequests.Inc();
             //var accessToken = await _httpContextAccessor.HttpContext?.GetTokenAsync("access_token");//current part endpoint dont have authrotization
-            return await _justinParticipantClient.GetParticipantByUserName(request?.Username.ToString(), "");
+            return await this._justinParticipantClient.GetParticipantByUserName(request?.Username.ToString(), "");
         }
     }
 }

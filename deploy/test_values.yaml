@@ -79,7 +79,14 @@ frontend:
     pullPolicy: Always
   replicaCount: 1
   settings:
-    edtURL: https://p.zpa-auth.net/IevTunx4Bg/doauth?origurl=https%3A%2F%2Fauf%2Etest%2Ejustice%2Egov%2Ebc%2Eca%2FEdt%2Easpx%23&domain=test.agencies.justice.gov.bc.ca
+    launch:
+      subAgencyAufPortalUrl: "https://p.zpa-auth.net/IevTunx4Bg/doauth?origurl=https%3A%2F%2Fauf%2Ejustice%2Egov%2Ebc%2Eca%2FEdt%2Easpx%23&domain=agencies.justice.gov.bc.ca"
+      bcpsDemsPortalUrl: "https://dems.jag.gov.bc.ca/"
+      bcLawDiscPortalUrl: "https://p.zpa-auth.net/IevTunx4Bg/doauth?origurl=https%3A%2F%2Fauf%2Ejustice%2Egov%2Ebc%2Eca%2FEdt%2Easpx%23"
+      subAgencyAufPortalLabel: "Launch DEMS Agency Upload Facility (AUF)"
+      bcpsDemsPortalLabel: "Launch DEMS"
+      bcLawDiscPortalLabel: "Launch Disclosure Portal"
+    edtURL: https://p.zpa-auth.net/IevTunx4Bg/doauth?origurl=https%3A%2F%2Fauf%2Ejustice%2Egov%2Ebc%2Eca%2FEdt%2Easpx%23&domain=agencies.justice.gov.bc.ca
     environmentName: dev
     keycloak:
       url: https://test.common-sso.justice.gov.bc.ca/auth

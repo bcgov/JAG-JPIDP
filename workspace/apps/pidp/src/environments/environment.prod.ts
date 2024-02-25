@@ -28,7 +28,7 @@ import { AppEnvironment, EnvironmentName } from './environment.model';
 export const environment: AppEnvironment = {
   production: true,
   apiEndpoint: 'http://localhost:5050',
-  configEndpoint: 'http://localhost:8080',
+  configEndpoint: 'http://localhost:5259',
   authEndpoint: 'https://dev.common-sso.justice.gov.bc.ca',
   authRealm: 'BCPS',
   caseManagement: {
@@ -58,6 +58,14 @@ export const environment: AppEnvironment = {
     bcscMobileSetup: 'https://id.gov.bc.ca/account',
     specialAuthority: specialAuthorityUrl,
     doctorsTechnologyOffice: doctorsTechnologyOfficeUrl,
+    bcLawDiscPortalUrl: 'https://dev.disclosure.bcprosecution.gov.bc.ca/',
+    bcpsDemsPortalUrl: 'https://dems.dev.jag.gov.bc.ca/',
+    subAgencyAufPortalUrl: 'https://auf.dev.justice.gov.bc.ca/'
+  },
+  launch: {
+    bcLawDiscPortalLabel: "Launch DEMS Agency Upload Facility (AUF)",
+    subAgencyAufPortalLabel: "Launch DEMS Agency Upload Facility (AUF)",
+    bcpsDemsPortalLabel: "Launch DEMS"
   },
   keycloakConfig: {
     config: {

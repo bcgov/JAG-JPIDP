@@ -2,6 +2,7 @@ namespace Pidp.Features;
 
 using System.Diagnostics;
 using DomainResults.Common;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using Pidp.Infrastructure.Services;
@@ -9,6 +10,7 @@ using Pidp.Infrastructure.Telemetry;
 
 [Produces("application/json")]
 [ApiController]
+[Authorize]
 public class PidpControllerBase : ControllerBase
 {
     protected IPidpAuthorizationService AuthorizationService { get; }

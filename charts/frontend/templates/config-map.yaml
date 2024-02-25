@@ -26,6 +26,16 @@ data:
         "showCaseImportLink": false,
         "stickyAgencyCodes": [ "RCMP","FAKE"]
       },
+      "urls": {
+        "subAgencyAufPortalUrl": "{{ .Values.settings.launch.subAgencyAufPortalUrl }}",
+        "bcpsDemsPortalUrl": "{{ .Values.settings.launch.bcpsDemsPortalUrl }}",
+        "bcLawDiscPortalUrl": "{{ .Values.settings.launch.bcLawDiscPortalUrl }}"
+      },
+      "launch": {
+        "bcLawDiscPortalLabel": "{{ .Values.settings.launch.bcLawDiscPortalLabel }}",
+        "subAgencyAufPortalLabel": "{{ .Values.settings.launch.subAgencyAufPortalLabel }}",
+        "bcpsDemsPortalLabel" : "{{ .Values.settings.launch.bcpsDemsPortalLabel }}"
+      },
       "demsImportURL": "{{ .Values.settings.edtURL }}",
       "keycloakConfig": {
         "config": {

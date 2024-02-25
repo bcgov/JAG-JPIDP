@@ -170,7 +170,11 @@ public class DigitalEvidence
             if (!digitalEvidence.OrganizationType.Equals(this.SUBMITTING_AGENCY, StringComparison.Ordinal) && !digitalEvidence.OrganizationType.Equals(this.LAW_SOCIETY, StringComparison.Ordinal))
             {
                 // get the assigned regions again - this prevents sending requests with an altered list of regions
-                var query = new CrownRegionQuery.Query(command.PartyId, Convert.ToDecimal(command.ParticipantId));
+                var query = new CrownRegionQuery.Query
+                {
+                    PartyId = command.PartyId,
+                    ParticipantId = Convert.ToDecimal(command.ParticipantId)
+                };
 
                 // create an instance of the QueryHandler class
                 var handler = new CrownRegionQuery.QueryHandler(this.orgUnitService);

@@ -1,6 +1,5 @@
 namespace edt.service.Infrastructure.Auth;
 
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using edt.service;
 using edt.service.Extensions;
@@ -15,8 +14,9 @@ public static class AuthenticationSetup
     public static IServiceCollection AddKeycloakAuth(this IServiceCollection services, EdtServiceConfiguration config)
     {
 
+        Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
-        JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+        //        JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
         services.AddAuthentication(option =>
         {
@@ -29,7 +29,7 @@ public static class AuthenticationSetup
             options.RequireHttpsMetadata = false;
             options.Audience = "DIAM-INTERNAL";
             options.MetadataAddress = config.Keycloak.WellKnownConfig;
-            options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters()
+            options.TokenValidationParameters = new TokenValidationParameters()
             {
                 ValidateIssuerSigningKey = true,
                 ValidateIssuer = false,

@@ -176,6 +176,9 @@ export class LoginPage implements OnInit {
   }
 
   private filterAgencies(value: string): LoginOptionLookup[] {
+    if (!value || value.length < 2) {
+      return [];
+    }
     if (this.agency && value !== this.agency.name) {
       this.agency = undefined;
     }
@@ -185,7 +188,7 @@ export class LoginPage implements OnInit {
     const response = this.submittingAgencies.filter((option) =>
       option.name.toLowerCase().includes(filterValue)
     );
-    return response.length === 1 ? response : [];
+    return response.length > 0 ? response : [];
   }
 
   public agencySelected(): boolean {
@@ -193,6 +196,7 @@ export class LoginPage implements OnInit {
   }
 
   public onSelectionChanged(event: MatAutocompleteSelectedEvent): void {
+
     if (event.option.value === this.governmentAgency.name) {
       // add government agency
       this.agency = this.governmentAgency;

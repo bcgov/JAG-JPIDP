@@ -1,12 +1,15 @@
 namespace Pidp.Features.Parties;
 
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Security.Claims;
 using System.Text.Json.Serialization;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using common.Constants.Auth;
 using Common.Models.EDT;
+using Common.Models.JUSTIN;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +17,6 @@ using NodaTime;
 using Pidp.Data;
 using Pidp.Extensions;
 using Pidp.Infrastructure;
-using Pidp.Infrastructure.Auth;
 using Pidp.Infrastructure.HttpClients.Jum;
 using Pidp.Infrastructure.HttpClients.Plr;
 using Pidp.Models;
@@ -30,6 +32,7 @@ public partial class ProfileStatus
 
     public class Command : ICommand<Model>
     {
+        [Required]
         public int Id { get; set; }
         [JsonIgnore]
         public ClaimsPrincipal? User { get; set; }
@@ -389,11 +392,11 @@ public partial class ProfileStatus
         public bool UserIsBcServicesCard => this.User.GetIdentityProvider() == ClaimValues.BCServicesCard;
         //public bool UserIsPhsa => this.User.GetIdentityProvider() == ClaimValues.Phsa;
         //public bool UserIsBcps => this.User.GetIdentityProvider() == ClaimValues.Bcps;
-        public bool UserIsBcps => this.User.GetIdentityProvider() == ClaimValues.Bcps && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpApi).Contains(DefaultRoles.Bcps) || (this.PermitIDIRDEMS() && (this.User.GetIdentityProvider() == ClaimValues.Idir || this.User.GetIdentityProvider() == ClaimValues.AzureAd));
+        public bool UserIsBcps => this.User.GetIdentityProvider() == ClaimValues.Bcps && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpService).Contains(DefaultRoles.Bcps) || (this.PermitIDIRDEMS() && (this.User.GetIdentityProvider() == ClaimValues.Idir || this.User.GetIdentityProvider() == ClaimValues.AzureAd));
         public bool UserIsIdir => this.User.GetIdentityProvider() == ClaimValues.Idir || this.User.GetIdentityProvider() == ClaimValues.AzureAd;
-        public bool UserIsIdirCaseManagement => this.User.GetIdentityProvider() == ClaimValues.Idir && this.PermitIDIRDEMS() && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpApi).Contains(Roles.SubmittingAgency);
-        public bool UserIsDutyCounsel => (this.User.GetIdentityProvider() == ClaimValues.VerifiedCredentials && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpApi).Contains(Roles.DutyCounsel))
-                  || (this.PermitIDIRDEMS() && (this.User.GetIdentityProvider() == ClaimValues.Idir || this.User.GetIdentityProvider() == ClaimValues.AzureAd) && this.User?.Identity is ClaimsIdentity claimsIdentity && claimsIdentity.GetResourceAccessRoles(Clients.PidpApi).Contains(Roles.DutyCounsel));
+        public bool UserIsIdirCaseManagement => this.User.GetIdentityProvider() == ClaimValues.Idir && this.PermitIDIRDEMS() && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpService).Contains(Roles.SubmittingAgency);
+        public bool UserIsDutyCounsel => (this.User.GetIdentityProvider() == ClaimValues.VerifiedCredentials && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpService).Contains(Roles.DutyCounsel))
+                  || (this.PermitIDIRDEMS() && (this.User.GetIdentityProvider() == ClaimValues.Idir || this.User.GetIdentityProvider() == ClaimValues.AzureAd) && this.User?.Identity is ClaimsIdentity claimsIdentity && claimsIdentity.GetResourceAccessRoles(Clients.PidpService).Contains(Roles.DutyCounsel));
 
         public bool UserIsInLawSociety => this.User.GetIdentityProvider() == ClaimValues.VerifiedCredentials;
 

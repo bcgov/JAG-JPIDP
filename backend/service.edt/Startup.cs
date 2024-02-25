@@ -127,21 +127,11 @@ public class Startup
             //   options.AddPolicy("Administrator", policy => policy.Requirements.Add(new RealmAccessRoleRequirement("administrator")));
         });
 
-
-
-        //services.AddDbContext<EdtDataStoreDbContext>(options => options
-        //    .UseSqlServer(config.ConnectionStrings.EdtDataStore, sql => sql.UseNodaTime())
-        //    .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
-
         services.AddDbContext<EdtDataStoreDbContext>(options => options
             .UseNpgsql(config.ConnectionStrings.EdtDataStore, npg => npg.UseNodaTime())
             .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
 
         services.AddMediatR(typeof(Startup).Assembly);
-
-        //services.AddHealthChecks()
-        //        .AddCheck("liveliness", () => HealthCheckResult.Healthy())
-        //        .AddSqlServer(config.ConnectionStrings.EdtDataStore, tags: new[] { "services" }).ForwardToPrometheus();
 
         services.AddHealthChecks()
         .AddCheck("liveliness", () => HealthCheckResult.Healthy())
@@ -173,13 +163,30 @@ public class Startup
 
         services.AddSwaggerGen(options =>
         {
-            options.SwaggerDoc("v1", new OpenApiInfo { Title = "EDT Core Service API", Version = "v1" });
+            options.SwaggerDoc("v1", new OpenApiInfo { Title = "EDT Core Service API", Version = "v1", Description = "DIAM APIs for accessing EDT related services" });
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 Description = "Standard Authorization header using the Bearer scheme. Example: \"bearer {token}\"",
                 In = ParameterLocation.Header,
                 Name = "Authorization",
                 Type = SecuritySchemeType.ApiKey
+            });
+            options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.OAuth2,
+                Flows = new OpenApiOAuthFlows
+                {
+                    ClientCredentials = new OpenApiOAuthFlow
+                    {
+                        AuthorizationUrl = new Uri("https://dev.common-sso.justice.gov.bc.ca/auth/realms/BCPS/protocol/openid-connect/auth"),
+                        TokenUrl = new Uri("https://dev.common-sso.justice.gov.bc.ca/auth/realms/BCPS/protocol/openid-connect/token"),
+                        Scopes = new Dictionary<string, string>
+                    {
+                        { "openid" , "DIAM Server HTTP Api" }
+                    },
+                    }
+                },
+                Description = "DIAM Server OpenId Security Scheme"
             });
             options.AddSecurityRequirement(new OpenApiSecurityRequirement()
                 {

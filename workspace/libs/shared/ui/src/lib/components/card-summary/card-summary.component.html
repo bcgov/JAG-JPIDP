@@ -15,13 +15,22 @@
     <ng-container uiCardContent>
       <ng-content select="[uiCardSummaryContent]"></ng-content>
     </ng-container>
-    <ng-container uiCardActions *ngIf="hasActions()">
-      <span>
-        <button *ngIf="actionLabel" mat-stroked-button type="button" color="primary" [disabled]="actionDisabled"
-          (click)="onAction()">
-          {{ actionLabel }}
-        </button>
-      </span>
+
+    <ng-container uiCardActions>
+      <div class="d-flex">
+        <div class="col-md-6 col-sm-12" *ngIf="launchString">
+          <button mat-stroked-button type="button" color="primary" [disabled]="launchDisabled" *ngIf="!launchHidden"
+            (click)="onLaunch()">
+            {{ launchString }}
+          </button>
+        </div>
+        <div [ngClass]="launchString ? 'col-md-6' : 'col-md-12'" class="text-md-end" *ngIf="hasActions()">
+          <button *ngIf="actionLabel" mat-stroked-button type="button" color="primary" [disabled]="actionDisabled"
+            (click)="onAction()">
+            {{ actionLabel }}
+          </button>
+        </div>
+      </div>
     </ng-container>
   </ui-card>
 </ng-template>

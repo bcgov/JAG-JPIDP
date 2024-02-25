@@ -1,9 +1,8 @@
 namespace Pidp.Features.AddressAutocomplete;
 
+using common.Constants.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
-using Pidp.Infrastructure.Auth;
 using Pidp.Infrastructure.HttpClients.AddressAutocomplete;
 using Pidp.Infrastructure.Services;
 

@@ -1,0 +1,3763 @@
+openapi: 3.0.1
+info:
+  title: PIdP Web API
+  description: DIAM main webapi entrypoint - all UI communication goes through this WebApi service currently
+  version: v1
+paths:
+  '/api/access-requests/{partyId}':
+    get:
+      tags:
+        - AccessRequests
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            minimum: 0
+            exclusiveMinimum: true
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pidp.Features.AccessRequests.Index.Model'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+  '/api/access-requests/digital-evidence/validate/{partyId}/{code}':
+    get:
+      tags:
+        - AccessRequests
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: code
+          in: path
+          required: true
+          schema:
+            minLength: 1
+            type: string
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - bcsc-authentication-policy
+  /api/access-requests/driver-fitness:
+    post:
+      tags:
+        - AccessRequests
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.AccessRequests.DriverFitness.Command'
+          text/json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.AccessRequests.DriverFitness.Command'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.AccessRequests.DriverFitness.Command'
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - bcsc-authentication-policy
+  /api/access-requests/digital-evidence:
+    post:
+      tags:
+        - AccessRequests
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.AccessRequests.DigitalEvidence.Command'
+          text/json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.AccessRequests.DigitalEvidence.Command'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.AccessRequests.DigitalEvidence.Command'
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - dems-idp-policy
+  /api/access-requests/digital-evidence-defence:
+    post:
+      tags:
+        - AccessRequests
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.AccessRequests.DigitalEvidenceDefence.Command'
+          text/json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.AccessRequests.DigitalEvidenceDefence.Command'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.AccessRequests.DigitalEvidenceDefence.Command'
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - dems-idp-policy
+  /api/access-requests/digital-evidence-disclosure:
+    post:
+      tags:
+        - AccessRequests
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.AccessRequests.DigitalEvidencePublicDisclosure.Command'
+          text/json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.AccessRequests.DigitalEvidencePublicDisclosure.Command'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.AccessRequests.DigitalEvidencePublicDisclosure.Command'
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - bcsc-authentication-policy
+  '/api/access-requests/digital-evidence-disclosure/cases/{partyId}':
+    get:
+      tags:
+        - AccessRequests
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            minimum: 0
+            exclusiveMinimum: true
+            type: integer
+            format: int32
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - bcsc-authentication-policy
+  /api/address-autocomplete:
+    get:
+      tags:
+        - AddressAutocomplete
+      parameters:
+        - name: searchTerm
+          in: query
+          required: true
+          schema:
+            minLength: 1
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pidp.Infrastructure.HttpClients.AddressAutocomplete.AddressAutocompleteFindResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+  '/api/address-autocomplete/{id}':
+    get:
+      tags:
+        - AddressAutocomplete
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            minLength: 1
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pidp.Infrastructure.HttpClients.AddressAutocomplete.AddressAutocompleteRetrieveResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+  /api/admin/parties:
+    delete:
+      tags:
+        - Admin
+      responses:
+        '204':
+          description: No Content
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - admin-authentication-policy
+    get:
+      tags:
+        - Admin
+      parameters:
+        - name: query
+          in: query
+          schema:
+            $ref: '#/components/schemas/Pidp.Features.Admin.PartyIndex.Query'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pidp.Features.Admin.PartyIndex.Model'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - admin-authentication-policy
+  '/api/admin/party/{partyId}':
+    get:
+      tags:
+        - Admin
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pidp.Features.Admin.PartyModel'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - admin-authentication-policy
+    delete:
+      tags:
+        - Admin
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pidp.Features.Admin.PartyModel'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - admin-authentication-policy
+  /api/client-logs:
+    post:
+      tags:
+        - ClientLogs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.ClientLogs.Create.Command'
+          text/json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.ClientLogs.Create.Command'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.ClientLogs.Create.Command'
+      responses:
+        '200':
+          description: Success
+        '400':
+          description: Bad Request
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+  /api/court-location:
+    get:
+      tags:
+        - CourtLocation
+      parameters:
+        - name: partyId
+          in: query
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pidp.Models.Lookups.CourtLocation'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - verified-credentials-authentication-policy
+    post:
+      tags:
+        - CourtLocation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.CourtLocations.Commands.CourtAccessRequest.Command'
+          text/json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.CourtLocations.Commands.CourtAccessRequest.Command'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.CourtLocations.Commands.CourtAccessRequest.Command'
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - verified-credentials-authentication-policy
+  '/api/court-location/{requestId}':
+    put:
+      tags:
+        - CourtLocation
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - verified-credentials-authentication-policy
+  '/api/court-location/party/{partyId}/request/{requestId}':
+    delete:
+      tags:
+        - CourtLocation
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            minimum: 0
+            exclusiveMinimum: true
+            type: integer
+            format: int32
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            minimum: 0
+            exclusiveMinimum: true
+            type: integer
+            format: int32
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - verified-credentials-authentication-policy
+  '/api/court-location/party/{partyId}/requests':
+    get:
+      tags:
+        - CourtLocation
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: includeDeleted
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - verified-credentials-authentication-policy
+  /api/admin/court-location:
+    get:
+      tags:
+        - CourtLocation
+      parameters:
+        - name: activeOnly
+          in: query
+          schema:
+            type: boolean
+        - name: includeEdtDetails
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pidp.Features.Admin.CourtLocations.CourtLocationAdminModel'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - admin-authentication-policy
+    put:
+      tags:
+        - CourtLocation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.Admin.CourtLocations.UpdateCourtLocationCommand.Command'
+          text/json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.Admin.CourtLocations.UpdateCourtLocationCommand.Command'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.Admin.CourtLocations.UpdateCourtLocationCommand.Command'
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - admin-authentication-policy
+  '/api/defence-counsel/{partyId}/{defenceUniqueID}':
+    get:
+      tags:
+        - DefenceCounsel
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            minimum: 0
+            exclusiveMinimum: true
+            type: integer
+            format: int32
+        - name: defenceUniqueID
+          in: path
+          required: true
+          schema:
+            minLength: 1
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pidp.Models.DigitalEvidenceCaseModel'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - verified-credentials-authentication-policy
+  '/api/Parties/{partyId}/endorsement-requests':
+    get:
+      tags:
+        - EndorsementRequests
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            minimum: 0
+            exclusiveMinimum: true
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pidp.Features.EndorsementRequests.Index.Model'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+    post:
+      tags:
+        - EndorsementRequests
+      parameters:
+        - name: command
+          in: query
+          schema:
+            $ref: '#/components/schemas/Pidp.Features.EndorsementRequests.Create.Command'
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+  '/api/Parties/{partyId}/endorsement-requests/receive':
+    post:
+      tags:
+        - EndorsementRequests
+      parameters:
+        - name: command
+          in: query
+          schema:
+            $ref: '#/components/schemas/Pidp.Features.EndorsementRequests.Receive.Command'
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+  '/api/Parties/{partyId}/endorsement-requests/{endorsementRequestId}/approve':
+    post:
+      tags:
+        - EndorsementRequests
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            minimum: 0
+            exclusiveMinimum: true
+            type: integer
+            format: int32
+        - name: endorsementRequestId
+          in: path
+          required: true
+          schema:
+            minimum: 0
+            exclusiveMinimum: true
+            type: integer
+            format: int32
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+  '/api/Parties/{partyId}/endorsement-requests/{endorsementRequestId}/decline':
+    post:
+      tags:
+        - EndorsementRequests
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            minimum: 0
+            exclusiveMinimum: true
+            type: integer
+            format: int32
+        - name: endorsementRequestId
+          in: path
+          required: true
+          schema:
+            minimum: 0
+            exclusiveMinimum: true
+            type: integer
+            format: int32
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+  '/api/Parties/{partyId}/endorsements':
+    get:
+      tags:
+        - Endorsements
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            minimum: 0
+            exclusiveMinimum: true
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pidp.Features.Endorsements.Index.Model'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+  '/api/Parties/{partyId}/endorsements/{endorsementId}/cancel':
+    post:
+      tags:
+        - Endorsements
+      parameters:
+        - name: endorsementId
+          in: path
+          required: true
+          schema:
+            minimum: 0
+            exclusiveMinimum: true
+            type: integer
+            format: int32
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            minimum: 0
+            exclusiveMinimum: true
+            type: integer
+            format: int32
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+  /error:
+    put:
+      tags:
+        - Error
+      responses:
+        '200':
+          description: Success
+    post:
+      tags:
+        - Error
+      responses:
+        '200':
+          description: Success
+    get:
+      tags:
+        - Error
+      responses:
+        '200':
+          description: Success
+  '/api/evidence-case-management/{requestId}':
+    get:
+      tags:
+        - EvidenceCaseManagement
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            minimum: 0
+            exclusiveMinimum: true
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pidp.Models.DigitalEvidenceCaseModel'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - subgency-idp-policy
+    put:
+      tags:
+        - EvidenceCaseManagement
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            minimum: 0
+            exclusiveMinimum: true
+            type: integer
+            format: int32
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - subgency-idp-policy
+  '/api/evidence-case-management/case/{caseId}':
+    get:
+      tags:
+        - EvidenceCaseManagement
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pidp.Models.DigitalEvidenceCaseModel'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - subgency-idp-policy
+  /api/evidence-case-management/getCaseUserKeys:
+    get:
+      tags:
+        - EvidenceCaseManagement
+      parameters:
+        - name: rCCNumber
+          in: query
+          required: true
+          schema:
+            minLength: 1
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2: [ ]
+  /api/evidence-case-management:
+    get:
+      tags:
+        - EvidenceCaseManagement
+      parameters:
+        - name: partyId
+          in: query
+          required: true
+          schema:
+            minimum: 0
+            exclusiveMinimum: true
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pidp.Models.DigitalEvidenceCaseModel'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - subgency-idp-policy
+    post:
+      tags:
+        - EvidenceCaseManagement
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.DigitalEvidenceCaseManagement.Commands.CaseAccessRequest.Command'
+          text/json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.DigitalEvidenceCaseManagement.Commands.CaseAccessRequest.Command'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.DigitalEvidenceCaseManagement.Commands.CaseAccessRequest.Command'
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - subgency-idp-policy
+  /api/evidence-case-management/search:
+    get:
+      tags:
+        - EvidenceCaseManagement
+      parameters:
+        - name: agencyFileNumber
+          in: query
+          schema:
+            type: string
+        - name: partyId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pidp.Models.DigitalEvidenceCaseModel'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - subgency-idp-policy
+  /api/admin/identity-provider:
+    get:
+      tags:
+        - IdentityProvider
+      parameters:
+        - name: query
+          in: query
+          schema:
+            $ref: '#/components/schemas/Pidp.Features.Admin.IdentityProviders.IdentityProviderQuery'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Keycloak.Net.Models.RealmsAdmin.IdentityProvider'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - admin-authentication-policy
+  /api/admin/kafka/topics:
+    get:
+      tags:
+        - Kafka
+      parameters:
+        - name: topicName
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pidp.Features.Admin.Kafka.Models.TopicModel'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - admin-authentication-policy
+  /api/lookups:
+    get:
+      tags:
+        - Lookups
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pidp.Features.Lookups.Index.Model'
+  /api/parties:
+    get:
+      tags:
+        - Parties
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            minLength: 1
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pidp.Features.Parties.Index.Model'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+    post:
+      tags:
+        - Parties
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.Parties.Create.Command'
+          text/json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.Parties.Create.Command'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/Pidp.Features.Parties.Create.Command'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+  '/api/parties/{partyId}/access-administrator':
+    get:
+      tags:
+        - Parties
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            minimum: 0
+            exclusiveMinimum: true
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pidp.Features.Parties.AccessAdministrator.Command'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+    put:
+      tags:
+        - Parties
+      parameters:
+        - name: command
+          in: query
+          schema:
+            $ref: '#/components/schemas/Pidp.Features.Parties.AccessAdministrator.Command'
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+  '/api/parties/{partyId}/college-certifications':
+    get:
+      tags:
+        - Parties
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            minimum: 0
+            exclusiveMinimum: true
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pidp.Features.Parties.CollegeCertifications.Model'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+  '/api/parties/{id}/demographics':
+    get:
+      tags:
+        - Parties
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            minimum: 0
+            exclusiveMinimum: true
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pidp.Features.Parties.Demographics.Command'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+    put:
+      tags:
+        - Parties
+      parameters:
+        - name: command
+          in: query
+          schema:
+            $ref: '#/components/schemas/Pidp.Features.Parties.Demographics.Command'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+  '/api/parties/{partyId}/licence-declaration':
+    get:
+      tags:
+        - Parties
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            minimum: 0
+            exclusiveMinimum: true
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pidp.Features.Parties.LicenceDeclaration.Command'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+    put:
+      tags:
+        - Parties
+      parameters:
+        - name: command
+          in: query
+          schema:
+            $ref: '#/components/schemas/Pidp.Features.Parties.LicenceDeclaration.Command'
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: string
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+  '/api/parties/{partyId}/organization-details':
+    get:
+      tags:
+        - Parties
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            minimum: 0
+            exclusiveMinimum: true
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pidp.Features.Parties.OrganizationDetails.Command'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+    put:
+      tags:
+        - Parties
+      parameters:
+        - name: command
+          in: query
+          schema:
+            $ref: '#/components/schemas/Pidp.Features.Parties.OrganizationDetails.Command'
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '406':
+          description: Not Acceptable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+  '/api/parties/{partyId}/user-type':
+    get:
+      tags:
+        - Parties
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            minimum: 0
+            exclusiveMinimum: true
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pidp.Models.UserTypeModel'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+  '/api/parties/{partyId}/crown-region/{participantId}/user-orgunit':
+    get:
+      tags:
+        - Parties
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            minimum: 0
+            exclusiveMinimum: true
+            type: integer
+            format: int32
+        - name: participantId
+          in: path
+          required: true
+          schema:
+            minimum: 0
+            exclusiveMinimum: true
+            type: number
+            format: double
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pidp.Models.OrgUnitModel'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+  '/api/parties/{id}/profile-status':
+    post:
+      tags:
+        - Parties
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            minimum: 0
+            exclusiveMinimum: true
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pidp.Features.Parties.ProfileStatus.Model'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+  '/api/parties/{id}/work-setting':
+    get:
+      tags:
+        - Parties
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            minimum: 0
+            exclusiveMinimum: true
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pidp.Features.Parties.WorkSetting.Command'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+    put:
+      tags:
+        - Parties
+      parameters:
+        - name: command
+          in: query
+          schema:
+            $ref: '#/components/schemas/Pidp.Features.Parties.WorkSetting.Command'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+  /api/admin/submitting-agencies:
+    get:
+      tags:
+        - SubmittingAgencies
+      parameters:
+        - name: query
+          in: query
+          schema:
+            $ref: '#/components/schemas/Pidp.Features.Admin.SubmittingAgencies.SubmittingAgencyQuery'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pidp.Models.SubmittingAgencyModel'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - admin-authentication-policy
+    put:
+      tags:
+        - SubmittingAgencies
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSubmittingAgencyCommand.Command'
+          text/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSubmittingAgencyCommand.Command'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/UpdateSubmittingAgencyCommand.Command'
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Microsoft.AspNetCore.Mvc.ProblemDetails'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - admin-authentication-policy
+  /api/version:
+    get:
+      tags:
+        - Version
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: string
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      security:
+        - oauth2:
+            - party-idp-policy
+components:
+  schemas:
+    Common.Models.EDT.EdtField:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+          nullable: true
+        value:
+          nullable: true
+      additionalProperties: false
+    Keycloak.Net.Models.RealmsAdmin.Config:
+      type: object
+      properties:
+        hideOnLoginPage:
+          type: string
+          nullable: true
+        clientSecret:
+          type: string
+          nullable: true
+        clientId:
+          type: string
+          nullable: true
+        disableUserInfo:
+          type: string
+          nullable: true
+        useJwksUrl:
+          type: string
+          nullable: true
+      additionalProperties: false
+    Keycloak.Net.Models.RealmsAdmin.IdentityProvider:
+      type: object
+      properties:
+        alias:
+          type: string
+          nullable: true
+        internalId:
+          type: string
+          nullable: true
+        providerId:
+          type: string
+          nullable: true
+        enabled:
+          type: boolean
+          nullable: true
+        updateProfileFirstLoginMode:
+          type: string
+          nullable: true
+        trustEmail:
+          type: boolean
+          nullable: true
+        storeToken:
+          type: boolean
+          nullable: true
+        addReadTokenRoleOnCreate:
+          type: boolean
+          nullable: true
+        authenticateByDefault:
+          type: boolean
+          nullable: true
+        linkOnly:
+          type: boolean
+          nullable: true
+        firstBrokerLoginFlowAlias:
+          type: string
+          nullable: true
+        config:
+          $ref: '#/components/schemas/Keycloak.Net.Models.RealmsAdmin.Config'
+      additionalProperties: false
+    Microsoft.AspNetCore.Mvc.ProblemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        status:
+          type: integer
+          format: int32
+          nullable: true
+        detail:
+          type: string
+          nullable: true
+        instance:
+          type: string
+          nullable: true
+      additionalProperties: { }
+    Microsoft.Extensions.Logging.LogLevel:
+      enum:
+        - 0
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+      type: integer
+      format: int32
+    NodaTime.CalendarSystem:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+          readOnly: true
+        name:
+          type: string
+          nullable: true
+          readOnly: true
+        minYear:
+          type: integer
+          format: int32
+          readOnly: true
+        maxYear:
+          type: integer
+          format: int32
+          readOnly: true
+        eras:
+          type: array
+          items:
+            $ref: '#/components/schemas/NodaTime.Calendars.Era'
+          nullable: true
+          readOnly: true
+      additionalProperties: false
+    NodaTime.Calendars.Era:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+          readOnly: true
+      additionalProperties: false
+    NodaTime.Instant:
+      type: object
+      additionalProperties: false
+    NodaTime.IsoDayOfWeek:
+      enum:
+        - 0
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+      type: integer
+      format: int32
+    NodaTime.LocalDate:
+      type: object
+      properties:
+        calendar:
+          $ref: '#/components/schemas/NodaTime.CalendarSystem'
+        year:
+          type: integer
+          format: int32
+        month:
+          type: integer
+          format: int32
+        day:
+          type: integer
+          format: int32
+        dayOfWeek:
+          $ref: '#/components/schemas/NodaTime.IsoDayOfWeek'
+        yearOfEra:
+          type: integer
+          format: int32
+          readOnly: true
+        era:
+          $ref: '#/components/schemas/NodaTime.Calendars.Era'
+        dayOfYear:
+          type: integer
+          format: int32
+          readOnly: true
+      additionalProperties: false
+    Pidp.Features.AccessRequests.DigitalEvidence.Command:
+      required:
+        - organizationName
+        - organizationType
+        - participantId
+      type: object
+      properties:
+        partyId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+        organizationType:
+          minLength: 1
+          type: string
+        organizationName:
+          minLength: 1
+          type: string
+        participantId:
+          minLength: 1
+          type: string
+        assignedRegions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pidp.Models.AssignedRegion'
+          nullable: true
+      additionalProperties: false
+    Pidp.Features.AccessRequests.DigitalEvidenceDefence.Command:
+      required:
+        - organizationName
+        - organizationType
+        - participantId
+      type: object
+      properties:
+        partyId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+        organizationType:
+          minLength: 1
+          type: string
+        organizationName:
+          minLength: 1
+          type: string
+        participantId:
+          minLength: 1
+          type: string
+      additionalProperties: false
+    Pidp.Features.AccessRequests.DigitalEvidencePublicDisclosure.Command:
+      required:
+        - keyData
+        - participantId
+        - partyId
+      type: object
+      properties:
+        partyId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+        participantId:
+          minLength: 1
+          type: string
+        keyData:
+          minLength: 1
+          type: string
+      additionalProperties: false
+    Pidp.Features.AccessRequests.DriverFitness.Command:
+      type: object
+      properties:
+        partyId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+      additionalProperties: false
+    Pidp.Features.AccessRequests.Index.Model:
+      type: object
+      properties:
+        partyId:
+          type: integer
+          format: int32
+        accessTypeCode:
+          $ref: '#/components/schemas/Pidp.Models.Lookups.AccessTypeCode'
+        requestedOn:
+          $ref: '#/components/schemas/NodaTime.Instant'
+      additionalProperties: false
+    Pidp.Features.AccessRequests.Index.Query:
+      required:
+        - partyId
+      type: object
+      properties:
+        partyId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+      additionalProperties: false
+    Pidp.Features.AccessRequests.PublicDisclosureAccessQuery.Query:
+      required:
+        - partyId
+      type: object
+      properties:
+        partyId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+      additionalProperties: false
+    Pidp.Features.AccessRequests.ValidateUser.Command:
+      required:
+        - code
+        - partyId
+      type: object
+      properties:
+        ipAddress:
+          $ref: '#/components/schemas/System.Net.IPAddress'
+        partyId:
+          type: integer
+          format: int32
+        code:
+          minLength: 1
+          type: string
+      additionalProperties: false
+    Pidp.Features.AddressAutocomplete.Find.Query:
+      required:
+        - searchTerm
+      type: object
+      properties:
+        searchTerm:
+          minLength: 1
+          type: string
+      additionalProperties: false
+    Pidp.Features.AddressAutocomplete.Retrieve.Query:
+      required:
+        - id
+      type: object
+      properties:
+        id:
+          minLength: 1
+          type: string
+      additionalProperties: false
+    Pidp.Features.Admin.CourtLocations.CourtLocationAdminModel:
+      type: object
+      properties:
+        code:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        active:
+          type: boolean
+        staffed:
+          type: boolean
+        courtSubLocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pidp.Models.Lookups.CourtSubLocation'
+          nullable: true
+        userCount:
+          type: integer
+          format: int32
+        edtId:
+          type: integer
+          format: int32
+        status:
+          type: string
+          nullable: true
+        edtFields:
+          type: array
+          items:
+            $ref: '#/components/schemas/Common.Models.EDT.EdtField'
+          nullable: true
+        key:
+          type: string
+          nullable: true
+          readOnly: true
+      additionalProperties: false
+    Pidp.Features.Admin.CourtLocations.UpdateCourtLocationCommand.Command:
+      required:
+        - code
+        - name
+      type: object
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+        active:
+          type: boolean
+        delete:
+          type: boolean
+      additionalProperties: false
+    Pidp.Features.Admin.IdentityProviders.IdentityProviderQuery:
+      type: object
+      additionalProperties: false
+    Pidp.Features.Admin.Kafka.Models.TopicModel:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+        partitions:
+          type: integer
+          format: int32
+        replicas:
+          type: integer
+          format: int32
+        inSyncReplicas:
+          type: integer
+          format: int32
+        entries:
+          type: integer
+          format: int32
+        consumers:
+          type: array
+          items:
+            type: string
+          nullable: true
+      additionalProperties: false
+    Pidp.Features.Admin.PartyIndex.Model:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        providerName:
+          type: string
+          nullable: true
+        providerOrganizationCode:
+          $ref: '#/components/schemas/Pidp.Models.Lookups.OrganizationCode'
+        digitalEvidenceAccessRequest:
+          type: boolean
+        organizationName:
+          type: string
+          nullable: true
+      additionalProperties: false
+    Pidp.Features.Admin.PartyIndex.Query:
+      type: object
+      additionalProperties: false
+    Pidp.Features.Admin.PartyModel:
+      type: object
+      properties:
+        username:
+          type: string
+          nullable: true
+        firstName:
+          type: string
+          nullable: true
+        lastName:
+          type: string
+          nullable: true
+        roles:
+          type: array
+          items:
+            type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        enabled:
+          type: boolean
+        identityProvider:
+          type: string
+          nullable: true
+        participantId:
+          type: number
+          format: double
+        created:
+          $ref: '#/components/schemas/NodaTime.Instant'
+        keycloakUserId:
+          type: string
+          format: uuid
+        userIssues:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+        systemsAccess:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/Pidp.Features.Admin.SystemUserModel'
+          nullable: true
+      additionalProperties: false
+    Pidp.Features.Admin.SubmittingAgencies.SubmittingAgencyQuery:
+      type: object
+      additionalProperties: false
+    Pidp.Features.Admin.SystemUserModel:
+      type: object
+      properties:
+        system:
+          type: string
+          nullable: true
+        username:
+          type: string
+          nullable: true
+        enabled:
+          type: boolean
+        accountType:
+          type: string
+          nullable: true
+        key:
+          type: string
+          nullable: true
+        isAdmin:
+          type: boolean
+        roles:
+          type: array
+          items:
+            type: string
+          nullable: true
+        regions:
+          type: array
+          items:
+            type: string
+          nullable: true
+      additionalProperties: false
+    Pidp.Features.ClientLogs.Create.Command:
+      required:
+        - logLevel
+        - message
+      type: object
+      properties:
+        message:
+          minLength: 1
+          type: string
+        logLevel:
+          $ref: '#/components/schemas/Microsoft.Extensions.Logging.LogLevel'
+        additionalInformation:
+          type: string
+          nullable: true
+      additionalProperties: false
+    Pidp.Features.CourtLocations.Commands.CourtAccessRequest.Command:
+      required:
+        - courtLocation
+        - partyId
+        - validFrom
+        - validUntil
+      type: object
+      properties:
+        partyId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+        courtLocation:
+          $ref: '#/components/schemas/Pidp.Models.Lookups.CourtLocation'
+        validFrom:
+          type: string
+          format: date-time
+        validUntil:
+          type: string
+          format: date-time
+        timeZoneOffset:
+          type: integer
+          format: int32
+      additionalProperties: false
+    Pidp.Features.CourtLocations.Commands.RemoveCourtLocationRequest.Command:
+      required:
+        - partyId
+        - requestId
+      type: object
+      properties:
+        requestId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+        partyId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+      additionalProperties: false
+    Pidp.Features.DefenceCounsel.Query.DefenceFolioQuery.Query:
+      required:
+        - defenceUniqueID
+        - partyId
+      type: object
+      properties:
+        partyId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+        defenceUniqueID:
+          minLength: 1
+          type: string
+      additionalProperties: false
+    Pidp.Features.DigitalEvidenceCaseManagement.Commands.CaseAccessRequest.Command:
+      required:
+        - agencyFileNumber
+      type: object
+      properties:
+        partyId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+        submittingAgencyCode:
+          type: string
+          nullable: true
+        agencyFileNumber:
+          minLength: 1
+          type: string
+        requestId:
+          type: integer
+          format: int32
+        caseId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+        key:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        caseGroup:
+          type: string
+          nullable: true
+        requestStatus:
+          type: string
+          nullable: true
+      additionalProperties: false
+    Pidp.Features.DigitalEvidenceCaseManagement.Commands.RemoveCaseAccess.Command:
+      required:
+        - requestId
+      type: object
+      properties:
+        requestId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+      additionalProperties: false
+    Pidp.Features.DigitalEvidenceCaseManagement.Query.DigitalEvidenceByPartyQuery.Query:
+      required:
+        - partyId
+      type: object
+      properties:
+        partyId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+      additionalProperties: false
+    Pidp.Features.DigitalEvidenceCaseManagement.Query.DigitalEvidenceByRequestIdQuery.Query:
+      required:
+        - requestId
+      type: object
+      properties:
+        requestId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+      additionalProperties: false
+    Pidp.Features.DigitalEvidenceCaseManagement.Query.SubmittingAgencyByCaseId.Query:
+      required:
+        - rccNumber
+      type: object
+      properties:
+        rccNumber:
+          minLength: 1
+          type: string
+      additionalProperties: false
+    Pidp.Features.EndorsementRequests.Approve.Command:
+      required:
+        - endorsementRequestId
+        - partyId
+      type: object
+      properties:
+        partyId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+        endorsementRequestId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+      additionalProperties: false
+    Pidp.Features.EndorsementRequests.Create.Command:
+      required:
+        - recipientEmail
+      type: object
+      properties:
+        recipientEmail:
+          minLength: 1
+          type: string
+          format: email
+        additionalInformation:
+          type: string
+          nullable: true
+      additionalProperties: false
+    Pidp.Features.EndorsementRequests.Decline.Command:
+      required:
+        - endorsementRequestId
+        - partyId
+      type: object
+      properties:
+        partyId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+        endorsementRequestId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+      additionalProperties: false
+    Pidp.Features.EndorsementRequests.Index.Model:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        recipientEmail:
+          type: string
+          nullable: true
+        additionalInformation:
+          type: string
+          nullable: true
+        partyName:
+          type: string
+          nullable: true
+        collegeCode:
+          $ref: '#/components/schemas/Pidp.Models.Lookups.CollegeCode'
+        status:
+          $ref: '#/components/schemas/Pidp.Models.EndorsementRequestStatus'
+        statusDate:
+          $ref: '#/components/schemas/NodaTime.Instant'
+        actionable:
+          type: boolean
+      additionalProperties: false
+    Pidp.Features.EndorsementRequests.Index.Query:
+      required:
+        - partyId
+      type: object
+      properties:
+        partyId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+      additionalProperties: false
+    Pidp.Features.EndorsementRequests.Receive.Command:
+      required:
+        - token
+      type: object
+      properties:
+        token:
+          minLength: 1
+          type: string
+          format: uuid
+      additionalProperties: false
+    Pidp.Features.Endorsements.Cancel.Command:
+      required:
+        - endorsementId
+        - partyId
+      type: object
+      properties:
+        endorsementId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+        partyId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+      additionalProperties: false
+    Pidp.Features.Endorsements.Index.Model:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        partyName:
+          type: string
+          nullable: true
+        active:
+          type: boolean
+        createdOn:
+          $ref: '#/components/schemas/NodaTime.Instant'
+      additionalProperties: false
+    Pidp.Features.Endorsements.Index.Query:
+      required:
+        - partyId
+      type: object
+      properties:
+        partyId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+      additionalProperties: false
+    Pidp.Features.Lookups.Index.Model:
+      type: object
+      properties:
+        accessTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pidp.Models.Lookups.AccessType'
+          nullable: true
+        colleges:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pidp.Models.Lookups.College'
+          nullable: true
+        countries:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pidp.Models.Lookups.Country'
+          nullable: true
+        provinces:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pidp.Models.Lookups.Province'
+          nullable: true
+        organizations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pidp.Models.Lookups.Organization'
+          nullable: true
+        healthAuthorities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pidp.Models.Lookups.HealthAuthority'
+          nullable: true
+        justiceSectors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pidp.Models.Lookups.JusticeSector'
+          nullable: true
+        lawEnforcements:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pidp.Models.Lookups.LawEnforcement'
+          nullable: true
+        correctionServices:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pidp.Models.Lookups.CorrectionService'
+          nullable: true
+        lawSocieties:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pidp.Models.Lookups.LawSociety'
+          nullable: true
+        crownRegions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pidp.Models.Lookups.CrownRegion'
+          nullable: true
+        submittingAgencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pidp.Models.Lookups.SubmittingAgency'
+          nullable: true
+      additionalProperties: false
+    Pidp.Features.Parties.AccessAdministrator.Command:
+      required:
+        - email
+      type: object
+      properties:
+        email:
+          minLength: 1
+          type: string
+          format: email
+      additionalProperties: false
+    Pidp.Features.Parties.AccessAdministrator.Query:
+      required:
+        - partyId
+      type: object
+      properties:
+        partyId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+      additionalProperties: false
+    Pidp.Features.Parties.CollegeCertifications.Model:
+      type: object
+      properties:
+        identifierType:
+          type: string
+          nullable: true
+        collegeId:
+          type: string
+          nullable: true
+        providerRoleType:
+          type: string
+          nullable: true
+        statusCode:
+          type: string
+          nullable: true
+        statusStartDate:
+          $ref: '#/components/schemas/NodaTime.LocalDate'
+        isGoodStanding:
+          type: boolean
+      additionalProperties: false
+    Pidp.Features.Parties.CollegeCertifications.Query:
+      required:
+        - partyId
+      type: object
+      properties:
+        partyId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+      additionalProperties: false
+    Pidp.Features.Parties.Create.Command:
+      required:
+        - firstName
+        - lastName
+        - userId
+      type: object
+      properties:
+        userId:
+          minLength: 1
+          type: string
+          format: uuid
+        jpdid:
+          type: string
+          nullable: true
+        birthdate:
+          $ref: '#/components/schemas/NodaTime.LocalDate'
+        gender:
+          type: string
+          nullable: true
+        firstName:
+          minLength: 1
+          type: string
+        email:
+          type: string
+          nullable: true
+        lastName:
+          minLength: 1
+          type: string
+      additionalProperties: false
+    Pidp.Features.Parties.CrownRegionQuery.Query:
+      required:
+        - participantId
+        - partyId
+      type: object
+      properties:
+        partyId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+        participantId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: number
+          format: double
+      additionalProperties: false
+    Pidp.Features.Parties.Demographics.Command:
+      required:
+        - email
+      type: object
+      properties:
+        id:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+        preferredFirstName:
+          type: string
+          nullable: true
+        preferredMiddleName:
+          type: string
+          nullable: true
+        preferredLastName:
+          type: string
+          nullable: true
+        email:
+          minLength: 1
+          type: string
+          format: email
+        phone:
+          type: string
+          nullable: true
+      additionalProperties: false
+    Pidp.Features.Parties.Demographics.Query:
+      required:
+        - id
+      type: object
+      properties:
+        id:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+      additionalProperties: false
+    Pidp.Features.Parties.Index.Model:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+      additionalProperties: false
+    Pidp.Features.Parties.Index.Query:
+      required:
+        - userId
+      type: object
+      properties:
+        userId:
+          minLength: 1
+          type: string
+          format: uuid
+      additionalProperties: false
+    Pidp.Features.Parties.LicenceDeclaration.Command:
+      type: object
+      properties:
+        collegeCode:
+          $ref: '#/components/schemas/Pidp.Models.Lookups.CollegeCode'
+        licenceNumber:
+          type: string
+          nullable: true
+      additionalProperties: false
+    Pidp.Features.Parties.LicenceDeclaration.Query:
+      required:
+        - partyId
+      type: object
+      properties:
+        partyId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+      additionalProperties: false
+    Pidp.Features.Parties.OrganizationDetails.Command:
+      required:
+        - employeeIdentifier
+      type: object
+      properties:
+        organizationCode:
+          $ref: '#/components/schemas/Pidp.Models.Lookups.OrganizationCode'
+        healthAuthorityCode:
+          $ref: '#/components/schemas/Pidp.Models.Lookups.HealthAuthorityCode'
+        justiceSectorCode:
+          $ref: '#/components/schemas/Pidp.Models.Lookups.JusticeSectorCode'
+        correctionServiceCode:
+          $ref: '#/components/schemas/Pidp.Models.Lookups.CorrectionServiceCode'
+        employeeIdentifier:
+          minLength: 1
+          type: string
+      additionalProperties: false
+    Pidp.Features.Parties.OrganizationDetails.Query:
+      required:
+        - partyId
+      type: object
+      properties:
+        partyId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+      additionalProperties: false
+    Pidp.Features.Parties.ProfileStatus.Command:
+      required:
+        - id
+      type: object
+      properties:
+        id:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+      additionalProperties: false
+    Pidp.Features.Parties.ProfileStatus.Model:
+      type: object
+      properties:
+        status:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/Pidp.Features.Parties.ProfileStatus.Model.ProfileSection'
+          nullable: true
+        alerts:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: '#/components/schemas/Pidp.Features.Parties.ProfileStatus.Model.Alert'
+          nullable: true
+          readOnly: true
+      additionalProperties: false
+    Pidp.Features.Parties.ProfileStatus.Model.Alert:
+      enum:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+      type: integer
+      format: int32
+    Pidp.Features.Parties.ProfileStatus.Model.ProfileSection:
+      type: object
+      properties:
+        alerts:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: '#/components/schemas/Pidp.Features.Parties.ProfileStatus.Model.Alert'
+          nullable: true
+        statusCode:
+          $ref: '#/components/schemas/Pidp.Features.Parties.ProfileStatus.Model.StatusCode'
+        order:
+          type: number
+          format: double
+        isComplete:
+          type: boolean
+          readOnly: true
+      additionalProperties: false
+    Pidp.Features.Parties.ProfileStatus.Model.StatusCode:
+      enum:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        - 8
+        - 9
+        - 10
+        - 11
+        - 12
+        - 13
+      type: integer
+      format: int32
+    Pidp.Features.Parties.UserType.Query:
+      required:
+        - partyId
+      type: object
+      properties:
+        partyId:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+      additionalProperties: false
+    Pidp.Features.Parties.WorkSetting.Command:
+      type: object
+      properties:
+        jobTitle:
+          type: string
+          nullable: true
+        facilityName:
+          type: string
+          nullable: true
+        physicalAddress:
+          $ref: '#/components/schemas/Pidp.Features.Parties.WorkSetting.Command.Address'
+      additionalProperties: false
+    Pidp.Features.Parties.WorkSetting.Command.Address:
+      required:
+        - city
+        - countryCode
+        - postal
+        - provinceCode
+        - street
+      type: object
+      properties:
+        countryCode:
+          minLength: 1
+          type: string
+        provinceCode:
+          minLength: 1
+          type: string
+        street:
+          minLength: 1
+          type: string
+        city:
+          minLength: 1
+          type: string
+        postal:
+          minLength: 1
+          type: string
+      additionalProperties: false
+    Pidp.Features.Parties.WorkSetting.Query:
+      required:
+        - id
+      type: object
+      properties:
+        id:
+          minimum: 0
+          exclusiveMinimum: true
+          type: integer
+          format: int32
+      additionalProperties: false
+    Pidp.Infrastructure.HttpClients.AddressAutocomplete.AddressAutocompleteFindResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        text:
+          type: string
+          nullable: true
+        highlight:
+          type: string
+          nullable: true
+        cursor:
+          type: integer
+          format: int32
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        next:
+          type: string
+          nullable: true
+      additionalProperties: false
+    Pidp.Infrastructure.HttpClients.AddressAutocomplete.AddressAutocompleteRetrieveResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        domesticId:
+          type: string
+          nullable: true
+        language:
+          type: string
+          nullable: true
+        languageAlternatives:
+          type: string
+          nullable: true
+        department:
+          type: string
+          nullable: true
+        company:
+          type: string
+          nullable: true
+        subBuilding:
+          type: string
+          nullable: true
+        buildingNumber:
+          type: string
+          nullable: true
+        buildingName:
+          type: string
+          nullable: true
+        secondaryStreet:
+          type: string
+          nullable: true
+        street:
+          type: string
+          nullable: true
+        block:
+          type: string
+          nullable: true
+        neighbourhood:
+          type: string
+          nullable: true
+        district:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        line1:
+          type: string
+          nullable: true
+        line2:
+          type: string
+          nullable: true
+        line3:
+          type: string
+          nullable: true
+        line4:
+          type: string
+          nullable: true
+        line5:
+          type: string
+          nullable: true
+        adminAreaName:
+          type: string
+          nullable: true
+        adminAreaCode:
+          type: string
+          nullable: true
+        province:
+          type: string
+          nullable: true
+        provinceName:
+          type: string
+          nullable: true
+        provinceCode:
+          type: string
+          nullable: true
+        postalCode:
+          type: string
+          nullable: true
+        countryName:
+          type: string
+          nullable: true
+        countryIso2:
+          type: string
+          nullable: true
+        countryIso3:
+          type: string
+          nullable: true
+        countryIsoNumber:
+          type: integer
+          format: int32
+          nullable: true
+        sortingNumber1:
+          type: string
+          nullable: true
+        sortingNumber2:
+          type: string
+          nullable: true
+        barcode:
+          type: string
+          nullable: true
+        poBoxNumber:
+          type: string
+          nullable: true
+        label:
+          type: string
+          nullable: true
+        dataLevel:
+          type: string
+          nullable: true
+      additionalProperties: false
+    Pidp.Models.AssignedRegion:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        regionId:
+          type: integer
+          format: int32
+        regionName:
+          type: string
+          nullable: true
+        assignedAgency:
+          type: string
+          nullable: true
+      additionalProperties: false
+    Pidp.Models.DigitalEvidenceCaseModel:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        requestId:
+          type: integer
+          format: int32
+        partyId:
+          type: integer
+          format: int32
+        name:
+          type: string
+          nullable: true
+        details:
+          type: string
+          nullable: true
+        agencyFileNumber:
+          type: string
+          nullable: true
+        key:
+          type: string
+          nullable: true
+        requestedOn:
+          $ref: '#/components/schemas/NodaTime.Instant'
+        assignedOn:
+          $ref: '#/components/schemas/NodaTime.Instant'
+        lastUpdated:
+          $ref: '#/components/schemas/NodaTime.Instant'
+        status:
+          type: string
+          nullable: true
+        errors:
+          type: string
+          nullable: true
+        requestStatus:
+          type: string
+          nullable: true
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pidp.Models.Field'
+          nullable: true
+      additionalProperties: false
+    Pidp.Models.EndorsementRequestStatus:
+      enum:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+      type: integer
+      format: int32
+    Pidp.Models.Field:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+          nullable: true
+        value:
+          nullable: true
+        display:
+          type: boolean
+      additionalProperties: false
+    Pidp.Models.Lookups.AccessType:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/Pidp.Models.Lookups.AccessTypeCode'
+        name:
+          type: string
+          nullable: true
+      additionalProperties: false
+    Pidp.Models.Lookups.AccessTypeCode:
+      enum:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        - 8
+        - 9
+        - 10
+      type: integer
+      format: int32
+    Pidp.Models.Lookups.College:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/Pidp.Models.Lookups.CollegeCode'
+        name:
+          type: string
+          nullable: true
+        acronym:
+          type: string
+          nullable: true
+      additionalProperties: false
+    Pidp.Models.Lookups.CollegeCode:
+      enum:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+      type: integer
+      format: int32
+    Pidp.Models.Lookups.CorrectionService:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/Pidp.Models.Lookups.CorrectionServiceCode'
+        name:
+          type: string
+          nullable: true
+      additionalProperties: false
+    Pidp.Models.Lookups.CorrectionServiceCode:
+      enum:
+        - 1
+        - 2
+        - 3
+      type: integer
+      format: int32
+    Pidp.Models.Lookups.Country:
+      type: object
+      properties:
+        code:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+      additionalProperties: false
+    Pidp.Models.Lookups.CourtLocation:
+      type: object
+      properties:
+        code:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        active:
+          type: boolean
+        staffed:
+          type: boolean
+        courtSubLocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pidp.Models.Lookups.CourtSubLocation'
+          nullable: true
+      additionalProperties: false
+    Pidp.Models.Lookups.CourtSubLocation:
+      required:
+        - name
+      type: object
+      properties:
+        courtSubLocationId:
+          type: integer
+          format: int32
+        name:
+          minLength: 1
+          type: string
+        courtLocation:
+          $ref: '#/components/schemas/Pidp.Models.Lookups.CourtLocation'
+      additionalProperties: false
+    Pidp.Models.Lookups.CrownRegion:
+      type: object
+      properties:
+        agencyCode:
+          type: string
+          nullable: true
+        crownLocation:
+          type: string
+          nullable: true
+        regionName:
+          type: string
+          nullable: true
+        regionId:
+          type: integer
+          format: int32
+      additionalProperties: false
+    Pidp.Models.Lookups.HealthAuthority:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/Pidp.Models.Lookups.HealthAuthorityCode'
+        name:
+          type: string
+          nullable: true
+      additionalProperties: false
+    Pidp.Models.Lookups.HealthAuthorityCode:
+      enum:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+      type: integer
+      format: int32
+    Pidp.Models.Lookups.JusticeSector:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/Pidp.Models.Lookups.JusticeSectorCode'
+        name:
+          type: string
+          nullable: true
+      additionalProperties: false
+    Pidp.Models.Lookups.JusticeSectorCode:
+      enum:
+        - 1
+        - 2
+      type: integer
+      format: int32
+    Pidp.Models.Lookups.LawEnforcement:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/Pidp.Models.Lookups.LawEnforcementCode'
+        name:
+          type: string
+          nullable: true
+      additionalProperties: false
+    Pidp.Models.Lookups.LawEnforcementCode:
+      enum:
+        - 1
+        - 2
+        - 3
+        - 4
+      type: integer
+      format: int32
+    Pidp.Models.Lookups.LawSociety:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/Pidp.Models.Lookups.LawSocietyCode'
+        name:
+          type: string
+          nullable: true
+      additionalProperties: false
+    Pidp.Models.Lookups.LawSocietyCode:
+      enum:
+        - 1
+      type: integer
+      format: int32
+    Pidp.Models.Lookups.Organization:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/Pidp.Models.Lookups.OrganizationCode'
+        name:
+          type: string
+          nullable: true
+        idpHint:
+          type: string
+          nullable: true
+      additionalProperties: false
+    Pidp.Models.Lookups.OrganizationCode:
+      enum:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        - 8
+        - 9
+      type: integer
+      format: int32
+    Pidp.Models.Lookups.Province:
+      type: object
+      properties:
+        code:
+          type: string
+          nullable: true
+        countryCode:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+      additionalProperties: false
+    Pidp.Models.Lookups.SubmittingAgency:
+      type: object
+      properties:
+        code:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        idpHint:
+          type: string
+          nullable: true
+        clientCertExpiry:
+          $ref: '#/components/schemas/NodaTime.Instant'
+        levelOfAssurance:
+          type: integer
+          format: int32
+          nullable: true
+      additionalProperties: false
+    Pidp.Models.OrgUnitModel:
+      type: object
+      properties:
+        assignedAgency:
+          type: string
+          nullable: true
+        regionId:
+          type: integer
+          format: int32
+        regionName:
+          type: string
+          nullable: true
+      additionalProperties: false
+    Pidp.Models.SubmittingAgencyModel:
+      type: object
+      properties:
+        code:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        idpHint:
+          type: string
+          nullable: true
+        clientCertExpiry:
+          $ref: '#/components/schemas/NodaTime.Instant'
+        levelOfAssurance:
+          type: integer
+          format: int32
+          nullable: true
+        hasRealm:
+          type: boolean
+        hasIdentityProvider:
+          type: boolean
+        hasIdentityProviderLink:
+          type: boolean
+        warnings:
+          type: array
+          items:
+            type: string
+          nullable: true
+      additionalProperties: false
+    Pidp.Models.UserTypeModel:
+      type: object
+      properties:
+        organizationType:
+          type: string
+          nullable: true
+        organizationName:
+          type: string
+          nullable: true
+        participantId:
+          type: string
+          nullable: true
+        isSubmittingAgency:
+          type: boolean
+        submittingAgencyCode:
+          type: string
+          nullable: true
+      additionalProperties: false
+    System.Net.IPAddress:
+      type: object
+      properties:
+        addressFamily:
+          $ref: '#/components/schemas/System.Net.Sockets.AddressFamily'
+        scopeId:
+          type: integer
+          format: int64
+        isIPv6Multicast:
+          type: boolean
+          readOnly: true
+        isIPv6LinkLocal:
+          type: boolean
+          readOnly: true
+        isIPv6SiteLocal:
+          type: boolean
+          readOnly: true
+        isIPv6Teredo:
+          type: boolean
+          readOnly: true
+        isIPv6UniqueLocal:
+          type: boolean
+          readOnly: true
+        isIPv4MappedToIPv6:
+          type: boolean
+          readOnly: true
+        address:
+          type: integer
+          format: int64
+          deprecated: true
+      additionalProperties: false
+    System.Net.Sockets.AddressFamily:
+      enum:
+        - 0
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        - 8
+        - 9
+        - 10
+        - 11
+        - 12
+        - 13
+        - 14
+        - 15
+        - 16
+        - 17
+        - 18
+        - 19
+        - 21
+        - 22
+        - 23
+        - 24
+        - 25
+        - 26
+        - 28
+        - 29
+        - 65536
+        - 65537
+        - -1
+      type: integer
+      format: int32
+    UpdateSubmittingAgencyCommand.Command:
+      required:
+        - code
+        - name
+      type: object
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+        clientCertExpiry:
+          $ref: '#/components/schemas/NodaTime.Instant'
+        idpHint:
+          type: string
+          nullable: true
+        levelOfAssurance:
+          type: integer
+          format: int32
+          nullable: true
+      additionalProperties: false
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      description: DIAM Server OpenId Security Scheme
+      flows:
+        clientCredentials:
+          authorizationUrl: https://dev.common-sso.justice.gov.bc.ca/auth/realms/BCPS/protocol/openid-connect/auth
+          tokenUrl: https://dev.common-sso.justice.gov.bc.ca/auth/realms/BCPS/protocol/openid-connect/token
+          scopes:
+            openid: DIAM Server HTTP Api

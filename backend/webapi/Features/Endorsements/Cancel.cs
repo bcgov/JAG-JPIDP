@@ -1,5 +1,6 @@
 namespace Pidp.Features.Endorsements;
 
+using System.ComponentModel.DataAnnotations;
 using DomainResults.Common;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -10,8 +11,10 @@ public class Cancel
 {
     public class Command : ICommand<IDomainResult>
     {
+        [Required]
         public int EndorsementId { get; set; }
-        public int PartyId { get; set; }
+        [Required]
+        public required int PartyId { get; set; }
     }
 
     public class ComandValidator : AbstractValidator<Command>
