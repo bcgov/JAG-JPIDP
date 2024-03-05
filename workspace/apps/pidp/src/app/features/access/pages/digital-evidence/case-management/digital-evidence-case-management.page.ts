@@ -236,7 +236,7 @@ export class DigitalEvidenceCaseManagementPage
 
     this.isFindDisabled =
       this.formState.caseName.value &&
-        this.formState.caseName?.value.length >= 6 && this.formState.agencyCode.value && this.formState.agencyCode.value.length >= 2 ? false : true;
+        this.formState.caseName?.value.length >= 4 && this.formState.agencyCode.value && this.formState.agencyCode.value.length >= 2 ? false : true;
 
     return this.isFindDisabled;
   }
