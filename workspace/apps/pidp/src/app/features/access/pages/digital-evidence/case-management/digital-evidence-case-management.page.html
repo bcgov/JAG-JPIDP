@@ -31,9 +31,10 @@
       Requested case not found.<br />
       Please check the entered Agency Code and File # and that the case is scheduled to be in DEMS<br />
     </section>
-    <section class="caseSelection mat-elevation-z4" *ngIf="requestedCase && !requestedCaseInactive">
+    <section class="caseSelection mat-elevation-z4"
+      *ngIf="requestedCase && !requestedCaseInactive && !showJUSTINCaseInfo">
 
-      <b>Case Name:</b> {{ requestedCase?.name }}<br />
+      <b>Case Name:</b> {{ decodeName(requestedCase.name) }}<br />
       <div *ngFor="let field of requestedCase.fields">
         <span *ngIf="field.display"><b>{{ field.name }}:</b> {{ field.value }}</span>
       </div>
@@ -46,7 +47,22 @@
       </button>
     </section>
 
-    <section class="caseSelectionInvalid mat-elevation-z4" *ngIf="requestedCase && requestedCaseInactive">
+    <section class="caseNotInDEMS mat-elevation-z4" *ngIf="requestedCase && showJUSTINCaseInfo">
+      The requested case is not currently available in BCPS DEMS.<br />
+      It is a valid <b>JUSTIN</b> case and is currently in a status of <b>{{ requestedCase.justinStatus.description
+        }}</b>.
+      <div *ngIf="requestedCase.justinStatus.demsCandidate">
+        This case should be available in BCPS DEMS within the next 15 minutes. If you are unable to find this case after
+        this
+        time has elapsed please contact BCPS DEMS Support.
+      </div>
+      <div *ngIf="!requestedCase.justinStatus.demsCandidate">
+        This case will NOT be available in DEMS at this time.
+      </div>
+    </section>
+
+    <section class="caseSelectionInvalid mat-elevation-z4"
+      *ngIf="requestedCase && requestedCaseInactive && !showJUSTINCaseInfo">
       This case shows as inactive.<br />To upload to this case, please check:
       <ul>
         <li>case has been submitted or re-submitted through PRIME-JUSTIN.</li>

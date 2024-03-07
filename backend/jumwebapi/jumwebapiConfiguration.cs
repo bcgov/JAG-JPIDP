@@ -12,6 +12,7 @@ public class JumWebApiConfiguration
     public JustinClientConfiguration TestORDSConfiguration { get; set; } = new();
     public JustinBackgroundEventConfiguration JustinChangeEventClient { get; set; } = new();
     public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
+    public JustinClientConfiguration JustinCaseClient { get; set; } = new();
 
     public KafkaClusterConfiguration KafkaCluster { get; set; } = new();
     public KeycloakConfiguration Keycloak { get; set; } = new();

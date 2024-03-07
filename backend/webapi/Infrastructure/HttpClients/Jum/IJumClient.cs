@@ -10,8 +10,11 @@ public interface IJumClient
     Task<Participant?> GetJumUserByPartIdAsync(decimal partId);
     Task<Participant?> GetJumUserByPartIdAsync(string partId);
 
+
     Task<Participant?> GetJumUserByPartIdAsync(decimal partId, string accessToken);
     Task<bool> IsJumUser(Participant? justinUser, Party party);
+
+    Task<Common.Models.JUSTIN.CaseStatus> GetJustinCaseStatus(string partyId, string caseId, string accessToken);
 
     Task<bool> FlagUserUpdateAsComplete(int messageId, bool isSuccessful);
 }

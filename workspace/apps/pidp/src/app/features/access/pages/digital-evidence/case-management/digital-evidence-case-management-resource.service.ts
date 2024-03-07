@@ -24,7 +24,7 @@ export class DigitalEvidenceCaseManagementResource {
     private apiResource: ApiHttpClient,
     private portalResource: PortalResource,
     private resourceUtilsService: ResourceUtilsService
-  ) {}
+  ) { }
 
   public getProfileStatus(partyId: number): Observable<ProfileStatus | null> {
     return this.portalResource.getProfileStatus(partyId);

@@ -17,12 +17,26 @@ public class EdtCaseManagementClient : BaseClient, IEdtCaseManagementClient
 
         if (!result.IsSuccess)
         {
-            return null;
+            if (result.Status == DomainResults.Common.DomainOperationStatus.NotFound)
+            {
+                return new DigitalEvidenceCaseModel
+                {
+                    Name = caseName,
+                    Status = "NotFound"
+                };
+            }
+            else
+            {
+                return new DigitalEvidenceCaseModel
+                {
+                    Name = caseName,
+                    Status = "Error",
+                    Errors = string.Join(",", result.Errors)
+                };
+            }
         }
 
-
         return result.Value;
-
 
     }
 
@@ -37,9 +51,7 @@ public class EdtCaseManagementClient : BaseClient, IEdtCaseManagementClient
             return null;
         }
 
-
         return result.Value;
-
 
     }
 }

@@ -96,6 +96,7 @@ public static class HttpClientSetup
             SaslOauthbearerMethod = SaslOauthbearerMethod.Oidc,
             SaslOauthbearerScope = config.KafkaCluster.Scope,
             ClientId = Dns.GetHostName(),
+            LogConnectionClose = false,
             SslEndpointIdentificationAlgorithm = hostVerification,
             SslCaLocation = config.KafkaCluster.SslCaLocation,
             SaslOauthbearerClientId = config.KafkaCluster.SaslOauthbearerProducerClientId,

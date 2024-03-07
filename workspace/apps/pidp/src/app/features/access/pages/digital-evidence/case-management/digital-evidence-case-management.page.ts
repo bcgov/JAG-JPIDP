@@ -90,6 +90,7 @@ export class DigitalEvidenceCaseManagementPage
 
   public isCaseFound: boolean;
   public accessRequestFailed: boolean;
+  public showJUSTINCaseInfo: boolean;
   public requestedCaseNotFound: boolean;
   public isFindDisabled: boolean;
   public refreshEnabled: boolean;
@@ -195,6 +196,7 @@ export class DigitalEvidenceCaseManagementPage
     this.requestedCaseNotFound = false;
     this.isCaseSearchInProgress = false;
     this.isFindDisabled = true;
+    this.showJUSTINCaseInfo = false;
     this.requestedCaseInactive = false;
     this.refreshEnabled = false;
     this.refreshCount = 0;
@@ -329,6 +331,7 @@ export class DigitalEvidenceCaseManagementPage
     }
 
     this.requestedCase = null;
+    this.showJUSTINCaseInfo = false;
     this.requestedCaseNotFound = false;
     this.requestedCaseInactive = false;
     this.isCaseSearchInProgress = true;
@@ -355,13 +358,22 @@ export class DigitalEvidenceCaseManagementPage
 
         this.isCaseFound = true;
         this.requestedCaseNotFound = !digitalEvidenceCase ? true : false;
-        if (digitalEvidenceCase?.status !== 'Active') {
+        if (digitalEvidenceCase?.status !== 'Active' && !digitalEvidenceCase?.justinStatus) {
           this.requestedCaseInactive = true;
         }
+
+        if (digitalEvidenceCase?.status !== 'Active' && digitalEvidenceCase?.justinStatus) {
+          this.showJUSTINCaseInfo = true;
+        }
+
         this.requestedCase = digitalEvidenceCase;
         this.isCaseSearchInProgress = false;
 
       });
+  }
+
+  public decodeName(name: string): string {
+    return decodeURIComponent(name);
   }
 
   protected performSubmission(): Observable<unknown> {

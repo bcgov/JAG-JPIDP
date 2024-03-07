@@ -1,9 +1,9 @@
-using Common.Models.JUSTIN;
+namespace jumwebapi.Features.Participants.Queries;
+
+using global::Common.Models.JUSTIN;
 using jumwebapi.Infrastructure.HttpClients.JustinParticipant;
 using MediatR;
 using Prometheus;
-
-namespace jumwebapi.Features.Participants.Queries;
 
 public record GetParticipantByUsernameQuery(object Username) : IRequest<Participant>;
 public class GetParticipantByUsername : IRequestHandler<GetParticipantByUsernameQuery, Participant>
