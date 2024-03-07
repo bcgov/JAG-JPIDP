@@ -282,7 +282,6 @@ public class Startup
         {
             options.SwaggerEndpoint("/swagger/v1/swagger.yaml", "JUM Web API");
             options.EnablePersistAuthorization();
-            options.InjectStylesheet("/content/swagger-extras.css");
         }
         );
 

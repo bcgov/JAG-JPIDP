@@ -15,12 +15,13 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AppAny.Quartz.EntityFrameworkCore.Migrations.PostgreSQL" Version="0.4.0" />
-    <PackageReference Include="Quartz.Serialization.Json" Version="3.8.0" />
     <PackageReference Include="xunit" Version="2.6.6" />
     <ProjectReference Include="..\common\Common.csproj" />
     <PackageReference Include="HybridModelBinding" Version="0.18.0" />
     <PackageReference Include="Quartz" Version="3.8.0" />
     <PackageReference Include="Quartz.AspNetCore" Version="3.8.0" />
+    <PackageReference Include="Quartz.Serialization.Json" Version="3.8.0" />
+
     <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.8.0" />
     <PackageReference Include="Keycloak.Net" Version="1.0.18" />
     <PackageReference Include="SendGrid" Version="9.28.1" />
@@ -29,6 +30,7 @@
 
   <ItemGroup>
     <Folder Include="API\v1" />
+    <Folder Include="Features\SanityChecks\Onboarding\" />
   </ItemGroup>
 
   
@@ -40,8 +42,7 @@
 
 
   <Target Name="OpenAPI" AfterTargets="Build" Condition="$(Configuration)=='Debug'">
-    <Exec Command="dotnet swagger tofile --output ./API/v1/$(AssemblyName).yaml --yaml $(OutputPath)$(AssemblyName).dll v1" WorkingDirectory="$(ProjectDir)" />
-    <Exec Command="dotnet swagger tofile --output ./API/v1/$(AssemblyName).json $(OutputPath)$(AssemblyName).dll v1" WorkingDirectory="$(ProjectDir)" />
+
   </Target>
 
 </Project>

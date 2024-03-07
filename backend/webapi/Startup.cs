@@ -249,10 +249,7 @@ public class Startup
                 });
                 store.UseJsonSerializer();
             });
-            //q.UseInMemoryStore();
 
-            //q.UseMicrosoftDependencyInjectionScopedJobFactory();
-            // q.UseSimpleTypeLoader();
             // Create a "key" for the job
             var jobKey = new JobKey("Court access trigger");
 
@@ -265,6 +262,9 @@ public class Startup
                 .ForJob(jobKey) // link to the HelloWorldJob
                 .WithIdentity("CourtAccess-trigger") // give the trigger a unique name
                 .WithCronSchedule(config.CourtAccess.PollCron));
+
+
+            q.AddJob<CourtAccessScheduledJob>(opts => opts.WithIdentity(jobKey));
 
 
         });

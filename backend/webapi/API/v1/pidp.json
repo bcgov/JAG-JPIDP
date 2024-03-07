@@ -3779,8 +3779,7 @@
             "format": "int32"
           },
           "status": {
-            "type": "string",
-            "nullable": true
+            "$ref": "#/components/schemas/Pidp.Models.CaseStatus"
           },
           "edtFields": {
             "type": "array",
@@ -5120,6 +5119,16 @@
         },
         "additionalProperties": false
       },
+      "Pidp.Models.CaseStatus": {
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
       "Pidp.Models.DigitalEvidenceCaseModel": {
         "type": "object",
         "properties": {
@@ -5161,8 +5170,7 @@
             "$ref": "#/components/schemas/NodaTime.Instant"
           },
           "status": {
-            "type": "string",
-            "nullable": true
+            "$ref": "#/components/schemas/Pidp.Models.CaseStatus"
           },
           "errors": {
             "type": "string",

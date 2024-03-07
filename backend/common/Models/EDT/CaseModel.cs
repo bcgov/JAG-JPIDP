@@ -1,5 +1,4 @@
 namespace Common.Models.EDT;
-
 public class CaseModel
 {
 
@@ -21,4 +20,11 @@ public class Field
     public string Name { get; set; } = string.Empty;
     public object Value { get; set; } = string.Empty;
     public bool Display { get; set; } = true;
+}
+
+public enum EDTCaseStatus
+{
+    Active,
+    Inactive,
+    NotFound
 }

@@ -156,7 +156,7 @@ public class BaseClient
             }
 
             var test = await response.Content.ReadAsStringAsync(cancellationToken);
-            Serilog.Log.Information($"Got {test}");
+            Serilog.Log.Debug($"Got {test}");
             if (typeof(T) == typeof(string))
             {
                 return (IDomainResult<T>)DomainResult.Success(test);

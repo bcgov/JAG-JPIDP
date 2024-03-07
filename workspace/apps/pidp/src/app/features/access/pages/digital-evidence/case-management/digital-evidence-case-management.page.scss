@@ -50,6 +50,13 @@ mat-icon {
   background-color: palette.theme-palette(blue, lightest);
 }
 
+.caseNotInDEMS {
+  width: 100%;
+  padding: 5px;
+  border-radius: 5px;
+  border: 2px palette.theme-palette(blue, darkest) solid;
+}
+
 .caseSelectionInvalid {
   width: 100%;
   padding: 5px;

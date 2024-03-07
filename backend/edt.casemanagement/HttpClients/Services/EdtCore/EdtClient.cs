@@ -1,4 +1,5 @@
 namespace edt.casemanagement.HttpClients.Services.EdtCore;
+
 using System.Threading.Tasks;
 using AutoMapper;
 using Common.Models.EDT;
@@ -223,6 +224,8 @@ public class EdtClient : BaseClient, IEdtClient
 
     public async Task<CaseModel> GetCase(int caseId)
     {
+
+
         var result = await this.GetAsync<CaseModel?>($"api/v1/cases/{caseId}");
         if (result.IsSuccess)
         {
@@ -366,6 +369,16 @@ public class EdtClient : BaseClient, IEdtClient
 
                     searchRequest.ResponseStatus = (foundCase != null) ? "Found " + foundCase.Id : "Not found";
 
+                    // As we're searching a 200 is a valid response for a non-existent case
+                    if (foundCase == null)
+                    {
+                        return new CaseModel
+                        {
+                            Status = EDTCaseStatus.NotFound.ToString(),
+                            Name = caseIdOrKey,
+
+                        };
+                    }
                     return foundCase;
                 }
 
@@ -387,7 +400,7 @@ public class EdtClient : BaseClient, IEdtClient
 
                 if (foundCase.Status == "Inactive")
                 {
-                    var primaryAgencyFileField = foundCase.Fields.First(field => field.Name.Equals("Primary Agency File ID"));
+                    var primaryAgencyFileField = foundCase?.Fields.First(field => field.Name.Equals("Primary Agency File ID"));
                     if (primaryAgencyFileField.Value != null && !string.IsNullOrEmpty(primaryAgencyFileField.Value.ToString()))
                     {
                         Log.Information($"Checking if case {caseId} was merged - primary file id {primaryAgencyFileField.Value.ToString()}");
@@ -458,6 +471,7 @@ public class EdtClient : BaseClient, IEdtClient
         }
         catch (Exception ex)
         {
+            Serilog.Log.Error($"Case {caseIdOrKey} lookup error [{ex.Message}]");
             searchRequest.ResponseStatus = ex.Message;
             return foundCase;
 
