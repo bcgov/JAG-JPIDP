@@ -275,6 +275,14 @@ public class EdtClient : BaseClient, IEdtClient
                     filteredFields = filteredFields.Where(f => !removeValues.Contains(f.Id)).ToList();
                 }
 
+                filteredFields.ForEach(f =>
+                {
+                    if (f.Value == null || f.Value.ToString() == "null")
+                    {
+                        f.Value = "Not set";
+                    }
+                });
+
 
                 filteredFields.Sort((f1, f2) =>
                 {
