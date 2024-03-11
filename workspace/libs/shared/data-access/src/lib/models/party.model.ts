@@ -46,4 +46,5 @@ export interface Party extends User {
   jobTitle: string;
   facility: Facility;
   accessRequests: AccessRequest[];
+  userTypes: string[];
 }
