@@ -53,6 +53,9 @@ public class Party : BaseAuditable, IOwnedResource
 
     public ICollection<PartyAlternateId> AlternateIds { get; set; } = new List<PartyAlternateId>();
 
+    public ICollection<PartyUserType> PartyUserTypes { get; set; } = new List<PartyUserType>();
+
+
     public ICollection<PublicUserValidation> ValidationAttempts { get; set; } = new List<PublicUserValidation>();
 
 

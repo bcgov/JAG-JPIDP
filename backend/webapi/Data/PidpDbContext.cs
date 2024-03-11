@@ -31,7 +31,7 @@ public class PidpDbContext : DbContext
     public DbSet<HcimEnrolment> HcimEnrolments { get; set; } = default!;
     public DbSet<DigitalEvidence> DigitalEvidences { get; set; } = default!;
     public DbSet<DigitalEvidenceDisclosure> DigitalEvidenceDisclosures { get; set; } = default!;
-    public DbSet<Models.DigitalEvidenceDefence> DigitalEvidenceDefences { get; set; } = default!;
+    public DbSet<DigitalEvidenceDefence> DigitalEvidenceDefences { get; set; } = default!;
 
     public DbSet<PartyLicenceDeclaration> PartyLicenceDeclarations { get; set; } = default!;
     public DbSet<Party> Parties { get; set; } = default!;
@@ -54,6 +54,8 @@ public class PidpDbContext : DbContext
     public DbSet<DeferredEvent> DeferredEvents { get; set; } = default!;
     public DbSet<PublicUserValidation> PublicUserValidations { get; set; } = default!;
     public DbSet<DigitalEvidencePublicDisclosure> DigitalEvidencePublicDisclosures { get; set; } = default!;
+    public DbSet<PartyUserType> PartyUserTypes { get; set; } = default!;
+    public DbSet<UserTypeLookup> UserTypeLookups { get; set; } = default!;
 
     public override int SaveChanges()
     {
