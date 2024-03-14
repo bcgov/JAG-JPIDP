@@ -34,16 +34,15 @@ export const environment: AppEnvironment = {
   caseManagement: {
     showAUFLink: true,
     showCaseImportLink: false,
-    stickyAgencyCodes: [
-      "FAKE"
-    ]
+    stickyAgencyCodes: ['FAKE'],
   },
   environmentName: EnvironmentName.LOCAL,
   applicationUrl: 'http://localhost:4200',
-  demsImportURL: 'https://p.zpa-auth.net/IevTunx4Bg/doauth?origurl=https%3A%2F%2Fauf%2Etest%2Ejustice%2Egov%2Ebc%2Eca%2FEdt%2Easpx%23&domain=test.agencies.justice.gov.bc.ca',
+  demsImportURL:
+    'https://p.zpa-auth.net/IevTunx4Bg/doauth?origurl=https%3A%2F%2Fauf%2Etest%2Ejustice%2Egov%2Ebc%2Eca%2FEdt%2Easpx%23&domain=test.agencies.justice.gov.bc.ca',
   // demsImportURL: 'https://dems.dev.jag.gov.bc.ca/Edt.aspx#/import/',
   emails: {
-    providerIdentitySupport: 'jpsprovideridentityportal@gov.bc.ca',
+    providerIdentitySupport: 'DIAM.Support@gov.bc.ca',
     specialAuthorityEformsSupport: specialAuthorityEformsSupportEmail,
     hcimAccountTransferSupport: hcimWebAccountTransferSupport,
     hcimEnrolmentSupport: hcimWebEnrolmentSupport,
@@ -59,13 +58,16 @@ export const environment: AppEnvironment = {
     specialAuthority: specialAuthorityUrl,
     doctorsTechnologyOffice: doctorsTechnologyOfficeUrl,
     bcLawDiscPortalUrl: 'https://dev.disclosure.bcprosecution.gov.bc.ca/',
+    publicDiscPortalUrl: 'https://dev.disclosure.bcprosecution.gov.bc.ca/',
     bcpsDemsPortalUrl: 'https://dems.dev.jag.gov.bc.ca/',
-    subAgencyAufPortalUrl: 'https://auf.dev.justice.gov.bc.ca/'
+    subAgencyAufPortalUrl: 'https://auf.dev.justice.gov.bc.ca/',
   },
   launch: {
-    bcLawDiscPortalLabel: "Launch DEMS Agency Upload Facility (AUF)",
-    subAgencyAufPortalLabel: "Launch DEMS Agency Upload Facility (AUF)",
-    bcpsDemsPortalLabel: "Launch DEMS"
+    bcLawDiscPortalLabel: 'Launch DEMS Agency Upload Facility (AUF)',
+    subAgencyAufPortalLabel: 'Launch DEMS Agency Upload Facility (AUF)',
+    bcpsDemsPortalLabel: 'Launch DEMS',
+    outOfCustodyPortalLabel: 'Launch BCPS Disclosure Portal',
+    publicDisclosurePortalLabel: 'Access your disclosure material',
   },
   keycloakConfig: {
     config: {

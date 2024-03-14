@@ -7,6 +7,7 @@ using global::Common.Authorization;
 using IdentityModel.Client;
 using jumwebapi.Extensions;
 using jumwebapi.Infrastructure.Auth;
+using jumwebapi.Infrastructure.HttpClients.JustinCases;
 using jumwebapi.Infrastructure.HttpClients.JustinParticipant;
 using jumwebapi.Infrastructure.HttpClients.JustinUserChangeManagement;
 using jumwebapi.Infrastructure.HttpClients.Keycloak;
@@ -41,6 +42,7 @@ public static class HttpClientSetup
             Serilog.Log.Logger.Information("JUSTIN Client configured with bearer token");
             services.AddHttpClientWithBaseAddress<IJustinParticipantClient, JustinParticipantClient>(config.JustinParticipantClient.Url).ConfigureHttpClient(client => client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", config.JustinAuthentication.ApiKey));
             services.AddHttpClientWithBaseAddress<IJustinUserChangeManagementClient, JustinUserChangeManagementClient>(config.JustinChangeEventClient.Url).ConfigureHttpClient(client => client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", config.JustinAuthentication.ApiKey));
+            services.AddHttpClientWithBaseAddress<IJustinCaseClient, JustinCaseClient>(config.JustinCaseClient.Url).ConfigureHttpClient(client => client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", config.JustinAuthentication.ApiKey));
 
         }
         //else if (config.JustinAuthentication.Method.Equals("oauth", StringComparison.OrdinalIgnoreCase) && !(string.IsNullOrEmpty(config.JustinAuthentication.ClientId) && string.IsNullOrEmpty(config.JustinAuthentication.ClientSecret) && string.IsNullOrEmpty(config.JustinAuthentication.TokenUrl)))
@@ -62,12 +64,15 @@ public static class HttpClientSetup
             var svcCredentials = Convert.ToBase64String(Encoding.ASCII.GetBytes(username + ":" + password));
             services.AddHttpClientWithBaseAddress<IJustinParticipantClient, JustinParticipantClient>(config.JustinParticipantClient.Url).ConfigureHttpClient(client => client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", svcCredentials));
             services.AddHttpClientWithBaseAddress<IJustinUserChangeManagementClient, JustinUserChangeManagementClient>(config.JustinChangeEventClient.Url).ConfigureHttpClient(client => client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", svcCredentials));
+            services.AddHttpClientWithBaseAddress<IJustinCaseClient, JustinCaseClient>(config.JustinCaseClient.Url).ConfigureHttpClient(client => client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", svcCredentials));
+
         }
         else
         {
             Serilog.Log.Logger.Warning("JUSTIN Client configured with no authentication");
             services.AddHttpClientWithBaseAddress<IJustinParticipantClient, JustinParticipantClient>(config.JustinParticipantClient.Url);
             services.AddHttpClientWithBaseAddress<IJustinUserChangeManagementClient, JustinUserChangeManagementClient>(config.JustinChangeEventClient.Url);
+            services.AddHttpClientWithBaseAddress<IJustinCaseClient, JustinCaseClient>(config.JustinCaseClient.Url);
 
         }
 

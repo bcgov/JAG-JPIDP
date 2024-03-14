@@ -7,11 +7,10 @@ using NodaTime;
 /// </summary>
 public class DigitalEvidenceCaseModel
 {
-
+    public Common.Models.JUSTIN.CaseStatus? JustinStatus { get; set; }
 
     public int Id { get; set; }
     public int RequestId { get; set; }
-
     public int PartyId { get; set; }
     public string Name { get; set; } = string.Empty;
 
@@ -23,7 +22,7 @@ public class DigitalEvidenceCaseModel
     public Instant RequestedOn { get; set; }
     public Instant AssignedOn { get; set; }
     public Instant LastUpdated { get; set; }
-    public string Status { get; set; }
+    public string Status { get; set; } = string.Empty;
     public string Errors { get; set; } = string.Empty;
     public string RequestStatus { get; set; } = string.Empty;
 
@@ -38,4 +37,12 @@ public class Field
     public object Value { get; set; }
 
     public bool Display { get; set; }
+}
+
+public enum DEMSCaseStatus
+{
+    Active,
+    Inactive,
+    NotFound,
+    Error
 }

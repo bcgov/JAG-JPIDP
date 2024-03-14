@@ -2,12 +2,15 @@ namespace Pidp.Features.Parties;
 
 using System.Security.Claims;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using NodaTime;
 using Pidp.Data;
 using Pidp.Extensions;
 using Pidp.Infrastructure.Auth;
 using Pidp.Models;
 using Pidp.Models.Lookups;
+using Pidp.Models.UserInfo;
+using Quartz.Impl.Triggers;
 
 public class Create
 {
@@ -180,7 +183,25 @@ public class Create
                 this.context.Parties.Add(party);
             }
 
+            // if user is public user (BCSC) we'll set the org as public user
+            if (user.GetIdentityProvider().Equals(ClaimValues.BCServicesCard))
+            {
+                Serilog.Log.Information("User {0} is using BCSC - automatically assigning organization", user.GetUserId());
 
+                var outOfCustodyType = await this.GetAndAddUserTypeLookup(PublicUserType.OutOfCustodyAccused.ToString(), "Out of custody accused");
+
+                if ( outOfCustodyType != null)
+                {
+                    var partyUserType = new PartyUserType
+                    {
+                        Party = party,
+                        UserTypeLookup = outOfCustodyType
+                    };
+                    party.PartyUserTypes.Add(partyUserType);
+                }
+
+
+            }
 
             if (!(user.GetIdentityProvider().Equals(ClaimValues.Bcps, StringComparison.Ordinal) || user.GetIdentityProvider().Equals(ClaimValues.Idir, StringComparison.Ordinal)))
             {
@@ -276,6 +297,29 @@ public class Create
             // get the SubmittingAgencies list from the result
             return result.Result.SubmittingAgencies;
         }
+
+        private async Task<UserTypeLookup> GetAndAddUserTypeLookup(string name, string description)
+        {
+            var userType = await this.context.UserTypeLookups.Where(t => t.Name.Equals(name)).FirstOrDefaultAsync();
+            if (userType == null)
+            {
+                Serilog.Log.Information($"Adding new user type {name}");
+                // should go to a service interface really
+                this.context.UserTypeLookups.Add(
+                    new UserTypeLookup
+                    {
+                        Name = name,
+                        Description = description
+                    });
+                await this.context.SaveChangesAsync();
+            }
+
+            return userType;
+
+        }
+
     }
+
+
 
 }

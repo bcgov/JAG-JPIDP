@@ -18,7 +18,7 @@ public class CourtLocationQueryHandler : IQueryHandler<CourtLocationQuery, List<
     private readonly PidpDbContext context;
     private readonly IHttpContextAccessor httpContextAccessor;
 
-    public CourtLocationQueryHandler(IMapper mapper, IEdtDisclosureClient edtDisclosureClient, PidpDbContext context,  IHttpContextAccessor httpContextAccessor)
+    public CourtLocationQueryHandler(IMapper mapper, IEdtDisclosureClient edtDisclosureClient, PidpDbContext context, IHttpContextAccessor httpContextAccessor)
     {
         this.mapper = mapper;
         this.edtDisclosureClient = edtDisclosureClient;
@@ -39,7 +39,8 @@ public class CourtLocationQueryHandler : IQueryHandler<CourtLocationQuery, List<
         }
     }
 
-    private async Task<List<CourtLocationAdminModel>> EnhanceCourtLocations(List<CourtLocation> locations, CourtLocationQuery query) {
+    private async Task<List<CourtLocationAdminModel>> EnhanceCourtLocations(List<CourtLocation> locations, CourtLocationQuery query)
+    {
         var response = new List<CourtLocationAdminModel>();
 
         foreach (var location in locations)
@@ -47,10 +48,10 @@ public class CourtLocationQueryHandler : IQueryHandler<CourtLocationQuery, List<
             var model = this.mapper.Map<CourtLocation, CourtLocationAdminModel>(location);
             if (query.IncludeEdtDetails)
             {
-                var edtInfo = await edtDisclosureClient.GetCaseModelByKey(model.Key);
-                if ( edtInfo == null)
+                var edtInfo = await this.edtDisclosureClient.GetCaseModelByKey(model.Key);
+                if (edtInfo == null)
                 {
-                    model.Status = "Not Found";
+                    model.Status = "NotFound";
                 }
                 else
                 {

@@ -29,12 +29,14 @@ data:
       "urls": {
         "subAgencyAufPortalUrl": "{{ .Values.settings.launch.subAgencyAufPortalUrl }}",
         "bcpsDemsPortalUrl": "{{ .Values.settings.launch.bcpsDemsPortalUrl }}",
-        "bcLawDiscPortalUrl": "{{ .Values.settings.launch.bcLawDiscPortalUrl }}"
+        "bcLawDiscPortalUrl": "{{ .Values.settings.launch.bcLawDiscPortalUrl }}",
+        "publicDiscPortalUrl": "{{ .Values.settings.launch.publicDiscPortalUrl }}"
       },
       "launch": {
         "bcLawDiscPortalLabel": "{{ .Values.settings.launch.bcLawDiscPortalLabel }}",
         "subAgencyAufPortalLabel": "{{ .Values.settings.launch.subAgencyAufPortalLabel }}",
-        "bcpsDemsPortalLabel" : "{{ .Values.settings.launch.bcpsDemsPortalLabel }}"
+        "bcpsDemsPortalLabel" : "{{ .Values.settings.launch.bcpsDemsPortalLabel }}",
+        "outOfCustodyPortalLabel" : "{{ .Values.settings.launch.outOfCustodyPortalLabel }}"
       },
       "demsImportURL": "{{ .Values.settings.edtURL }}",
       "keycloakConfig": {

@@ -251,6 +251,17 @@ public partial class ProfileStatus
                         profile.Email = party.Email;
                     }
                 }
+                else
+                {
+                    var lookups = this.context.PartyUserTypes
+                            .Include( p => p.UserTypeLookup )
+                            .Where(p => p.PartyId == party.Id)
+                            .Select( put => put.UserTypeLookup.Name).ToList();
+                    profile.UserTypes = lookups;
+                }
+
+
+          
 
                 var profileStatus = new Model
                 {
@@ -258,6 +269,7 @@ public partial class ProfileStatus
                 {
                     new Model.AccessAdministrator(profile),
                     new Model.OrganizationDetails(profile),
+
                     new Model.Demographics(profile),
 
                     new Model.DigitalEvidence(profile),
@@ -363,6 +375,7 @@ public partial class ProfileStatus
         public string? EmployeeIdentifier { get; set; }
         //public bool OrganizationDetailEntered { get; set; }
         public IEnumerable<AccessTypeCode> CompletedEnrolments { get; set; } = Enumerable.Empty<AccessTypeCode>();
+        public IEnumerable<string> UserTypes { get; set; } = Enumerable.Empty<string>();
         public IEnumerable<string> AccessRequestStatus { get; set; } = Enumerable.Empty<string>();
 
 

@@ -18,11 +18,18 @@ export interface DigitalEvidenceCase {
   name: string;
   description: string;
   key: string;
+  justinStatus: JustinCaseStatus;
   agencyFileNumber: string;
   details: string;
   status: string;
   fields: Field[] | [];
   id: number;
+}
+
+export interface JustinCaseStatus {
+  value: string;
+  demsCandidate: boolean;
+  description: string;
 }
 
 export interface DigitalEvidenceCaseAccessRequest {

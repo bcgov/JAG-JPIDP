@@ -77,11 +77,6 @@ app.MapMetrics("/metrics");
 
 app.UseSerilogRequestLogging(options => options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
 {
-    //var userId = httpContext.User.GetUserId();
-    //if (!userId.Equals(Guid.Empty))
-    //{
-    //    diagnosticContext.Set("User", userId);
-    //}
 });
 
 app.UseHttpsRedirection();
@@ -105,7 +100,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 
-Log.Logger.Information("### Approval Flow Configuration complete");
+Log.Logger.Information("### DIAM Configuration complete");
 
 app.Run();
 
