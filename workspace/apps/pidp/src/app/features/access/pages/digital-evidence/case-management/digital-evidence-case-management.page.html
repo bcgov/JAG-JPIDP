@@ -79,9 +79,15 @@
       It is a valid <b>JUSTIN</b> case and is currently in a status of
       <b>{{ requestedCase.justinStatus.description }}</b>.
       <div *ngIf="requestedCase.justinStatus.demsCandidate">
-        This case should be available in BCPS DEMS within the next 15 minutes.
+        This case should be available in BCPS DEMS within the next 15
+        minutes.<br />
         If you are unable to find this case after this time has elapsed please
-        contact BCPS DEMS Support.
+        contact BCPS DEMS Agency Support @
+        <a
+          href="mailto:DEMS.Agency.Support@gov.bc.ca?subject=Unable to access case {{ getCleanCaseName() }}"
+          >DEMS.Agency.Support@gov.bc.ca</a
+        >
+        for assistance.
       </div>
       <div *ngIf="!requestedCase.justinStatus.demsCandidate">
         This case will NOT be available in DEMS at this time.
