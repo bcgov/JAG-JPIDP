@@ -405,6 +405,13 @@ export class DigitalEvidenceCaseManagementPage
     return decodeURIComponent(name);
   }
 
+  public getCleanCaseName(): string {
+    const caseName = this.requestedCase
+      ? this.requestedCase.name.replace('+', '')
+      : '';
+    return caseName;
+  }
+
   protected performSubmission(): Observable<unknown> {
     throw new Error('Method not implemented.');
   }
