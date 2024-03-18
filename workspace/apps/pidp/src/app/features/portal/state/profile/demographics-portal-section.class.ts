@@ -43,7 +43,7 @@ export class DemographicsPortalSection
       StatusCode.LOCKEDCOMPLETE,
     ].includes(this.getStatusCode())
       ? ''
-      : '1 min to complete';
+      : '';
   }
 
   public get properties(): PortalSectionProperty[] {
