@@ -88,7 +88,7 @@ frontend:
       bcpsDemsPortalLabel: "Launch DEMS"
       bcLawDiscPortalLabel: "Launch Disclosure Portal"
       outOfCustodyPortalLabel: "Launch BCPS Disclosure Portal"
-    edtURL: https://p.zpa-auth.net/IevTunx4Bg/doauth?origurl=https%3A%2F%2Fauf%2Etest%2Ejustice%2Egov%2Ebc%2Eca%2FEdt%2Easpx%23&domain=test.agencies.justice.gov.bc.ca
+    edtURL: "https://p.zpa-auth.net/IevTunx4Bg/doauth?origurl=https%3A%2F%2Fauf%2Etest%2Ejustice%2Egov%2Ebc%2Eca%2FEdt%2Easpx%23&domain=test.agencies.justice.gov.bc.ca"
     environmentName: test
     keycloak:
       url: https://test.common-sso.justice.gov.bc.ca/auth
