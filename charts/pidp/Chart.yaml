@@ -38,7 +38,7 @@ dependencies:
     version: "0.1.5"
   - name: admin-frontend
     repository: "file://../admin-frontend"
-    version: "0.2.0"
+    version: "0.2.1"
   - name: webapi
     repository: "file://../webapi"
     version: "0.3.0"
