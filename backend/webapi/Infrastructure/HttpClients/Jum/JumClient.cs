@@ -263,22 +263,36 @@ public class JumClient : BaseClient, IJumClient
         #endregion
 
         #region email check
-        // check email
-        if (string.IsNullOrEmpty(justinUser.partUpnTxt))
+        if (Environment.GetEnvironmentVariable("JUSTIN_SKIP_USER_EMAIL_CHECK") is not null and "true")
         {
-            Serilog.Log.Error($"JUSTIN email was empty for user {justinUser.partUpnTxt}");
-            response = false;
+            if (string.IsNullOrEmpty(justinUser.partUpnTxt))
+            {
+                Serilog.Log.Warning($"JUSTIN email was empty for user {justinUser.partId}");
+            }
+            if (!string.IsNullOrEmpty(justinUser.partUpnTxt) && !string.IsNullOrEmpty(party.Email) && !justinUser.partUpnTxt.Equals(party.Email, StringComparison.OrdinalIgnoreCase))
+            {
+                Serilog.Log.Warning($"JUSTIN [{justinUser.partUpnTxt}] and party email [{party.Email}] do not match");
+            }
         }
+        else
+        {
+            // check email
+            if (string.IsNullOrEmpty(justinUser.partUpnTxt))
+            {
+                Serilog.Log.Error($"JUSTIN email was empty for user {justinUser.partId}");
+                response = false;
+            }
 
-        if (string.IsNullOrEmpty(party.Email))
-        {
-            Serilog.Log.Error($"Party email was empty for user {party.Id}");
-            response = false;
-        }
-        if (!string.IsNullOrEmpty(justinUser.partUpnTxt) && !string.IsNullOrEmpty(party.Email) && !justinUser.partUpnTxt.Equals(party.Email, StringComparison.OrdinalIgnoreCase))
-        {
-            Serilog.Log.Error($"JUSTIN [{justinUser.partUpnTxt}] and party email [{party.Email}] do not match");
-            response = false;
+            if (string.IsNullOrEmpty(party.Email))
+            {
+                Serilog.Log.Error($"Party email was empty for user {party.Id}");
+                response = false;
+            }
+            if (!string.IsNullOrEmpty(justinUser.partUpnTxt) && !string.IsNullOrEmpty(party.Email) && !justinUser.partUpnTxt.Equals(party.Email, StringComparison.OrdinalIgnoreCase))
+            {
+                Serilog.Log.Error($"JUSTIN [{justinUser.partUpnTxt}] and party email [{party.Email}] do not match");
+                response = false;
+            }
         }
         #endregion
 
