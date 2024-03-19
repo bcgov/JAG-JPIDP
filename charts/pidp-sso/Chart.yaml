@@ -37,3 +37,7 @@ dependencies:
     repository: https://charts.bitnami.com/bitnami
     version: 11.1.3
     condition: postgresql.enabled
+  - name: minio
+    repository: https://charts.bitnami.com/bitnami
+    version: "{{ .Values.minio.version }}"
+    condition: minio.enabled
