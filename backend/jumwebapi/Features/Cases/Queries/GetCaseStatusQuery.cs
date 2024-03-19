@@ -15,7 +15,7 @@ public class GetCaseStatusQueryHandler : IRequestHandler<GetCaseStatusQuery, Cas
 
     private readonly IJustinCaseClient justinCaseClient;
     private static readonly Counter CaseStatusSearchCount = Metrics
-    .CreateCounter("justin_case_status_search_count", "Number of justin case status searches");
+    .CreateCounter("justin_case_status_search_total", "Number of justin case status searches");
     private static readonly Histogram CaseStatusDuration = Metrics
         .CreateHistogram("justin_case_status_search_duration", "Histogram of justin case searches.");
     public GetCaseStatusQueryHandler(IJustinCaseClient justinCaseClient)
