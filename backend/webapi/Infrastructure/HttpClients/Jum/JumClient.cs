@@ -11,7 +11,7 @@ public class JumClient : BaseClient, IJumClient
 {
 
     private static readonly Counter InvalidNameMatchCount = Metrics
-    .CreateCounter("justin_name_mismatch_count", "Number of name matches resulting in errors.");
+    .CreateCounter("justin_name_mismatch_total", "Number of name matches resulting in errors.");
 
     public JumClient(HttpClient httpClient, ILogger<JumClient> logger) : base(httpClient, logger) { }
 

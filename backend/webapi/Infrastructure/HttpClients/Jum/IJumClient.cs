@@ -9,6 +9,7 @@ public interface IJumClient
     Task<Participant?> GetJumUserAsync(string username, string accessToken);
     Task<Participant?> GetJumUserByPartIdAsync(decimal partId);
     Task<Participant?> GetJumUserByPartIdAsync(string partId);
+    Task<Participant?> GetParticipantByUserNameAsync(string username);
 
 
     Task<Participant?> GetJumUserByPartIdAsync(decimal partId, string accessToken);
