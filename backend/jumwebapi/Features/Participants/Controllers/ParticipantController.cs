@@ -31,9 +31,9 @@ public class ParticipantController : ControllerBase
         Log.Logger.Information("Getting participant info for {0}", username);
         var participant = await this.mediator.Send(new GetParticipantByUsernameQuery(username));
         Log.Logger.Information("Got participant {0}", JsonSerializer.Serialize(participant));
-
         return new JsonResult(participant);
     }
+
     [HttpGet("{partId:decimal}")]
     [Produces("application/json")]
     [ProducesResponseType(StatusCodes.Status200OK)]

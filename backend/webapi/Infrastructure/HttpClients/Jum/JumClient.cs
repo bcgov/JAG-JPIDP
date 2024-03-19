@@ -1,6 +1,7 @@
 namespace Pidp.Infrastructure.HttpClients.Jum;
 
 using System.Globalization;
+using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Common.Models.JUSTIN;
@@ -10,6 +11,26 @@ using Pidp.Models;
 public class JumClient : BaseClient, IJumClient
 {
     public JumClient(HttpClient httpClient, ILogger<JumClient> logger) : base(httpClient, logger) { }
+
+
+    /// <summary>
+    /// Get a JUSTIN Case - called if Case is not found in EDT
+    /// </summary>
+    /// <param name="caseId"></param>
+    /// <param name="accessToken"></param>
+    /// <returns></returns>
+    public async Task<Common.Models.JUSTIN.CaseStatus> GetJustinCaseStatus(string partyId, string caseId, string accessToken)
+    {
+        var result = await this.GetAsync<Common.Models.JUSTIN.CaseStatus>($"justin-case/{WebUtility.UrlEncode(caseId)}", accessToken);
+
+        if (!result.IsSuccess)
+        {
+            Serilog.Log.Information($"Failed to get case from JUSTIN {caseId} {result}");
+
+        }
+        return result.Value;
+    }
+
 
     public async Task<Participant?> GetJumUserAsync(string username, string accessToken)
     {
@@ -195,6 +216,8 @@ public class JumClient : BaseClient, IJumClient
         }
 
     }
+
+
 }
 public static partial class JumClientLoggingExtensions
 {

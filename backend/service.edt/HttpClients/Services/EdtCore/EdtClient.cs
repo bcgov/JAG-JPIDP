@@ -347,7 +347,7 @@ public class EdtClient : BaseClient, IEdtClient
     public async Task<UserModificationEvent> EnableTombstoneAccount(EdtUserProvisioningModel accessRequest, EdtUserDto userDetails)
     {
 
-        Log.Logger.Information("Updating EDT User {0} {1}", accessRequest.ToString(), userDetails.ToString());
+        Log.Logger.Information("Updating EDT tombstone user {0} {1}", accessRequest.ToString(), userDetails.ToString());
 
         userDetails.Email = accessRequest.Email;
         userDetails.IsActive = true;
@@ -363,7 +363,7 @@ public class EdtClient : BaseClient, IEdtClient
     {
         using (AccountUpdateDuration.NewTimer())
         {
-            Log.Logger.Information("Updating EDT User {0} {1}", accessRequest.ToString(), previousRequest.ToString());
+            Log.Logger.Information("Updating EDT User {0} {1} TS: {2}", accessRequest.ToString(), previousRequest.ToString(), fromTombstone);
             var edtUserDto = this.mapper.Map<EdtUserProvisioningModel, EdtUserDto>(accessRequest);
             edtUserDto.Id = previousRequest.Id;
             var result = await this.PutAsync($"api/v1/users", edtUserDto);

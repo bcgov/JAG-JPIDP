@@ -14,10 +14,10 @@ export interface AppEnvironment extends EnvironmentConfig {
   // using --configuration=production
   production: boolean;
   caseManagement: {
-    showAUFLink: boolean,
-    showCaseImportLink: boolean,
-    stickyAgencyCodes: string[]
-  },
+    showAUFLink: boolean;
+    showCaseImportLink: boolean;
+    stickyAgencyCodes: string[];
+  };
   emails: {
     providerIdentitySupport: string;
     specialAuthorityEformsSupport: string;
@@ -28,12 +28,14 @@ export interface AppEnvironment extends EnvironmentConfig {
     uciSupport: string;
     msTeamsSupport: string;
     doctorsTechnologyOfficeSupport: string;
-  },
+  };
   launch: {
-    bcLawDiscPortalLabel: string,
-    subAgencyAufPortalLabel: string,
-    bcpsDemsPortalLabel: string
-  },
+    bcLawDiscPortalLabel: string;
+    publicDisclosurePortalLabel: string;
+    subAgencyAufPortalLabel: string;
+    bcpsDemsPortalLabel: string;
+    outOfCustodyPortalLabel: string;
+  };
   urls: {
     bcscSupport: string;
     bcscMobileSetup: string;
@@ -42,5 +44,6 @@ export interface AppEnvironment extends EnvironmentConfig {
     bcLawDiscPortalUrl: string;
     subAgencyAufPortalUrl: string;
     bcpsDemsPortalUrl: string;
+    publicDiscPortalUrl: string;
   };
 }

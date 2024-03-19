@@ -105,6 +105,7 @@ public partial class ProfileStatus
             public LocalDate? Birthdate { get; set; }
             public string? Email { get; set; }
             public string? Phone { get; set; }
+            public IEnumerable<string> UserTypes { get; set; }
 
             public Demographics(ProfileStatusDto profile) : base(profile)
             {
@@ -113,6 +114,7 @@ public partial class ProfileStatus
                 this.Birthdate = profile.Birthdate;
                 this.Email = profile.Email;
                 this.Phone = profile.Phone;
+                this.UserTypes = profile.UserTypes;
             }
 
             // submitting agency user details are locked

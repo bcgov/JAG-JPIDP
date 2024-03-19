@@ -26,7 +26,8 @@ public class PidpConfiguration
     public EnvironmentConfiguration EnvironmentConfig { get; set; } = new EnvironmentConfiguration();
 
     public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
-    public CourtAccessConfiguration CourtAccess { get; set; } = new();
+    public CronConfig CourtAccess { get; set; } = new();
+    public CronConfig SanityCheck { get; set; } = new CronConfig();
     public VerifiableCredentialsConfiguration VerifiableCredentials { get; set; } = new VerifiableCredentialsConfiguration();
     public TelemeteryConfiguration Telemetry { get; set; } = new TelemeteryConfiguration();
 
@@ -73,7 +74,7 @@ public class PidpConfiguration
 
     }
 
-    public class CourtAccessConfiguration
+    public class CronConfig
     {
         public string PollCron { get; set; } = "0 * * * * ?";
     }

@@ -3,6 +3,7 @@ namespace jumwebapi.Infrastructure.HttpClients.JustinParticipant;
 using global::Common.Models.JUSTIN;
 using jumwebapi.Features.Participants.Models;
 
+
 public class JustinParticipantClient : BaseClient, IJustinParticipantClient
 {
     public JustinParticipantClient(HttpClient httpClient, ILogger<JustinParticipantClient> logger) : base(httpClient, logger) { }

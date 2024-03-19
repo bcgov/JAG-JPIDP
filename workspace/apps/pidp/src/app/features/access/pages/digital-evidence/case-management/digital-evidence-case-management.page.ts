@@ -65,7 +65,8 @@ import {
 })
 export class DigitalEvidenceCaseManagementPage
   extends AbstractFormPage<DigitalEvidenceCaseManagementFormState>
-  implements OnInit, AfterViewInit {
+  implements OnInit, AfterViewInit
+{
   public formState: DigitalEvidenceCaseManagementFormState;
   public title: string;
 
@@ -90,10 +91,12 @@ export class DigitalEvidenceCaseManagementPage
 
   public isCaseFound: boolean;
   public accessRequestFailed: boolean;
+  public showJUSTINCaseInfo: boolean;
   public requestedCaseNotFound: boolean;
   public isFindDisabled: boolean;
   public refreshEnabled: boolean;
   public requestedCaseInactive: boolean;
+
   public launchDEMSLabel: string;
   public hasCaseListingResults: boolean;
   public caseTooltip: string;
@@ -132,7 +135,7 @@ export class DigitalEvidenceCaseManagementPage
   ) {
     super(dialog, formUtilsService);
     const routeData = this.route.snapshot.data;
-    const AGENCY_CODE = "agencyCode";
+    const AGENCY_CODE = 'agencyCode';
     this.title = routeData.title;
     this.organizationType = new OrganizationUserType();
     const partyId = this.partyService.partyId;
@@ -161,28 +164,39 @@ export class DigitalEvidenceCaseManagementPage
       this.organizationType.organizationName = data['organizationName'];
       this.organizationType.submittingAgencyCode = data['submittingAgencyCode'];
 
-
       // sticky agency codes if org in the sticky list
-      if (this.organizationType.submittingAgencyCode && this.config.caseManagement.stickyAgencyCodes.includes(this.organizationType.submittingAgencyCode)) {
+      if (
+        this.organizationType.submittingAgencyCode &&
+        this.config.caseManagement.stickyAgencyCodes.includes(
+          this.organizationType.submittingAgencyCode
+        )
+      ) {
         // no local code set but we have the agency code
-        if (!localStorage.getItem(AGENCY_CODE) && this.organizationType.submittingAgencyCode) {
-          if (this.organizationType.submittingAgencyCode && this.formState.agencyCode.value) {
-            localStorage.setItem(AGENCY_CODE, this.organizationType.submittingAgencyCode);
+        if (
+          !localStorage.getItem(AGENCY_CODE) &&
+          this.organizationType.submittingAgencyCode
+        ) {
+          if (
+            this.organizationType.submittingAgencyCode &&
+            this.formState.agencyCode.value
+          ) {
+            localStorage.setItem(
+              AGENCY_CODE,
+              this.organizationType.submittingAgencyCode
+            );
           }
-
         } else if (localStorage.getItem(AGENCY_CODE)) {
-          this.organizationType.submittingAgencyCode = localStorage.getItem(AGENCY_CODE) || "";
+          this.organizationType.submittingAgencyCode =
+            localStorage.getItem(AGENCY_CODE) || '';
           this.formState.agencyCode.patchValue(
             this.organizationType.submittingAgencyCode
           );
         }
       } else {
-
         this.formState.agencyCode.patchValue(
           this.organizationType.submittingAgencyCode
         );
       }
-
     });
     this.collectionNotice =
       documentService.getDigitalEvidenceCollectionNotice();
@@ -195,6 +209,7 @@ export class DigitalEvidenceCaseManagementPage
     this.requestedCaseNotFound = false;
     this.isCaseSearchInProgress = false;
     this.isFindDisabled = true;
+    this.showJUSTINCaseInfo = false;
     this.requestedCaseInactive = false;
     this.refreshEnabled = false;
     this.refreshCount = 0;
@@ -228,15 +243,17 @@ export class DigitalEvidenceCaseManagementPage
     });
   }
 
-
-
   public checkCaseInput(): boolean {
     if (this.formState.caseName.value)
       this.formState.caseName.setValue(this.formState.caseName.value.trim());
 
     this.isFindDisabled =
       this.formState.caseName.value &&
-        this.formState.caseName?.value.length >= 6 && this.formState.agencyCode.value && this.formState.agencyCode.value.length >= 2 ? false : true;
+      this.formState.caseName?.value.length >= 4 &&
+      this.formState.agencyCode.value &&
+      this.formState.agencyCode.value.length >= 2
+        ? false
+        : true;
 
     return this.isFindDisabled;
   }
@@ -257,8 +274,8 @@ export class DigitalEvidenceCaseManagementPage
         exhaustMap((result) =>
           result
             ? this.digitalEvidenceCaseResource.removeCaseAccessRequest(
-              requestedCase.requestId
-            )
+                requestedCase.requestId
+              )
             : EMPTY
         )
       )
@@ -322,13 +339,19 @@ export class DigitalEvidenceCaseManagementPage
       return;
     }
 
-    if (this.organizationType.submittingAgencyCode && this.config.caseManagement.stickyAgencyCodes.includes(this.organizationType.submittingAgencyCode)) {
+    if (
+      this.organizationType.submittingAgencyCode &&
+      this.config.caseManagement.stickyAgencyCodes.includes(
+        this.organizationType.submittingAgencyCode
+      )
+    ) {
       if (this.formState.agencyCode.value) {
-        localStorage.setItem("agencyCode", this.formState.agencyCode.value);
+        localStorage.setItem('agencyCode', this.formState.agencyCode.value);
       }
     }
 
     this.requestedCase = null;
+    this.showJUSTINCaseInfo = false;
     this.requestedCaseNotFound = false;
     this.requestedCaseInactive = false;
     this.isCaseSearchInProgress = true;
@@ -339,7 +362,9 @@ export class DigitalEvidenceCaseManagementPage
         retry(0),
         catchError((error) => {
           if (error.status === 500) {
-            this.toastService.openErrorToast("Case searching failed - please retry or contact support");
+            this.toastService.openErrorToast(
+              'Case searching failed - please retry or contact support'
+            );
           }
           if (error.status === 404) {
             this.isCaseFound = false;
@@ -352,16 +377,39 @@ export class DigitalEvidenceCaseManagementPage
         })
       )
       .subscribe((digitalEvidenceCase: DigitalEvidenceCase) => {
-
         this.isCaseFound = true;
-        this.requestedCaseNotFound = !digitalEvidenceCase ? true : false;
-        if (digitalEvidenceCase?.status !== 'Active') {
+        this.requestedCaseNotFound =
+          !digitalEvidenceCase || digitalEvidenceCase.status === 'NotFound'
+            ? true
+            : false;
+        if (
+          digitalEvidenceCase?.status === 'Inactive' &&
+          !digitalEvidenceCase?.justinStatus
+        ) {
           this.requestedCaseInactive = true;
         }
+
+        if (
+          digitalEvidenceCase?.status !== 'Active' &&
+          digitalEvidenceCase?.justinStatus
+        ) {
+          this.showJUSTINCaseInfo = true;
+        }
+
         this.requestedCase = digitalEvidenceCase;
         this.isCaseSearchInProgress = false;
-
       });
+  }
+
+  public decodeName(name: string): string {
+    return decodeURIComponent(name);
+  }
+
+  public getCleanCaseName(): string {
+    const caseName = this.requestedCase
+      ? this.requestedCase.name.replace('+', '')
+      : '';
+    return caseName;
   }
 
   protected performSubmission(): Observable<unknown> {
@@ -402,10 +450,9 @@ export class DigitalEvidenceCaseManagementPage
   public onUploadToCase(evidenceCase: DigitalEvidenceCase): void {
     let url = this.config.demsImportURL;
 
-    if (this.config.demsImportURL.indexOf("~~CASEID~~") !== -1) {
-      url = url.replace("~~CASEID~~", "" + evidenceCase.id);
-    }
-    else {
+    if (this.config.demsImportURL.indexOf('~~CASEID~~') !== -1) {
+      url = url.replace('~~CASEID~~', '' + evidenceCase.id);
+    } else {
       url += evidenceCase.id;
     }
     this.openPopUp(url);
@@ -422,8 +469,8 @@ export class DigitalEvidenceCaseManagementPage
     } catch (e) {
       this.toastService.openErrorToast(
         'Popup blocked enabled - please add ' +
-        this.config.demsImportURL +
-        ' to your exception list'
+          this.config.demsImportURL +
+          ' to your exception list'
       );
     }
   }

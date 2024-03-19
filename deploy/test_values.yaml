@@ -80,14 +80,16 @@ frontend:
   replicaCount: 1
   settings:
     launch:
-      subAgencyAufPortalUrl: "https://p.zpa-auth.net/IevTunx4Bg/doauth?origurl=https%3A%2F%2Fauf%2Ejustice%2Egov%2Ebc%2Eca%2FEdt%2Easpx%23&domain=agencies.justice.gov.bc.ca"
-      bcpsDemsPortalUrl: "https://dems.jag.gov.bc.ca/"
-      bcLawDiscPortalUrl: "https://p.zpa-auth.net/IevTunx4Bg/doauth?origurl=https%3A%2F%2Fauf%2Ejustice%2Egov%2Ebc%2Eca%2FEdt%2Easpx%23"
+      subAgencyAufPortalUrl: "https://p.zpa-auth.net/IevTunx4Bg/doauth?origurl=https%3A%2F%2Fauf%2Etest%2Ejustice%2Egov%2Ebc%2Eca%2FEdt%2Easpx%23&domain=test.agencies.justice.gov.bc.ca"
+      bcpsDemsPortalUrl: "https://dems.test.jag.gov.bc.ca/"
+      bcLawDiscPortalUrl: "https://p.zpa-auth.net/IevTunx4Bg/doauth?origurl=https%3A%2F%2Ftest%2Edisclosure%2Ebcprosecution%2Egov%2Ebc%2Eca%2FEdt%2Easpx%23&domain=test.legalcounsel.bcprosecution.gov.bc.ca"
+      publicDiscPortalUrl: "https://p.zpa-auth.net/IevTunx4Bg/doauth?origurl=https%3A%2F%2Ftest%2Edisclosure%2Ebcprosecution%2Egov%2Ebc%2Eca%2FEdt%2Easpx%23&domain=test.accused.bcprosecution.gov.bc.ca"
       subAgencyAufPortalLabel: "Launch DEMS Agency Upload Facility (AUF)"
       bcpsDemsPortalLabel: "Launch DEMS"
       bcLawDiscPortalLabel: "Launch Disclosure Portal"
-    edtURL: https://p.zpa-auth.net/IevTunx4Bg/doauth?origurl=https%3A%2F%2Fauf%2Ejustice%2Egov%2Ebc%2Eca%2FEdt%2Easpx%23&domain=agencies.justice.gov.bc.ca
-    environmentName: dev
+      outOfCustodyPortalLabel: "Launch BCPS Disclosure Portal"
+    edtURL: https://p.zpa-auth.net/IevTunx4Bg/doauth?origurl=https%3A%2F%2Fauf%2Etest%2Ejustice%2Egov%2Ebc%2Eca%2FEdt%2Easpx%23&domain=test.agencies.justice.gov.bc.ca
+    environmentName: test
     keycloak:
       url: https://test.common-sso.justice.gov.bc.ca/auth
       realm: BCPS
