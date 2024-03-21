@@ -17,7 +17,7 @@ public class EdtDisclosureServiceConfiguration
     public SchemaRegistryConfiguration SchemaRegistry { get; set; } = new();
     public TelemeteryConfiguration Telemetry { get; set; } = new TelemeteryConfiguration();
     public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
-
+    public string EdtSystemId { get; set; } = "1";
 
     public class SplunkConfiguration
     {

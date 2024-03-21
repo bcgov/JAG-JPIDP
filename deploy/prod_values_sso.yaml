@@ -23,3 +23,37 @@ postgresql:
     database: keycloak
     existingSecret: "pidp-prod-sso-postgres"
 
+minio:
+  enabled: true
+  version: 14.1.0
+  mode: distributed
+  statefulset:
+    replicaCount: 2
+    zones: 2
+    drivesPerNode: 2
+  provisioning:
+    enabled: true
+    buckets:
+      - name: commmon-sso-tf
+        region: us-east-1
+        versioning: Versioned
+        withLock: true
+        lifecycle:
+          - id: CommonSSOTFdRetention
+            prefix: sso-prefix
+            disabled: false
+            expiry:
+              days: 7
+              nonconcurrentDays: 3
+        quota:
+          type: set
+          size: 1GiB
+        tags:
+          key1: common-sso
+  persistence:
+    size: 1Gi
+  console:
+    hostname: minio-console-e27db1-prod.apps.gold.devops.gov.bc.ca
+  api:
+    hostname: minio-api-e27db1-prod.apps.gold.devops.gov.bc.ca
+
