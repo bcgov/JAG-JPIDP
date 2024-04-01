@@ -22,8 +22,9 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         .CreateCounter("disclosure_case_search_total", "Number of disclosure case search requests.");
     private static readonly Histogram AccountCreationDuration = Metrics.CreateHistogram("edt_disclosure_account_creation_duration", "Histogram of edt disclosure account creations.");
     private static readonly Histogram AccountUpdateDuration = Metrics.CreateHistogram("edt_disclosure_account_update_duration", "Histogram of edt disclosure account updates.");
-    private static readonly Counter CaseAddRequest = Metrics
-    .CreateCounter("disclosure_case_addition_total", "Number of disclosure cases added.");
+    private static readonly Counter CourtLocationAddRequest = Metrics
+    .CreateCounter("disclosure_court_location_add_total", "Number of court location requests.");
+    private readonly string EdtOrgUnitId;
 
     public EdtDisclosureClient(
         HttpClient httpClient, OtelMetrics meters, EdtDisclosureServiceConfiguration edtServiceConfiguration,
@@ -34,6 +35,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         this.mapper = mapper;
         this.meters = meters;
         this.configuration = edtServiceConfiguration;
+        this.EdtOrgUnitId = this.configuration.EdtOrgUnitId;
     }
 
 
@@ -56,6 +58,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
                 throw new EdtDisclosureServiceException($"Failed to query for user {userKey} - check service is available [{string.Join(",", result.Errors)}]");
             }
         }
+        Log.Logger.Information($"Found user {userKey} {result.Value?.Id}");
         return result.Value;
     }
 
@@ -183,7 +186,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         ProcessedJobCount.Inc();
         Log.Logger.Information("Finding case {0}", caseName);
 
-        var caseSearch = await this.GetAsync<IEnumerable<CourtLocationCaseModel>?>($"api/v1/org-units/1/cases/{caseName}/id");
+        var caseSearch = await this.GetAsync<IEnumerable<CourtLocationCaseModel>?>($"api/v1/org-units/{this.EdtOrgUnitId}/cases/{caseName}/id");
 
         if (!caseSearch.IsSuccess)
         {
@@ -268,14 +271,6 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
                         Log.Information($"User {newUser.Id} added to {groupToAdd} in EDT");
                     }
                 }
-
-                //// add user to their folio folder
-                //var addedToFolio = await this.AddUserToFolio(accessRequest, newUser);
-                //if (!addedToFolio)
-                //{
-                //    userModificationResponse.successful = false;
-                //    userModificationResponse.Errors.Add($"Failed to add user to Folio");
-                //}
             }
             else
             {
@@ -368,14 +363,6 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
                     }
                 }
             }
-
-
-            //var addedToFolio = await this.AddUserToFolio(accessRequest, currentUser);
-            //if (!addedToFolio)
-            //{
-            //    userModificationResponse.successful = false;
-            //    userModificationResponse.Errors.Add($"Failed to add user {currentUser.Id} to folio {accessRequest.FolioId}");
-            //}
 
             return userModificationResponse;
         }
@@ -496,63 +483,6 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
     }
 
-    //private async Task<bool> AddUserToFolio(EdtDisclosureUserProvisioningModel accessRequest, EdtUserDto currentUser)
-    //{
-    //    if (currentUser == null)
-    //    {
-    //        Log.Error($"Null user sent to AddUserToFolio({accessRequest.Id})");
-    //        return false;
-    //    }
-
-    //    // lets confirm that the caseID and UniqueID match and nobody tried to fake it
-    //    var caseById = await this.GetCase(accessRequest.FolioCaseId);
-    //    var folioCase = await this.FindCase("Folio ID", accessRequest.FolioId);
-
-    //    if (caseById.Id != folioCase.Id)
-    //    {
-    //        Log.Error($"Invalid attempt to access case - folio and case Id do not match - possible attempt to access unauthorized cases");
-    //        return false;
-    //    }
-
-    //    var existingCaseAccess = await this.GetUserCaseAccess(currentUser.Id);
-    //    var alreadyAssigned = existingCaseAccess.FirstOrDefault(cases => cases.Id == folioCase.Id);
-
-    //    if (alreadyAssigned != null)
-    //    {
-    //        Log.Logger.Information($"User already assigned {currentUser.Id} to folio case {accessRequest.FolioId}");
-    //        var userCaseGroups = await this.GetUserCaseGroups(currentUser.Id, caseById.Id);
-    //        var caseUserGroup = userCaseGroups.FirstOrDefault(group => group.GroupName.Equals(CounselGroup, StringComparison.OrdinalIgnoreCase));
-    //        if ( caseUserGroup== null)
-    //        {
-    //            await this.AddUserToCaseGroup(currentUser.Id, caseById.Id, CounselGroup);
-    //        }
-    //        return true;
-    //    }
-
-    //    Log.Logger.Information($"Adding user {currentUser.Id} to folio case {accessRequest.FolioId}");
-    //    var addedToCase = await this.AddUserToCase(currentUser.Id, folioCase.Id, "Case Manager");
-
-
-    //    if (!addedToCase)
-    //    {
-    //        Log.Error($"Failed to add user {currentUser.Id} to case {folioCase.Id}");
-    //        return false;
-    //    }
-    //    else
-    //    {
-
-    //        // add user to case group
-    //        var addedToCaseGroup = await this.AddUserToCaseGroup(currentUser.Id, folioCase.Id, await this.GetCaseGroupId(folioCase.Id, CounselGroup));
-    //        if (!addedToCaseGroup)
-    //        {
-    //            Log.Error($"Failed to add user {currentUser.Id} to case group {folioCase.Id} [{CounselGroup}]");
-    //        }
-
-    //        return addedToCaseGroup;
-    //    }
-    //}
-
-
     private async Task<int> GetCaseGroupId(int caseId, string groupName)
     {
         Log.Debug("Getting case {0} group id for {1}", caseId, groupName);
@@ -583,7 +513,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
     private async Task<IEnumerable<OrgUnitModel>> GetUserCaseAccess(string userId)
     {
 
-        var result = await this.GetAsync<IEnumerable<OrgUnitModel>>($"api/v1/org-units/1/users/{userId}/cases");
+        var result = await this.GetAsync<IEnumerable<OrgUnitModel>>($"api/v1/org-units/{this.EdtOrgUnitId}/users/{userId}/cases");
         if (result.IsSuccess)
         {
             return result.Value;
@@ -790,7 +720,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
     {
         Log.Logger.Information("Finding case {0}", search);
 
-        var result = await this.GetAsync<IEnumerable<CaseId>?>($"api/v1/org-units/1/cases/{search}/id");
+        var result = await this.GetAsync<IEnumerable<CaseId>?>($"api/v1/org-units/{this.EdtOrgUnitId}/cases/{search}/id");
 
         if (result.IsSuccess)
         {
@@ -817,7 +747,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         {
             throw new EdtDisclosureServiceException($"Invalid case creation request received");
         }
-        var response = await this.PostAsync<CaseModel>($"api/v1/org-units/1/cases", caseInfo);
+        var response = await this.PostAsync<CaseModel>($"api/v1/org-units/{this.EdtOrgUnitId}/cases", caseInfo);
         if (!response.IsSuccess)
         {
             var msg = $"Case creation failed {caseInfo.Name} {string.Join(",", response.Errors)}";
@@ -838,7 +768,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
     {
         Log.Logger.Information($"Getting cases for user {userIdOrKey}");
 
-        var response = await this.GetAsync<IEnumerable<KeyIdPair>>($"api/v1/org-units/1/users/{userIdOrKey}/cases");
+        var response = await this.GetAsync<IEnumerable<KeyIdPair>>($"api/v1/org-units/{this.EdtOrgUnitId}/users/{userIdOrKey}/cases");
 
         if (response.IsSuccess)
         {
@@ -968,7 +898,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
     private async Task<IEnumerable<OrgUnitModel>> GetUserOUGroups(string userId)
     {
-        var result = await this.GetAsync<IEnumerable<OrgUnitModel?>>($"api/v1/org-units/1/users/{userId}/groups");
+        var result = await this.GetAsync<IEnumerable<OrgUnitModel?>>($"api/v1/org-units/{this.EdtOrgUnitId}/users/{userId}/groups");
 
         if (!result.IsSuccess)
         {
@@ -984,7 +914,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
     private async Task<int> GetOuGroupId(string regionName)
     {
-        var result = await this.GetAsync<IEnumerable<OrgUnitModel?>>($"api/v1/org-units/1/groups");
+        var result = await this.GetAsync<IEnumerable<OrgUnitModel?>>($"api/v1/org-units/{this.EdtOrgUnitId}/groups");
 
         if (!result.IsSuccess)
         {
@@ -999,7 +929,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
     private async Task<List<EdtUserGroup>> GetAssignedOUGroups(string userKey)
     {
-        var result = await this.GetAsync<List<EdtUserGroup>?>($"api/v1/org-units/1/users/{userKey}/groups");
+        var result = await this.GetAsync<List<EdtUserGroup>?>($"api/v1/org-units/{this.EdtOrgUnitId}/users/{userKey}/groups");
         if (!result.IsSuccess)
         {
             Log.Logger.Error("Failed to determine existing EDT groups for {0} [{1}]", string.Join(", ", result.Errors));
@@ -1028,7 +958,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             // see if user already in group
 
 
-            var result = await this.PostAsync($"api/v1/org-units/1/groups/{groupId}/users", new AddUserToOuGroup() { UserIdOrKey = userId });
+            var result = await this.PostAsync($"api/v1/org-units/{this.EdtOrgUnitId}/groups/{groupId}/users", new AddUserToOuGroup() { UserIdOrKey = userId });
 
             if (!result.IsSuccess)
             {
@@ -1052,7 +982,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
     {
         CaseModel response = null;
 
-        var result = await this.GetAsync<IdentifierResponseModel>($"api/v1/org-units/1/identifiers?filter=IdentifierValue:{identifierValue},IdentifierType:{identifierType},ItemType:Case");
+        var result = await this.GetAsync<IdentifierResponseModel>($"api/v1/org-units/{this.EdtOrgUnitId}/identifiers?filter=IdentifierValue:{identifierValue},IdentifierType:{identifierType},ItemType:Case");
         if (result.IsSuccess)
         {
             Log.Information($"Found {result.Value.Total} case for {identifierValue}");
