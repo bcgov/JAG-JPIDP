@@ -5,18 +5,26 @@ using edt.disclosure.Exceptions;
 using edt.disclosure.HttpClients.Services.EdtDisclosure;
 using edt.disclosure.Kafka.Interfaces;
 using edt.disclosure.Kafka.Model;
+using Prometheus;
 
 public abstract class BaseProvisioningHandler
 {
     protected IEdtDisclosureClient edtClient { get; set; }
     protected readonly EdtDisclosureServiceConfiguration configuration;
     protected readonly IKafkaProducer<string, PersonFolioLinkageModel> folioLinkageProducer;
+    protected readonly string edtCoreDisclosureInstanceId;
+    private static readonly Histogram UserFolioCreationHistogram = Metrics.CreateHistogram("edt_disclosure_folio_creation", "Histogram of edt disclosure folio creation times.");
+    private static readonly Counter FolioLinkageRequests = Metrics
+    .CreateCounter("edt_disclosure_folio_linkage_count_total", "Number of disclosure folio linkage requests.");
+    private static readonly Counter FolioLinkageRequestFailures = Metrics
+.CreateCounter("edt_disclosure_folio_linkage_failure_total", "Number of failed disclosure folio linkage requests.");
 
     protected BaseProvisioningHandler(IEdtDisclosureClient edtClient, EdtDisclosureServiceConfiguration configuration, IKafkaProducer<string, PersonFolioLinkageModel> producer)
     {
         this.edtClient = edtClient;
         this.configuration = configuration;
         this.folioLinkageProducer = producer;
+        this.edtCoreDisclosureInstanceId = this.configuration.EdtCoreDisclosureInstanceId;
     }
 
     protected async Task<string> CheckEdtServiceVersion() => await this.edtClient.GetVersion();
@@ -38,59 +46,62 @@ public abstract class BaseProvisioningHandler
 
     protected async Task<CaseModel> CreateUserFolio(EdtDisclosureUserProvisioningModel accessRequestModel)
     {
-        // check case isnt present - key changes depending on user type
-        string? caseKey;
-        if (accessRequestModel is EdtDisclosurePublicUserProvisioningModel)
+
+        using (UserFolioCreationHistogram.NewTimer())
         {
-            caseKey = ((EdtDisclosurePublicUserProvisioningModel)accessRequestModel).PersonKey;
-            Serilog.Log.Information($"Public user {accessRequestModel.UserName} - creating folio with key: {caseKey}");
+            // check case isnt present - key changes depending on user type
+            string? caseKey;
+            if (accessRequestModel is EdtDisclosurePublicUserProvisioningModel model)
+            {
+                caseKey = model.PersonKey;
+                Serilog.Log.Information($"Public user {accessRequestModel.UserName} - creating folio with key: {caseKey}");
 
-        }
-        else
-        {
+            }
+            else
+            {
 
-            caseKey = accessRequestModel.Key;
-            Serilog.Log.Information($"Defence user {accessRequestModel.UserName} - creating folio with key: {caseKey}");
+                caseKey = accessRequestModel.Key;
+                Serilog.Log.Information($"Defence user {accessRequestModel.UserName} - creating folio with key: {caseKey}");
 
-        }
+            }
 
-        var caseModel = await this.edtClient.FindCaseByKey(caseKey);
-        if (caseModel != null)
-        {
+            var caseModel = await this.edtClient.FindCaseByKey(caseKey);
+            if (caseModel != null)
+            {
+                return caseModel;
+            }
+
+            var caseName = (accessRequestModel is EdtDisclosurePublicUserProvisioningModel)
+                ? accessRequestModel.FullName + " (" + caseKey + " Accused Folio)"
+                : accessRequestModel.FullName + " (" + caseKey + " Defence Folio)";
+
+            var caseCreation = (accessRequestModel is EdtDisclosurePublicUserProvisioningModel) ?
+                new EdtCaseDto
+                {
+                    Name = caseName,
+                    Description = "Folio Case for Accused",
+                    Key = caseKey,
+                    TemplateCase = (this.configuration.EdtClient.OutOfCustodyTemplateId > -1) ? "" + this.configuration.EdtClient.OutOfCustodyTemplateId : "",
+                } :
+
+                new EdtCaseDto
+                {
+                    Name = caseName,
+                    Description = "Folio Case for Defence Counsel",
+                    Key = caseKey,
+                    TemplateCase = (this.configuration.EdtClient.DefenceFolioTemplateId > -1) ? "" + this.configuration.EdtClient.DefenceFolioTemplateId : "",
+                };
+
+            Serilog.Log.Information($"Creating new case {caseCreation.Name} Template {caseCreation.TemplateCase}");
+
+            var createResponseID = await this.edtClient.CreateCase(caseCreation);
+
+            caseModel = await this.edtClient.GetCase(createResponseID);
+
+
             return caseModel;
+
         }
-
-        var caseName = (accessRequestModel is EdtDisclosurePublicUserProvisioningModel)
-            ? accessRequestModel.FullName + " (" + caseKey + " Accused Folio)"
-            : accessRequestModel.FullName + " (" + caseKey + " Defence Folio)";
-
-        var caseCreation = (accessRequestModel is EdtDisclosurePublicUserProvisioningModel) ?
-            new EdtCaseDto
-            {
-                Name = caseName,
-                Description = "Folio Case for Accused",
-                Key = caseKey,
-                TemplateCase = (this.configuration.EdtClient.OutOfCustodyTemplateId > -1) ? "" + this.configuration.EdtClient.OutOfCustodyTemplateId : "",
-            } :
-
-            new EdtCaseDto
-            {
-                Name = caseName,
-                Description = "Folio Case for Defence Counsel",
-                Key = caseKey,
-                TemplateCase = (this.configuration.EdtClient.DefenceFolioTemplateId > -1) ? "" + this.configuration.EdtClient.DefenceFolioTemplateId : "",
-            };
-
-        Serilog.Log.Information($"Creating new case {caseCreation.Name} Template {caseCreation.TemplateCase}");
-
-        var createResponseID = await this.edtClient.CreateCase(caseCreation);
-
-        caseModel = await this.edtClient.GetCase(createResponseID);
-
-
-        return caseModel;
-
-
     }
 
     protected async Task<bool> LinkUserToFolio(EdtDisclosureUserProvisioningModel accessRequestModel, int caseId)
@@ -144,10 +155,9 @@ public abstract class BaseProvisioningHandler
         // once linkage is complete we need to publish back to core the ID for the folio and the user info
         var msgKey = Guid.NewGuid().ToString();
         var edtKey = (accessRequestModel is EdtDisclosurePublicUserProvisioningModel model) ? model.PersonKey : "";
-
         var produced = await this.folioLinkageProducer.ProduceAsync(this.configuration.KafkaCluster.CoreFolioCreationNotificationTopic, msgKey, new PersonFolioLinkageModel
         {
-            DisclosureCaseIdentifier = "1-" + caseId,
+            DisclosureCaseIdentifier = edtCoreDisclosureInstanceId + "-" + caseId,
             PersonKey = user.Key,
             EdtExternalId = edtKey,
             AccessRequestId = accessRequestModel.AccessRequestId,
@@ -155,8 +165,18 @@ public abstract class BaseProvisioningHandler
             Status = "Pending"
         });
 
-
-        return true;
+        if (produced != null && produced.Status == Confluent.Kafka.PersistenceStatus.Persisted)
+        {
+            Serilog.Log.Information($"{msgKey} persisted for core folio linkage {caseId} for person {user.Key}");
+            FolioLinkageRequests.Inc();
+            return true;
+        }
+        else
+        {
+            Serilog.Log.Error($"Failed to produce to topic {this.configuration.KafkaCluster.CoreFolioCreationNotificationTopic} ({msgKey})");
+            FolioLinkageRequestFailures.Inc();
+            return false;
+        }
     }
 
 }

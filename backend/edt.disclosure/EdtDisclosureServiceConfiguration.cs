@@ -17,7 +17,10 @@ public class EdtDisclosureServiceConfiguration
     public SchemaRegistryConfiguration SchemaRegistry { get; set; } = new();
     public TelemeteryConfiguration Telemetry { get; set; } = new TelemeteryConfiguration();
     public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
-    public string EdtSystemId { get; set; } = "1";
+    // this is the ID know to core for disclosure (e.g. in disclosure it might be 1 but in core it may be 2 (as core is already 1))
+    public string EdtCoreDisclosureInstanceId { get; set; } = "2";
+    public string EdtInstanceId { get; set; } = "1";
+    public string EdtOrgUnitId { get; set; } = "1";
 
     public class SplunkConfiguration
     {
