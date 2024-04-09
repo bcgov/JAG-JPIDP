@@ -36,6 +36,15 @@ public interface IEdtClient
     Task<CaseModel> GetCase(int caseId);
 
     /// <summary>
+    /// Gets summary information only
+    /// This is not affected by the state of the case (unlike GetCase)
+    /// It is primarily used to detemine if the case is currently being processed
+    /// </summary>
+    /// <param name="caseId"></param>
+    /// <returns></returns>
+    Task<CaseSummaryModel> GetCaseSummary(int caseId);
+
+    /// <summary>
     /// Get the case Ids currently assigned to a user
     /// </summary>
     /// <param name="userKey"></param>
