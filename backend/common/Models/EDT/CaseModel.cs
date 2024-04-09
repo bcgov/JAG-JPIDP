@@ -1,4 +1,15 @@
 namespace Common.Models.EDT;
+
+public class CaseSummaryModel
+{
+    public bool IsCreated { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public int Id { get; set; }
+    public string Key { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+
+}
+
 public class CaseModel
 {
 

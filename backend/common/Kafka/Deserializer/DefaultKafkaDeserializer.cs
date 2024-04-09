@@ -3,11 +3,9 @@ using System;
 using System.Globalization;
 using System.Text;
 using Confluent.Kafka;
-using Google.Protobuf.WellKnownTypes;
 using Newtonsoft.Json;
 using NodaTime;
 using NodaTime.Extensions;
-using NodaTime.Serialization.JsonNet;
 
 public sealed class DefaultKafkaDeserializer<T> : IDeserializer<T>
 {

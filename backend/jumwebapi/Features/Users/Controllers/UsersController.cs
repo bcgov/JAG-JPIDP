@@ -35,7 +35,7 @@ public class UsersController : ControllerBase
         return new JsonResult(e);
     }
 
-    [HttpGet("/username/{username:alpha}")]
+    [HttpGet("username/{username:alpha}")]
     [Produces("application/json")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -45,7 +45,7 @@ public class UsersController : ControllerBase
         var user = await this._mediator.Send(new GetUserQuery(username));
         return new JsonResult(user);
     }
-    [HttpGet("/partid/{partId:long}")]
+    [HttpGet("partid/{partId:long}")]
     [Produces("application/json")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

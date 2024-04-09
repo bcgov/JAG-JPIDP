@@ -53,7 +53,7 @@
       scheduled to be in DEMS<br />
     </section>
     <section
-      *ngIf="requestedCase && !requestedCaseNotFound && !requestedCaseInactive && !showJUSTINCaseInfo"
+      *ngIf="requestedCase && !requestedCaseNotFound && !requestedCaseInactive && !showJUSTINCaseInfo && requestedCase.status !== 'Queued'"
       class="caseSelection mat-elevation-z4">
       <b>Case Name:</b> {{ decodeName(requestedCase.name) }}<br />
       <div *ngFor="let field of requestedCase.fields">
@@ -92,6 +92,31 @@
       <div *ngIf="!requestedCase.justinStatus.demsCandidate">
         This case will NOT be available in DEMS at this time.
       </div>
+    </section>
+
+    <section
+      *ngIf="checkingQueuedCase  || requestedCase && requestedCase?.status === 'Queued'"
+      class="caseQueued mat-elevation-z4">
+      This case has been received by BCPS DEMS and is currently being processed.
+      <br />
+      Typically, case creation only takes a few minutes.
+      <div
+        style="width: 100%"
+        fxLayout="row"
+        fxLayoutAlign="start end"
+        fxLayoutGap="8">
+        <mat-progress-spinner
+          diameter="36"
+          mode="indeterminate"></mat-progress-spinner>
+        <button
+          type="button"
+          mat-stroked-button
+          color="primary"
+          (click)="cancelQueuedSearch()">
+          Cancel Search
+        </button>
+      </div>
+      <br />
     </section>
 
     <section
