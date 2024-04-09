@@ -1,5 +1,6 @@
 namespace Pidp;
 
+using Common.Models.EDT;
 using Pidp.Infrastructure.Auth;
 
 public class PidpConfiguration
@@ -24,13 +25,12 @@ public class PidpConfiguration
     public EdtCaseManagementClientConfiguration EdtCaseManagementClient { get; set; } = new EdtCaseManagementClientConfiguration();
     public EdtClientConfiguration EdtDisclosureClient { get; set; } = new EdtClientConfiguration();
     public EnvironmentConfiguration EnvironmentConfig { get; set; } = new EnvironmentConfiguration();
-
+    public List<PersonLookupType> EdtPersonLookups { get; set; } = [];
     public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
     public CronConfig CourtAccess { get; set; } = new();
     public CronConfig SanityCheck { get; set; } = new CronConfig();
     public VerifiableCredentialsConfiguration VerifiableCredentials { get; set; } = new VerifiableCredentialsConfiguration();
     public TelemeteryConfiguration Telemetry { get; set; } = new TelemeteryConfiguration();
-
 
     // ------- Configuration Objects -------
 
@@ -42,6 +42,13 @@ public class PidpConfiguration
     public class BackGroundServicesConfiguration
     {
         public DecomissionCaseAccessService DecomissionCaseAccessService { get; set; } = new DecomissionCaseAccessService();
+    }
+
+    public class PersonLookupType
+    {
+        public LookupType Type { get; set; }
+        public string Name { get; set; }
+
     }
 
     public class SplunkConfiguration
@@ -58,6 +65,9 @@ public class PidpConfiguration
     public class ConnectionStringConfiguration
     {
         public string PidpDatabase { get; set; } = string.Empty;
+        public string Schema { get; set; } = "public";
+        public string EfHistorySchema { get; set; } = "public";
+        public string EfHistoryTable { get; set; } = "__EFMigrationsHistory";
     }
 
     public class VerifiableCredentialsConfiguration
@@ -114,6 +124,7 @@ public class PidpConfiguration
         public string IncomingChangeEventTopic { get; set; } = string.Empty;
         public string ProducerTopicName { get; set; } = string.Empty;
         public string CaseAccessRequestTopicName { get; set; } = string.Empty;
+        public string ProbeRequestTopicName { get; set; } = string.Empty;
         public string PersonCreationTopic { get; set; } = string.Empty;
         public string DisclosureDefenceUserCreationTopic { get; set; } = string.Empty;
         public string DisclosurePublicUserCreationTopic { get; set; } = string.Empty;
@@ -169,7 +180,6 @@ public class PidpConfiguration
         public int MaxClientValidations { get; set; } = 5;
         public string DateOfBirthField { get; set; } = "Date of Birth";
     }
-
 
     public class EdtCaseManagementClientConfiguration
     {
