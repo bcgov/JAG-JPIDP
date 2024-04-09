@@ -53,7 +53,13 @@
       scheduled to be in DEMS<br />
     </section>
     <section
-      *ngIf="requestedCase && !requestedCaseNotFound && !requestedCaseInactive && !showJUSTINCaseInfo && requestedCase.status !== 'Queued'"
+      *ngIf="requestedCase && requestedCase.status === 'Removed'"
+      class="caseSelectionInvalid mat-elevation-z4">
+      Requested case has been removed from BCPSDEMS.<br />
+      Please contact DEMS Support for information regarding this case<br />
+    </section>
+    <section
+      *ngIf="requestedCase && !requestedCaseNotFound && !requestedCaseInactive && !showJUSTINCaseInfo && requestedCase.status !== 'Queued' && requestedCase.status !== 'Removed'"
       class="caseSelection mat-elevation-z4">
       <b>Case Name:</b> {{ decodeName(requestedCase.name) }}<br />
       <div *ngFor="let field of requestedCase.fields">
