@@ -1,0 +1,36 @@
+name: diam-sso-dev
+ 
+on:
+  push:
+    branches: [develop]
+    paths:
+      - "auth/**"
+      - ".github/workflows/build-push-sso-dev.yaml"
+  workflow_dispatch:
+env:
+  IMAGE_NAME: diam-sso
+  WORKING_DIRECTORY: ./auth
+ 
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+ 
+    steps:
+      - uses: actions/checkout@v3
+ 
+      - name: Login to Artifactory
+        uses: docker/login-action@v1
+        with:
+          registry: artifacts.developer.gov.bc.ca
+          username: ${{ secrets.ARTIFACTORY_USERNAME }}
+          password: ${{ secrets.ARTIFACTORY_PASSWORD }}
+ 
+      - name: Build Image
+        working-directory: ${{env.WORKING_DIRECTORY}}
+        run: |
+          docker build -t artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:dev .
+     
+      - name: Docker Push to Artifactory
+        run: |
+          docker push artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:dev
