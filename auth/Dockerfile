@@ -1,4 +1,4 @@
-FROM registry.redhat.io/rhbk/keycloak-rhel9:22-6
+FROM image-registry.apps.gold.devops.gov.bc.ca/e27db1-tools/kc_rhel9:22-6
 
 MAINTAINER lee.wright@gov.bc.ca
 
