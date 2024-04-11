@@ -5,7 +5,7 @@ on:
     branches: [develop]
     paths:
       - "auth/**"
-      - ".github/workflows/build-push-sso-dev.yaml"
+      - ".github/workflows/build-push-sso-dev.yml"
   workflow_dispatch:
 env:
   IMAGE_NAME: diam-sso
