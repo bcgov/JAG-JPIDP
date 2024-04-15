@@ -1,0 +1,39 @@
+name: diam-edtcore
+ 
+on:
+  push:
+    branches: [develop]
+    paths:
+      - "backend/service.edt/**"
+      - ".github/workflows/build-push-edtcore.yml"
+  workflow_dispatch:
+env:
+  IMAGE_NAME: diam-edtcore
+  WORKING_DIRECTORY: ./backend
+ 
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+ 
+    steps:
+      - uses: actions/checkout@v3
+  
+      - name: Branch name
+        run: echo running on branch ${GITHUB_REF##*/}
+
+      - name: Login to Artifactory 
+        uses: docker/login-action@v1
+        with:
+          registry: artifacts.developer.gov.bc.ca
+          username: ${{ secrets.ARTIFACTORY_USERNAME }}
+          password: ${{ secrets.ARTIFACTORY_PASSWORD }}
+ 
+      - name: Build Image
+        working-directory: ${{env.WORKING_DIRECTORY}}
+        run: |
+          docker build -t artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:${GITHUB_REF##*/} -f Dockerfile.EdtCore .
+     
+      - name: Docker Push to Artifactory
+        run: |
+          docker push artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:${GITHUB_REF##*/}
