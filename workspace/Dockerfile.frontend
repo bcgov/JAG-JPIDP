@@ -9,7 +9,7 @@ RUN yarn install
 
 COPY ./ /app/
 
-RUN yarn build --prod --cache-folder ./ycache --verbose; rm -rf ./ycache
+RUN yarn build --prod --verbose
 
 RUN ls -l /app
 
