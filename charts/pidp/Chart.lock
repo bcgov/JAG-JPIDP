@@ -13,7 +13,7 @@ dependencies:
   version: 0.3.0
 - name: diam-config
   repository: file://../diam-config
-  version: 0.1.0
+  version: 0.2.0
 - name: edt-casemgmt
   repository: file://../edt-casemgmt
   version: 0.3.0
@@ -32,5 +32,5 @@ dependencies:
 - name: nginx
   repository: file://../nginx
   version: 9.7.3
-digest: sha256:3034c043bc3b201a93726fc87a8311e0011f11491879d03a358e2e238b4006ac
-generated: "2024-03-19T10:57:30.1641178-07:00"
+digest: sha256:0b7144299dc267a5be24dcbb11b2621dd773ec58f0b7591455142ef94e947d79
+generated: "2024-04-16T08:26:40.0863469-07:00"
