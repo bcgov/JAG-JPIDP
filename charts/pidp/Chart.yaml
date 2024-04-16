@@ -47,7 +47,7 @@ dependencies:
     version: "0.3.0"
   - name: diam-config
     repository: "file://../diam-config"
-    version: "0.1.0"
+    version: "0.2.0"
   - name: edt-casemgmt
     repository: "file://../edt-casemgmt"
     version: "0.3.0"
