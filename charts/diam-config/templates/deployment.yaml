@@ -59,8 +59,10 @@ spec:
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.global.image.registry }}/{{ .Values.image.repository }}:{{ .Values.global.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.global.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          imagePullSecrets:
+            - name: {{ .Values.imagePullSecrets.name }}
           env:
             - name: DOTNET_BUNDLE_EXTRACT_BASE_DIR
               value: /tmp
