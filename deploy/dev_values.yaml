@@ -36,7 +36,7 @@ postgresql:
 
 diam-config:
   image:
-    registry: artifacts.developer.gov.bc.ca/artifactory/de27-general-docker
+    registry: artifacts.developer.gov.bc.ca/de27-general-docker
 
 
 
