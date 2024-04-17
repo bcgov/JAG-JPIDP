@@ -8,7 +8,7 @@ on:
       - ".github/workflows/build-push-diamconfig.yml"
   workflow_dispatch:
 env:
-  IMAGE_NAME: diam-diamconfig
+  IMAGE_NAME: diam-config
   WORKING_DIRECTORY: ./backend
  
 jobs:
