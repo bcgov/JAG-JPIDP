@@ -24,7 +24,8 @@ image:
   # Overrides the image tag whose default is the chart appVersion.
   tag: "develop"
 
-imagePullSecrets: []
+imagePullSecrets: 
+  name: de27-artifactory-pull-secret
 nameOverride: ""
 fullnameOverride: ""
 
