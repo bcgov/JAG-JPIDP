@@ -22,7 +22,7 @@ image:
 
 
 imagePullSecrets: 
-  name: artifacts-pull-diam-qqllzc
+  name: artifacts-diam-qqllzc
 
 
 nameOverride: ""
