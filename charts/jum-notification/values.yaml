@@ -7,13 +7,13 @@ global:
   commit_sha: ""
   licenseplate: e27db1
   image:
-    registry: image-registry.openshift-image-registry.svc:5000/e27db1-tools
+    registry: artifacts.developer.gov.bc.ca/de27-general-docker
     tag: develop
 
 replicaCount: 1
 
 image:
-  repository: jum-notification
+  repository: diam-notification
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: "develop"

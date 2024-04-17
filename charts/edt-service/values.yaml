@@ -16,7 +16,7 @@ aspnetcore:
   environment: Staging
 
 image:
-  repository: edt-service
+  repository: diam-edtcore
   pullPolicy: Always
 
 
