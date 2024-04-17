@@ -23,7 +23,8 @@ image:
 migrations:
   enabled: false
   
-imagePullSecrets: []
+imagePullSecrets: 
+  name: de27-artifactory-pull-secret
 nameOverride: ""
 fullnameOverride: ""
 

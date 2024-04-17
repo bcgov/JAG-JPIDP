@@ -23,7 +23,8 @@ image:
   pullPolicy: Always
 
 
-imagePullSecrets: []
+imagePullSecrets: 
+  name: de27-artifactory-pull-secret
 nameOverride: ""
 fullnameOverride: ""
 
