@@ -17,12 +17,12 @@ aspnetcore:
 
 
 image:
-  repository: diam-diamconfig
+  repository: diam-config
   pullPolicy: Always
 
 
 imagePullSecrets: 
-  name: artifacts-diam-qqllzc
+  name: de27-artifactory-pull-secret
 
 
 nameOverride: ""

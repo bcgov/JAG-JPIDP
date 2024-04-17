@@ -1,4 +1,4 @@
-name: diam-diamconfig
+name: diam-config
  
 on:
   push:
