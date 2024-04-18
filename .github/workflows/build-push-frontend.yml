@@ -68,7 +68,7 @@ jobs:
           
           # Update the Helm values file with the new image tag and version
           DATETIME=$(date +'%Y-%m-%d %H:%M:%S')  # Get current date and time
-          echo "Updating tag apitag: to ${{ steps.short_sha.outputs.SHORT_SHA }"
+          echo "Updating tag apitag: to ${{ steps.short_sha.outputs.SHORT_SHA }}"
 
           more ../deploy/dev_values.yaml
           sed -i "s/apitag: .*/apitag: dev-${{ steps.short_sha.outputs.SHORT_SHA }} # Image Updated on $DATETIME/" ../deploy/dev_values.yaml
