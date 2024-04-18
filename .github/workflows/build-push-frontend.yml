@@ -45,7 +45,7 @@ jobs:
         with:
           repository: bcgov-c/tenant-gitops-e27db1
           ref: develop
-          token: ${{ secrets.GIT_OPS_SSH_KEY }} # `GH_PAT` is a secret that contains your PAT
+          token: ${{ secrets.ARGO_PAT }} # access token
           path: gitops
 
       - name: Update Helm Values and Commit
