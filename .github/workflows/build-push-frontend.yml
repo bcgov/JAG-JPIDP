@@ -64,16 +64,8 @@ jobs:
           echo "Updating helm values to trigger ArgoCD deployment"
           
           # Navigate to the directory containing your Helm values file for the environment develop -> DEV, test -> test
-          echo "gitops"
-          cd gitops
+          cd gitops/charts
           ls -l
-          echo "Apps"
-          cd applications
-          ls -l 
-          cd ..
-          echo "charts"
-          ls -l "charts"
-          cd charts
           
           # Update the Helm values file with the new image tag and version
           DATETIME=$(date +'%Y-%m-%d %H:%M:%S')  # Get current date and time
@@ -95,8 +87,6 @@ jobs:
           cd frontend
 
           helm dependency build
-          
-          cd charts
 
           git add .
           
