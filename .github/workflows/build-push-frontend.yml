@@ -44,7 +44,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: bcgov-c/tenant-gitops-e27db1
-          ref: develop
+          ref: ${GITHUB_REF##*/}
           token: ${{ secrets.ARGO_PAT }} # access token
           path: gitops
 
