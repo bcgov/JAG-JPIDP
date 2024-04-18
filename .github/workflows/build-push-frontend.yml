@@ -61,7 +61,7 @@ jobs:
         if: steps.gitops.outcome == 'success'  # Only run if the previous step (publish) was successful
         run: |
 
-          echo "Updating helm values to trigger ArgoCD deployment"
+          echo "Updating helm values to trigger ArgoCD deployment "
           
           # Navigate to the directory containing your Helm values file for the environment develop -> DEV, test -> test
           cd gitops/charts
