@@ -71,8 +71,8 @@ jobs:
           cd applications
           ls -l 
           cd ..
-          echo "back"
-          ls -l 
+          echo "charts"
+          ls -l "charts"
           cd charts
           
           # Update the Helm values file with the new image tag and version
