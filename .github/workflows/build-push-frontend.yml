@@ -65,7 +65,6 @@ jobs:
           
           # Navigate to the directory containing your Helm values file for the environment develop -> DEV, test -> test
           cd gitops/charts
-          ls -l
           
           # Update the Helm values file with the new image tag and version
           DATETIME=$(date +'%Y-%m-%d %H:%M:%S')  # Get current date and time
