@@ -62,10 +62,16 @@ jobs:
         run: |
 
           echo "Updating helm values to trigger ArgoCD deployment"
-          ls -l gitops/charts
           
           # Navigate to the directory containing your Helm values file for the environment develop -> DEV, test -> test
+          echo "gitops"
           cd gitops
+          ls -l
+          echo "Apps"
+          cd applications
+          ls -l 
+          cd ..
+          echo "back"
           ls -l 
           cd charts
           
