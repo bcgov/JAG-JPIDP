@@ -49,6 +49,11 @@ jobs:
           token: ${{ secrets.ARGO_PAT }} # access token
           path: gitops
 
+      - name: Debug Paths
+        id: debug      
+        run: |
+          ls -l gitops         
+
       - name: Update Helm Values and Commit
         id: helm
         if: steps.gitops.outcome == 'success'  # Only run if the previous step (publish) was successful
