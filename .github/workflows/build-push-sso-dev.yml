@@ -35,8 +35,8 @@ jobs:
       - name: Build Image
         working-directory: ${{env.WORKING_DIRECTORY}}
         run: |
-          docker build -t artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:dev .
+          docker build -t artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:${GITHUB_REF##*/} .
      
       - name: Docker Push to Artifactory
         run: |
-          docker push artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:dev
+          docker push artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:${GITHUB_REF##*/}
