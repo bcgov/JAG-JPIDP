@@ -1,4 +1,4 @@
-FROM image-registry.apps.gold.devops.gov.bc.ca/e27db1-tools/kc_rhel9:22-6
+FROM image-registry.apps.gold.devops.gov.bc.ca/e27db1-tools/kc_rhel9:22-10
 
 MAINTAINER lee.wright@gov.bc.ca
 
@@ -25,8 +25,10 @@ COPY theme/ /opt/keycloak/themes/
 #RUN chown -R jboss:jboss $JBOSS_HOME/themes
 
 #RUN chmod -R 775 $JBOSS_HOME/themes
+COPY entrypoint.sh /opt/keycloak/bin/entrypoint.sh
+RUN chgrp 0 /opt/keycloak/bin/entrypoint.sh && chmod a+rx,o-rx /opt/keycloak/bin/entrypoint.sh
 
 
 USER 1000
 
-ENTRYPOINT [ "/opt/keycloak/bin/kc.sh" ]
+ENTRYPOINT [ "/opt/keycloak/bin/entrypoint.sh","/opt/keycloak/bin/kc.sh" ]
