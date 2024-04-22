@@ -29,7 +29,6 @@ COPY entrypoint.sh /opt/keycloak/bin/entrypoint.sh
 RUN chgrp 0 /opt/keycloak/bin/entrypoint.sh && chmod a+rx,o-rx /opt/keycloak/bin/entrypoint.sh
 RUN chown -R 1000 /opt/keycloak
 
-
 USER 1000
 
 ENTRYPOINT [ "/opt/keycloak/bin/entrypoint.sh","/opt/keycloak/bin/kc.sh" ]
