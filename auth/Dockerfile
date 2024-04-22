@@ -25,8 +25,10 @@ COPY theme/ /opt/keycloak/themes/
 #RUN chown -R jboss:jboss $JBOSS_HOME/themes
 
 #RUN chmod -R 775 $JBOSS_HOME/themes
+COPY entrypoint.sh /opt/keycloak/bin/entrypoint.sh
+RUN chgrp 0 /opt/keycloak/bin/entrypoint.sh && chmod a+rx,o-rx /opt/keycloak/bin/entrypoint.sh
 
 
 USER 1000
 
-ENTRYPOINT [ "/opt/keycloak/bin/kc.sh" ]
+ENTRYPOINT [ "/opt/keycloak/bin/entrypoint.sh","/opt/keycloak/bin/kc.sh" ]
