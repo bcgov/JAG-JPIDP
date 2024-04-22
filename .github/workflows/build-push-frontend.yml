@@ -28,6 +28,13 @@ jobs:
           registry: artifacts.developer.gov.bc.ca
           username: ${{ secrets.ARTIFACTORY_USERNAME }}
           password: ${{ secrets.ARTIFACTORY_PASSWORD }}
+
+       # Get SHORT_SHA to tag images
+      - name: Get short SHA
+        id: short_sha
+        run: |
+          echo "::set-output name=SHORT_SHA::$(git rev-parse --short HEAD)"
+          echo "Short SHA: $SHORT_SHA"          
  
       - name: Build Image
         working-directory: ${{env.WORKING_DIRECTORY}}
@@ -35,6 +42,7 @@ jobs:
           docker build -t artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:${GITHUB_REF##*/} -f Dockerfile.frontend .
      
       - name: Docker Push to Artifactory
+        id: publish      
         run: |
           docker push artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:${GITHUB_REF##*/}
 
@@ -45,22 +53,24 @@ jobs:
         with:
           repository: bcgov-c/tenant-gitops-e27db1
           ref: develop
-          token: ${{ secrets.ARGO_PAT }} # `GH_PAT` is a secret that contains your PAT
+          token: ${{ secrets.ARGO_PAT }} # access token
           path: gitops
 
       - name: Update Helm Values and Commit
         id: helm
         if: steps.gitops.outcome == 'success'  # Only run if the previous step (publish) was successful
         run: |
-          # Clone the GitOps deployment configuration repository
-          # Navigate to the directory containing your Helm values file for the environment develop -> DEV, test -> test and 
-          cd gitops/charts
 
+          echo "Updating helm values to trigger ArgoCD deployment "
+          
+          # Navigate to the directory containing your Helm values file for the environment develop -> DEV, test -> test
+          cd gitops/charts
+          
           # Update the Helm values file with the new image tag and version
           DATETIME=$(date +'%Y-%m-%d %H:%M:%S')  # Get current date and time
+          echo "Updating tag apitag: to ${{ steps.short_sha.outputs.SHORT_SHA }}"
 
           sed -i "s/apitag: .*/apitag: dev-${{ steps.short_sha.outputs.SHORT_SHA }} # Image Updated on $DATETIME/" ../deploy/dev_values.yaml
-
           sed -i "s/apitag: .*/apitag: dev-${{ steps.short_sha.outputs.SHORT_SHA }} # Image Updated on $DATETIME/" frontend/values.yaml
           
           # Commit and push the changes
@@ -76,8 +86,6 @@ jobs:
           cd frontend
 
           helm dependency build
-          
-          cd charts
 
           git add .
           
