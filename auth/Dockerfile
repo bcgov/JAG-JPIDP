@@ -11,7 +11,7 @@ COPY module.xml /opt/keycloak/lib/lib/main/
 COPY okio-1.13.0.jar /opt/keycloak/lib/lib/main/
 
 # deployment for Justin REST SPI
-##COPY json-graphql-remote-claim.jar /opt/keycloak/providers
+COPY json-graphql-remote-claim.jar /opt/keycloak/providers
 
 # deployment for BCGOV Themes
 COPY theme/bcgov /opt/keycloak/themes/bcgov
