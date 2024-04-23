@@ -63,7 +63,7 @@ jobs:
           echo "Updating tag apitag: to ${{ steps.short_sha.outputs.SHORT_SHA }}"
 
           sed -i "s/apitag: .*/apitag: dev-${{ steps.short_sha.outputs.SHORT_SHA }} # Image Updated on $DATETIME/" ../deploy/dev_values.yaml
-          sed -i "s/apitag: .*/apitag: dev-${{ steps.short_sha.outputs.SHORT_SHA }} # Image Updated on $DATETIME/" frontend/values.yaml
+          sed -i "s/apitag: .*/apitag: dev-${{ steps.short_sha.outputs.SHORT_SHA }} # Image Updated on $DATETIME/" edt-disclosure/values.yaml
           
           # Commit and push the changes
           git config --global user.email "actions@github.com"
@@ -75,7 +75,7 @@ jobs:
           
           # Repackage Helm Chart      
 
-          cd frontend
+          cd edt-disclosure
 
           helm dependency build
 
