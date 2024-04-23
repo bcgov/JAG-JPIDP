@@ -31,6 +31,8 @@ COPY entrypoint.sh /opt/keycloak/bin/entrypoint.sh
 RUN chgrp 0 /opt/keycloak/bin/entrypoint.sh && chmod a+rx,o-rx /opt/keycloak/bin/entrypoint.sh
 RUN chown -R 1000 /opt/keycloak
 RUN ls -l /opt/keycloak
+RUN chmod 777 /opt/keycloak/lib/quarkus/build-system.properties
+RUN more /opt/keycloak/lib/quarkus/build-system.properties
 
 USER 1000
 
