@@ -16,8 +16,8 @@ COPY json-graphql-remote-claim.jar /opt/keycloak/providers
 # deployment for BCGOV Themes
 COPY theme/ /opt/keycloak/themes/
 ##COPY configuration/standalone-openshift.xml $JBOSS_HOME/standalone/configuration/standalone-openshift.xml
-#COPY keycloak-metrics-spi-2.5.3.jar /opt/keycloak/providers
-#COPY bcgov-services-1.0.0.jar /opt/keycloak/providers
+COPY keycloak-metrics-spi-2.5.3.jar /opt/keycloak/providers
+COPY bcgov-services-1.0.0.jar /opt/keycloak/providers
 
 #RUN touch /opt/eap/standalone/deployments/keycloak-metrics-spi-2.5.3.jar.deploy
 #RUN touch /opt/eap/standalone/deployments/bcgov-services-1.0.0.jar.deploy
@@ -31,9 +31,9 @@ COPY entrypoint.sh /opt/keycloak/bin/entrypoint.sh
 RUN chgrp 0 /opt/keycloak/bin/entrypoint.sh && chmod a+rx,o-rx /opt/keycloak/bin/entrypoint.sh
 RUN chown -R 1000 /opt/keycloak
 RUN ls -l /opt/keycloak
-RUN chmod 777 /opt/keycloak/lib/quarkus/build-system.properties
-RUN more /opt/keycloak/lib/quarkus/build-system.properties
 
 USER 1000
+
+RUN ls -l /opt/keycloak/lib/quarkus/build-system.properties
 
 ENTRYPOINT [ "/opt/keycloak/bin/entrypoint.sh","/opt/keycloak/bin/kc.sh" ]
