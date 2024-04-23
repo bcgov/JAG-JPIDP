@@ -4,6 +4,7 @@ MAINTAINER lee.wright@gov.bc.ca
 
 USER root
 
+
 # custom claim plugins module for wildfly
 COPY okhttp-3.9.0.jar /opt/keycloak/lib/lib/main/
 COPY module.xml /opt/keycloak/lib/lib/main/
@@ -25,9 +26,11 @@ COPY theme/ /opt/keycloak/themes/
 #RUN chown -R jboss:jboss $JBOSS_HOME/themes
 
 #RUN chmod -R 775 $JBOSS_HOME/themes
+
 COPY entrypoint.sh /opt/keycloak/bin/entrypoint.sh
 RUN chgrp 0 /opt/keycloak/bin/entrypoint.sh && chmod a+rx,o-rx /opt/keycloak/bin/entrypoint.sh
 RUN chown -R 1000 /opt/keycloak
+RUN ls -l /opt/keycloak
 
 USER 1000
 
