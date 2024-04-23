@@ -1,4 +1,4 @@
-FROM quay.io/keycloak/keycloak
+FROM quay.io/keycloak/keycloak:nightly
 
 MAINTAINER lee.wright@gov.bc.ca
 
