@@ -16,7 +16,7 @@ COPY json-graphql-remote-claim.jar /opt/keycloak/providers
 # deployment for BCGOV Themes
 COPY theme/ /opt/keycloak/themes/
 ##COPY configuration/standalone-openshift.xml $JBOSS_HOME/standalone/configuration/standalone-openshift.xml
-COPY keycloak-metrics-spi-2.5.3.jar /opt/keycloak/providers
+##COPY keycloak-metrics-spi-2.5.3.jar /opt/keycloak/providers
 COPY bcgov-services-1.0.0.jar /opt/keycloak/providers
 
 #RUN touch /opt/eap/standalone/deployments/keycloak-metrics-spi-2.5.3.jar.deploy
