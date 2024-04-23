@@ -1,4 +1,4 @@
-FROM image-registry.apps.gold.devops.gov.bc.ca/e27db1-tools/kc_rhel9:22-10
+FROM quay.io/keycloak/keycloak
 
 MAINTAINER lee.wright@gov.bc.ca
 
