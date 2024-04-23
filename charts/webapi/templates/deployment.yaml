@@ -86,6 +86,8 @@ spec:
 
             - name: JUSTIN_EMAIL_CHANGE_DISABLED
               value: "true"
+            - name: apitag
+              value: {{ .Values.global.image.apitag }}
 
           volumeMounts:
             - name: kafka-truststore

@@ -76,6 +76,8 @@ spec:
               value: /tmp
             - name: ApplicationUrl
               value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"
+            - name: apitag
+              value: {{ .Values.global.image.apitag }}
           volumeMounts:
           - name: truststore
             mountPath: "/opt/kafka/certificates"

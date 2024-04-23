@@ -63,7 +63,9 @@ spec:
             - name: DOTNET_BUNDLE_EXTRACT_BASE_DIR
               value: /tmp
             - name: ApplicationUrl
-              value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"     
+              value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"
+            - name: apitag
+              value: {{ .Values.global.image.apitag }}     
           volumeMounts:
           ports:
             - name: http
