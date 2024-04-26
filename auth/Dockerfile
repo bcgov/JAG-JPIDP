@@ -38,6 +38,6 @@ RUN ls -l /opt/keycloak
 
 USER 1000
 
-RUN ls -l /opt/keycloak/lib/quarkus/build-system.properties
+#RUN ls -l /opt/keycloak/lib/quarkus/build-system.properties
 
 ENTRYPOINT [ "/opt/keycloak/bin/entrypoint.sh","/opt/keycloak/bin/kc.sh" ]
