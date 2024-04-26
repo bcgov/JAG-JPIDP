@@ -1,4 +1,6 @@
-FROM registry.redhat.io/rh-sso-7/sso76-openshift-rhel8:7.6-5
+#FROM registry.redhat.io/rh-sso-7/sso76-openshift-rhel8:7.6-5
+FROM FROM image-registry.apps.gold.devops.gov.bc.ca/e27db1-tools/sso76-openshift-rhel8
+
 #FROM quay.io/keycloak/keycloak:24.0.2-0
 
 MAINTAINER lee.wright@gov.bc.ca
