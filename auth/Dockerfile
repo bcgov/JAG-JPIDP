@@ -1,4 +1,5 @@
-FROM quay.io/keycloak/keycloak:24.0.2-0
+FROM registry.redhat.io/rh-sso-7/sso76-openshift-rhel8:7.6-5
+#FROM quay.io/keycloak/keycloak:24.0.2-0
 
 MAINTAINER lee.wright@gov.bc.ca
 
@@ -14,10 +15,11 @@ COPY okio-1.13.0.jar /opt/keycloak/lib/lib/main/
 COPY json-graphql-remote-claim.jar /opt/keycloak/providers
 
 # deployment for BCGOV Themes
-COPY theme/bcgov /opt/keycloak/themes/bcgov
+#COPY theme/bcgov /opt/keycloak/themes/bcgov
 ##COPY configuration/standalone-openshift.xml $JBOSS_HOME/standalone/configuration/standalone-openshift.xml
 ##COPY keycloak-metrics-spi-2.5.3.jar /opt/keycloak/providers
-#COPY bcgov-services-1.0.0.jar /opt/keycloak/providers
+#COPY bcgov-services-1.0.0.jar /opt/keycloak/providers   # - failed with class not found org/keycloak/authentication/DisplayTypeAuthenticatorFactory
+
 
 #RUN touch /opt/eap/standalone/deployments/keycloak-metrics-spi-2.5.3.jar.deploy
 #RUN touch /opt/eap/standalone/deployments/bcgov-services-1.0.0.jar.deploy
