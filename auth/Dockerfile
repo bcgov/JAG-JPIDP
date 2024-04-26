@@ -20,6 +20,7 @@ COPY json-graphql-remote-claim.jar /opt/keycloak/providers
 ##COPY keycloak-metrics-spi-2.5.3.jar /opt/keycloak/providers
 #COPY bcgov-services-1.0.0.jar /opt/keycloak/providers   # - failed with class not found org/keycloak/authentication/DisplayTypeAuthenticatorFactory
 
+
 #RUN touch /opt/eap/standalone/deployments/keycloak-metrics-spi-2.5.3.jar.deploy
 #RUN touch /opt/eap/standalone/deployments/bcgov-services-1.0.0.jar.deploy
 #RUN touch /opt/eap/standalone/deployments/json-graphql-remote-claim.jar.deploy
