@@ -15,7 +15,8 @@ COPY json-graphql-remote-claim.jar /opt/keycloak/providers
 
 # deployment for BCGOV Themes
 COPY theme/bcgov /opt/keycloak/themes/bcgov
-COPY theme/bcgov-idp-login /opt/keycloak/themes/bcgov-idp-log
+COPY theme/bcgov-idp-login /opt/keycloak/themes/bcgov-idp-login
+COPY theme/diam-corrections /opt/keycloak/themes/diam-corrections
 
 
 ##COPY configuration/standalone-openshift.xml $JBOSS_HOME/standalone/configuration/standalone-openshift.xml
