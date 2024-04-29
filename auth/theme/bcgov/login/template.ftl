@@ -43,7 +43,7 @@
   <div class="banner">
     <span></span>
     <#if properties.kcShowHeaderTitle == "true">
-      <h1>Pathfinder SSO</h1>
+      <h1>DIAM Justice &amp; Public Safety Sector SSO</h1>
     </#if>
   </div>
   <div class="other">&nbsp;</div>
