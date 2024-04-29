@@ -1,4 +1,6 @@
-FROM registry.redhat.io/rh-sso-7/sso76-openshift-rhel8:7.6-5
+#FROM registry.redhat.io/rh-sso-7/sso76-openshift-rhel8:7.6-5
+FROM image-registry.apps.gold.devops.gov.bc.ca/e27db1-tools/sso76-openshift-rhel8:7.6-5
+
 #FROM quay.io/keycloak/keycloak:24.0.2-0
 
 MAINTAINER lee.wright@gov.bc.ca
@@ -36,6 +38,6 @@ RUN ls -l /opt/keycloak
 
 USER 1000
 
-RUN ls -l /opt/keycloak/lib/quarkus/build-system.properties
+#RUN ls -l /opt/keycloak/lib/quarkus/build-system.properties
 
 ENTRYPOINT [ "/opt/keycloak/bin/entrypoint.sh","/opt/keycloak/bin/kc.sh" ]
