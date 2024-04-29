@@ -15,6 +15,9 @@ COPY json-graphql-remote-claim.jar /opt/keycloak/providers
 
 # deployment for BCGOV Themes
 COPY theme/bcgov /opt/keycloak/themes/bcgov
+COPY theme/bcgov-idp-login /opt/keycloak/themes/bcgov-idp-log
+
+
 ##COPY configuration/standalone-openshift.xml $JBOSS_HOME/standalone/configuration/standalone-openshift.xml
 ##COPY keycloak-metrics-spi-2.5.3.jar /opt/keycloak/providers
 #COPY bcgov-services-1.0.0.jar /opt/keycloak/providers   # - failed with class not found org/keycloak/authentication/DisplayTypeAuthenticatorFactory
