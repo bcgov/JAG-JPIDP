@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function (event) {
 
   addTooltips();
 
+  addCSNumberListeners();
   if (titleContent === 'Login Error:') {
     if (
       document.getElementsByClassName('login-err-username')[0] &&
@@ -46,6 +47,7 @@ document.addEventListener('DOMContentLoaded', function (event) {
   }
 });
 
+
 function updateFavIcon() {
   var link = document.querySelector("link[rel*='icon']") || document.createElement('link');
   link.type = 'image/x-icon';
@@ -72,4 +74,47 @@ function forceRestartLogin() {
   if (restartLoginLink && !otpInput) {
     window.location.href = restartLoginLink.href;
   }
+}
+
+function addCSNumberListeners() {
+  const cs1 = document.getElementById("cs_num_1");
+  const cs2 = document.getElementById("cs_num_2");
+  const cs3 = document.getElementById("cs_num_3");
+  const cs4 = document.getElementById("cs_num_4");
+  const cs5 = document.getElementById("cs_num_5");
+  const cs6 = document.getElementById("cs_num_6");
+  const cs7 = document.getElementById("cs_num_7");
+  const cs8 = document.getElementById("cs_num_8");
+  const login_but = document.getElementById("kc-login");
+
+  cs1.addEventListener("input", (event) => {
+    if (event.target.value.length > 1) {
+      cs1.value = "";
+    }
+    cs2.focus();
+  });
+  cs2.addEventListener("input", (event) => {
+    if (event.target.value.length > 1) {
+      cs2.value = "";
+    }
+    cs3.focus();
+  });
+  cs3.addEventListener("input", (event) => {
+    cs4.focus();
+  });
+  cs4.addEventListener("input", (event) => {
+    cs5.focus();
+  });
+  cs5.addEventListener("input", (event) => {
+    cs6.focus();
+  });
+  cs6.addEventListener("input", (event) => {
+    cs7.focus();
+  });
+  cs7.addEventListener("input", (event) => {
+    cs8.focus();
+  });
+  cs8.addEventListener("input", (event) => {
+    login_but.focus();
+  });
 }
