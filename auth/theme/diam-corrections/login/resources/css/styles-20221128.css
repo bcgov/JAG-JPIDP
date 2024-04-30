@@ -5,34 +5,34 @@
   color: #036;
 }
 
-.login-pf body .login-pf-page {
-  padding-bottom: 60px;
-}
+  .login-pf body .login-pf-page {
+    padding-bottom: 60px;
+  }
 
-.login-pf body .login-pf-page #kc-header {
-  margin-bottom: 0;
-}
+    .login-pf body .login-pf-page #kc-header {
+      margin-bottom: 0;
+    }
 
-.login-pf body .login-pf-page #kc-header #kc-header-wrapper {
-  font-size: 2rem;
-  font-weight: 700;
-  text-align: center;
-  text-transform: uppercase;
-  color: white;
-  padding: 62px 10px 20px;
-}
+      .login-pf body .login-pf-page #kc-header #kc-header-wrapper {
+        font-size: 2rem;
+        font-weight: 700;
+        text-align: center;
+        text-transform: uppercase;
+        color: white;
+        padding: 62px 10px 20px;
+      }
 
-.login-pf body .login-pf-page #kc-header #kc-header-wrapper.no-transform {
-  text-transform: none;
-}
+        .login-pf body .login-pf-page #kc-header #kc-header-wrapper.no-transform {
+          text-transform: none;
+        }
 
-.login-pf body .login-pf-page .login-pf-accounts,
-.login-pf body .login-pf-page .card-pf {
-  margin-bottom: 10px;
-  max-width: 450px;
-  padding: 10px 20px;
-  margin: auto;
-}
+    .login-pf body .login-pf-page .login-pf-accounts,
+    .login-pf body .login-pf-page .card-pf {
+      margin-bottom: 10px;
+      max-width: 1024px;
+      padding: 10px 20px;
+      margin: auto;
+    }
 
 @media (max-width: 450px) {
   .login-pf body .login-pf-page .login-pf-accounts,
@@ -48,20 +48,20 @@
   position: relative;
 }
 
-.login-pf body .login-pf-page .login-pf-header::before {
-  content: url('../img/logo.svg');
-  display: block;
-  padding-bottom: 20px;
-}
+  .login-pf body .login-pf-page .login-pf-header::before {
+    content: url('../img/logo.svg');
+    display: block;
+    padding-bottom: 20px;
+  }
 
-.login-pf body .login-pf-page .login-pf-header #kc-page-title {
-  font-size: 1rem;
-  font-weight: 700;
-  border-bottom: 1px solid #b3b1b3;
-  color: #036;
-  padding-bottom: 5px;
-  margin-bottom: 0;
-}
+  .login-pf body .login-pf-page .login-pf-header #kc-page-title {
+    font-size: 1rem;
+    font-weight: 700;
+    border-bottom: 1px solid #b3b1b3;
+    color: #036;
+    padding-bottom: 5px;
+    margin-bottom: 0;
+  }
 
 .login-pf body .login-pf-page #kc-content #kc-content-wrapper #kc-form-wrapper {
   width: 100%;
@@ -86,15 +86,15 @@
   position: relative;
 }
 
-.login-pf body .login-pf-page #kc-content #kc-content-wrapper .kc-social-link > a > .kc-social-title {
-  width: 100%;
-}
+  .login-pf body .login-pf-page #kc-content #kc-content-wrapper .kc-social-link > a > .kc-social-title {
+    width: 100%;
+  }
 
-.login-pf body .login-pf-page #kc-content #kc-content-wrapper .kc-social-link > a > .kc-social-icon {
-  width: 28px;
-  position: absolute;
-  right: 10px;
-}
+  .login-pf body .login-pf-page #kc-content #kc-content-wrapper .kc-social-link > a > .kc-social-icon {
+    width: 28px;
+    position: absolute;
+    right: 10px;
+  }
 
 .login-pf body .login-pf-page .kc-social-links {
   display: block;
@@ -114,31 +114,31 @@
   z-index: 100;
 }
 
-.login-pf body > header .banner {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  margin: 0 10px 0 0;
-}
+  .login-pf body > header .banner {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin: 0 10px 0 0;
+  }
 
-.login-pf body > header .banner span {
-  content: url('../img/bcgovlogo.svg');
-  display: block;
-  height: 100%;
-}
+    .login-pf body > header .banner span {
+      content: url('../img/bcgovlogo.svg');
+      display: block;
+      height: 100%;
+    }
 
-.login-pf body > header .banner h1 {
-  font-family: 'BCSans', 'Noto Sans', Verdana, Arial, sans-serif;
-  font-weight: 700;
-  margin: 5px 5px 0 18px;
-  white-space: nowrap;
-}
+    .login-pf body > header .banner h1 {
+      font-family: 'BCSans', 'Noto Sans', Verdana, Arial, sans-serif;
+      font-weight: 700;
+      margin: 5px 5px 0 18px;
+      white-space: nowrap;
+    }
 
-.login-pf body > header .other {
-  display: flex;
-  align-items: center;
-  flex-grow: 1;
-}
+  .login-pf body > header .other {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+  }
 
 /* FOOTER */
 .login-pf body footer {
@@ -152,33 +152,33 @@
   font-family: 'BCSans', 'Noto Sans', Verdana, Arial, sans-serif;
 }
 
-.login-pf body footer .list {
-  display: flex;
-  justify-content: center;
-  flex-direction: column;
-  text-align: center;
-  height: 3rem;
-}
+  .login-pf body footer .list {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    height: 3rem;
+  }
 
-.login-pf body footer ul {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  margin: 0;
-  color: #fff;
-  list-style: none;
-  align-items: center;
-  height: 100%;
-}
+  .login-pf body footer ul {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin: 0;
+    color: #fff;
+    list-style: none;
+    align-items: center;
+    height: 100%;
+  }
 
-.login-pf body footer ul li a {
-  font-size: 1rem;
-  font-weight: normal; /* 400 */
-  color: #fff;
-  border-right: 1px solid #4b5e7e;
-  padding-left: 0.8rem;
-  padding-right: 0.8rem;
-}
+    .login-pf body footer ul li a {
+      font-size: 1rem;
+      font-weight: normal; /* 400 */
+      color: #fff;
+      border-right: 1px solid #4b5e7e;
+      padding-left: 0.8rem;
+      padding-right: 0.8rem;
+    }
 
 /* BCGOV PRIMARY BUTTON */
 #kc-form-buttons input,
@@ -203,43 +203,43 @@
   padding: 0.4rem 0.5rem;
 }
 
-#kc-form-buttons input:hover,
-#kc-social-providers .kc-social-links a[type='button']:hover,
-.bcgov-primary:hover {
-  color: white !important;
-  text-decoration-line: none;
-  border: none;
-  border-radius: 4px;
-  background-color: rgb(0, 51, 102, 0.8);
-}
+  #kc-form-buttons input:hover,
+  #kc-social-providers .kc-social-links a[type='button']:hover,
+  .bcgov-primary:hover {
+    color: white !important;
+    text-decoration-line: none;
+    border: none;
+    border-radius: 4px;
+    background-color: rgb(0, 51, 102, 0.8);
+  }
 
-#kc-form-buttons input:after,
-#kc-social-providers .kc-social-links a[type='button']:after,
-.bcgov-primary:after {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  pointer-events: none;
-  content: '';
-  border: none;
-  border-color: transparent;
-  border-radius: 4px;
-}
+  #kc-form-buttons input:after,
+  #kc-social-providers .kc-social-links a[type='button']:after,
+  .bcgov-primary:after {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    pointer-events: none;
+    content: '';
+    border: none;
+    border-color: transparent;
+    border-radius: 4px;
+  }
 
-#kc-form-buttons input:focus,
-#kc-social-providers .kc-social-links a[type='button']:focus,
-.bcgov-primary:focus {
-  outline: 4px solid #3b99fc;
-  outline-offset: 1px;
-}
+  #kc-form-buttons input:focus,
+  #kc-social-providers .kc-social-links a[type='button']:focus,
+  .bcgov-primary:focus {
+    outline: 4px solid #3b99fc;
+    outline-offset: 1px;
+  }
 
-#kc-form-buttons input:active,
-#kc-social-providers .kc-social-links a[type='button']:active,
-.bcgov-primary:active {
-  opacity: 1;
-}
+  #kc-form-buttons input:active,
+  #kc-social-providers .kc-social-links a[type='button']:active,
+  .bcgov-primary:active {
+    opacity: 1;
+  }
 
 /* GENERAL */
 .hidden {
@@ -281,16 +281,30 @@
   z-index: 1;
 }
 
-.tooltiptext:before {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  margin-left: -8px;
-  border: 8px solid transparent;
-  border-top: 8px solid #333;
-}
+  .tooltiptext:before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -8px;
+    border: 8px solid transparent;
+    border-top: 8px solid #333;
+  }
 
 .kc-social-icon:hover .tooltiptext {
   visibility: visible;
+}
+
+.digit::-webkit-outer-spin-button,
+.digit::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+.digit {
+  width: 120px;
+  height: 120px;
+  text-align: center;
+  font-size: 88pt;
+  border: solid 2px black;
+  -webkit-appearance: none;
 }
