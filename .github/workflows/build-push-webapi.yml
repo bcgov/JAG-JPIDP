@@ -2,7 +2,7 @@ name: diam-webapi
  
 on:
   push:
-    branches: [develop]
+    branches: [develop,test]
     paths:
       - "backend/webapi/**"
       - ".github/workflows/build-push-webapi.yml"
