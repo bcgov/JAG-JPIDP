@@ -2,7 +2,7 @@ name: diam-admin-frontend
  
 on:
   push:
-    branches: [develop]
+    branches: [develop,test]
     paths:
       - "diam-admin-ui/**"
       - ".github/workflows/build-push-admin-frontend.yml"

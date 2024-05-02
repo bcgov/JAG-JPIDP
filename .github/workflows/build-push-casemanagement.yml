@@ -2,7 +2,7 @@ name: diam-casemanagement
  
 on:
   push:
-    branches: [develop]
+    branches: [develop,test]
     paths:
       - "backend/edt.casemanagement/**"
       - ".github/workflows/build-push-casemanagement.yml"

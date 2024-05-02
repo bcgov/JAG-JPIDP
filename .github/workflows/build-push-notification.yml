@@ -2,7 +2,7 @@ name: diam-notification
  
 on:
   push:
-    branches: [develop]
+    branches: [develop,test]
     paths:
       - "backend/NotificationService/**"
       - ".github/workflows/build-push-notification.yml"

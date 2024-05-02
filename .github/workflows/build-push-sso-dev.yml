@@ -2,7 +2,7 @@ name: diam-sso-dev
  
 on:
   push:
-    branches: [develop]
+    branches: [develop,test]
     paths:
       - "auth/**"
       - ".github/workflows/build-push-sso-dev.yml"
