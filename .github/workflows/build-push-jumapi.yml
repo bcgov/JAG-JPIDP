@@ -2,7 +2,7 @@ name: diam-jumapi
  
 on:
   push:
-    branches: [develop]
+    branches: [develop,test]
     paths:
       - "backend/jumwebapi/**"
       - ".github/workflows/build-push-jumapi.yml"

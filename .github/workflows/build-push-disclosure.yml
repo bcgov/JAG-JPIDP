@@ -2,7 +2,7 @@ name: diam-disclosure
  
 on:
   push:
-    branches: [develop]
+    branches: [develop,test]
     paths:
       - "backend/edt.disclosure/**"
       - ".github/workflows/build-push-disclosure.yml"
