@@ -29,11 +29,6 @@
             <script src="${url.resourcesPath}/${script}" type="text/javascript"></script>
         </#list>
     </#if>
-    <#if properties.absoluteScripts?has_content>
-        <#list properties.absoluteScripts?split(' ') as script>
-            <script src="${script}" type="text/javascript"></script>
-        </#list>
-    </#if>
     <#if scripts??>
         <#list scripts as script>
             <script src="${script}" type="text/javascript"></script>
@@ -48,7 +43,7 @@
   <div class="banner">
     <span></span>
     <#if properties.kcShowHeaderTitle == "true">
-      <h1>Justice &amp; Public Safety Sector SSO</h1>
+      <h1>Pathfinder SSO</h1>
     </#if>
   </div>
   <div class="other">&nbsp;</div>

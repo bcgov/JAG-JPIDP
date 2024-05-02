@@ -1,0 +1,21 @@
+FROM node:lts-alpine as build
+
+WORKDIR /app
+
+# Copy the package.json and install dependencies
+COPY package*.json /app/
+
+RUN yarn install
+
+COPY ./ /app/
+
+RUN yarn build --prod --verbose
+
+RUN ls -l /app
+
+FROM docker.io/bitnami/nginx:1.25
+
+COPY --from=build /app/dist/apps/pidp /app/.
+COPY fe-nginx-sb.conf /opt/bitnami/nginx/conf/server_blocks/
+
+EXPOSE 8080

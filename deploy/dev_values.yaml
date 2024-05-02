@@ -34,6 +34,10 @@ postgresql:
     initdb:
       scriptsConfigMap: pipd-postgres-init
 
+diam-config:
+  image:
+    registry: artifacts.developer.gov.bc.ca/de27-general-docker
+
 
 
 database:

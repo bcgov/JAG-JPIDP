@@ -47,10 +47,8 @@ spec:
       labels:
         {{- include "diam-config.selectorLabels" . | nindent 8 }}
     spec:
-      {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+        - name: {{ .Values.imagePullSecrets.name }}
       serviceAccountName: {{ .Values.global.licenseplate }}-vault
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
@@ -59,13 +57,15 @@ spec:
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.global.image.registry }}/{{ .Values.image.repository }}:{{ .Values.global.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.global.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             - name: DOTNET_BUNDLE_EXTRACT_BASE_DIR
               value: /tmp
             - name: ApplicationUrl
-              value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"     
+              value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"
+            - name: apitag
+              value: {{ .Values.global.image.apitag }}     
           volumeMounts:
           ports:
             - name: http

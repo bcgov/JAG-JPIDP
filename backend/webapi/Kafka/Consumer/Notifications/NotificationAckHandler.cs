@@ -93,11 +93,18 @@ public class NotificationAckHandler : IKafkaHandler<string, NotificationAckModel
 
                     return Task.CompletedTask;
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
+                    Log.Error($"An error occurred processing notification ack {value.PartId} {key} {value.AccessRequestId} {e.Message}");
+
                     await trx.RollbackAsync();
                     return Task.FromException(new InvalidOperationException());
                 }
+            }
+            else
+            {
+                Log.Warning($"Case Access message received for unknown request id {value.AccessRequestId} - ignoring");
+                return Task.CompletedTask;
             }
         }
 
