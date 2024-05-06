@@ -22,6 +22,7 @@ mono_crash.*
 .idea
 
 # Build results
+[Tt]arget/
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
