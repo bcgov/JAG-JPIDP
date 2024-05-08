@@ -3,7 +3,7 @@
     <#if section = "header">
       <h1>BC Corrections Service Login</h1>
       <h2>Please enter your Corrections Service (CS) Number</h2><#elseif section = "form">
-    <#elseif section = "form">
+<#--    < section = "form">-->
         <div id="kc-form">
             <div id="kc-form-wrapper">
             		<h3>
