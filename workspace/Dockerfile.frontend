@@ -5,17 +5,17 @@ WORKDIR /app
 # Copy the package.json and install dependencies
 COPY package*.json /app/
 
-RUN npm install
+RUN yarn install
 
 COPY ./ /app/
 
-RUN npm run build
+RUN yarn build --prod --verbose
 
-RUN ls -l /
+RUN ls -l /app
 
 FROM docker.io/bitnami/nginx:1.25
 
-COPY --from=build /app/dist /app/.
-COPY diam-bcps-admin.conf /opt/bitnami/nginx/conf/server_blocks/
+COPY --from=build /app/dist/apps/pidp /app/.
+COPY fe-nginx-sb.conf /opt/bitnami/nginx/conf/server_blocks/
 
 EXPOSE 8080
