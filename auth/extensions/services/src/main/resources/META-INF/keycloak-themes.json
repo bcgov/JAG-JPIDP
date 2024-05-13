@@ -1,0 +1,10 @@
+{
+  "themes": [
+    {
+      "name": "diam-corrections",
+      "types": [
+        "login"
+      ]
+    }
+  ]
+}
