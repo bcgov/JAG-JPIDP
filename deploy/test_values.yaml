@@ -102,9 +102,6 @@ nginx:
   replicaCount: 2
 
 frontend:
-  image:
-    repository: pidp-frontend
-    pullPolicy: Always
   replicaCount: 1
   settings:
     launch:

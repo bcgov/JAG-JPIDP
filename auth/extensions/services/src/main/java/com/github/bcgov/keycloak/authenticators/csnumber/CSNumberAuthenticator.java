@@ -6,7 +6,6 @@ import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.Authenticator;
 import org.keycloak.forms.login.LoginFormsProvider;
-import org.keycloak.forms.login.freemarker.FreeMarkerLoginFormsProvider;
 import org.keycloak.models.AuthenticatorConfigModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
@@ -23,7 +22,13 @@ public class CSNumberAuthenticator implements Authenticator {
 
   private static final String RESULT_FIELD = "csnumber.result";
   private static final String ERROR_MESSAGE = "csnumber.result.error";
-  private static final String TEMPLATE = "csnumberform.ftl";
+  private static final String TEMPLATE = "csnumberlogin.ftl";
+
+//  @Override
+//  public void authenticate(AuthenticationFlowContext context) {
+//    Response response = prepareCSNumber(context, null);
+//    context.challenge(response);
+//  }
 
   @Override
   public void authenticate(AuthenticationFlowContext context) {
@@ -53,11 +58,15 @@ public class CSNumberAuthenticator implements Authenticator {
 
   private static Response prepareCSNumber(AuthenticationFlowContext context, FormMessage errorMessage) {
     AuthenticatorConfigModel authenticatorConfig = context.getAuthenticatorConfig();
-    //Map<String, String> config = authenticatorConfig.getConfig();
+    Map<String, String> config = authenticatorConfig.getConfig();
 
     AuthenticationSessionModel authSession = context.getAuthenticationSession();
-    authSession.setAuthNote(RESULT_FIELD, Integer.toString(12345678));
-    LoginFormsProvider formsProvider = new FreeMarkerLoginFormsProvider(context.getSession());
+//    authSession.setAuthNote(RESULT_FIELD, Integer.toString(result));
+
+    LoginFormsProvider formsProvider = context.form();
+    if (errorMessage != null) {
+      formsProvider.addError(errorMessage);
+    }
     return formsProvider.createForm(TEMPLATE);
   }
 
@@ -67,7 +76,7 @@ public class CSNumberAuthenticator implements Authenticator {
 
   @Override
   public boolean requiresUser() {
-    return false;
+    return true;
   }
 
   @Override

@@ -5,6 +5,7 @@
 global:
   vanityURL: "pidp-e27db1-dev.apps.gold.devops.gov.bc.ca"
   commit_sha: ""
+  licenseplate: e27db1
   image:
     registry: artifacts.developer.gov.bc.ca/de27-general-docker
     tag: develop
@@ -21,6 +22,7 @@ image:
 
 imagePullSecrets: 
   name: de27-artifactory-pull-secret
+
 nameOverride: ""
 fullnameOverride: ""
 

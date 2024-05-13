@@ -2,7 +2,7 @@ name: diam-config
  
 on:
   push:
-    branches: [develop,test]
+    branches: [develop,test,main]
     paths:
       - "backend/DIAMConfiguration/**"
       - ".github/workflows/build-push-diamconfig.yml"

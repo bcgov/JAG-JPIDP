@@ -73,7 +73,7 @@ nginx:
       }
 
       location ^~ /api/config/ {
-        proxy_pass http://diam-config:8080/api/config/;
+        proxy_pass http://{{ .Release.Name }}-diam-config:8080/api/config/;
       }
 
       location ^~ /api/v1/PLRHL7 {
@@ -125,7 +125,7 @@ nginx:
       }
 
       location ^~ /api/config/ {
-        proxy_pass http://diam-config:8080/api/config/;
+        proxy_pass http://{{ .Release.Name }}-diam-config:8080/api/config/;
       }
 
       #location ^~ /api/v1/PLRHL7 {

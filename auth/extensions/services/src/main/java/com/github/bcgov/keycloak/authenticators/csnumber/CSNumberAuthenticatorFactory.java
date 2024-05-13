@@ -27,7 +27,7 @@ public class CSNumberAuthenticatorFactory  implements AuthenticatorFactory {
 
   @Override
   public String getDisplayType() {
-    return "TEST Corrections CS Number / BioMetrics Authenticator";
+    return "Corrections CS Number / BioMetrics Authenticator";
   }
 
   @Override
@@ -64,8 +64,7 @@ public class CSNumberAuthenticatorFactory  implements AuthenticatorFactory {
 
   @Override
   public void init(Config.Scope config) {
-    this.lowerBound = config.get("lowerBound", "0");
-    this.upperBound = config.get("upperBound", "20");
+
   }
 
   @Override
