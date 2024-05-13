@@ -57,7 +57,7 @@ jobs:
           path: gitops
 
       - name: Update Helm Values and Commit for Dev
-        id: helm
+        id: helm-dev
         if: steps.gitops.outcome == 'success' && ${{ github.ref == 'refs/heads/develop' }} # Only run if the previous step (publish) was successful
         run: |
 
@@ -93,7 +93,7 @@ jobs:
           git push origin develop  # Update the branch name as needed
           
       - name: Update Helm Values and Commit for Test
-        id: helm
+        id: helm-test
         if: steps.gitops.outcome == 'success' && ${{ github.ref == 'refs/heads/test' }} # Only run if the previous step (publish) was successful
         run: |
 
@@ -130,7 +130,7 @@ jobs:
 
 
       - name: Update Helm Values and Commit for Main
-        id: helm
+        id: helm-prod
         if: steps.gitops.outcome == 'success' && ${{ github.ref == 'refs/heads/main' }} # Only run if the previous step (publish) was successful
         run: |
 
