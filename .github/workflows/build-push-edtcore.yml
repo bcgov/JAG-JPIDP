@@ -2,7 +2,7 @@ name: diam-edtcore
  
 on:
   push:
-    branches: [develop,test]
+    branches: [develop,test,main]
     paths:
       - "backend/service.edt/**"
       - ".github/workflows/build-push-edtcore.yml"
@@ -35,6 +35,7 @@ jobs:
           docker build -t artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:${GITHUB_REF##*/} -f Dockerfile.EdtCore .
      
       - name: Docker Push to Artifactory
+        id: publish        
         run: |
           docker push artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:${GITHUB_REF##*/}
       - name: Checkout ArgoCD Repo

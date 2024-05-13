@@ -2,7 +2,7 @@ name: diam-approvalflow
  
 on:
   push:
-    branches: [develop,test]
+    branches: [develop,test,main]
     paths:
       - "backend/ApprovalFlow/**"
       - ".github/workflows/build-push-approvalflow.yml"
