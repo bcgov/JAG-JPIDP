@@ -38,7 +38,7 @@ public class CorrectionsIdentityProvider extends SAMLIdentityProvider {
   protected static final Logger logger = Logger.getLogger(CorrectionsIdentityProvider.class);
 
 
-  public CorrectionsIdentityProvider(KeycloakSession session, SiteMinderSamlIdentityProviderConfig smSamlIdentityProviderConfig,
+  public CorrectionsIdentityProvider(KeycloakSession session, CorrectionsSAMLIdentityProviderConfig smSamlIdentityProviderConfig,
                                 DestinationValidator destinationValidator) {
 
     super(session, smSamlIdentityProviderConfig, destinationValidator);

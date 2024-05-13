@@ -26,9 +26,15 @@ public class CorrectionsIdentityProviderFactory extends SAMLIdentityProviderFact
   }
 
   @Override
+  public CorrectionsSAMLIdentityProviderConfig createConfig() {
+    return new CorrectionsSAMLIdentityProviderConfig();
+  }
+
+  @Override
   public SAMLIdentityProvider create(KeycloakSession session, IdentityProviderModel model) {
 
-    return new CorrectionsIdentityProvider(session, new SiteMinderSamlIdentityProviderConfig(model), destinationValidator);
+    return new CorrectionsIdentityProvider(session, new CorrectionsSAMLIdentityProviderConfig(model), destinationValidator);
+
   }
 
   @Override

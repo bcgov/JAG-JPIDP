@@ -100,21 +100,39 @@ function addCSNumberListeners() {
     cs3.focus();
   });
   cs3.addEventListener("input", (event) => {
+      if (event.target.value.length > 1) {
+        cs3.value = "";
+      }
     cs4.focus();
   });
   cs4.addEventListener("input", (event) => {
+        if (event.target.value.length > 1) {
+          cs4.value = "";
+        }
     cs5.focus();
   });
   cs5.addEventListener("input", (event) => {
+        if (event.target.value.length > 1) {
+          cs5.value = "";
+        }
     cs6.focus();
   });
   cs6.addEventListener("input", (event) => {
+        if (event.target.value.length > 1) {
+          cs6.value = "";
+        }
     cs7.focus();
   });
   cs7.addEventListener("input", (event) => {
+        if (event.target.value.length > 1) {
+          cs7.value = "";
+        }
     cs8.focus();
   });
   cs8.addEventListener("input", (event) => {
+        if (event.target.value.length > 1) {
+          cs8.value = "";
+        }
     login_but.focus();
   });
 }
