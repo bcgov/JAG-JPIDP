@@ -2,7 +2,7 @@ name: diam-edtcore
  
 on:
   push:
-    branches: [develop,test]
+    branches: [develop,test,main]
     paths:
       - "backend/service.edt/**"
       - ".github/workflows/build-push-edtcore.yml"

@@ -2,7 +2,7 @@ name: diam-frontend
  
 on:
   push:
-    branches: [develop,test]
+    branches: [develop,test,main]
     paths:
       - "workspace/**"
       - ".github/workflows/build-push-frontend.yml"
