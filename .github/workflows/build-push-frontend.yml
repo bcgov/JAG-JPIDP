@@ -58,7 +58,7 @@ jobs:
 
       - name: Update Helm Values and Commit for Dev
         id: helm-dev
-        if: ${{ github.ref == 'refs/heads/develop' }} && steps.gitops.outcome == 'success' # Only run if the previous step (publish) was successful
+        if: github.ref == 'refs/heads/dev' && steps.gitops.outcome == 'success' # Only run if the previous step (publish) was successful
         run: |
 
           echo "Updating dev helm values to trigger ArgoCD deployment"
@@ -94,7 +94,7 @@ jobs:
           
       - name: Update Helm Values and Commit for Test
         id: helm-test
-        if: ${{ github.ref == 'refs/heads/test' }} && steps.gitops.outcome == 'success' # Only run if the previous step (publish) was successful
+        if: github.ref == 'refs/heads/test' && steps.gitops.outcome == 'success' # Only run if the previous step (publish) was successful
         run: |
 
           echo "Updating test helm values to trigger ArgoCD deployment "
@@ -131,7 +131,7 @@ jobs:
 
       - name: Update Helm Values and Commit for Main
         id: helm-prod
-        if: ${{ github.ref == 'refs/heads/main' }} && steps.gitops.outcome == 'success'  # Only run if the previous step (publish) was successful
+        if: github.ref == 'refs/heads/main' && steps.gitops.outcome == 'success'  # Only run if the previous step (publish) was successful
         run: |
 
           echo "Updating main helm values to trigger ArgoCD deployment "
