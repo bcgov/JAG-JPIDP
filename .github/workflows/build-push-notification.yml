@@ -114,7 +114,7 @@ jobs:
   
           git add .
             
-          git commit -m "Update Dev API image tag"
+          git commit -m "Update ${{ env.BRANCH_NAME }} API image tag"
           git push origin ${{ env.BRANCH_NAME }}  # Update the branch name as needed      
           
 
