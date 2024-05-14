@@ -73,6 +73,13 @@ jobs:
           ref: ${{ env.BRANCH_NAME }}
           token: ${{ secrets.ARGO_PAT }} # access token
           path: gitops
+
+
+      - name: Get short SHA
+        id: short_sha
+        run: |
+          echo "::set-output name=SHORT_SHA::$(git rev-parse --short HEAD)"
+          echo "Short SHA: $SHORT_SHA"
   
       - name: Update Helm Dev Values and Commit
         id: helm
