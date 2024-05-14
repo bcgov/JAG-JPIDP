@@ -81,7 +81,7 @@ jobs:
           echo "::set-output name=SHORT_SHA::$(git rev-parse --short HEAD)"
           echo "Short SHA: $SHORT_SHA"
   
-      - name: Update Helm Dev Values and Commit
+      - name: Update Helm Values and Commit
         id: helm
         if: steps.gitops.outcome == 'success' # Only run if the previous step (publish) was successful
         run: |
