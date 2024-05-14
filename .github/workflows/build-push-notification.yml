@@ -24,11 +24,11 @@ jobs:
 
       - name: Set environment for branch
         run: |
-          if [[ $GITHUB_REF_NAME == 'main' ]]; then
+          if [[ ${{ github.ref_name }} == 'main' ]]; then
               echo "BRANCH_NAME=main" >> "$GITHUB_ENV"
               echo "VALUES_FILE=prod" >> "$GITHUB_ENV"
 
-          else if [[ $GITHUB_REF_NAME == 'test' ]]; then
+          else if [[ ${{ github.ref_name }} == 'test' ]]; then
               echo "BRANCH_NAME=test" >> "$GITHUB_ENV"
               echo "VALUES_FILE=test" >> "$GITHUB_ENV"
           else
