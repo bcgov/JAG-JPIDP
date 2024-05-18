@@ -63,6 +63,8 @@ jobs:
         run: |
           docker push artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:${GITHUB_REF##*/}
 
+
+
       - name: Checkout ArgoCD Repo
         id: gitops
         if: steps.publish.outcome == 'success'
@@ -84,7 +86,7 @@ jobs:
         if: steps.gitops.outcome == 'success' # Only run if the previous step (publish) was successful
         run: |
 
-          echo "Updating helm values to trigger ArgoCD deployment "
+          echo "Updating ${{ env.BRANCH_NAME }} helm values to trigger ArgoCD deployment "
             
           # Navigate to the directory containing your Helm values file for the environment develop -> DEV, test -> test
           cd gitops/charts
@@ -93,8 +95,8 @@ jobs:
           DATETIME=$(date +'%Y-%m-%d %H:%M:%S')  # Get current date and time
           echo "Updating tag apitag: to ${{ steps.short_sha.outputs.SHORT_SHA }}"
   
-          sed -i "s/apitag: .*/apitag: dev-${{ steps.short_sha.outputs.SHORT_SHA }} # Image Updated on $DATETIME/" ../deploy/dev_values.yaml
-          sed -i "s/apitag: .*/apitag: dev-${{ steps.short_sha.outputs.SHORT_SHA }} # Image Updated on $DATETIME/" edt-service/values.yaml
+          sed -i "s/apitag: .*/apitag: ${{ env.VALUES_FILE }}-${{ steps.short_sha.outputs.SHORT_SHA }} # Image Updated on $DATETIME/" ../deploy/${{ env.VALUES_FILE }}_values.yaml
+          sed -i "s/apitag: .*/apitag: ${{ env.VALUES_FILE }}-${{ steps.short_sha.outputs.SHORT_SHA }} # Image Updated on $DATETIME/" edt-service/values.yaml
             
           # Commit and push the changes
           git config --global user.email "actions@github.com"
@@ -102,7 +104,7 @@ jobs:
           
           git add .
             
-          git add ../deploy/dev_values.yaml
+          git add ../deploy/${{ env.VALUES_FILE }}_values.yaml
             
             # Repackage Helm Chart      
            cd edt-service
@@ -111,76 +113,6 @@ jobs:
   
           git add .
             
-          git commit -m "Update Dev API image tag"
-          git push origin develop  # Update the branch name as needed
+          git commit -m "Update ${{ env.BRANCH_NAME }} API image tag"
+          git push origin ${{ env.BRANCH_NAME }}  # Update the branch name as needed
 
-      - name: Update Helm Test Values and Commit
-        id: helm-test
-        if: github.ref == 'refs/heads/test' && steps.gitops.outcome == 'success' # Only run if the previous step (publish) was successful
-        run: |
-
-          echo "Updating helm values to trigger ArgoCD deployment "
-            
-          # Navigate to the directory containing your Helm values file for the environment develop -> DEV, test -> test
-          cd gitops/charts
-            
-          # Update the Helm values file with the new image tag and version
-          DATETIME=$(date +'%Y-%m-%d %H:%M:%S')  # Get current date and time
-          echo "Updating tag apitag: to ${{ steps.short_sha.outputs.SHORT_SHA }}"
-  
-          sed -i "s/apitag: .*/apitag: test-${{ steps.short_sha.outputs.SHORT_SHA }} # Image Updated on $DATETIME/" ../deploy/test_values.yaml
-          sed -i "s/apitag: .*/apitag: test-${{ steps.short_sha.outputs.SHORT_SHA }} # Image Updated on $DATETIME/" edt-service/values.yaml
-            
-          # Commit and push the changes
-          git config --global user.email "actions@github.com"
-          git config --global user.name "GitHub Actions"
-          
-          git add .
-            
-          git add ../deploy/test_values.yaml
-            
-            # Repackage Helm Chart      
-           cd edt-service
-  
-          helm dependency build
-  
-          git add .
-            
-          git commit -m "Update Test API image tag"
-          git push origin test  # Update the branch name as needed       
-          
-      - name: Update Helm Main Values and Commit
-        id: helm-main
-        if: github.ref == 'refs/heads/main' && steps.gitops.outcome == 'success' # Only run if the previous step (publish) was successful
-        run: |
-
-          echo "Updating helm values to trigger ArgoCD deployment "
-            
-          # Navigate to the directory containing your Helm values file for the environment develop -> DEV, test -> test
-          cd gitops/charts
-            
-          # Update the Helm values file with the new image tag and version
-          DATETIME=$(date +'%Y-%m-%d %H:%M:%S')  # Get current date and time
-          echo "Updating tag apitag: to ${{ steps.short_sha.outputs.SHORT_SHA }}"
-  
-          sed -i "s/apitag: .*/apitag: main-${{ steps.short_sha.outputs.SHORT_SHA }} # Image Updated on $DATETIME/" ../deploy/prod_values.yaml
-          sed -i "s/apitag: .*/apitag: main-${{ steps.short_sha.outputs.SHORT_SHA }} # Image Updated on $DATETIME/" edt-service/values.yaml
-            
-          # Commit and push the changes
-          git config --global user.email "actions@github.com"
-          git config --global user.name "GitHub Actions"
-          
-          git add .
-            
-          git add ../deploy/prod_values.yaml
-            
-            # Repackage Helm Chart      
-           cd edt-service
-  
-          helm dependency build
-  
-          git add .
-            
-          git commit -m "Update Main API image tag"
-          git push origin main  # Update the branch name as needed    
-  
