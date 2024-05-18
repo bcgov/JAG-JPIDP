@@ -40,14 +40,35 @@ route:
 edt-casemgmt:
   migrations:
     enabled: false
+  resources: 
+    limits:
+      cpu: 200m
+      memory: 250Mi
+    requests:
+      cpu: 100m
+      memory: 150Mi
 
 edt-disclosure:
   migrations:
     enabled: false
+  resources: 
+    limits:
+      cpu: 200m
+      memory: 250Mi
+    requests:
+      cpu: 100m
+      memory: 150Mi
 
 approvalflow:
   migrations:
     enabled: false
+  resources: 
+    limits:
+      cpu: 200m
+      memory: 250Mi
+    requests:
+      cpu: 100m
+      memory: 150Mi
 
 database:
   autoCreate: false
@@ -63,6 +84,13 @@ keycloak:
 edt-service:
   migrations:
     enabled: false
+  resources: 
+    limits:
+      cpu: 200m
+      memory: 250Mi
+    requests:
+      cpu: 100m
+      memory: 150Mi
 
 redis:
   enabled: false
@@ -88,11 +116,12 @@ frontend:
       bcpsDemsPortalLabel: "Launch DEMS"
       bcLawDiscPortalLabel: "Launch Disclosure Portal"
       outOfCustodyPortalLabel: "Launch BCPS Disclosure Portal"
-    edtURL: https://p.zpa-auth.net/IevTunx4Bg/doauth?origurl=https%3A%2F%2Fauf%2Etest%2Ejustice%2Egov%2Ebc%2Eca%2FEdt%2Easpx%23&domain=test.agencies.justice.gov.bc.ca
+    edtURL: "https://p.zpa-auth.net/IevTunx4Bg/doauth?origurl=https%3A%2F%2Fauf%2Etest%2Ejustice%2Egov%2Ebc%2Eca%2FEdt%2Easpx%23&domain=test.agencies.justice.gov.bc.ca"
     environmentName: test
     keycloak:
       url: https://test.common-sso.justice.gov.bc.ca/auth
       realm: BCPS
+
 
 
 webapi:
@@ -102,6 +131,15 @@ webapi:
     environment: Staging
   migrations:
     enabled: false
+  resources: 
+    limits:
+      cpu: 200m
+      memory: 250Mi
+    requests:
+      cpu: 100m
+      memory: 150Mi
 
 plr-intake:
   replicaCount: 1
+
+

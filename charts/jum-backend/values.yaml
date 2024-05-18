@@ -9,7 +9,7 @@ global:
   environment: dev
 
   image:
-    registry: image-registry.openshift-image-registry.svc:5000/e27db1-tools
+    registry: artifacts.developer.gov.bc.ca/de27-general-docker
     tag: develop
 
 replicaCount: 1
@@ -19,12 +19,13 @@ route:
   enabled: false
 
 image:
-  repository: jum-api
+  repository: diam-jumapi
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: "develop"
 
-imagePullSecrets: []
+imagePullSecrets: 
+  name: de27-artifactory-pull-secret
 nameOverride: ""
 fullnameOverride: ""
 

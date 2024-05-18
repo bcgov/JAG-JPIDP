@@ -96,6 +96,8 @@ export class DigitalEvidenceCaseManagementPage
   public isFindDisabled: boolean;
   public refreshEnabled: boolean;
   public requestedCaseInactive: boolean;
+  public checkingQueuedCase: boolean;
+  public checkingQueuedCaseInProgress: boolean;
 
   public launchDEMSLabel: string;
   public hasCaseListingResults: boolean;
@@ -212,6 +214,8 @@ export class DigitalEvidenceCaseManagementPage
     this.showJUSTINCaseInfo = false;
     this.requestedCaseInactive = false;
     this.refreshEnabled = false;
+    this.checkingQueuedCase = false;
+    this.checkingQueuedCaseInProgress = false;
     this.refreshCount = 0;
     this.pageSize = 20;
     this.pageIndex = 0;
@@ -247,6 +251,7 @@ export class DigitalEvidenceCaseManagementPage
     if (this.formState.caseName.value)
       this.formState.caseName.setValue(this.formState.caseName.value.trim());
 
+    this.checkingQueuedCaseInProgress = false;
     this.isFindDisabled =
       this.formState.caseName.value &&
       this.formState.caseName?.value.length >= 4 &&
@@ -389,16 +394,39 @@ export class DigitalEvidenceCaseManagementPage
           this.requestedCaseInactive = true;
         }
 
+        if (digitalEvidenceCase?.status === 'Queued') {
+          this.checkingQueuedCase = true;
+          if (!this.checkingQueuedCaseInProgress) {
+            this.recheckCase();
+          }
+        }
+
         if (
           digitalEvidenceCase?.status !== 'Active' &&
+          digitalEvidenceCase?.status !== 'Queued' &&
           digitalEvidenceCase?.justinStatus
         ) {
           this.showJUSTINCaseInfo = true;
         }
 
+        if (
+          digitalEvidenceCase?.status === 'Active' &&
+          this.checkingQueuedCase
+        ) {
+          this.toastService.openInfoToast('Case is now available');
+          this.checkingQueuedCaseInProgress = false;
+          this.checkingQueuedCase = false;
+        }
+
         this.requestedCase = digitalEvidenceCase;
         this.isCaseSearchInProgress = false;
       });
+  }
+
+  public cancelQueuedSearch(): void {
+    this.checkingQueuedCase = false;
+    this.checkingQueuedCaseInProgress = false;
+    this.requestedCase = null;
   }
 
   public decodeName(name: string): string {
@@ -437,6 +465,15 @@ export class DigitalEvidenceCaseManagementPage
       .pipe(takeWhile(() => this.refreshEnabled))
       .subscribe(() => {
         this.getPartyRequests();
+      });
+  }
+
+  public recheckCase(): void {
+    this.checkingQueuedCaseInProgress = true;
+    interval(5000)
+      .pipe(takeWhile(() => this.checkingQueuedCase))
+      .subscribe(() => {
+        this.findCase();
       });
   }
 

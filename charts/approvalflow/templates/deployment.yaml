@@ -59,10 +59,8 @@ spec:
       labels:
         {{- include "approvalflow.selectorLabels" . | nindent 8 }}
     spec:
-      {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+        - name: {{ .Values.imagePullSecrets.name }}
       serviceAccountName: {{ .Values.global.licenseplate }}-vault
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
@@ -77,7 +75,9 @@ spec:
             - name: DOTNET_BUNDLE_EXTRACT_BASE_DIR
               value: /tmp
             - name: ApplicationUrl
-              value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"     
+              value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"
+            - name: apitag
+              value: {{ .Values.global.image.apitag }}     
           volumeMounts:
           - name: truststore
             mountPath: "/opt/kafka/certificates"

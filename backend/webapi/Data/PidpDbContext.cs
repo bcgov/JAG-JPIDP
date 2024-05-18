@@ -14,8 +14,13 @@ using Pidp.Models.UserInfo;
 public class PidpDbContext : DbContext
 {
     private readonly IClock clock;
+    private readonly PidpConfiguration configuration;
 
-    public PidpDbContext(DbContextOptions<PidpDbContext> options, IClock clock) : base(options) => this.clock = clock;
+    public PidpDbContext(DbContextOptions<PidpDbContext> options, IClock clock, PidpConfiguration configuration) : base(options)
+    {
+        this.clock = clock;
+        this.configuration = configuration;
+    }
 
     public DbSet<AccessRequest> AccessRequests { get; set; } = default!;
     public DbSet<ClientLog> ClientLogs { get; set; } = default!;
@@ -57,6 +62,9 @@ public class PidpDbContext : DbContext
     public DbSet<PartyUserType> PartyUserTypes { get; set; } = default!;
     public DbSet<UserTypeLookup> UserTypeLookups { get; set; } = default!;
 
+    public DbSet<PlrRecord> PlrRecords { get; set; } = default!;
+
+
     public override int SaveChanges()
     {
         this.ApplyAudits();
@@ -77,6 +85,8 @@ public class PidpDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.HasDefaultSchema(this.configuration.ConnectionStrings.Schema);
+
         modelBuilder.Entity<DigitalEvidence>().Property(x => x.AssignedRegions).
             HasConversion(
                           v => JsonConvert.SerializeObject(v, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }),
@@ -92,8 +102,6 @@ public class PidpDbContext : DbContext
              .ToTable("OutBoxedExportedEvent");
         //.Property(x => x.JsonEventPayload).HasColumnName("EventPayload");
 
-        modelBuilder.Entity<ExportedEvent>()
-            .ToTable("OutBoxedExportedEvent");
 
         // Adds Quartz.NET PostgreSQL schema to EntityFrameworkCore
         modelBuilder.AddQuartz(builder => builder.UsePostgreSql());
@@ -113,6 +121,7 @@ public class PidpDbContext : DbContext
     }
 
     public async Task<bool> HasBeenProcessed(string messageId, string consumer) => await this.IdempotentConsumers.AnyAsync(x => x.MessageId == messageId && x.Consumer == consumer);
+
     private void ApplyAudits()
     {
         this.ChangeTracker.DetectChanges();
@@ -139,6 +148,9 @@ public class PidpDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
+        optionsBuilder.UseNpgsql(this.configuration.ConnectionStrings.PidpDatabase, x => x.MigrationsHistoryTable(this.configuration.ConnectionStrings.EfHistoryTable, this.configuration.ConnectionStrings.EfHistorySchema));
+
+
         if (Environment.GetEnvironmentVariable("LOG_SQL") != null && "true".Equals(Environment.GetEnvironmentVariable("LOG_SQL")))
         {
             optionsBuilder.LogTo(Console.WriteLine);

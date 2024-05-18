@@ -16,11 +16,12 @@ aspnetcore:
   environment: Staging
 
 image:
-  repository: edt-service
+  repository: diam-edtcore
   pullPolicy: Always
 
 
-imagePullSecrets: []
+imagePullSecrets: 
+  name: de27-artifactory-pull-secret
 nameOverride: ""
 fullnameOverride: ""
 

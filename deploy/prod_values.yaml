@@ -45,7 +45,7 @@ frontend:
       bcpsDemsPortalLabel: "Launch DEMS"
       bcLawDiscPortalLabel: "Launch Disclosure Portal"
       outOfCustodyPortalLabel: "Launch BCPS Disclosure Portal"
-    edtURL: https://dems.jag.gov.bc.ca
+    edtURL: "https://p.zpa-auth.net/IevTunx4Bg/doauth?origurl=https%3A%2F%2Fauf%2Ejustice%2Egov%2Ebc%2Eca%2FEdt%2Easpx%23&domain=agencies.justice.gov.bc.ca"
     environmentName: prod
     keycloak:
       url: https://common-sso.justice.gov.bc.ca/auth
@@ -58,15 +58,36 @@ webapi:
     environment: Staging
   migrations:
     enabled: false
+  resources: 
+    limits:
+      cpu: 250m
+      memory: 500Mi
+    requests:
+      cpu: 100m
+      memory: 250Mi
 
 
 edt-casemgmt:
   migrations:
     enabled: false
+  resources: 
+    limits:
+      cpu: 250m
+      memory: 500Mi
+    requests:
+      cpu: 100m
+      memory: 250Mi
 
 edt-disclosure:
   migrations:
     enabled: false
+  resources: 
+    limits:
+      cpu: 250m
+      memory: 500Mi
+    requests:
+      cpu: 100m
+      memory: 250Mi
 
 plr-intake:
   replicaCount: 1
@@ -74,4 +95,11 @@ plr-intake:
 edt-service:
   migrations:
     enabled: false
+  resources: 
+    limits:
+      cpu: 250m
+      memory: 500Mi
+    requests:
+      cpu: 100m
+      memory: 250Mi
 
