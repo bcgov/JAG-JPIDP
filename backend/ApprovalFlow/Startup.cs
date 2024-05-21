@@ -101,7 +101,6 @@ public class Startup
 
         }
 
-
         services
           .AddAutoMapper(typeof(Startup))
           .AddKafkaConsumer(config)

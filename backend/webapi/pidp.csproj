@@ -14,8 +14,8 @@
     <None Remove="logs\**" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="AppAny.Quartz.EntityFrameworkCore.Migrations.PostgreSQL" Version="0.4.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.3" />
+    <PackageReference Include="AppAny.Quartz.EntityFrameworkCore.Migrations.PostgreSQL" Version="0.5.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.5" />
     <PackageReference Include="xunit" Version="2.6.6" />
     <ProjectReference Include="..\common\Common.csproj" />
     <PackageReference Include="HybridModelBinding" Version="0.18.0" />
