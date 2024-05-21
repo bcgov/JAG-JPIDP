@@ -1,0 +1,26 @@
+apiVersion: warden.devops.gov.bc.ca/v1alpha1
+kind: GitOpsTeam
+metadata:
+  name: diam-argo-e27db1
+  namespace: e27db1-tools
+  finalizers:
+    - GitOpsTeam_controller
+  labels:
+    devops.gov.bc.ca/gitops-app-shared: diam-e27db1
+spec:
+  gitOpsMembers:
+    admins:
+      - ag-pssg-isb-sa
+    readers:
+      - rloisell
+    writers:
+      - rloisell
+      - jjstratton
+      - leewrigh
+  projectMembers:
+    maintainers:
+      - ag-pssg-isb-sa@github
+      - rloisell@github
+      - jjstratton@github
+      - leewrigh@github
+

@@ -9,22 +9,31 @@ using edt.casemanagement.Features.Cases;
 using edt.casemanagement.Infrastructure.Telemetry;
 using edt.casemanagement.Models;
 using edt.casemanagement.ServiceEvents.CaseManagement.Models;
+using Microsoft.Extensions.Logging;
 using NodaTime;
 using Prometheus;
 using Serilog;
 
-public class EdtClient : BaseClient, IEdtClient
+public class EdtClient(
+    HttpClient httpClient, OtelMetrics meters, EdtServiceConfiguration edtServiceConfiguration,
+    IMapper mapper,
+    IClock clock,
+    CaseManagementDataStoreDbContext context,
+    ILogger<EdtClient> logger) : BaseClient(httpClient, logger), IEdtClient
 {
-    private readonly IMapper mapper;
-    private readonly IClock clock;
+    private readonly IMapper mapper = mapper;
+    private readonly IClock clock = clock;
 
-    private readonly OtelMetrics meters;
-    private readonly EdtServiceConfiguration configuration;
-    private readonly CaseManagementDataStoreDbContext context;
+    private readonly OtelMetrics meters = meters;
+    private readonly EdtServiceConfiguration configuration = edtServiceConfiguration;
+    private readonly CaseManagementDataStoreDbContext context = context;
 
 
     private static readonly Counter SearchCount = Metrics
         .CreateCounter("case_search_count_total", "Number of case search requests.");
+
+    private static readonly Histogram CaseStatusDuration = Metrics
+        .CreateHistogram("case_status_lookup_duration", "Histogram of case status searches.");
 
     private static readonly Counter ProcessedJobCount = Metrics
         .CreateCounter("case_access_count_total", "Number of case access requests.");
@@ -32,27 +41,11 @@ public class EdtClient : BaseClient, IEdtClient
     private static readonly Counter ProcessRemovedJob = Metrics
         .CreateCounter("case_removal_count_total", "Number of case removal requests.");
 
-    public EdtClient(
-        HttpClient httpClient, OtelMetrics meters, EdtServiceConfiguration edtServiceConfiguration,
-        IMapper mapper,
-        IClock clock,
-        CaseManagementDataStoreDbContext context,
-        ILogger<EdtClient> logger)
-        : base(httpClient, logger)
-    {
-        this.mapper = mapper;
-        this.clock = clock;
-        this.meters = meters;
-        this.context = context;
-        this.configuration = edtServiceConfiguration;
-    }
-
-
     public async Task<EdtUserDto?> GetUser(string userKey)
     {
 
         this.meters.GetUser();
-        Log.Logger.Information("Checking if user key {0} already present", userKey);
+        Log.Information("Checking if user key {0} already present", userKey);
         var result = await this.GetAsync<EdtUserDto?>($"api/v1/users/key:{userKey}");
 
         if (!result.IsSuccess)
@@ -102,7 +95,7 @@ public class EdtClient : BaseClient, IEdtClient
     public async Task<IEnumerable<KeyIdPair>> GetUserCases(string userKey)
     {
         var result = await this.GetAsync<IEnumerable<KeyIdPair>>($"api/v1/org-units/1/users/{userKey}/cases");
-        Log.Logger.Information("Got user cases {0} user {1}", result, userKey);
+        Log.Information("Got user cases {0} user {1}", result, userKey);
 
         if (result.IsSuccess)
         {
@@ -117,7 +110,7 @@ public class EdtClient : BaseClient, IEdtClient
     public async Task<IEnumerable<UserCaseGroup>> GetUserCaseGroups(string userKey, int caseId)
     {
         var result = await this.GetAsync<IEnumerable<UserCaseGroup>>($"api/v1/cases/{caseId}/users/{userKey}/groups");
-        Log.Logger.Information("Got user cases {0} user {1}", result, userKey);
+        Log.Information("Got user cases {0} user {1}", result, userKey);
 
         if (result.IsSuccess)
         {
@@ -152,7 +145,7 @@ public class EdtClient : BaseClient, IEdtClient
             return true;
         }
 
-        Log.Logger.Information($"Adding user {userKey} to case {caseId}");
+        Log.Information($"Adding user {userKey} to case {caseId}");
         var result = await this.PostAsync($"api/v1/cases/{caseId}/users/{userKey}");
 
         if (result.IsSuccess)
@@ -225,6 +218,33 @@ public class EdtClient : BaseClient, IEdtClient
     public async Task<CaseModel> GetCase(int caseId)
     {
 
+        // get the case status - later this will be redundant as it can be done with the find query to get the Id (11.6.8?)
+        var caseStatus = await this.GetCaseSummary(caseId);
+
+        if (caseStatus != null)
+        {
+            // check the status of the case - if not active then we wont attempt to get the case by ID as this will fail
+            if (caseStatus.Status != "Active")
+            {
+                if (caseStatus.Status == "Queued")
+                {
+                    this.Logger.LogCaseIsBeingCreated(caseId);
+
+                    // this case is currently being created and looking up the case details will fail at this time
+                    return new CaseModel
+                    {
+                        Status = caseStatus.Status,
+                        Key = caseStatus.Key,
+                        Id = caseStatus.Id,
+                        Name = caseStatus.Name
+                    };
+                }
+                else
+                {
+                    this.Logger.LogCaseStatusNotActive(caseId, caseStatus.Status);
+                }
+            }
+        }
 
         var result = await this.GetAsync<CaseModel?>($"api/v1/cases/{caseId}");
         if (result.IsSuccess)
@@ -404,6 +424,8 @@ public class EdtClient : BaseClient, IEdtClient
                     caseId = cases.First().Id;
                 }
 
+
+
                 foundCase = await this.GetCase(caseId);
 
                 if (foundCase.Status == "Inactive")
@@ -495,6 +517,11 @@ public class EdtClient : BaseClient, IEdtClient
 
     }
 
+    /// <summary>
+    /// get custom case fields
+    /// </summary>
+    /// <param name="objectType"></param>
+    /// <returns></returns>
     public async Task<IEnumerable<CustomFieldDefinition>> GetCustomFields(string objectType)
     {
         Log.Information($"Getting all field info for type {objectType}");
@@ -511,6 +538,13 @@ public class EdtClient : BaseClient, IEdtClient
     }
 
 
+    /// <summary>
+    /// Command handler
+    /// </summary>
+    /// <param name="userKey"></param>
+    /// <param name="accessRequest"></param>
+    /// <returns></returns>
+    /// <exception cref="EdtServiceException"></exception>
     public async Task<Task> HandleCaseRequest(string userKey, SubAgencyDomainEvent accessRequest)
     {
         // get the edt user
@@ -553,6 +587,14 @@ public class EdtClient : BaseClient, IEdtClient
         return Task.CompletedTask;
     }
 
+
+    /// <summary>
+    /// Get the group id assigned to the case
+    /// </summary>
+    /// <param name="caseId"></param>
+    /// <param name="groupName"></param>
+    /// <returns></returns>
+    /// <exception cref="CaseAssignmentException"></exception>
     public async Task<int> GetCaseGroupId(int caseId, string groupName)
     {
         Log.Debug("Getting case {0} group id for {1}", caseId, groupName);
@@ -607,6 +649,32 @@ public class EdtClient : BaseClient, IEdtClient
 
     }
 
+    /// <summary>
+    /// Used to get the summary of a case - can be used to determine if case is currently in the process of being generated
+    /// </summary>
+    /// <param name="caseId"></param>
+    /// <returns></returns>
+    public async Task<CaseSummaryModel> GetCaseSummary(int caseId)
+    {
+
+        using (CaseStatusDuration.NewTimer())
+        {
+            Log.Debug($"Getting case info for {caseId}");
+
+            var result = await this.GetAsync<CaseSummaryModel>($"api/v1/org-units/1/cases/info/{caseId}");
+
+            if (result.IsSuccess)
+            {
+                Log.Information($"Case {caseId} status is {result.Value.Status}");
+                return result.Value;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+    }
 
     public static class CaseEventType
     {
@@ -620,4 +688,15 @@ public class EdtClient : BaseClient, IEdtClient
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
     }
+
+
 }
+
+public static partial class EdtClientLoggingExtensions
+{
+    [LoggerMessage(1, LogLevel.Warning, "Case {caseId} status is {status} and is not active.")]
+    public static partial void LogCaseStatusNotActive(this Microsoft.Extensions.Logging.ILogger logger, int caseId, string status);
+    [LoggerMessage(2, LogLevel.Information, "Case {caseId} status currently being created and will be available shortly.")]
+    public static partial void LogCaseIsBeingCreated(this Microsoft.Extensions.Logging.ILogger logger, int caseId);
+}
+

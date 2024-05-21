@@ -139,10 +139,10 @@ namespace Pidp.Data.Migrations
                     { "WILL", true, "Williams Lake", "Williams Lake Court", true }
            });
 
-      migrationBuilder.CreateIndex(
-                name: "IX_RCCNumber",
-                table: "SubmittingAgencyRequest",
-                column: "RCCNumber");
+      //migrationBuilder.CreateIndex(
+      //          name: "IX_RCCNumber",
+      //          table: "SubmittingAgencyRequest",
+      //          column: "RCCNumber");
 
       migrationBuilder.CreateIndex(
           name: "IX_CourtLocationAccessRequest_CourtLocationCode",

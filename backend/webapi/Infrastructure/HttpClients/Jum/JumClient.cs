@@ -1,15 +1,18 @@
 namespace Pidp.Infrastructure.HttpClients.Jum;
 
-using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Common.Models.JUSTIN;
-using NodaTime;
 using Pidp.Models;
+using Prometheus;
 
 public class JumClient : BaseClient, IJumClient
 {
+
+    private static readonly Counter InvalidNameMatchCount = Metrics
+    .CreateCounter("justin_name_mismatch_total", "Number of name matches resulting in errors.");
+
     public JumClient(HttpClient httpClient, ILogger<JumClient> logger) : base(httpClient, logger) { }
 
 
@@ -19,9 +22,9 @@ public class JumClient : BaseClient, IJumClient
     /// <param name="caseId"></param>
     /// <param name="accessToken"></param>
     /// <returns></returns>
-    public async Task<Common.Models.JUSTIN.CaseStatus> GetJustinCaseStatus(string partyId, string caseId, string accessToken)
+    public async Task<CaseStatus> GetJustinCaseStatus(string partyId, string caseId, string accessToken)
     {
-        var result = await this.GetAsync<Common.Models.JUSTIN.CaseStatus>($"justin-case/{WebUtility.UrlEncode(caseId)}", accessToken);
+        var result = await this.GetAsync<CaseStatus>($"justin-case/{WebUtility.UrlEncode(caseId)}", accessToken);
 
         if (!result.IsSuccess)
         {
@@ -58,7 +61,7 @@ public class JumClient : BaseClient, IJumClient
     {
 
 
-        var result = await this.GetAsync<Participant>($"users/{username}");
+        var result = await this.GetAsync<Participant>($"users/username/{username}");
 
         if (!result.IsSuccess)
         {
@@ -85,6 +88,24 @@ public class JumClient : BaseClient, IJumClient
             throw fe;
         }
 
+    }
+
+    public async Task<Participant?> GetParticipantByUserNameAsync(string username)
+    {
+        var result = await this.GetAsync<Participant>($"participant?username={username}");
+
+        if (!result.IsSuccess)
+        {
+            return null;
+        }
+        var user = result.Value;
+        if (user == null)
+        {
+            this.Logger.LogNoUserFound(username);
+            return null;
+        }
+
+        return user;
     }
 
     public async Task<Participant?> GetJumUserByPartIdAsync(decimal partId)
@@ -178,21 +199,109 @@ public class JumClient : BaseClient, IJumClient
             }
         }
 
-
-
-        if (justinUser?.participantDetails?.FirstOrDefault()?.firstGivenNm == party.FirstName
-            && justinUser?.participantDetails?.FirstOrDefault()?.surname == party.LastName
-            && justinUser?.participantDetails?.FirstOrDefault()?.emailAddress == party.Email
-            //&& !justinUser.IsDisabled
-            //&& LocalDate.FromDateTime(justinUser.person.BirthDate) == party.Birthdate
-            && LocalDate.FromDateTime(Convert.ToDateTime(justinUser?.participantDetails?.FirstOrDefault()?.birthDate, CultureInfo.CurrentCulture)) == party.Birthdate)
-        //&& justinUser?.participantDetails?.FirstOrDefault()?.Gender == party.Gender)
+        if (this.ValidateJUSTINName(justinUser?.participantDetails?.FirstOrDefault(), party))
         {
             return Task.FromResult(true);
         }
 
         this.Logger.LogJustinUserNotMatching(JsonSerializer.Serialize(justinUser), JsonSerializer.Serialize(party));
         return Task.FromResult(false);
+    }
+
+    /// <summary>
+    /// Validate First Name, Last Name and EMail address matches between JUSTIN and the users login credentials
+    /// </summary>
+    /// <param name="justinUser"></param>
+    /// <param name="party"></param>
+    /// <returns></returns>
+    private bool ValidateJUSTINName(ParticipantDetail justinUser, Party party)
+    {
+        var response = true;
+        if (justinUser == null || party == null)
+        {
+            Serilog.Log.Error("JUSTIN User or party was null in call to ValidateJUSTINName()");
+            InvalidNameMatchCount.Inc();
+            return false;
+        }
+
+        #region last name check
+        // check last name
+        if (string.IsNullOrEmpty(justinUser.surname))
+        {
+            Serilog.Log.Error($"JUSTIN surname was empty for user {justinUser.partId}");
+            response = false;
+        }
+        if (string.IsNullOrEmpty(party.LastName))
+        {
+            Serilog.Log.Error($"Party surname was empty for user {party.Id}");
+            response = false;
+        }
+        if (!string.IsNullOrEmpty(justinUser.surname) && !string.IsNullOrEmpty(party.LastName) && !justinUser.surname.Equals(party.LastName, StringComparison.OrdinalIgnoreCase))
+        {
+            Serilog.Log.Error($"JUSTIN [{justinUser.surname}] and party surname [{party.LastName}] do not match");
+            response = false;
+        }
+        #endregion
+
+        #region first name check
+        // check first name
+        if (string.IsNullOrEmpty(justinUser.firstGivenNm))
+        {
+            Serilog.Log.Error($"JUSTIN first name was empty for user {justinUser.firstGivenNm}");
+            response = false;
+        }
+        if (string.IsNullOrEmpty(party.FirstName))
+        {
+            Serilog.Log.Error($"Party first name was empty for user {party.Id}");
+            response = false;
+        }
+        if (!string.IsNullOrEmpty(justinUser.firstGivenNm) && !string.IsNullOrEmpty(party.FirstName) && !justinUser.firstGivenNm.Equals(party.FirstName, StringComparison.OrdinalIgnoreCase))
+        {
+            Serilog.Log.Error($"JUSTIN [{justinUser.firstGivenNm}] and party first name [{party.FirstName}] do not match");
+            response = false;
+        }
+        #endregion
+
+        #region email check
+        if (Environment.GetEnvironmentVariable("JUSTIN_SKIP_USER_EMAIL_CHECK") is not null and "true")
+        {
+            if (string.IsNullOrEmpty(justinUser.partUpnTxt))
+            {
+                Serilog.Log.Warning($"JUSTIN email was empty for user {justinUser.partId}");
+            }
+            if (!string.IsNullOrEmpty(justinUser.partUpnTxt) && !string.IsNullOrEmpty(party.Email) && !justinUser.partUpnTxt.Equals(party.Email, StringComparison.OrdinalIgnoreCase))
+            {
+                Serilog.Log.Warning($"JUSTIN [{justinUser.partUpnTxt}] and party email [{party.Email}] do not match");
+            }
+        }
+        else
+        {
+            // check email
+            if (string.IsNullOrEmpty(justinUser.partUpnTxt))
+            {
+                Serilog.Log.Error($"JUSTIN email was empty for user {justinUser.partId}");
+                response = false;
+            }
+
+            if (string.IsNullOrEmpty(party.Email))
+            {
+                Serilog.Log.Error($"Party email was empty for user {party.Id}");
+                response = false;
+            }
+            if (!string.IsNullOrEmpty(justinUser.partUpnTxt) && !string.IsNullOrEmpty(party.Email) && !justinUser.partUpnTxt.Equals(party.Email, StringComparison.OrdinalIgnoreCase))
+            {
+                Serilog.Log.Error($"JUSTIN [{justinUser.partUpnTxt}] and party email [{party.Email}] do not match");
+                response = false;
+            }
+        }
+        #endregion
+
+        if (response != true)
+        {
+            InvalidNameMatchCount.Inc();
+        }
+        // all matches ok
+        return response;
     }
 
     public async Task<bool> FlagUserUpdateAsComplete(int eventMessageId, bool isSuccessful)

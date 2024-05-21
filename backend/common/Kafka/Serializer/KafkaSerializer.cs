@@ -4,7 +4,7 @@ using System.Text;
 using Confluent.Kafka;
 using Newtonsoft.Json;
 
-internal sealed class KafkaSerializer<T> : ISerializer<T>
+public sealed class KafkaSerializer<T> : ISerializer<T>
 {
     public byte[] Serialize(T data, SerializationContext context)
     {
@@ -14,8 +14,9 @@ internal sealed class KafkaSerializer<T> : ISerializer<T>
         if (typeof(T) == typeof(Ignore))
             throw new NotSupportedException("Not Supported.");
 
+
         var json = JsonConvert.SerializeObject(data, Formatting.Indented,
-            new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore});
+        new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
 
         return Encoding.UTF8.GetBytes(json);
     }

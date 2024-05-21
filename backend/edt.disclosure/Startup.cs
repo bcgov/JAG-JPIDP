@@ -53,6 +53,8 @@ public class Startup
             Environment.Exit(-1);
         }
 
+        Log.Logger.Information($"Edt System Identifier {config.EdtCoreDisclosureInstanceId}");
+
         if (!string.IsNullOrEmpty(config.Telemetry.CollectorUrl))
         {
 
