@@ -50,12 +50,6 @@ jobs:
       - name: Branch name
         run: echo running on branch ${GITHUB_REF##*/}
 
-      - name: Login to Artifactory 
-        uses: docker/login-action@v1
-        with:
-          registry: artifacts.developer.gov.bc.ca
-          username: ${{ secrets.ARTIFACTORY_USERNAME }}
-          password: ${{ secrets.ARTIFACTORY_PASSWORD }}
 
        # Get SHORT_SHA to tag images
       - name: Get short SHA
@@ -76,6 +70,14 @@ jobs:
         working-directory: ${{env.WORKING_DIRECTORY}}
         run: |
           docker build -t artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:${GITHUB_REF##*/} .
+
+          
+      - name: Login to Artifactory 
+        uses: docker/login-action@v1
+        with:
+          registry: artifacts.developer.gov.bc.ca
+          username: ${{ secrets.ARTIFACTORY_USERNAME }}
+          password: ${{ secrets.ARTIFACTORY_PASSWORD }}
 
       - name: Docker Push to Artifactory
         id: publish      
