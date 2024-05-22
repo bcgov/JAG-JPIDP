@@ -2,6 +2,8 @@
 
 The SQS connector plugin provides the ability to use AWS SQS queues as both a source (from an SQS queue into a Kafka topic) or sink (out of a Kafka topic into an SQS queue).
 
+Update jar 5-22
+
 ## Compatibility matrix
 
 |Connector version|Kafka Connect API|AWS SDK|
