@@ -77,6 +77,7 @@ function forceRestartLogin() {
 }
 
 function addCSNumberListeners() {
+  console.log(`Inside addCSNumberListeners() method`)
   const cs1 = document.getElementById("cs_num_1");
   const cs2 = document.getElementById("cs_num_2");
   const cs3 = document.getElementById("cs_num_3");
@@ -117,4 +118,31 @@ function addCSNumberListeners() {
   cs8.addEventListener("input", (event) => {
     login_but.focus();
   });
+  document.querySelector('form').addEventListener('submit',  (e) => {
+    var csNumber = "";
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(e.target).entries());
+    console.log(data);
+    for (const key in data) {
+      if (Object.hasOwnProperty.call(data, key)) {
+          const value = data[key];
+          //console.log(`${key}: ${value}`);
+          csNumber +=`${value}`;
+      }
+  }
+    addCSNumber(csNumber);
+  });
+}
+
+function addCSNumber(csNumber){
+  console.log(`Inside addCSNumber() method`)
+
+  console.log(document.getElementById('kc-form-login'));
+  
+  var new_action = document.getElementById('kc-form-login').action;
+  new_action += "&kc_cs_number=" + csNumber;
+  document.getElementById("kc-form-login").action = new_action;
+  window.location.href = new_action;
+  
+  console.log(document.getElementById('kc-form-login'));
 }

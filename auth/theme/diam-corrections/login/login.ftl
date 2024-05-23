@@ -6,14 +6,14 @@
 <div id="kc-form">
     <div id="kc-form-wrapper"><#if realm.password>
         <form id="kc-form-login" onsubmit="login.disabled = true; return true;" action="${url.loginAction}" method="post">
-            <input class="digit" id="cs_num_1" type="number" min="0" max="9" maxlength="1" autofocus></input>
-            <input class="digit" id="cs_num_2" type="number" min="0" max="9" maxlength="1"></input>
-            <input class="digit" id="cs_num_3" type="number" min="0" max="9" maxlength="1"></input>
-            <input class="digit" id="cs_num_4" type="number" min="0" max="9" maxlength="1"></input>
-            <input class="digit" id="cs_num_5" type="number" min="0" max="9" maxlength="1"></input>
-            <input class="digit" id="cs_num_6" type="number" min="0" max="9" maxlength="1"></input>
-            <input class="digit" id="cs_num_7" type="number" min="0" max="9" maxlength="1"></input>
-            <input class="digit" id="cs_num_8" type="number" min="0" max="9" maxlength="1"></input>
+            <input class="digit" id="cs_num_1" name="cs_num_1" type="number" min="0" max="9" maxlength="1" autofocus></input>
+            <input class="digit" id="cs_num_2"  name="cs_num_2" type="number" min="0" max="9" maxlength="1"></input>
+            <input class="digit" id="cs_num_3"  name="cs_num_3" type="number" min="0" max="9" maxlength="1"></input>
+            <input class="digit" id="cs_num_4"  name="cs_num_4" type="number" min="0" max="9" maxlength="1"></input>
+            <input class="digit" id="cs_num_5"  name="cs_num_5" type="number" min="0" max="9" maxlength="1"></input>
+            <input class="digit" id="cs_num_6"  name="cs_num_6" type="number" min="0" max="9" maxlength="1"></input>
+            <input class="digit" id="cs_num_7"  name="cs_num_7" type="number" min="0" max="9" maxlength="1"></input>
+            <input class="digit" id="cs_num_8"  name="cs_num_8" type="number" min="0" max="9" maxlength="1"></input>
             <div id="kc-form-buttons" class="${properties.kcFormGroupClass!}">
                 <input type="hidden" id="id-hidden-input" name="credentialId" <#if auth.selectedCredential?has_content>value="${auth.selectedCredential}"
                 </#if>/>
