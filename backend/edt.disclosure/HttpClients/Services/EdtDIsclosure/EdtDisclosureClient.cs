@@ -750,6 +750,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
         var response = await this.PostAsync<CaseModel>($"api/v1/org-units/{this.EdtOrgUnitId}/cases", caseInfo);
         if (!response.IsSuccess)
         {
+
             var msg = $"Case creation failed {caseInfo.Name} {string.Join(",", response.Errors)}";
             Log.Logger.Error(msg);
             throw new EdtDisclosureServiceException(msg);
