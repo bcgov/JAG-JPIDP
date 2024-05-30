@@ -4,6 +4,7 @@ using AppAny.Quartz.EntityFrameworkCore.Migrations;
 using AppAny.Quartz.EntityFrameworkCore.Migrations.PostgreSQL;
 using jumwebapi.Data.ef;
 using jumwebapi.Features.UserChangeManagement.Data;
+using jumwebapi.Infrastructure.Auth;
 using jumwebapi.Models;
 using Microsoft.EntityFrameworkCore;
 using NodaTime;
@@ -11,8 +12,14 @@ using NodaTime;
 public class JumDbContext : DbContext
 {
     private readonly IClock clock;
+    private readonly JumWebApiConfiguration configuration;
 
-    public JumDbContext(DbContextOptions<JumDbContext> options, IClock clock) : base(options) => this.clock = clock;
+    public JumDbContext(DbContextOptions<JumDbContext> options, IClock clock, JumWebApiConfiguration configuration) : base(options)
+    {
+
+        this.clock = clock;
+        this.configuration = configuration;
+    }
 
     public DbSet<JustinUser> Users { get; set; } = default!;
 
@@ -44,12 +51,26 @@ public class JumDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.HasDefaultSchema(this.configuration.ConnectionStrings.Schema);
+
         base.OnModelCreating(modelBuilder);
 
         // Adds Quartz.NET PostgreSQL schema to EntityFrameworkCore
         modelBuilder.AddQuartz(builder => builder.UsePostgreSql());
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(JumDbContext).Assembly);
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.UseNpgsql(this.configuration.ConnectionStrings.JumDatabase, x => x.MigrationsHistoryTable(this.configuration.ConnectionStrings.EfHistoryTable, this.configuration.ConnectionStrings.EfHistorySchema));
+
+
+        if (Environment.GetEnvironmentVariable("LOG_SQL") != null && "true".Equals(Environment.GetEnvironmentVariable("LOG_SQL")))
+        {
+            optionsBuilder.LogTo(Console.WriteLine);
+        }
+
     }
 
     private void ApplyAudits()

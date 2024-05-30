@@ -59,6 +59,9 @@ public class EdtServiceConfiguration
     public class ConnectionStringConfiguration
     {
         public string EdtDataStore { get; set; } = string.Empty;
+        public string Schema { get; set; } = "public";
+        public string EfHistorySchema { get; set; } = "public";
+        public string EfHistoryTable { get; set; } = "__EFMigrationsHistory";
     }
 
 

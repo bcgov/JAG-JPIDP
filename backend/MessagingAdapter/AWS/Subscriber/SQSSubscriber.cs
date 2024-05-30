@@ -103,8 +103,8 @@ public class SQSSubscriber : ISQSSubscriber, IDisposable
                     // get message and convert to EventModel object
                     var msgBody = msg.Body;
                     var json = JObject.Parse(msgBody);
-                    var content = json["Message"].ToString();
-                    var eventModel = JsonSerializer.Deserialize<DisclosureEventModel>(content, this.jsonSerializerOptions);
+                    // var content = json["Message"].ToString();
+                    var eventModel = JsonSerializer.Deserialize<DisclosureEventModel>(msgBody, this.jsonSerializerOptions);
                     if (eventModel != null)
                     {
                         messages.Add(eventModel);

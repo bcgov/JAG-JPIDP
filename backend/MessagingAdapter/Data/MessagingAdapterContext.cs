@@ -8,6 +8,7 @@ public class MessagingAdapterContext(DbContextOptions<MessagingAdapterContext> o
 {
 
     public DbSet<IdempotentConsumer> IdempotentConsumers { get; set; } = default!;
+    public DbSet<PollTracker> PollTrackers { get; set; } = default!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

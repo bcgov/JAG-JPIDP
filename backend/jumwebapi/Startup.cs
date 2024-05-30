@@ -96,7 +96,7 @@ public class Startup
          .UseNpgsql(config.ConnectionStrings.JumDatabase, npg => npg.UseNodaTime())
          .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
 
-        services.AddMediatR(typeof(Startup).Assembly);
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Startup).Assembly));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
 
         services.AddSingleton<ProblemDetailsFactory, UserManagerProblemDetailsFactory>();

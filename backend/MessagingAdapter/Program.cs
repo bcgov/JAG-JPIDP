@@ -37,19 +37,17 @@ public class Program
 
 
         builder.Services.AddDbContext<MessagingAdapterContext>(options => options
-    .UseNpgsql(dbConnection, npg =>
-    {
-        npg.MigrationsHistoryTable(HistoryRepository.DefaultTableName, "messaging-adapter");
-        npg.UseNodaTime();
-    }).EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
+            .UseNpgsql(dbConnection, npg =>
+            {
+                npg.MigrationsHistoryTable(HistoryRepository.DefaultTableName, "messaging-adapter");
+                npg.UseNodaTime();
+            }).EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
 
         builder.Services.AddScoped<ISQSSubscriber, SQSSubscriber>();
         builder.Services.AddScoped<ISNSProducer, SNSProducer>();
 
 
         var app = builder.Build();
-
-
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())

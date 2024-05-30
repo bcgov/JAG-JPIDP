@@ -13,7 +13,6 @@ using edt.service.ServiceEvents.UserAccountCreation.ConsumerRetry;
 using edt.service.ServiceEvents.UserAccountCreation.Handler;
 using edt.service.ServiceEvents.UserAccountModification.Handler;
 using FluentValidation.AspNetCore;
-using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.Versioning;
@@ -24,7 +23,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using NodaTime;
 using NodaTime.Serialization.SystemTextJson;
-using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
@@ -70,8 +68,6 @@ public class Startup
         if (!string.IsNullOrEmpty(config.Telemetry.CollectorUrl))
         {
 
-            var meters = new OtelMetrics();
-
             Action<ResourceBuilder> configureResource = r => r.AddService(
                  serviceName: TelemetryConstants.ServiceName,
                  serviceVersion: Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown",
@@ -105,9 +101,14 @@ public class Startup
                        });
                    }
                })
-               .WithMetrics(builder =>
-                   builder.AddHttpClientInstrumentation()
-                       .AddAspNetCoreInstrumentation()).StartWithHost();
+                .WithMetrics(builder =>
+                {
+                    builder
+                     .AddMeter(Instrumentation.MeterName)
+                     .AddRuntimeInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddAspNetCoreInstrumentation();
+                });
 
         }
 
@@ -131,7 +132,7 @@ public class Startup
             .UseNpgsql(config.ConnectionStrings.EdtDataStore, npg => npg.UseNodaTime())
             .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
 
-        services.AddMediatR(typeof(Startup).Assembly);
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Startup).Assembly));
 
         services.AddHealthChecks()
         .AddCheck("liveliness", () => HealthCheckResult.Healthy())
@@ -146,7 +147,7 @@ public class Startup
              });
         services.AddHttpClient();
 
-        services.AddSingleton<OtelMetrics>();
+        services.AddSingleton<Instrumentation>();
         services.AddSingleton<IAuthorizationHandler, RealmAccessRoleHandler>();
         services.AddScoped<IFolioLinkageService, FolioLinkageService>();
 
@@ -252,15 +253,6 @@ public class Startup
             });
 
 
-            // q.UseMicrosoftDependencyInjectionJobFactory();
-            //q.UseSimpleTypeLoader();
-            //q.UseInMemoryStore();
-            //q.UseDefaultThreadPool(tp =>
-            //{
-            //    tp.MaxConcurrency = 2;
-            //});
-
-
             var jobKey = new JobKey("Folio Linkage Jon");
 
             q.AddJob<FolioLinkageJob>(opts => opts.WithIdentity(jobKey));
@@ -272,12 +264,7 @@ public class Startup
                 .WithDescription("Court access scheduled event")
                 .WithCronSchedule(config.FolioLinkageBackgroundService.PollCron));
 
-            //q.ScheduleJob<FolioLinkageJob>(trigger => trigger
-            //  .WithIdentity("Folio linkage process")
-            //  .StartNow()
-            //  .WithDailyTimeIntervalSchedule(x => x.WithInterval(config.FolioLinkageBackgroundService.PollSeconds, IntervalUnit.Second))
-            //  .WithDescription("Court access scheduled event")
-            //);
+
 
 
         });

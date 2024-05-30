@@ -101,9 +101,14 @@ public class Startup
                             });
                     }
                 })
-                .WithMetrics(builder =>
-                    builder.AddHttpClientInstrumentation()
-                        .AddAspNetCoreInstrumentation()).StartWithHost();
+             .WithMetrics(builder =>
+             {
+                 builder
+                  .AddMeter(Instrumentation.MeterName)
+                  .AddRuntimeInstrumentation()
+                 .AddHttpClientInstrumentation()
+                 .AddAspNetCoreInstrumentation();
+             });
 
 
 

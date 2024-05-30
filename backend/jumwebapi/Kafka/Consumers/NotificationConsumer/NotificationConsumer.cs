@@ -4,6 +4,7 @@ namespace jumwebapi.Kafka.Consumers.NotificationConsumer;
 using Confluent.Kafka;
 using jumwebapi.Kafka.Interfaces;
 using jumwebapi.Kafka.Producer.Interfaces;
+using Serilog;
 
 public class NotificationConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TValue : class
 {
@@ -28,7 +29,11 @@ public class NotificationConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> w
         using var scope = this._serviceScopeFactory.CreateScope();
 
         this._handler = scope.ServiceProvider.GetRequiredService<IKafkaHandler<TKey, TValue>>();
-        this._consumer = new ConsumerBuilder<TKey, TValue>(this._config).SetValueDeserializer(new KafkaDeserializer<TValue>()).Build();
+        this._consumer = new ConsumerBuilder<TKey, TValue>(this._config)
+            // fix annoying logging
+            .SetLogHandler((producer, log) => { })
+            .SetErrorHandler((producer, log) => Log.Error($"Kafka error {log}"))
+            .SetValueDeserializer(new KafkaDeserializer<TValue>()).Build();
         this._topic = topic;
 
         await Task.Run(() => this.StartConsumerLoop(stoppingToken), stoppingToken);

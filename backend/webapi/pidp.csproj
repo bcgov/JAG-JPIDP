@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Pidp</RootNamespace>
     <UserSecretsId>5c2dc965-00b4-4531-9ff0-9b37193ead9b</UserSecretsId>
-    <Version>1.1.5</Version>
+    <Version>1.1.6</Version>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="logs\**" />
@@ -15,17 +15,17 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AppAny.Quartz.EntityFrameworkCore.Migrations.PostgreSQL" Version="0.5.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.5" />
-    <PackageReference Include="xunit" Version="2.6.6" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.6" />
+    <PackageReference Include="xunit" Version="2.8.1" />
     <ProjectReference Include="..\common\Common.csproj" />
     <PackageReference Include="HybridModelBinding" Version="0.18.0" />
-    <PackageReference Include="Quartz" Version="3.8.0" />
-    <PackageReference Include="Quartz.AspNetCore" Version="3.8.0" />
-    <PackageReference Include="Quartz.Serialization.Json" Version="3.8.0" />
+    <PackageReference Include="Quartz" Version="3.9.0" />
+    <PackageReference Include="Quartz.AspNetCore" Version="3.9.0" />
+    <PackageReference Include="Quartz.Serialization.Json" Version="3.9.0" />
 
-    <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.8.0" />
-    <PackageReference Include="Keycloak.Net.Core" Version="1.0.25" />
-    <PackageReference Include="SendGrid" Version="9.28.1" />
+    <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.9.0" />
+    <PackageReference Include="Keycloak.Net.Core" Version="1.0.26" />
+    <PackageReference Include="SendGrid" Version="9.29.3" />
 
   </ItemGroup>
 
