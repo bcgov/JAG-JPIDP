@@ -36,6 +36,9 @@ public class JumWebApiConfiguration
     public class ConnectionStringConfiguration
     {
         public string JumDatabase { get; set; } = string.Empty;
+        public string Schema { get; set; } = "public";
+        public string EfHistorySchema { get; set; } = "public";
+        public string EfHistoryTable { get; set; } = "__EFMigrationsHistory";
     }
 
     public class ChesClientConfiguration

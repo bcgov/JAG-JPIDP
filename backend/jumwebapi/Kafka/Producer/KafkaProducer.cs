@@ -16,7 +16,14 @@ public class KafkaProducer<TKey, TValue> : IDisposable, IKafkaProducer<TKey, TVa
     private const string EXPIRY_CLAIM = "exp";
 
 
-    public KafkaProducer(ProducerConfig config) => this.producer = new ProducerBuilder<TKey, TValue>(config).SetOAuthBearerTokenRefreshHandler(this.OauthTokenRefreshCallback).SetValueSerializer(new KafkaSerializer<TValue>()).Build();
+    public KafkaProducer(ProducerConfig config) => this.producer = new ProducerBuilder<TKey, TValue>(config)
+        // fix annoying logging
+        .SetLogHandler((producer, log) => { })
+        .SetErrorHandler((producer, log) => Log.Error($"Kafka error {log}"))
+        .SetOAuthBearerTokenRefreshHandler(this.OauthTokenRefreshCallback).SetValueSerializer(new KafkaSerializer<TValue>()).Build();
+
+
+
     public async Task<DeliveryResult<TKey, TValue>> ProduceAsync(string topic, TKey key, TValue value)
     {
         var message = new Message<TKey, TValue> { Key = key, Value = value };

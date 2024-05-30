@@ -1,5 +1,7 @@
 namespace edt.disclosure.HttpClients.Services.EdtDisclosure;
 
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Threading.Tasks;
 using AutoMapper;
 using common.Constants.Auth;
@@ -16,33 +18,40 @@ using Serilog;
 public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 {
     private readonly IMapper mapper;
-    private readonly OtelMetrics meters;
     private readonly EdtDisclosureServiceConfiguration configuration;
     private static readonly Counter ProcessedJobCount = Metrics
         .CreateCounter("disclosure_case_search_total", "Number of disclosure case search requests.");
     private static readonly Histogram AccountCreationDuration = Metrics.CreateHistogram("edt_disclosure_account_creation_duration", "Histogram of edt disclosure account creations.");
     private static readonly Histogram AccountUpdateDuration = Metrics.CreateHistogram("edt_disclosure_account_update_duration", "Histogram of edt disclosure account updates.");
-    private static readonly Counter CourtLocationAddRequest = Metrics
-    .CreateCounter("disclosure_court_location_add_total", "Number of court location requests.");
+
     private readonly string EdtOrgUnitId;
 
+    private readonly Counter<long> getUserCounter;
+    private readonly Counter<long> addUserCounter;
+
+    private readonly ActivitySource activitySource;
+
+
     public EdtDisclosureClient(
-        HttpClient httpClient, OtelMetrics meters, EdtDisclosureServiceConfiguration edtServiceConfiguration,
+        HttpClient httpClient, Instrumentation instrumentation, EdtDisclosureServiceConfiguration edtServiceConfiguration,
         IMapper mapper,
         ILogger<EdtDisclosureClient> logger)
         : base(httpClient, logger)
     {
+        ArgumentNullException.ThrowIfNull(instrumentation);
+
         this.mapper = mapper;
-        this.meters = meters;
         this.configuration = edtServiceConfiguration;
         this.EdtOrgUnitId = this.configuration.EdtOrgUnitId;
+        this.getUserCounter = instrumentation.EdtGetUserCounter;
+        this.addUserCounter = instrumentation.EdtAddUserCounter;
     }
 
 
     public async Task<EdtUserDto?> GetUser(string userKey)
     {
+        using var activity = this.activitySource.StartActivity("get edt user");
 
-        this.meters.GetUser();
         Log.Logger.Information("Checking if user key {0} already present", userKey);
         var result = await this.GetAsync<EdtUserDto?>($"api/v1/users/key:{userKey}");
 
@@ -58,6 +67,9 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
                 throw new EdtDisclosureServiceException($"Failed to query for user {userKey} - check service is available [{string.Join(",", result.Errors)}]");
             }
         }
+
+        this.getUserCounter.Add(1);
+
         Log.Logger.Information($"Found user {userKey} {result.Value?.Id}");
         return result.Value;
     }
@@ -232,7 +244,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
         using (AccountCreationDuration.NewTimer())
         {
-            this.meters.AddUser();
+            this.addUserCounter.Add(1);
             var edtUserDto = this.mapper.Map<EdtDisclosureUserProvisioningModel, EdtUserDto>(accessRequest);
             var result = await this.PostAsync($"api/v1/users", edtUserDto);
             var userModificationResponse = new UserModificationEvent

@@ -10,7 +10,6 @@ using edt.casemanagement.Infrastructure.Telemetry;
 using edt.casemanagement.Kafka;
 using edt.casemanagement.ServiceEvents.CaseManagement.Handler;
 using FluentValidation.AspNetCore;
-using MediatR;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
@@ -21,7 +20,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using NodaTime;
 using NodaTime.Serialization.SystemTextJson;
-using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
@@ -57,7 +55,6 @@ public class Startup
         if (!string.IsNullOrEmpty(config.Telemetry.CollectorUrl))
         {
 
-            var meters = new OtelMetrics();
 
             Action<ResourceBuilder> configureResource = r => r.AddService(
                  serviceName: TelemetryConstants.ServiceName,
@@ -71,6 +68,8 @@ public class Startup
                .ConfigureResource(configureResource)
                .WithTracing(builder =>
                {
+
+                   // tracing
                    builder.SetSampler(new AlwaysOnSampler())
                        .AddHttpClientInstrumentation()
                        .AddEntityFrameworkCoreInstrumentation(options => options.SetDbStatementForText = true)
@@ -93,8 +92,13 @@ public class Startup
                    }
                })
                .WithMetrics(builder =>
-                   builder.AddHttpClientInstrumentation()
-                       .AddAspNetCoreInstrumentation()).StartWithHost();
+               {
+                   builder
+                    .AddMeter(Instrumentation.MeterName)
+                    .AddRuntimeInstrumentation()
+                   .AddHttpClientInstrumentation()
+                   .AddAspNetCoreInstrumentation();
+               });
 
         }
 
@@ -118,7 +122,7 @@ public class Startup
             .UseNpgsql(config.ConnectionStrings.CaseManagementDataStore, sql => sql.UseNodaTime())
             .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
 
-        services.AddMediatR(typeof(Startup).Assembly);
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Startup).Assembly));
 
         services.AddHealthChecks()
                 .AddCheck("liveliness", () => HealthCheckResult.Healthy())
@@ -133,7 +137,7 @@ public class Startup
              });
         services.AddHttpClient();
 
-        services.AddSingleton<OtelMetrics>();
+        services.AddSingleton<Instrumentation>();
 
 
         //services.AddSingleton<ProblemDetailsFactory, UserManagerProblemDetailsFactory>();

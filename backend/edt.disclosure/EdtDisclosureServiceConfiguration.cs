@@ -73,6 +73,9 @@ public class EdtDisclosureServiceConfiguration
     public class ConnectionStringConfiguration
     {
         public string DisclosureDataStore { get; set; } = string.Empty;
+        public string Schema { get; set; } = "public";
+        public string EfHistorySchema { get; set; } = "public";
+        public string EfHistoryTable { get; set; } = "__EFMigrationsHistory";
     }
 
     public class KeycloakConfiguration
