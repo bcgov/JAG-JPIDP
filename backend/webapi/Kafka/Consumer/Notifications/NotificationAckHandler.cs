@@ -42,7 +42,7 @@ public class NotificationAckHandler : IKafkaHandler<string, NotificationAckModel
                     accessRequest.Status = value.Status;
                     await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
                     await this.context.SaveChangesAsync();
-                    trx.Commit();
+                    await trx.CommitAsync();
 
                     return Task.CompletedTask;
                 }
@@ -83,15 +83,24 @@ public class NotificationAckHandler : IKafkaHandler<string, NotificationAckModel
                     }
                     else
                     {
+                        Log.Information($"Flagging {value.Status} for {accessRequest.RequestId}");
                         accessRequest.RequestStatus = value.Status;
-                        accessRequest.Details = value.Details;
+                        accessRequest.Details = string.IsNullOrEmpty(value.Details) ? value.Status : value.Details;
                     }
 
-                    await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
-                    await this.context.SaveChangesAsync();
-                    await trx.CommitAsync();
+                    var affectedRows = await this.context.SaveChangesAsync();
+                    if (affectedRows > 0)
+                    {
+                        await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
+                        await trx.CommitAsync();
 
-                    return Task.CompletedTask;
+                        return Task.CompletedTask;
+                    }
+                    else
+                    {
+                        await trx.RollbackAsync();
+                        return Task.FromException(new InvalidOperationException($"Failed to update case record {value.AccessRequestId} - {affectedRows} rows updated"));
+                    }
                 }
                 catch (Exception e)
                 {
