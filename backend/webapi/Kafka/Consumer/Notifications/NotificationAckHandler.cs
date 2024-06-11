@@ -17,7 +17,6 @@ public class NotificationAckHandler : IKafkaHandler<string, NotificationAckModel
 
         using var trx = this.context.Database.BeginTransaction();
 
-
         Log.Logger.Information("Message received on {0} with key {1}", consumerName, key);
         //check whether this message has been processed before   
         if (await this.context.HasBeenProcessed(key, consumerName))
@@ -35,7 +34,6 @@ public class NotificationAckHandler : IKafkaHandler<string, NotificationAckModel
             if (accessRequest != null)
             {
                 Log.Information($"Marking access request {value.AccessRequestId} as {value.Status}");
-
 
                 try
                 {
