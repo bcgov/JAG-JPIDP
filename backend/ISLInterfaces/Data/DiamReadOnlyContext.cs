@@ -13,22 +13,21 @@ public class DiamReadOnlyContext : DbContext
 
     private readonly IConfiguration configuration;
 
-
-    public DiamReadOnlyContext(DbContextOptions<DiamReadOnlyContext> options) : base(options)
-    {
-
-    }
-
-
-
-    protected DiamReadOnlyContext(DbContextOptions<DiamReadOnlyContext> options, IConfiguration configuration) : base(options)
+    public DiamReadOnlyContext(DbContextOptions<DiamReadOnlyContext> options
+       , IConfiguration configuration) : base(options)
     {
         this.configuration = configuration;
     }
 
+
+
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasDefaultSchema("diam");
+
+        var schema = this.configuration.GetValue<string>("DatabaseConnectionInfo:Schema");
+
+        modelBuilder.HasDefaultSchema(schema);
         base.OnModelCreating(modelBuilder);
 
 

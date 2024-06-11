@@ -23,6 +23,11 @@ public class CaseAccessService(DiamReadOnlyContext context, ILogger<CaseAccessSe
         this.logger.LogInformation($"Getting users on case {rccNumber}");
         this.caseSearchCount.Add(1);
 
+        if (!this.context.Database.CanConnect())
+        {
+            logger.LogError("Unable to connect to database - check connection info");
+        }
+
         var result = await this.context.SubmittingAgencyRequests
       .Where(access => access.RCCNumber == rccNumber && (access.RequestStatus == AgencyRequestStatus.Complete || access.RequestStatus == AgencyRequestStatus.Pending))
       .Include(party => party.Party)

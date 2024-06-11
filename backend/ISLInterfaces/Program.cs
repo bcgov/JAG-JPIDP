@@ -7,6 +7,7 @@ using ISLInterfaces.Features.CaseAccess;
 using ISLInterfaces.Infrastructure.Auth;
 using ISLInterfaces.Infrastructure.Telemetry;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -31,6 +32,7 @@ public class Program
         var dbConnection = builder.Configuration.GetValue<string>("DatabaseConnectionInfo:DiamDatabase");
         var histogramAggregation = builder.Configuration.GetValue("HistogramAggregation", defaultValue: "explicit")!.ToLowerInvariant();
 
+        builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
 
         builder.Services.AddDbContext<DiamReadOnlyContext>(options => options
@@ -90,6 +92,9 @@ public class Program
         app.MapControllers();
 
         app.Run();
+
+        Log.Logger.Information("### ISL Interface Service running");
+
     }
 
 }
