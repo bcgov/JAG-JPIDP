@@ -72,7 +72,7 @@ if (app.Environment.IsDevelopment())
 
 app.MapGet("/", () => $"DIAM Configuration {Assembly.GetExecutingAssembly().GetName().Version?.ToString()}");
 
-app.MapHealthChecks("/health/liveness");
+app.MapHealthChecks("/health/liveness").AllowAnonymous();
 app.MapMetrics("/metrics");
 
 app.UseSerilogRequestLogging(options => options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
