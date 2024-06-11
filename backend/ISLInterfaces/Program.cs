@@ -42,10 +42,8 @@ public class Program
             metrics
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation()
-                .AddConsoleExporter()
                 .AddMeter(Instrumentation.MeterName)
                 .AddMeter("Microsoft.AspNetCore.Hosting")
-
         );
 
 
