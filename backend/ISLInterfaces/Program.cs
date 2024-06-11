@@ -80,7 +80,7 @@ public class Program
         app.UseHttpsRedirection();
 
         app.UseAuthorization();
-        app.MapHealthChecks("/health/liveness");
+        app.MapHealthChecks("/health/liveness").AllowAnonymous();
         app.MapMetrics("/metrics");
 
         app.UseSerilogRequestLogging(options => options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
