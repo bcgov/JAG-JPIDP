@@ -1,4 +1,4 @@
-name: diam-approvalflow
+name: diam-islinterfaces
  
 on:
   push:
