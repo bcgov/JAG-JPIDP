@@ -27,7 +27,7 @@ builder.Services.AddSingleton<IClock>(SystemClock.Instance);
 builder.Services.AddDbContext<DIAMConfigurationDataStoreDbContext>(options => options
     .UseNpgsql(dbConnection, npg =>
     {
-        npg.MigrationsHistoryTable(HistoryRepository.DefaultTableName, "diam-config");
+        npg.MigrationsHistoryTable(HistoryRepository.DefaultTableName, builder.Configuration.GetValue<string>("ConfigSchema"));
         npg.UseNodaTime();
     })
     .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
