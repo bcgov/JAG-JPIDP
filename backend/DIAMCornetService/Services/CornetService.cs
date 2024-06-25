@@ -17,7 +17,7 @@ public class CornetService(ILogger<NotificationService> logger, IKafkaProducer<s
     public async Task<ParticipantCSNumberModel> GetParticipantCSNumberAsync(string participantId)
     {
 
-        // if this cannot lookup the participant, it should throw an exception (CornetException)
+        // JAMAL Code here - if this cannot lookup the participant, it should throw an exception (CornetException)
         logger.LogInformation($"*************************** ADD CS NUMBER LOOKUP CODE HERE ***************************");
 
         return new ParticipantCSNumberModel
@@ -81,7 +81,7 @@ public class CornetService(ILogger<NotificationService> logger, IKafkaProducer<s
 
 
         // JAMAL add code here
-        logger.LogInformation($"*************************** ADD PUBLIC EVENT CODE HERE ***************************");
+        logger.LogInformation($"*************************** ADD PUBLISH EVENT CODE HERE ***************************");
 
         // some response code to show notification worked
         return 0;
