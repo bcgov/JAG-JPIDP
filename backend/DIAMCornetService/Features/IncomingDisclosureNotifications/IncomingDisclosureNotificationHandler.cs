@@ -3,6 +3,7 @@ namespace DIAMCornetService.Features.MessageConsumer;
 using System.Threading.Tasks;
 using Common.Kafka;
 using DIAMCornetService.Data;
+using DIAMCornetService.Exceptions;
 using DIAMCornetService.Services;
 using global::DIAMCornetService.Models;
 
@@ -49,16 +50,33 @@ public class IncomingDisclosureNotificationHandler : IKafkaHandler<string, Incom
             incomingMessage.CSNumber = response["CSNumber"];
             incomingMessage.ProcessResponseId = response["id"];
 
+            // assuming no error on CS Number lookup
+            // change to if error = true
+            if (false)
+            {
+                incomingMessage.ErrorMessage = response["ErrorMessage"];
+
+            }
             // submit notification to users
-            var notificationResponse = await this.cornetService.PublishNotificationAsync(response["CSNumber"], value.MessageText);
+            var notificationResponse = await this.cornetService.SubmitNotificationToEServices(response["CSNumber"], value.MessageText);
 
+            // if publish returned an error
+            if (false)
+            {
+                // log error
 
-            //add to tell message has been processed by consumer
-            await this.context.AddIdempotentConsumer(messageId: key, consumer: consumerName);
+                return Task.FromException(new CornetException("Failed to publish notification"));
+            }
+            else
+            {
 
-            incomingMessage.CompletedTimestamp = DateTime.UtcNow;
+                //add to tell message has been processed by consumer
+                await this.context.AddIdempotentConsumer(messageId: key, consumer: consumerName);
 
-            return Task.CompletedTask;
+                incomingMessage.CompletedTimestamp = DateTime.UtcNow;
+
+                return Task.CompletedTask;
+            }
         }
         catch (Exception ex)
         {
