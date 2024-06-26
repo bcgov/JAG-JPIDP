@@ -40,7 +40,7 @@ public class SNSProducer : ISNSProducer
     {
         var attributes = new Dictionary<string, MessageAttributeValue>();
 
-        var filterType = (eventModel is DisclosureEventModel model) ? model.DisclosureEventType.ToString() : "unknown";
+        var filterType = (eventModel is DisclosureEventModel model) ? model.EventType.ToString() : "unknown";
         var value = new MessageAttributeValue
         {
             DataType = "String",
@@ -56,6 +56,7 @@ public class SNSProducer : ISNSProducer
         {
             Message = eventModel.AsJSON(),
             MessageAttributes = attributes,
+            MessageGroupId = "DIAM-test",
             Subject = "Disclosure Test",
             TopicArn = publisherOptions.SNSTarget
         };

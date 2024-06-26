@@ -10,8 +10,13 @@ using NodaTime;
 public class EdtDataStoreDbContext : DbContext
 {
     private readonly IClock clock;
+    private readonly EdtServiceConfiguration configuration;
 
-    public EdtDataStoreDbContext(DbContextOptions<EdtDataStoreDbContext> options, IClock clock) : base(options) => this.clock = clock;
+    public EdtDataStoreDbContext(DbContextOptions<EdtDataStoreDbContext> options, IClock clock, EdtServiceConfiguration configuration) : base(options)
+    {
+        this.clock = clock;
+        this.configuration = configuration;
+    }
 
     public DbSet<EmailLog> EmailLogs { get; set; } = default!;
     public DbSet<IdempotentConsumer> IdempotentConsumers { get; set; } = default!;
@@ -35,7 +40,7 @@ public class EdtDataStoreDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasDefaultSchema("edt");
+        modelBuilder.HasDefaultSchema(this.configuration.ConnectionStrings.Schema);
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.Entity<IdempotentConsumer>()
@@ -86,4 +91,16 @@ public class EdtDataStoreDbContext : DbContext
         await this.SaveChangesAsync();
     }
     public async Task<bool> HasBeenProcessed(string messageId, string consumer) => await this.IdempotentConsumers.AnyAsync(x => x.MessageId == messageId && x.Consumer == consumer);
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.UseNpgsql(this.configuration.ConnectionStrings.EdtDataStore, x => x.MigrationsHistoryTable(this.configuration.ConnectionStrings.EfHistoryTable, this.configuration.ConnectionStrings.EfHistorySchema));
+
+
+        if (Environment.GetEnvironmentVariable("LOG_SQL") != null && "true".Equals(Environment.GetEnvironmentVariable("LOG_SQL")))
+        {
+            optionsBuilder.LogTo(Console.WriteLine);
+        }
+
+    }
 }

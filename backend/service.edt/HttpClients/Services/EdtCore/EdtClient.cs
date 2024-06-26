@@ -1,5 +1,6 @@
 namespace edt.service.HttpClients.Services.EdtCore;
 
+using System.Diagnostics.Metrics;
 using System.Threading.Tasks;
 using AutoMapper;
 using Common.Models.EDT;
@@ -15,7 +16,6 @@ public class EdtClient : BaseClient, IEdtClient
 {
     private const string SUBMITTING_AGENCY_GROUP_NAME = "Submitting Agency";
     private readonly IMapper mapper;
-    private readonly OtelMetrics meters;
     private readonly EdtServiceConfiguration configuration;
     private readonly string SUBMITTING_AGENCY = "SubmittingAgency";
     private static readonly Histogram AccountCreationDuration = Metrics.CreateHistogram("edt_account_creation_duration", "Histogram of edt account creations.");
@@ -25,24 +25,33 @@ public class EdtClient : BaseClient, IEdtClient
     private static readonly Histogram ParticipantModificationDuration = Metrics.CreateHistogram("edt_participant_modification_duration", "Histogram of edt participant modifications.");
     private static readonly Histogram DisclosureLinkageDuration = Metrics.CreateHistogram("edt_person_disclosure_linkage", "Histogram of edt participant to folio linkage events.");
 
-
+    private readonly Counter<long> getPersonCounter;
+    private readonly Counter<long> addPersonCounter;
+    private readonly Counter<long> getUserCounter;
+    private readonly Counter<long> updateUserCounter;
+    private readonly Counter<long> updatePersonCounter;
 
     public EdtClient(
-        HttpClient httpClient, OtelMetrics meters, EdtServiceConfiguration edtServiceConfiguration,
+        HttpClient httpClient, Instrumentation instrumentation, EdtServiceConfiguration edtServiceConfiguration,
         IMapper mapper,
         ILogger<EdtClient> logger)
         : base(httpClient, logger)
     {
+        ArgumentNullException.ThrowIfNull(instrumentation);
         this.mapper = mapper;
-        this.meters = meters;
         this.configuration = edtServiceConfiguration;
+        this.getPersonCounter = instrumentation.EdtGetPersonCounter;
+        this.addPersonCounter = instrumentation.EdtAddPersonCounter;
+        this.getUserCounter = instrumentation.EdtGetUserCounter;
+        this.updateUserCounter = instrumentation.EdtUpdateUserCounter;
+        this.updatePersonCounter = instrumentation.EdtUpdatePersonCounter;
+
     }
 
     public async Task<UserModificationEvent> CreateUser(EdtUserProvisioningModel accessRequest)
     {
         using (AccountCreationDuration.NewTimer())
         {
-            this.meters.AddUser();
             var edtUserDto = this.mapper.Map<EdtUserProvisioningModel, EdtUserDto>(accessRequest);
             var result = await this.PostAsync($"api/v1/users", edtUserDto);
             var userModificationResponse = new UserModificationEvent
@@ -433,7 +442,7 @@ public class EdtClient : BaseClient, IEdtClient
     {
         using (GetUserDuration.NewTimer())
         {
-            this.meters.GetUser();
+            this.getUserCounter.Add(1);
             Log.Logger.Information("Checking if user key {0} already present", userKey);
             var result = await this.GetAsync<EdtUserDto?>($"api/v1/users/key:{userKey}");
 
@@ -449,7 +458,7 @@ public class EdtClient : BaseClient, IEdtClient
     {
         using (GetUserDuration.NewTimer())
         {
-            this.meters.GetPerson();
+            this.getPersonCounter.Add(1);
             Log.Logger.Information("Checking if person with key {0} already present", userKey);
             var result = await this.GetAsync<EdtPersonDto?>($"api/v1/org-units/1/persons/{userKey}");
 
@@ -471,7 +480,7 @@ public class EdtClient : BaseClient, IEdtClient
     {
         using (GetUserDuration.NewTimer())
         {
-            this.meters.GetPerson();
+            this.getPersonCounter.Add(1);
             Log.Logger.Information($"Getting person by id {id}");
             var result = await this.GetAsync<EdtPersonDto?>($"api/v1/org-units/1/persons/{id}");
 
@@ -708,7 +717,7 @@ public class EdtClient : BaseClient, IEdtClient
 
         using (ParticipantCreationDuration.NewTimer())
         {
-            this.meters.AddPerson();
+            this.addPersonCounter.Add(1);
             var edtPersonDto = this.mapper.Map<EdtPersonProvisioningModel, EdtPersonDto>(accessRequest);
             var result = await this.PostAsync($"api/v1/org-units/1/persons", edtPersonDto);
             var userModificationResponse = new UserModificationEvent
@@ -752,7 +761,7 @@ public class EdtClient : BaseClient, IEdtClient
     {
         using (ParticipantModificationDuration.NewTimer())
         {
-            this.meters.UpdatePerson();
+            this.updatePersonCounter.Add(1);
 
             var hasChange = false;
             var person = await this.GetPerson(modificationInfo.Key);
@@ -832,7 +841,7 @@ public class EdtClient : BaseClient, IEdtClient
     {
         using (ParticipantModificationDuration.NewTimer())
         {
-            this.meters.UpdatePerson();
+            this.updatePersonCounter.Add(1);
 
             var edtPersonDto = this.mapper.Map<EdtPersonProvisioningModel, EdtPersonDto>(accessRequest);
 

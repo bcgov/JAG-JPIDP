@@ -1,8 +1,7 @@
 # DIAM Notification Adapter
 
-## Process incoming AWS messages and adapt and produce to internal message bus
+## Temporary process waiting on changes to EDT 11.6.9
 
-This application will receive messages from AWS SQS (and push test messages to SNS).
-When a message is received the service will place a new kafka message onto a topic that can then be consumed by other services.
+In a future release EDT will automatically publish disclosure events to an SNS topic.
+In the interim we will be using a poll mechanism to pull messages from EDT via an API and publish them to an SNS topic.
 
-This separates out the AWS messaging from the DIAM messaging and allows other Justice apps to process those messages from Kafka without having to consume from AWS.

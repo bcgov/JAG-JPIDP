@@ -1,11 +1,11 @@
 namespace Pidp.Kafka.Producer;
 
-using Confluent.Kafka;
-using Pidp.Kafka.Interfaces;
-using IdentityModel.Client;
 using System.Globalization;
-using Serilog;
+using Confluent.Kafka;
+using IdentityModel.Client;
 using Pidp.Infrastructure.Telemetry;
+using Pidp.Kafka.Interfaces;
+using Serilog;
 
 public class KafkaProducer<TKey, TValue> : IDisposable, IKafkaProducer<TKey, TValue> where TValue : class
 {
@@ -13,7 +13,11 @@ public class KafkaProducer<TKey, TValue> : IDisposable, IKafkaProducer<TKey, TVa
     private const string EXPIRY_CLAIM = "exp";
     private const string SUBJECT_CLAIM = "sub";
 
-    public KafkaProducer(ProducerConfig config) => this.producer = new ProducerBuilder<TKey, TValue>(config).SetOAuthBearerTokenRefreshHandler(OauthTokenRefreshCallback).SetValueSerializer(new KafkaSerializer<TValue>()).Build();
+    public KafkaProducer(ProducerConfig config) => this.producer = new ProducerBuilder<TKey, TValue>(config)
+        // fix annoying logging
+        .SetLogHandler((producer, log) => { })
+        .SetErrorHandler((producer, log) => Log.Error($"Kafka error {log}"))
+        .SetOAuthBearerTokenRefreshHandler(OauthTokenRefreshCallback).SetValueSerializer(new KafkaSerializer<TValue>()).Build();
 
     public async Task ProduceAsyncDeprecated(string topic, TKey key, TValue value) => await this.producer.ProduceAsync(topic, new Message<TKey, TValue> { Key = key, Value = value });
 

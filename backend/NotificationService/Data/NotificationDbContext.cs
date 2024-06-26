@@ -7,8 +7,13 @@ namespace NotificationService.Data;
 public class NotificationDbContext : DbContext
 {
     private readonly IClock clock;
+    private readonly NotificationServiceConfiguration configuration;
 
-    public NotificationDbContext(DbContextOptions<NotificationDbContext> options, IClock clock) : base(options) => this.clock = clock;
+    public NotificationDbContext(DbContextOptions<NotificationDbContext> options, IClock clock, NotificationServiceConfiguration configuration) : base(options)
+    {
+        this.clock = clock;
+        this.configuration = configuration;
+    }
 
     public DbSet<EmailLog> EmailLogs { get; set; } = default!;
     public DbSet<IdempotentConsumer> IdempotentConsumers { get; set; } = default!;
@@ -31,7 +36,7 @@ public class NotificationDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasDefaultSchema("notification");
+        modelBuilder.HasDefaultSchema(this.configuration.ConnectionStrings.Schema);
 
         base.OnModelCreating(modelBuilder);
 
@@ -84,4 +89,16 @@ public class NotificationDbContext : DbContext
         await SaveChangesAsync();
     }
     public async Task<bool> HasBeenProcessed(string messageId) => await this.IdempotentConsumers.AnyAsync(x => x.MessageId == messageId);
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.UseNpgsql(this.configuration.ConnectionStrings.NotificationDatabase, x => x.MigrationsHistoryTable(this.configuration.ConnectionStrings.EfHistoryTable, this.configuration.ConnectionStrings.EfHistorySchema));
+
+
+        if (Environment.GetEnvironmentVariable("LOG_SQL") != null && "true".Equals(Environment.GetEnvironmentVariable("LOG_SQL")))
+        {
+            optionsBuilder.LogTo(Console.WriteLine);
+        }
+
+    }
 }
