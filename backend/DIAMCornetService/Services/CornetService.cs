@@ -6,7 +6,7 @@ using Confluent.Kafka;
 using DIAMCornetService.Exceptions;
 using DIAMCornetService.Models;
 
-public class CornetService(ILogger<NotificationService> logger, IKafkaProducer<string, ParticipantCSNumberModel> producer, DIAMCornetServiceConfiguration cornetServiceConfiguration, ICornetORDSClient cornetORDSClient) : ICornetService
+public class CornetService(ILogger logger, IKafkaProducer<string, ParticipantCSNumberModel> producer, DIAMCornetServiceConfiguration cornetServiceConfiguration, ICornetORDSClient cornetORDSClient) : ICornetService
 {
 
     /// <summary>
@@ -68,73 +68,82 @@ public class CornetService(ILogger<NotificationService> logger, IKafkaProducer<s
                     break;
 
             }
-
-
-
-            return responseModel;
-
-        }
-
-        /// <summary>
-        /// Publish a CS number to Participant ID response mapping to outbound topic
-        /// </summary>
-        /// <param name="participantId"></param>
-        /// <param name="csNumber"></param>
-        /// <returns></returns>
-        /// <exception cref="DIAMKafkaException"></exception>
-        public async Task<Dictionary<string, string>> PublishCSNumberResponseAsync(string participantId)
-        {
-            try
-            {
-                var guid = Guid.NewGuid();
-                var csNumberLookupResponse = await this.GetParticipantCSNumberAsync(participantId);
-
-                var response = await producer.ProduceAsync(cornetServiceConfiguration.KafkaCluster.ParticipantCSNumberMappingTopic, guid.ToString(), csNumberLookupResponse);
-
-
-                if (response.Status != PersistenceStatus.Persisted)
-                {
-                    throw new DIAMKafkaException($"Failed to publish cs number mapping for {guid.ToString()} Part: {csNumberLookupResponse.ParticipantId} CSNumber: {csNumberLookupResponse.CSNumber}");
-                }
-                else
-                {
-
-                    return new Dictionary<string, string>
-                {
-                    { "id", guid.ToString() },
-                    { "CSNumber", string.IsNullOrEmpty( csNumberLookupResponse.CSNumber) ? "NOT_FOUND": csNumberLookupResponse.CSNumber },
-                  };
-                }
-            }
-
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Failed to publish cs number mapping");
-                throw;
-            }
-
         }
 
 
-        /// <summary>
-        /// Publish a notification within the CORNET system
-        /// </summary>
-        /// <param name="csNumber"></param>
-        /// <param name="message"></param>
-        /// <returns></returns>
-        public async Task<int> SubmitNotificationToEServices(string csNumber, string message)
-        {
-            logger.LogInformation($"Publish notification for {csNumber} {message}");
 
-            // cornetORDSClient.GetCSNumberToParticipant(csNumber, message);
+        return responseModel;
 
-            // JAMAL add code here
-            logger.LogInformation($"*************************** ADD PUBLISH EVENT CODE HERE ***************************");
-
-            // some response code to show notification worked
-            return 0;
-
-        }
-
-        private static int GetRandomEightDigitNumber() => new Random().Next(10000000, 99999999);
     }
+
+
+
+    /// <summary>
+    /// Publish a CS number to Participant ID response mapping to outbound topic
+    /// </summary>
+    /// <param name="participantId"></param>
+    /// <param name="csNumber"></param>
+    /// <returns></returns>
+    /// <exception cref="DIAMKafkaException"></exception>
+
+
+    public async Task<Dictionary<string, string>> PublishCSNumberResponseAsync(string participantId)
+    {
+        try
+        {
+            var guid = Guid.NewGuid();
+            var csNumberLookupResponse = await this.GetParticipantCSNumberAsync(participantId);
+
+            var response = await producer.ProduceAsync(cornetServiceConfiguration.KafkaCluster.ParticipantCSNumberMappingTopic, guid.ToString(), csNumberLookupResponse);
+
+            if (response.Status != PersistenceStatus.Persisted)
+            {
+                CornetServiceLogging.FailedToPublishCSNumberMapping(logger, new DIAMKafkaException($"Failed to publish cs number mapping for {guid.ToString()} Part: {csNumberLookupResponse.ParticipantId} CSNumber: {csNumberLookupResponse.CSNumber}"));
+                throw new DIAMKafkaException($"Failed to publish cs number mapping for {guid.ToString()} Part: {csNumberLookupResponse.ParticipantId} CSNumber: {csNumberLookupResponse.CSNumber}");
+            }
+            else
+            {
+                return new Dictionary<string, string>
+              {
+                  { "id", guid.ToString() },
+                  { "CSNumber", string.IsNullOrEmpty(csNumberLookupResponse.CSNumber) ? "NOT_FOUND" : csNumberLookupResponse.CSNumber },
+              };
+            }
+        }
+        catch (Exception ex)
+        {
+            CornetLoggingExtensions.FailedToPublishNotification(logger, participantId);
+            throw;
+        }
+    }
+
+
+    /// <summary>
+    /// Publish a notification within the CORNET system
+    /// </summary>
+    /// <param name="csNumber"></param>
+    /// <param name="message"></param>
+    /// <returns></returns>
+    public async Task<int> SubmitNotificationToEServices(string csNumber, string message)
+    {
+        logger.Log(LogLevel.Information, new EventId(), $"Publish notification for {csNumber} {message}", null, (state, ex) => state.ToString());
+
+        // await this call -  cornetORDSClient.GetCSNumberToParticipant(csNumber, message);
+
+        // JAMAL add code here
+        logger.LogInformation($"*************************** ADD PUBLISH EVENT CODE HERE ***************************");
+
+        // some response code to show notification worked
+        return 0;
+
+    }
+
+    private static int GetRandomEightDigitNumber() => new Random().Next(10000000, 99999999);
+
+}
+
+public static partial class CornetLoggingExtensions
+{
+    [LoggerMessage(1, LogLevel.Error, "Failed to publish cs number mapping for participant {ParticipantId}", EventName = "PublishError")]
+    public static partial void FailedToPublishNotification(ILogger logger, string ParticipantId);
+}
