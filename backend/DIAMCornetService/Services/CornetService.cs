@@ -6,7 +6,7 @@ using Confluent.Kafka;
 using DIAMCornetService.Exceptions;
 using DIAMCornetService.Models;
 
-public class CornetService(IKafkaProducer<string, ParticipantCSNumberModel> producer, DIAMCornetServiceConfiguration cornetServiceConfiguration, ICornetORDSClient cornetORDSClient) : ICornetService
+public class CornetService(IKafkaProducer<string, ParticipantCSNumberModel> producer, DIAMCornetServiceConfiguration cornetServiceConfiguration, ICornetORDSClient cornetORDSClient, ILogger<CornetService> logger) : ICornetService
 {
 
     /// <summary>
