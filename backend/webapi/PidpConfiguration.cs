@@ -10,7 +10,7 @@ public class PidpConfiguration
     private static readonly string? EnvironmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
 
     public string ApplicationUrl { get; set; } = string.Empty;
-
+    public int AUFToolsCaseId { get; set; }
     public AddressAutocompleteClientConfiguration AddressAutocompleteClient { get; set; } = new();
     public ConnectionStringConfiguration ConnectionStrings { get; set; } = new();
     public ChesClientConfiguration ChesClient { get; set; } = new();
