@@ -88,6 +88,7 @@ export class DigitalEvidenceCaseManagementPage
   public isCaseSearchInProgress: boolean;
   public showAUFLink: boolean;
   public showCaseImportLink: boolean;
+  public showCaseToolsLink: boolean;
 
   public isCaseFound: boolean;
   public accessRequestFailed: boolean;
@@ -100,6 +101,8 @@ export class DigitalEvidenceCaseManagementPage
   public checkingQueuedCaseInProgress: boolean;
 
   public launchDEMSLabel: string;
+  public accessPoliceToolsCaseLabel: string;
+
   public hasCaseListingResults: boolean;
   public caseTooltip: string;
   public refreshCount: number;
@@ -151,7 +154,11 @@ export class DigitalEvidenceCaseManagementPage
       .pipe(map((token) => token?.identity_provider ?? ''));
     this.showAUFLink = this.config.caseManagement.showAUFLink;
     this.showCaseImportLink = this.config.caseManagement.showCaseImportLink;
+    this.showCaseToolsLink = this.config.caseManagement.showCaseToolsLink;
     this.launchDEMSLabel = this.config.launch.subAgencyAufPortalLabel;
+    this.accessPoliceToolsCaseLabel =
+      this.config.launch.policeToolsCaseAccessLabel;
+
     accessTokenService.decodeToken().subscribe((n) => {
       if (n !== null) {
         this.result = n.identity_provider;
@@ -339,6 +346,50 @@ export class DigitalEvidenceCaseManagementPage
     this.openPopUp(this.config.demsImportURL);
   }
 
+  public hasToolsCaseAccess(): boolean {
+    return this.caseListing.some(
+      (c) => c.agencyFileNumber === 'AUF Tools Case'
+    );
+  }
+
+  public requestToolsCaseAccess(): void {
+    this.refreshEnabled = true;
+
+    const accessRequest: DigitalEvidenceCaseAccessRequest = {
+      partyId: this.partyService.partyId,
+      toolsCaseRequest: true,
+      caseId: -1,
+      agencyFileNumber: '',
+      key: '',
+      name: '',
+    };
+
+    this.resource
+      .requestAccess(accessRequest)
+      .pipe(
+        tap(() => this.getPartyRequests()),
+        catchError((error: HttpErrorResponse) => {
+          if (error.status === HttpStatusCode.NotFound) {
+            this.navigateToRoot();
+          }
+          this.toastService.openErrorToast(
+            'Failed to add case request :' + error.message
+          );
+          this.accessRequestFailed = true;
+          return of(noop());
+        })
+      )
+      .subscribe(() => {
+        this.formState.caseName.patchValue('');
+        this.formState.agencyCode.patchValue(
+          this.organizationType.submittingAgencyCode
+        );
+        this.requestedCase = null;
+        this.refreshCount = 0;
+        this.refreshTable();
+      });
+  }
+
   public findCase(): void {
     if (this.isCaseSearchInProgress) {
       return;
@@ -521,6 +572,7 @@ export class DigitalEvidenceCaseManagementPage
 
       const accessRequest: DigitalEvidenceCaseAccessRequest = {
         partyId: this.partyService.partyId,
+        toolsCaseRequest: false,
         agencyFileNumber: agencyFileNumber,
         caseId: this.requestedCase.id,
         name: this.requestedCase.name,
