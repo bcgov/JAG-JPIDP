@@ -1,4 +1,4 @@
-name: diam-disclosure
+name: diam-cornetservice
  
 on:
   push:
