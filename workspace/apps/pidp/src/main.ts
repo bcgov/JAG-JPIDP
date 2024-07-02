@@ -11,7 +11,7 @@ import { EnvironmentConfig } from './environments/environment-config.model';
 // assets folder, otherwise local development in/outside of a container relies
 // on the local environment files.
 
-fetch('./assets/environment.json')
+fetch('/assets/environment.json')
   .then((response) => response.json())
   .then((configMap: EnvironmentConfig) => {
     let appConfig = APP_DI_CONFIG;
@@ -25,7 +25,6 @@ fetch('./assets/environment.json')
   })
   .catch((err) => {
     console.warn('Config error - revert to local: ' + err);
-    alert('no config');
     return APP_DI_CONFIG;
   })
   .then((appConfig: AppConfig) => {
