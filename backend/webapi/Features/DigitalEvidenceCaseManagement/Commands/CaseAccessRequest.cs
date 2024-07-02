@@ -6,7 +6,9 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using NodaTime;
 using Pidp.Data;
+using Pidp.Exceptions;
 using Pidp.Features.AccessRequests;
+using Pidp.Infrastructure.HttpClients.Edt;
 using Pidp.Kafka.Interfaces;
 using Pidp.Models;
 using Pidp.Models.Lookups;
@@ -21,6 +23,7 @@ public class CaseAccessRequest
         public string AgencyFileNumber { get; set; } = string.Empty;
         public int RequestId { get; set; }
         public int CaseId { get; set; }
+        public bool ToolsCaseRequest { get; set; }
         public string? Key { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string CaseGroup { get; set; } = string.Empty;
@@ -30,9 +33,9 @@ public class CaseAccessRequest
     {
         public CommandValidator()
         {
-            this.RuleFor(x => x.AgencyFileNumber).NotEmpty();
+            this.RuleFor(x => x.AgencyFileNumber).NotEmpty().When(x => !x.ToolsCaseRequest);
             this.RuleFor(x => x.PartyId).GreaterThan(0);
-            this.RuleFor(x => x.CaseId).GreaterThan(0);
+            this.RuleFor(x => x.CaseId).GreaterThan(0).When(x => !x.ToolsCaseRequest);
             // BCPSDEMS-1655 - case key not necessary
             // this.RuleFor(command => command.Key).NotEmpty();
 
@@ -43,18 +46,25 @@ public class CaseAccessRequest
         private readonly IClock clock;
         private readonly ILogger logger;
         private readonly PidpConfiguration config;
+        private readonly IEdtCaseManagementClient caseMgmtClient;
+
         private readonly PidpDbContext context;
         private readonly IKafkaProducer<string, SubAgencyDomainEvent> kafkaProducer;
         private static readonly Histogram CaseQueueRequestDuration = Metrics
             .CreateHistogram("pipd_case_request_duration", "Histogram of case request call durations.");
 
-        public CommandHandler(IClock clock, ILogger<CommandHandler> logger, PidpConfiguration config, PidpDbContext context, IKafkaProducer<string, SubAgencyDomainEvent> kafkaProducer)
+        public CommandHandler(IClock clock, ILogger<CommandHandler> logger,
+            PidpConfiguration config, PidpDbContext context,
+            IKafkaProducer<string, SubAgencyDomainEvent> kafkaProducer,
+            IEdtCaseManagementClient caseMgmtClient
+            )
         {
             this.clock = clock;
             this.logger = logger;
             this.config = config;
             this.context = context;
             this.kafkaProducer = kafkaProducer;
+            this.caseMgmtClient = caseMgmtClient;
         }
 
         public async Task<IDomainResult> HandleAsync(Command command)
@@ -75,11 +85,28 @@ public class CaseAccessRequest
 
                 try
                 {
-
-                    if (string.IsNullOrEmpty(command.Key))
+                    // not a tools request and no key provided
+                    if (!command.ToolsCaseRequest && string.IsNullOrEmpty(command.Key))
                     {
                         // case has no RCC number - we'll record and move on
                         this.logger.LogCaseMissingKey(command.CaseId, dto.Jpdid);
+                    }
+
+                    if (command.ToolsCaseRequest)
+                    {
+                        var toolsCase = await this.caseMgmtClient.GetCase(this.config.AUFToolsCaseId);
+                        if (toolsCase == null)
+                        {
+                            throw new AccessRequestException("Tools case not found");
+                        }
+                        else
+                        {
+                            this.logger.LogRequestToolsCase(toolsCase.Id, dto.Jpdid);
+                            command.Key = toolsCase.Key;
+                            command.CaseId = toolsCase.Id;
+                            command.Name = toolsCase.Name;
+                            command.AgencyFileNumber = "AUF Tools Case";
+                        }
                     }
 
                     var subAgencyRequest = await this.SubmitAgencyCaseRequest(command); //save all trx at once for production(remove this and handle using idempotent)
@@ -128,7 +155,7 @@ public class CaseAccessRequest
         {
             var msgKey = Guid.NewGuid().ToString();
             Serilog.Log.Logger.Information("Publishing Sub Agency Domain Event to topic {0} {1} {2}", this.config.KafkaCluster.CaseAccessRequestTopicName, msgKey, subAgencyRequest.RequestId);
-            await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.CaseAccessRequestTopicName, msgKey, new SubAgencyDomainEvent
+            var publishResponse = await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.CaseAccessRequestTopicName, msgKey, new SubAgencyDomainEvent
             {
                 RequestId = subAgencyRequest.RequestId,
                 CaseId = subAgencyRequest.CaseId,
@@ -139,6 +166,16 @@ public class CaseAccessRequest
                 UserId = dto.UserId,
                 RequestedOn = subAgencyRequest.RequestedOn,
             });
+
+            if (publishResponse.Status == Confluent.Kafka.PersistenceStatus.Persisted)
+            {
+                Serilog.Log.Logger.Information($"Published response to {publishResponse.TopicPartition} for {subAgencyRequest.RequestId}");
+            }
+            else
+            {
+                Serilog.Log.Logger.Error($"Failed to publish to {this.config.KafkaCluster.CaseAccessRequestTopicName} for {subAgencyRequest.RequestId}");
+                throw new AccessRequestException($"Failed to publish to {this.config.KafkaCluster.CaseAccessRequestTopicName} for {subAgencyRequest.RequestId}");
+            }
         }
 
         private async Task<SubmittingAgencyRequest> SubmitAgencyCaseRequest(Command command)
@@ -153,6 +190,7 @@ public class CaseAccessRequest
                 PartyId = command.PartyId,
                 RequestedOn = this.clock.GetCurrentInstant()
             };
+
             this.context.SubmittingAgencyRequests.Add(subAgencyAccessRequest);
 
             await this.context.SaveChangesAsync();
@@ -188,4 +226,6 @@ public static partial class SubmittingAgencyLoggingExtensions
     public static partial void LogUserNotEnroled(this ILogger logger, string? username);
     [LoggerMessage(3, LogLevel.Warning, "Case request ID {caseId} - for user {username} does not have a valid key (RCCNumber).")]
     public static partial void LogCaseMissingKey(this ILogger logger, int caseId, string? username);
+    [LoggerMessage(4, LogLevel.Information, "Tools case {caseId} request - for user {username}.")]
+    public static partial void LogRequestToolsCase(this ILogger logger, int caseId, string? username);
 }

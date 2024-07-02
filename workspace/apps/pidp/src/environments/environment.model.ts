@@ -16,6 +16,7 @@ export interface AppEnvironment extends EnvironmentConfig {
   caseManagement: {
     showAUFLink: boolean;
     showCaseImportLink: boolean;
+    showCaseToolsLink: boolean;
     stickyAgencyCodes: string[];
   };
   emails: {
@@ -35,6 +36,7 @@ export interface AppEnvironment extends EnvironmentConfig {
     subAgencyAufPortalLabel: string;
     bcpsDemsPortalLabel: string;
     outOfCustodyPortalLabel: string;
+    policeToolsCaseAccessLabel: string;
   };
   urls: {
     bcscSupport: string;
