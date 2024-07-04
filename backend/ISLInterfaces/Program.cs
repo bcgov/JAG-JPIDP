@@ -95,6 +95,7 @@ public class Program
                 theme: AnsiConsoleTheme.Code
             );
 
+        // trigger build
         if (string.IsNullOrEmpty(splunkHost) || string.IsNullOrEmpty(splunkToken))
         {
             Console.WriteLine("Splunk Host or Token is not configured - check Splunk environment");
@@ -108,8 +109,6 @@ public class Program
 
 
         Log.Logger = loggerConfiguration.CreateLogger();
-
-        builder.Services.AddTransient<SerilogHandler>();
 
         Log.Information($"Logging to splunk host {splunkHost}");
 
