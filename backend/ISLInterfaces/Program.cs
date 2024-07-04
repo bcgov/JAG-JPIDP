@@ -13,6 +13,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using Prometheus;
 using Serilog;
+using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 
 public class Program
@@ -63,8 +64,6 @@ public class Program
         builder.Services.AddHealthChecks()
         .AddCheck("liveness", () => HealthCheckResult.Healthy()).ForwardToPrometheus();
 
-        builder.Services.AddTransient<SerilogHandler>();
-
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
@@ -104,13 +103,13 @@ public class Program
 
         Log.Information($"Logging to splunk host {splunkHost}");
         loggerConfig
-            .MinimumLevel.Debug()
-            .WriteTo.EventCollector("https://hec.monitoring.ag.gov.bc.ca:8088/services/collector", "d7811b9d-8079-4555-959e-81b547830c4d");
+            .MinimumLevel.Information()
+            .WriteTo.EventCollector(splunkHost, splunkToken, restrictedToMinimumLevel: LogEventLevel.Information);
 
 
         Log.Logger = loggerConfiguration.CreateLogger();
 
-
+        builder.Services.AddTransient<SerilogHandler>();
 
         Log.Information($"Logging to splunk host {splunkHost}");
 
