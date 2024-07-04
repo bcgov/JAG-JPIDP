@@ -13,7 +13,6 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using Prometheus;
 using Serilog;
-using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 
 public class Program
@@ -104,8 +103,7 @@ public class Program
 
         Log.Information($"Logging to splunk host {splunkHost}");
         loggerConfig
-            .MinimumLevel.Information()
-            .WriteTo.EventCollector(splunkHost, splunkToken, restrictedToMinimumLevel: LogEventLevel.Information);
+            .WriteTo.EventCollector(splunkHost, splunkToken);
 
 
         Log.Logger = loggerConfiguration.CreateLogger();
