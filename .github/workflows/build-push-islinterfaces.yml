@@ -59,6 +59,7 @@ jobs:
           docker build -t artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:${GITHUB_REF##*/} -f Dockerfile.ISLInterfaces .
      
       - name: Docker Push to Artifactory
+        id: publish    
         run: |
           docker push artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:${GITHUB_REF##*/}
 
