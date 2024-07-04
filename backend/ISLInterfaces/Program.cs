@@ -109,8 +109,6 @@ public class Program
 
         Log.Logger = loggerConfiguration.CreateLogger();
 
-        builder.Services.AddTransient<SerilogHandler>();
-
         Log.Information($"Logging to splunk host {splunkHost}");
 
 
