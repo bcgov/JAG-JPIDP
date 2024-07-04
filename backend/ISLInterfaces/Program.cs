@@ -100,16 +100,20 @@ public class Program
             Console.WriteLine("Splunk Host or Token is not configured - check Splunk environment");
             Environment.Exit(-1);
         }
-        else
-        {
-            Log.Information($"Logging to splunk host {splunkHost}");
-        }
 
-
+        Log.Information($"Logging to splunk host {splunkHost}");
         loggerConfig
             .MinimumLevel.Information()
-            .WriteTo.EventCollector(splunkHost, splunkToken, restrictedToMinimumLevel: LogEventLevel.Debug);
+            .WriteTo.EventCollector(splunkHost, splunkToken, restrictedToMinimumLevel: LogEventLevel.Information);
+
         Log.Logger = loggerConfiguration.CreateLogger();
+
+
+
+        Log.Information($"Logging to splunk host {splunkHost}");
+
+
+
 
         Action<ResourceBuilder> configureResource = r => r.AddService(
              serviceName: TelemetryConstants.ServiceName,
