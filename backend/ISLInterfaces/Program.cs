@@ -14,6 +14,7 @@ using OpenTelemetry.Resources;
 using Prometheus;
 using Serilog;
 using Serilog.Events;
+using Serilog.Sinks.SystemConsole.Themes;
 
 public class Program
 {
@@ -73,12 +74,26 @@ public class Program
         }
         var loggerConfig = new LoggerConfiguration();
 
-
+        var name = Assembly.GetExecutingAssembly().GetName();
+        var outputTemplate = "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}";
 
         var splunkHost = Environment.GetEnvironmentVariable("SplunkConfig__Host");
         splunkHost ??= builder.Configuration.GetValue<string>("SplunkConfig:Host");
         var splunkToken = Environment.GetEnvironmentVariable("SplunkConfig__CollectorToken");
         splunkToken ??= builder.Configuration.GetValue<string>("SplunkConfig:CollectorToken");
+
+        var loggerConfiguration = new LoggerConfiguration()
+            .MinimumLevel.Information()
+            .Filter.ByExcluding("RequestPath like '/health%'")
+            .Filter.ByExcluding("RequestPath like '/metrics%'")
+            .Enrich.FromLogContext()
+            .Enrich.WithMachineName()
+            .Enrich.WithProperty("Assembly", $"{name.Name}")
+            .Enrich.WithProperty("Version", $"{name.Version}")
+            .WriteTo.Console(
+                outputTemplate: outputTemplate,
+                theme: AnsiConsoleTheme.Code
+            );
 
         if (string.IsNullOrEmpty(splunkHost) || string.IsNullOrEmpty(splunkToken))
         {
@@ -92,9 +107,9 @@ public class Program
 
 
         loggerConfig
-            .MinimumLevel.Verbose()
+            .MinimumLevel.Information()
             .WriteTo.EventCollector(splunkHost, splunkToken, restrictedToMinimumLevel: LogEventLevel.Debug);
-
+        Log.Logger = loggerConfiguration.CreateLogger();
 
         Action<ResourceBuilder> configureResource = r => r.AddService(
              serviceName: TelemetryConstants.ServiceName,
