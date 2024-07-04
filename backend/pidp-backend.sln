@@ -93,6 +93,7 @@ Global
 		{68D2BE93-C7E6-49AA-A5BE-E74B5D38E3ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{68D2BE93-C7E6-49AA-A5BE-E74B5D38E3ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{68D2BE93-C7E6-49AA-A5BE-E74B5D38E3ED}.Release|Any CPU.Build.0 = Release|Any CPU
+=======
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
