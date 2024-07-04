@@ -5,6 +5,7 @@ on:
     branches: [develop,test,main]
     paths:
       - "backend/webapi/**"
+      - "backend/common/**" 
       - ".github/workflows/build-push-webapi.yml"
   workflow_dispatch:
 env:

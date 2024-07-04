@@ -5,6 +5,7 @@ on:
     branches: [develop,test,main]
     paths:
       - "backend/edt.disclosure/**"
+      - "backend/common/**" 
       - ".github/workflows/build-push-disclosure.yml"
   workflow_dispatch:
 env:
