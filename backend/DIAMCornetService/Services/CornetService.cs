@@ -6,7 +6,7 @@ using Confluent.Kafka;
 using DIAMCornetService.Exceptions;
 using DIAMCornetService.Models;
 
-public class CornetService(ILogger logger, IKafkaProducer<string, ParticipantCSNumberModel> producer, DIAMCornetServiceConfiguration cornetServiceConfiguration, ICornetORDSClient cornetORDSClient) : ICornetService
+public class CornetService(IKafkaProducer<string, ParticipantCSNumberModel> producer, DIAMCornetServiceConfiguration cornetServiceConfiguration, ICornetORDSClient cornetORDSClient, ILogger<CornetService> logger) : ICornetService
 {
 
     /// <summary>
@@ -62,7 +62,7 @@ public class CornetService(ILogger logger, IKafkaProducer<string, ParticipantCSN
                     break;
 
                 default:
-                    logger.LogWarning($"Participant {participantId} unhandled response returned {response.ErrorMessage}");
+                    logger.LogWarning($"Participant {participantId} unhandled response returned {responseModel.ErrorMessage}");
                     responseModel.ErrorMessage = "Participant {participantId} unhandled response returned {response.ErrorMessage}";
                     responseModel.ErrorType = CornetCSNumberErrorType.unknownResponseError;
                     break;
@@ -98,7 +98,7 @@ public class CornetService(ILogger logger, IKafkaProducer<string, ParticipantCSN
 
             if (response.Status != PersistenceStatus.Persisted)
             {
-                CornetServiceLogging.FailedToPublishCSNumberMapping(logger, new DIAMKafkaException($"Failed to publish cs number mapping for {guid.ToString()} Part: {csNumberLookupResponse.ParticipantId} CSNumber: {csNumberLookupResponse.CSNumber}"));
+                logger.LogError($"Failed to publish CS number lookup to topic for {participantId}");
                 throw new DIAMKafkaException($"Failed to publish cs number mapping for {guid.ToString()} Part: {csNumberLookupResponse.ParticipantId} CSNumber: {csNumberLookupResponse.CSNumber}");
             }
             else
@@ -112,7 +112,7 @@ public class CornetService(ILogger logger, IKafkaProducer<string, ParticipantCSN
         }
         catch (Exception ex)
         {
-            CornetLoggingExtensions.FailedToPublishNotification(logger, participantId);
+            logger.LogError($"Failed to publish CS number lookup to topic for {participantId} [{ex.Message}]");
             throw;
         }
     }
@@ -142,8 +142,3 @@ public class CornetService(ILogger logger, IKafkaProducer<string, ParticipantCSN
 
 }
 
-public static partial class CornetLoggingExtensions
-{
-    [LoggerMessage(1, LogLevel.Error, "Failed to publish cs number mapping for participant {ParticipantId}", EventName = "PublishError")]
-    public static partial void FailedToPublishNotification(ILogger logger, string ParticipantId);
-}
