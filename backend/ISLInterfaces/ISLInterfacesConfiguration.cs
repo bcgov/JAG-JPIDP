@@ -10,9 +10,16 @@ public class ISLInterfacesConfiguration
     public KeycloakConfiguration Keycloak { get; set; } = new();
     public const string KeycloakConfig = "Keycloak";
     public const string DatabaseConnectionInfoConfig = "DatabaseConnectionInfo";
-
+    public SplunkConfiguration SplunkConfig { get; set; } = new();
     public ConnectionStringConfiguration DatabaseConnectionInfo { get; set; } = new();
 }
+
+public class SplunkConfiguration
+{
+    public string Host { get; set; } = string.Empty;
+    public string CollectorToken { get; set; } = string.Empty;
+}
+
 
 public class ConnectionStringConfiguration
 {

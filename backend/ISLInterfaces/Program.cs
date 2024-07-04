@@ -13,6 +13,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using Prometheus;
 using Serilog;
+using Serilog.Events;
 
 public class Program
 {
@@ -70,6 +71,29 @@ public class Program
             app.UseSwagger();
             app.UseSwaggerUI();
         }
+        var loggerConfig = new LoggerConfiguration();
+
+
+
+        var splunkHost = Environment.GetEnvironmentVariable("SplunkConfig__Host");
+        splunkHost ??= builder.Configuration.GetValue<string>("SplunkConfig:Host");
+        var splunkToken = Environment.GetEnvironmentVariable("SplunkConfig__CollectorToken");
+        splunkToken ??= builder.Configuration.GetValue<string>("SplunkConfig:CollectorToken");
+
+        if (string.IsNullOrEmpty(splunkHost) || string.IsNullOrEmpty(splunkToken))
+        {
+            Console.WriteLine("Splunk Host or Token is not configured - check Splunk environment");
+            Environment.Exit(-1);
+        }
+        else
+        {
+            Log.Information($"Logging to splunk host {splunkHost}");
+        }
+
+
+        loggerConfig
+            .MinimumLevel.Verbose()
+            .WriteTo.EventCollector(splunkHost, splunkToken, restrictedToMinimumLevel: LogEventLevel.Debug);
 
 
         Action<ResourceBuilder> configureResource = r => r.AddService(
