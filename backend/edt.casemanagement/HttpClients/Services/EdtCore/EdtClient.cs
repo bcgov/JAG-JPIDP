@@ -358,16 +358,19 @@ public class EdtClient(
                 {
                     Log.Information("No cases found for {0}", searchString);
 
+
                     // check for merged - switch to alternate search
                     if (this.configuration.AlternateSearchFieldId > 0)
                     {
-                        Log.Information($"Searching by alternate Id");
                         searchString = this.configuration.AlternateSearchFieldId + ":" + caseIdOrKey;
+
+                        Log.Information($"Searching by alternate Id [{searchString}]");
+
                         var alternateSearch = await this.GetAsync<IEnumerable<CaseLookupModel>?>($"api/v1/org-units/1/cases/{searchString}/id");
                         if (alternateSearch.IsSuccess)
                         {
                             var alternateSearchValue = alternateSearch?.Value;
-                            if (alternateSearchValue.Count() > 0)
+                            if (alternateSearchValue.Any())
                             {
                                 foreach (var alternateCase in alternateSearchValue)
                                 {
@@ -375,8 +378,14 @@ public class EdtClient(
 
                                     if (caseInfo != null && caseInfo.Status == "Active")
                                     {
+                                        Log.Information($"Using primary case {caseInfo.Id} [{caseInfo.Status}] [{caseInfo.Name}]");
                                         foundCase = caseInfo;
                                         break;
+                                    }
+                                    else
+                                    {
+                                        Log.Information($"Found inactive case {caseInfo.Id} [{caseInfo.Status}] [{caseInfo.Name}]");
+
                                     }
                                 }
 
