@@ -25,7 +25,9 @@ public class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
+        builder.Services.ConfigureAuthorization(config);
         builder.Services.AddKafkaClients(config);
+
         builder.Services.AddHttpClientServices(config);
         builder.Services.AddCornetServices(config);
         builder.Services.AddApiVersioning(options =>

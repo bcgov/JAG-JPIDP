@@ -3,7 +3,6 @@ namespace DIAMCornetService.Features.MessageConsumer;
 using System.Threading.Tasks;
 using Common.Kafka;
 using DIAMCornetService.Data;
-using DIAMCornetService.Exceptions;
 using DIAMCornetService.Services;
 using global::DIAMCornetService.Models;
 
@@ -46,37 +45,40 @@ public class IncomingDisclosureNotificationHandler : IKafkaHandler<string, Incom
             logger.LogInformation("Message received on {0} with key {1}", consumerName, key);
 
             // this is where we'll produce a response
-            var response = await this.cornetService.PublishCSNumberResponseAsync(value.ParticipantId);
-            incomingMessage.CSNumber = response["CSNumber"];
-            incomingMessage.ProcessResponseId = response["id"];
+            var response = await this.cornetService.LookupCSNumberForParticipant(value.ParticipantId);
 
-            // assuming no error on CS Number lookup
-            // change to if error = true
-            if (false)
+            if (response.ErrorType != null)
             {
-                incomingMessage.ErrorMessage = response["ErrorMessage"];
-
-            }
-            // submit notification to users
-            var notificationResponse = await this.cornetService.SubmitNotificationToEServices(response["CSNumber"], value.MessageText);
-
-            // if publish returned an error
-            if (false)
-            {
-                // log error
-
-                return Task.FromException(new CornetException("Failed to publish notification"));
+                // error on getting the CS Number
+                response = await this.cornetService.PublishErrorsToDIAMAsync(response);
             }
             else
             {
 
-                //add to tell message has been processed by consumer
-                await this.context.AddIdempotentConsumer(messageId: key, consumer: consumerName);
+                incomingMessage.CSNumber = response.CSNumber;
 
-                incomingMessage.CompletedTimestamp = DateTime.UtcNow;
+                // submit notification to users
+                response = await this.cornetService.SubmitNotificationToEServices(response, value.MessageText);
 
-                return Task.CompletedTask;
+                // if submission was good we'll notify DIAM to provision the account
+                if (response.ErrorType == null)
+                {
+                    response = await this.cornetService.PublishNotificationToDIAMAsync(response);
+                }
+                // otherwise we'll notify the business of the errors
+                else
+                {
+                    response = await this.cornetService.PublishErrorsToDIAMAsync(response);
+                }
+
             }
+            //add to tell message has been processed by consumer
+            await this.context.AddIdempotentConsumer(messageId: key, consumer: consumerName);
+
+            incomingMessage.CompletedTimestamp = DateTime.UtcNow;
+
+            return Task.CompletedTask;
+
         }
         catch (Exception ex)
         {

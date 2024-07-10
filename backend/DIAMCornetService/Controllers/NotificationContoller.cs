@@ -1,9 +1,11 @@
 namespace DIAMCornetService.Controllers;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
 [Route("[controller]")]
+[Authorize]
 public class NotificationContoller : ControllerBase
 {
     private readonly ILogger<NotificationContoller> _logger;

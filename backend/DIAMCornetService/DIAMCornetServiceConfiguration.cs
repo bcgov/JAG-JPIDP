@@ -1,5 +1,7 @@
 namespace DIAMCornetService;
 
+using Common.Authorization;
+
 public class DIAMCornetServiceConfiguration
 {
 
@@ -9,6 +11,7 @@ public class DIAMCornetServiceConfiguration
     public KafkaClusterConfiguration KafkaCluster { get; set; } = new();
     public ConnectionStringConfiguration ConnectionStrings { get; set; } = new();
     public CornetConfiguration CornetService { get; set; } = new();
+    public KeycloakConfiguration Keycloak { get; set; } = new();
 
     public class KafkaClusterConfiguration
     {
@@ -28,6 +31,12 @@ public class DIAMCornetServiceConfiguration
         public string Scope { get; set; } = "openid";
         public string ConsumerGroupId { get; set; } = "diam-cornet-con-group";
 
+    }
+
+    public class KeycloakConfiguration
+    {
+        public string RealmUrl { get; set; } = string.Empty;
+        public string WellKnownConfig => KeycloakUrls.WellKnownConfig(this.RealmUrl);
     }
 
     public class ConnectionStringConfiguration

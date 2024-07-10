@@ -77,8 +77,5 @@
     <PackageReference Include="prometheus-net.AspNetCore.HealthChecks" Version="8.2.1" />
     <PackageReference Include="prometheus-net.NetFramework.AspNet" Version="8.2.1" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Authorization\" />
-  </ItemGroup>
 
 </Project>
