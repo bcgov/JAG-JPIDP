@@ -66,11 +66,13 @@ public static class KafkaConfiguration
             HeartbeatIntervalMs = 20000
         };
 
+
         services.AddSingleton(consumerConfig);
         services.AddSingleton(producerConfig);
         services.AddSingleton(typeof(IKafkaProducer<,>), typeof(KafkaProducer<,>));
         services.AddScoped<IKafkaHandler<string, IncomingDisclosureNotificationModel>, IncomingDisclosureNotificationHandler>();
         services.AddSingleton(typeof(IKafkaConsumer<,>), typeof(KafkaConsumer<,>));
+
         services.AddHostedService<IncomingNotificationConsumer>();
 
         return services;

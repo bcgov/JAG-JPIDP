@@ -12,7 +12,13 @@ public class DIAMCornetServiceConfiguration
     public ConnectionStringConfiguration ConnectionStrings { get; set; } = new();
     public CornetConfiguration CornetService { get; set; } = new();
     public KeycloakConfiguration Keycloak { get; set; } = new();
+    public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
 
+    public class SplunkConfiguration
+    {
+        public string Host { get; set; } = string.Empty;
+        public string CollectorToken { get; set; } = string.Empty;
+    }
     public class KafkaClusterConfiguration
     {
         public string Url { get; set; } = string.Empty;

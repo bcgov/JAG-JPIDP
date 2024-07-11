@@ -3,10 +3,12 @@ namespace DIAMCornetService.Services;
 using System.Threading.Tasks;
 using Common.Kafka;
 using Confluent.Kafka;
+using DIAM.Common.Models;
 using DIAMCornetService.Exceptions;
 using DIAMCornetService.Models;
+using NodaTime;
 
-public class CornetService(IKafkaProducer<string, ParticipantResponseModel> producer, DIAMCornetServiceConfiguration cornetServiceConfiguration, ICornetORDSClient cornetORDSClient, ILogger<CornetService> logger) : ICornetService
+public class CornetService(ILogger<CornetService> logger, IKafkaProducer<string, InCustodyParticipantModel> producer, IKafkaProducer<string, GenericProcessStatusResponse> errorProducer, DIAMCornetServiceConfiguration cornetServiceConfiguration, ICornetORDSClient cornetORDSClient) : ICornetService
 {
 
     /// <summary>
@@ -15,17 +17,19 @@ public class CornetService(IKafkaProducer<string, ParticipantResponseModel> prod
     /// <param name="model"></param>
     /// <returns></returns>
     /// <exception cref="DIAMKafkaException"></exception>
-    public async Task<ParticipantResponseModel> PublishNotificationToDIAMAsync(ParticipantResponseModel model)
+    public async Task<InCustodyParticipantModel> PublishNotificationToDIAMAsync(InCustodyParticipantModel model)
     {
         try
         {
             var guid = Guid.NewGuid();
 
+            model.CreationDateUTC = DateTime.UtcNow;
+
             var response = await producer.ProduceAsync(cornetServiceConfiguration.KafkaCluster.ParticipantCSNumberMappingTopic, guid.ToString(), model);
 
             if (response.Status != PersistenceStatus.Persisted)
             {
-                logger.LogError($"Failed to publish CS number lookup to topic for {model.ParticipantId}");
+                logger.DIAMResponseFailed(model.ParticipantId, cornetServiceConfiguration.KafkaCluster.ParticipantCSNumberMappingTopic, response.Status.ToString());
                 throw new DIAMKafkaException($"Failed to publish cs number mapping for {guid.ToString()} Part: {model.ParticipantId} CSNumber: {model.CSNumber}");
             }
             else
@@ -35,7 +39,7 @@ public class CornetService(IKafkaProducer<string, ParticipantResponseModel> prod
         }
         catch (Exception ex)
         {
-            logger.LogError($"Failed to publish CS number lookup to topic for {model.ParticipantId} [{ex.Message}]");
+            logger.DIAMResponseFailed(model.ParticipantId, cornetServiceConfiguration.KafkaCluster.ParticipantCSNumberMappingTopic, ex.Message);
             throw;
         }
 
@@ -43,17 +47,29 @@ public class CornetService(IKafkaProducer<string, ParticipantResponseModel> prod
     }
 
 
-    public async Task<ParticipantResponseModel> PublishErrorsToDIAMAsync(ParticipantResponseModel model)
+    public async Task<InCustodyParticipantModel> PublishErrorsToDIAMAsync(InCustodyParticipantModel model)
     {
         try
         {
             var guid = Guid.NewGuid();
 
-            var response = await producer.ProduceAsync(cornetServiceConfiguration.KafkaCluster.ProcessResponseTopic, guid.ToString(), model);
+            var responseModel = new GenericProcessStatusResponse()
+            {
+                DomainEvent = "digitalevidence-incustody-notify-failure",
+                ErrorList = [model.ErrorMessage],
+                EventTime = SystemClock.Instance.GetCurrentInstant(),
+                PartId = model.ParticipantId!,
+                Status = "Error"
+            };
+
+            model.CreationDateUTC = DateTime.UtcNow;
+
+            var response = await errorProducer.ProduceAsync(cornetServiceConfiguration.KafkaCluster.ProcessResponseTopic, guid.ToString(), responseModel);
 
             if (response.Status != PersistenceStatus.Persisted)
             {
-                logger.LogError($"Failed to publish Error response for {model.ParticipantId} to {cornetServiceConfiguration.KafkaCluster.ProcessResponseTopic}");
+                logger.DIAMErrorResponseFailed(model.ParticipantId, cornetServiceConfiguration.KafkaCluster.ProcessResponseTopic, response.Status.ToString());
+
                 throw new DIAMKafkaException($"Failed to publish Error response for {model.ParticipantId} to {cornetServiceConfiguration.KafkaCluster.ProcessResponseTopic}");
             }
             else
@@ -63,7 +79,7 @@ public class CornetService(IKafkaProducer<string, ParticipantResponseModel> prod
         }
         catch (Exception ex)
         {
-            logger.LogError($"Failed to publish Error response for {model.ParticipantId} to {cornetServiceConfiguration.KafkaCluster.ProcessResponseTopic} [{ex.Message}]");
+            logger.DIAMErrorResponseFailed(model.ParticipantId, cornetServiceConfiguration.KafkaCluster.ProcessResponseTopic, ex.Message);
             throw;
         }
 
@@ -76,7 +92,7 @@ public class CornetService(IKafkaProducer<string, ParticipantResponseModel> prod
     /// </summary>
     /// <param name="participantId"></param>
     /// <returns></returns>
-    public async Task<ParticipantResponseModel> LookupCSNumberForParticipant(string participantId)
+    public async Task<InCustodyParticipantModel> LookupCSNumberForParticipant(string participantId)
     {
         var responseModel = await cornetORDSClient.GetCSNumberForParticipantAsync(participantId);
 
@@ -91,29 +107,30 @@ public class CornetService(IKafkaProducer<string, ParticipantResponseModel> prod
     /// <param name="csNumber"></param>
     /// <param name="message"></param>
     /// <returns></returns>
-    public async Task<ParticipantResponseModel> SubmitNotificationToEServices(ParticipantResponseModel model, string message)
+    public async Task<InCustodyParticipantModel> SubmitNotificationToEServices(InCustodyParticipantModel model, string message)
     {
-        logger.Log(LogLevel.Information, new EventId(), $"Publish notification for partId: {model.ParticipantId} CS: {model.CSNumber} {message}", null, (state, ex) => state.ToString());
+
+        logger.PublishingToEServices(model.ParticipantId, model.CSNumber);
 
         var response = await cornetORDSClient.SubmitParticipantNotificationAsync(model, message);
 
         switch (response)
         {
-            case "ok":
+            case "SUCC":
             {
-                logger.Log(LogLevel.Information, new EventId(), $"Successfully published notification for partId: {model.ParticipantId} CS: {model.CSNumber} {message}", null, (state, ex) => state.ToString());
+                logger.NotificationSubmissionSuccessful(model.ParticipantId, model.CSNumber);
                 break;
             }
             case "NABI":
             {
-                logger.LogInformation($"Failed to publish notification for partId: {model.ParticipantId} CS: {model.CSNumber} {message} Reason: {response}");
+                logger.NotificationSubmissionFailed(model.ParticipantId, model.CSNumber, response);
                 model.ErrorMessage = "Participant has no active BioMetrics";
                 model.ErrorType = CornetCSNumberErrorType.noActiveBioMetrics;
                 break;
             }
             case "ENDP":
             {
-                logger.LogInformation($"Failed to publish notification for partId: {model.ParticipantId} CS: {model.CSNumber} {message} Reason: {response}");
+                logger.NotificationSubmissionFailed(model.ParticipantId, model.CSNumber, response);
                 model.ErrorMessage = "eDisclosure not provisioned for user";
                 model.ErrorType = CornetCSNumberErrorType.eDisclosureNotProvisioned;
                 break;
@@ -121,21 +138,21 @@ public class CornetService(IKafkaProducer<string, ParticipantResponseModel> prod
             // shouldnt get to this one as CS number is looked up previously but added to cover all responses
             case "MISC":
             {
-                logger.LogInformation($"Failed to publish notification for partId: {model.ParticipantId} CS: {model.CSNumber} {message} Reason: {response}");
+                logger.NotificationSubmissionFailed(model.ParticipantId, model.CSNumber, response);
                 model.ErrorMessage = "Missing CS Number";
                 model.ErrorType = CornetCSNumberErrorType.missingCSNumber;
                 break;
             }
             case "OTHR":
             {
-                logger.LogInformation($"Failed to publish notification for partId: {model.ParticipantId} CS: {model.CSNumber} {message} Reason: {response}");
+                logger.NotificationSubmissionFailed(model.ParticipantId, model.CSNumber, response);
                 model.ErrorMessage = "Unknown CORNET error occurred";
                 model.ErrorType = CornetCSNumberErrorType.otherError;
                 break;
             }
             default:
             {
-                logger.LogInformation($"Failed to publish notification for partId: {model.ParticipantId} CS: {model.CSNumber} {message} Reason: {response}");
+                logger.NotificationSubmissionFailed(model.ParticipantId, model.CSNumber, response);
                 model.ErrorMessage = $"Unknown CORNET response {response}";
                 model.ErrorType = CornetCSNumberErrorType.unknownResponseError;
                 break;
@@ -146,7 +163,18 @@ public class CornetService(IKafkaProducer<string, ParticipantResponseModel> prod
 
     }
 
-    private static int GetRandomEightDigitNumber() => new Random().Next(10000000, 99999999);
-
 }
 
+public static partial class CornetServiceLoggingExtensions
+{
+    [LoggerMessage(1, LogLevel.Information, "Successfully published notification for partId: {participantId} CS: {CSNumber}")]
+    public static partial void NotificationSubmissionSuccessful(this ILogger logger, string? participantId, string? CSNumber);
+    [LoggerMessage(2, LogLevel.Error, "Failed to submit eServices notification for partId: {participantId} CS: {CSNumber} - Reason {reason}")]
+    public static partial void NotificationSubmissionFailed(this ILogger logger, string? participantId, string? CSNumber, string reason);
+    [LoggerMessage(3, LogLevel.Error, "Failed to publish Error response for {participantId} to {topic} [{message}]")]
+    public static partial void DIAMErrorResponseFailed(this ILogger logger, string? participantId, string? topic, string? message);
+    [LoggerMessage(4, LogLevel.Error, "Failed to publish CS Number response {participantId} to {topic} [{message}]")]
+    public static partial void DIAMResponseFailed(this ILogger logger, string? participantId, string? topic, string? message);
+    [LoggerMessage(5, LogLevel.Information, "Publishing eServices notification to {participantId} CS: {CSNumber}")]
+    public static partial void PublishingToEServices(this ILogger logger, string? participantId, string? CSNumber);
+}

@@ -8,7 +8,7 @@ public interface ICornetService
     /// </summary>
     /// <param name="participantId"></param>
     /// <returns></returns>
-    public Task<ParticipantResponseModel> LookupCSNumberForParticipant(string participantId);
+    public Task<InCustodyParticipantModel> LookupCSNumberForParticipant(string participantId);
 
     /// <summary>
     /// Submit a message to eServices devices for Participant
@@ -17,7 +17,7 @@ public interface ICornetService
     /// <param name="csNumber"></param>
     /// <param name="message"></param>
     /// <returns></returns>
-    public Task<ParticipantResponseModel> SubmitNotificationToEServices(ParticipantResponseModel model, string message);
+    public Task<InCustodyParticipantModel> SubmitNotificationToEServices(InCustodyParticipantModel model, string message);
 
     /// <summary>
     /// Publish the participant and CS Number to the DIAM topic
@@ -25,7 +25,7 @@ public interface ICornetService
     /// <param name="participantId"></param>
     /// <param name="messageText"></param>
     /// <returns></returns>
-    public Task<ParticipantResponseModel> PublishNotificationToDIAMAsync(ParticipantResponseModel model);
+    public Task<InCustodyParticipantModel> PublishNotificationToDIAMAsync(InCustodyParticipantModel model);
 
     /// <summary>
     /// Publish and Error notifications to DIAM
@@ -33,5 +33,5 @@ public interface ICornetService
     /// <param name="participantId"></param>
     /// <param name="messageText"></param>
     /// <returns></returns>
-    public Task<ParticipantResponseModel> PublishErrorsToDIAMAsync(ParticipantResponseModel model);
+    public Task<InCustodyParticipantModel> PublishErrorsToDIAMAsync(InCustodyParticipantModel model);
 }
