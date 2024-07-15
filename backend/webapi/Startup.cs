@@ -19,7 +19,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using NodaTime;
 using NodaTime.Serialization.SystemTextJson;
-using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
@@ -40,6 +39,7 @@ using Pidp.Infrastructure.Auth;
 using Pidp.Infrastructure.HttpClients;
 using Pidp.Infrastructure.Services;
 using Pidp.Infrastructure.Telemetry;
+using Pidp.Kafka.Consumer.InCustodyProvisioning;
 using Prometheus;
 using Quartz;
 using Quartz.AspNetCore;
@@ -121,7 +121,7 @@ public class Startup
         .AddKeycloakAuth(config)
         .AddScoped<IEmailService, EmailService>()
         .AddScoped<IPidpAuthorizationService, PidpAuthorizationService>()
-
+        .AddScoped<IInCustodyService, InCustodyService>()
         .AddSingleton<IClock>(SystemClock.Instance)
         .AddScoped<Infrastructure.HttpClients.Jum.JumClient>();
 

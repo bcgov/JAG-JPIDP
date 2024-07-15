@@ -111,7 +111,7 @@ public class Demographics
                 Serilog.Log.Information($"Updating {party.Id} email to {command.Email} from {currentEmail}");
                 var messageId = Guid.NewGuid().ToString();
 
-                var userInfo = await this.administrationClient.GetUser(party.UserId);
+                var userInfo = await this.administrationClient.GetUser(Common.Constants.Auth.RealmConstants.BCPSRealm, party.UserId);
                 if (userInfo != null)
                 {
                     var changeModel = new UserChangeModel
@@ -143,7 +143,7 @@ public class Demographics
                     await this.context.SaveChangesAsync();
                     changeModel.ChangeId = changeEntry.Entity.Id;
                     userInfo.Email = command.Email;
-                    await this.administrationClient.UpdateUser(party.UserId, userInfo);
+                    await this.administrationClient.UpdateUser(Common.Constants.Auth.RealmConstants.BCPSRealm, party.UserId, userInfo);
 
                     if (accessRequests)
                     {

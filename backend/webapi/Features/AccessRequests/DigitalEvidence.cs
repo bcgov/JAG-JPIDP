@@ -268,7 +268,7 @@ public class DigitalEvidence
 
         private async Task<bool> UpdateKeycloakUser(Guid userId, IEnumerable<AssignedRegion> assignedGroup, string partId)
         {
-            if (!await this.keycloakClient.UpdateUser(userId, (user) => user.SetPartId(partId)))
+            if (!await this.keycloakClient.UpdateUser(Common.Constants.Auth.RealmConstants.BCPSRealm, userId, (user) => user.SetPartId(partId)))
             {
                 Serilog.Log.Logger.Error("Failed to set user {0} partId in keycloak", partId);
 
@@ -276,7 +276,7 @@ public class DigitalEvidence
             }
             foreach (var group in assignedGroup)
             {
-                if (!await this.keycloakClient.AddGrouptoUser(userId, group.RegionName))
+                if (!await this.keycloakClient.AddGrouptoUser(Common.Constants.Auth.RealmConstants.BCPSRealm, userId, group.RegionName))
                 {
                     Serilog.Log.Logger.Error("Failed to add user {0} group {1} to keycloak", partId, group.RegionName);
                     return false;

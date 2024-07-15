@@ -1,11 +1,10 @@
 namespace Pidp;
 
-using Avro.Generic;
+using System.Reflection;
 using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Json;
 using Serilog.Sinks.SystemConsole.Themes;
-using System.Reflection;
 
 
 public class Program
@@ -51,22 +50,11 @@ public class Program
          .AddJsonFile($"appsettings.{environmentName}.json", optional: true)
          .Build();
 
-        var seqEndpoint = Environment.GetEnvironmentVariable("Seq__Url");
-        seqEndpoint ??= config.GetValue<string>("Seq:Url");
 
         var splunkHost = Environment.GetEnvironmentVariable("SplunkConfig__Host");
         splunkHost ??= config.GetValue<string>("SplunkConfig:Host");
         var splunkToken = Environment.GetEnvironmentVariable("SplunkConfig__CollectorToken");
         splunkToken ??= config.GetValue<string>("SplunkConfig:CollectorToken");
-
-
-        if (string.IsNullOrEmpty(seqEndpoint))
-        {
-            Console.WriteLine("SEQ Log Host is not configured - check Seq environment");
-            Environment.Exit(100);
-        }
-
-
 
         try
         {
@@ -94,7 +82,6 @@ public class Program
             .Enrich.WithMachineName()
             .Enrich.WithProperty("Assembly", $"{name.Name}")
             .Enrich.WithProperty("Version", $"{name.Version}")
-            .WriteTo.Seq(seqEndpoint)
             .WriteTo.Console(
                 outputTemplate: outputTemplate,
                 theme: AnsiConsoleTheme.Code)

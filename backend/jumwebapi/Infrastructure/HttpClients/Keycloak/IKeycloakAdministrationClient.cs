@@ -1,4 +1,4 @@
-﻿namespace jumwebapi.Infrastructure.HttpClients.Keycloak;
+namespace jumwebapi.Infrastructure.HttpClients.Keycloak;
 
 public interface IKeycloakAdministrationClient
 {
@@ -46,7 +46,7 @@ public interface IKeycloakAdministrationClient
     /// Returns null if unccessful.
     /// </summary>
     /// <param name="userId"></param>
-    Task<UserRepresentation?> GetUser(Guid userId);
+    Task<UserRepresentation?> GetUser(string realm, Guid userId);
 
     /// <summary>
     /// Updates the User with the given Keycloak User Representation.

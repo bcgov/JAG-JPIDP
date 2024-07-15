@@ -10,7 +10,7 @@ public class PidpConfiguration
     private static readonly string? EnvironmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
 
     public string ApplicationUrl { get; set; } = string.Empty;
-
+    public string CorrectionsIDP { get; set; } = "siteminder";
     public AddressAutocompleteClientConfiguration AddressAutocompleteClient { get; set; } = new();
     public ConnectionStringConfiguration ConnectionStrings { get; set; } = new();
     public ChesClientConfiguration ChesClient { get; set; } = new();
@@ -132,6 +132,7 @@ public class PidpConfiguration
         public string ApprovalCreationTopic { get; set; } = string.Empty;
         public string ProcessResponseTopic { get; set; } = string.Empty;
         public string UserAccountChangeTopicName { get; set; } = string.Empty;
+        public string ParticipantCSNumberMappingTopic { get; set; } = string.Empty;
         public string NotificationTopicName { get; set; } = string.Empty;
         public string UserAccountChangeNotificationTopicName { get; set; } = string.Empty;
         public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;

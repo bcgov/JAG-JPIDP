@@ -81,7 +81,7 @@ public class KafkaProducer<TKey, TValue> : KafkaOauthTokenRefreshHandler, IDispo
             clientId ??= clusterConfig.GetValue<string>("KafkaCluster:SaslOauthbearerProducerClientId");
             tokenEndpoint ??= clusterConfig.GetValue<string>("KafkaCluster:SaslOauthbearerTokenEndpointUrl");
 
-            Log.Logger.Information("Pidp Kafka Producer getting token {0} {1}", tokenEndpoint, clientId);
+            Log.Logger.Debug("Pidp Kafka Producer getting token {0} {1}", tokenEndpoint, clientId);
             var accessTokenClient = new HttpClient();
 
             Log.Logger.Debug("Producer getting token {0}", tokenEndpoint);
