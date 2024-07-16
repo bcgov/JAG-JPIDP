@@ -95,7 +95,7 @@ jobs:
           echo "Updating tag apitag: to ${{ steps.short_sha.outputs.SHORT_SHA }}"
 
           sed -i "s/apitag: .*/apitag: ${{ env.VALUES_FILE }}-${{ steps.short_sha.outputs.SHORT_SHA }} # Image Updated on $DATETIME/" ../deploy/${{ env.VALUES_FILE }}_values.yaml
-          sed -i "s/apitag: .*/apitag: ${{ env.VALUES_FILE }}-${{ steps.short_sha.outputs.SHORT_SHA }} # Image Updated on $DATETIME/" edt-disclosure/values.yaml
+          sed -i "s/apitag: .*/apitag: ${{ env.VALUES_FILE }}-${{ steps.short_sha.outputs.SHORT_SHA }} # Image Updated on $DATETIME/" diam-cornet/values.yaml
           
           # Commit and push the changes
           git config --global user.email "actions@github.com"
@@ -107,7 +107,7 @@ jobs:
           
           # Repackage Helm Chart      
 
-          cd edt-disclosure
+          cd diam-cornet
 
           helm dependency build
 
