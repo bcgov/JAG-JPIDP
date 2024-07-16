@@ -133,10 +133,11 @@ public class InCustodyService(IClock clock, PidpDbContext context, ILogger<InCus
 
         if (party != null)
         {
-            logger.LogPartyAlreadyPresent(party.Jpdid);
+            logger.LogPartyAlreadyPresent(party.Jpdid, party.Id);
         }
         else
         {
+
             party = new Party
             {
                 UserId = keycloakUser.Id,
@@ -144,6 +145,13 @@ public class InCustodyService(IClock clock, PidpDbContext context, ILogger<InCus
                 FirstName = keycloakUser.FirstName!,
                 LastName = keycloakUser.LastName!,
                 Email = keycloakUser.Username
+            };
+
+            var altId = new PartyAlternateId
+            {
+                Name = "CSNumber",
+                Value = value.CSNumber,
+                Party = party
             };
 
             context.Parties.Add(party);
@@ -255,8 +263,8 @@ public static partial class InCustodyServiceLoggingExtensions
     public static partial void LogIDPNotFound(this ILogger logger, string realm, string idp);
     [LoggerMessage(11, LogLevel.Error, "Failed to complete in-custody onboarding {msg}")]
     public static partial void LogInCustodyServiceException(this ILogger logger, string msg, Exception ex);
-    [LoggerMessage(12, LogLevel.Information, "Party already present {party}")]
-    public static partial void LogPartyAlreadyPresent(this ILogger logger, string party);
+    [LoggerMessage(12, LogLevel.Information, "Party already present {party} {partyId}")]
+    public static partial void LogPartyAlreadyPresent(this ILogger logger, string party, int partyId);
     [LoggerMessage(13, LogLevel.Information, "Access request {accessRequestId} already present for party {party}")]
     public static partial void LogAccessRequestAlreadyPresent(this ILogger logger, string party, int accessRequestId);
 
