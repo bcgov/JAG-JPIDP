@@ -54,7 +54,7 @@ public class CaseAccessRequestHandler : IKafkaHandler<string, SubAgencyDomainEve
 
         using (CaseRequestDuration.NewTimer())
         {
-            var userInfo = await this.keycloakAdministrationClient.GetUser(caseEvent.UserId);
+            var userInfo = await this.keycloakAdministrationClient.GetUser("BCPS", caseEvent.UserId);
 
 
             if (userInfo == null)

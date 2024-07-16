@@ -20,7 +20,7 @@ public static class ServiceConfiguration
         services.AddSingleton<IClock>(SystemClock.Instance);
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<ICornetService, CornetService>();
-        services.AddScoped<ICornetORDSClient, CornetORDSClient>();
+        //    services.AddScoped<ICornetORDSClient, CornetORDSClient>();
         services.AddHealthChecks()
                 .AddCheck("liveliness", () => HealthCheckResult.Healthy())
                 .AddNpgSql(config.ConnectionStrings.DIAMCornetDatabase, tags: Tags).ForwardToPrometheus();

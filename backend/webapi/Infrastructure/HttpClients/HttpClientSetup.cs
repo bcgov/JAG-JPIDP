@@ -1,6 +1,7 @@
 namespace Pidp.Infrastructure.HttpClients;
 
 using System.Net;
+using Common.Models.CORNET;
 using Confluent.Kafka;
 using IdentityModel.Client;
 using Pidp.Extensions;
@@ -14,6 +15,7 @@ using Pidp.Infrastructure.HttpClients.Mail;
 using Pidp.Infrastructure.HttpClients.Plr;
 using Pidp.Kafka.Consumer;
 using Pidp.Kafka.Consumer.DomainEventResponses;
+using Pidp.Kafka.Consumer.InCustodyProvisioning;
 using Pidp.Kafka.Consumer.JustinUserChanges;
 using Pidp.Kafka.Consumer.Notifications;
 using Pidp.Kafka.Consumer.Responses;
@@ -132,10 +134,11 @@ public static class HttpClientSetup
         services.AddHostedService<NotificationAckService>();
         services.AddScoped<IKafkaHandler<string, JustinUserChangeEvent>, JustinUserChangeHandler>();
         services.AddScoped<IKafkaHandler<string, GenericProcessStatusResponse>, DomainEventResponseHandler>();
+        services.AddScoped<IKafkaHandler<string, InCustodyParticipantModel>, InCustodyHandler>();
 
         services.AddHostedService<JustinUserChangeService>();
         services.AddHostedService<DomainEventResponseService>();
-
+        services.AddHostedService<InCustodyMessageConsumer>();
         services.AddHostedService<DecomissionCaseAccessService>();
 
         return services;

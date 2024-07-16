@@ -94,7 +94,7 @@ public class ValidateUser
                     throw new DIAMAuthException($"Party {command.PartyId} was not found - request ignored");
                 }
 
-                var keycloakUser = await this.keycloakAdministrationClient.GetUser(party.UserId);
+                var keycloakUser = await this.keycloakAdministrationClient.GetUser(Common.Constants.Auth.RealmConstants.BCPSRealm, party.UserId);
 
                 if (keycloakUser == null)
                 {

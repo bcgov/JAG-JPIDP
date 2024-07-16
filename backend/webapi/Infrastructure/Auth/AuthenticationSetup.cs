@@ -132,13 +132,13 @@ public static class AuthenticationSetup
 
     private static Task OnForbidden(ForbiddenContext context)
     {
-        Serilog.Log.Warning($"Authentication challenge");
+        Serilog.Log.Warning($"Authentication failure {context.Result.Failure}");
         return Task.CompletedTask;
     }
 
     private static Task OnChallenge(JwtBearerChallengeContext context)
     {
-        Serilog.Log.Warning($"Authentication challenge");
+        Serilog.Log.Warning($"Authentication challenge {context.Error}");
         return Task.CompletedTask;
     }
 

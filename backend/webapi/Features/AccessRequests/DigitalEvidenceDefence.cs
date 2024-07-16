@@ -120,7 +120,7 @@ public class DigitalEvidenceDefence
                         }
 
                         // get the user details from keycloak and check they are valid - otherwise will require an approval step
-                        var keycloakUser = await this.keycloakClient.GetUser(dto.UserId);
+                        var keycloakUser = await this.keycloakClient.GetUser(Common.Constants.Auth.RealmConstants.BCPSRealm, dto.UserId);
 
                         if (keycloakUser == null)
                         {

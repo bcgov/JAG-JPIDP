@@ -13,4 +13,6 @@ public class AccessTokenClient : IAccessTokenClient
         var response = await this.client.RequestClientCredentialsTokenAsync(request);
         return response.AccessToken;
     }
+
+
 }

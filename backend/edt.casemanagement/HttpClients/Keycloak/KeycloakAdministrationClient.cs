@@ -2,7 +2,6 @@
 
 namespace edt.service.HttpClients.Keycloak;
 
-using System.Net;
 using edt.casemanagement.HttpClients;
 using EdtService.HttpClients.Keycloak;
 
@@ -17,9 +16,9 @@ public class KeycloakAdministrationClient : BaseClient, IKeycloakAdministrationC
     /// </summary>
     /// <param name="userId"></param>
     /// <returns>IDPs</returns>
-    public async Task<UserRepresentation?> GetUser(Guid userId)
+    public async Task<UserRepresentation?> GetUser(string realm, Guid userId)
     {
-        var result = await this.GetAsync<UserRepresentation>($"users/{userId}");
+        var result = await this.GetAsync<UserRepresentation>($"{realm}/users/{userId}");
         if (!result.IsSuccess)
         {
             return null;

@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
+using Common.Logging;
 using DomainResults.Common;
 using Flurl;
 
@@ -294,14 +295,3 @@ public class BaseClient
     }
 }
 
-public static partial class BaseClientLoggingExtensions
-{
-    [LoggerMessage(1, LogLevel.Error, "Received non-success status code {statusCode} with message: {responseMessage}.")]
-    public static partial void LogNonSuccessStatusCode(this ILogger logger, HttpStatusCode statusCode, string responseMessage);
-
-    [LoggerMessage(2, LogLevel.Error, "Response content was null.")]
-    public static partial void LogNullResponseContent(this ILogger logger);
-
-    [LoggerMessage(3, LogLevel.Error, "Unhandled exception when calling the API.")]
-    public static partial void LogBaseClientException(this ILogger logger, Exception e);
-}

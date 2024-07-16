@@ -50,6 +50,7 @@ public class Program
          .AddJsonFile($"appsettings.{environmentName}.json", optional: true)
          .Build();
 
+
         var splunkHost = Environment.GetEnvironmentVariable("SplunkConfig__Host");
         splunkHost ??= config.GetValue<string>("SplunkConfig:Host");
         var splunkToken = Environment.GetEnvironmentVariable("SplunkConfig__CollectorToken");
