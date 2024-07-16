@@ -12,7 +12,7 @@ using Pidp.Infrastructure.HttpClients.Keycloak;
 using Pidp.Models;
 using Pidp.Models.Lookups;
 
-public class InCustodyService(IClock clock, PidpDbContext context, ILogger<InCustodyService> logger, IKafkaProducer<string, AccessRequest> producer, IEdtCoreClient coreClient, IKeycloakAdministrationClient keycloakAdministrationClient, PidpConfiguration pidpConfiguration) : IInCustodyService
+public class InCustodyService(IClock clock, PidpDbContext context, ILogger<InCustodyService> logger, IKafkaProducer<string, EdtDisclosureUserProvisioning> producer, IEdtCoreClient coreClient, IKeycloakAdministrationClient keycloakAdministrationClient, PidpConfiguration pidpConfiguration) : IInCustodyService
 {
 
     public async Task<Task> ProcessInCustodySubmissionMessage(InCustodyParticipantModel value)
@@ -129,34 +129,49 @@ public class InCustodyService(IClock clock, PidpDbContext context, ILogger<InCus
 
     private async Task<AccessRequest> CreateInCustodyAccessRequest(ExtendedUserRepresentation keycloakUser, InCustodyParticipantModel value)
     {
+        var party = context.Parties.Where(p => p.Jpdid == keycloakUser.Username).FirstOrDefault();
 
-
-        var party = new Party
+        if (party != null)
         {
-            UserId = keycloakUser.Id,
-            Jpdid = keycloakUser.Username,
-            FirstName = keycloakUser.FirstName!,
-            LastName = keycloakUser.LastName!,
-            Email = keycloakUser.Username
-        };
-
-        context.Parties.Add(party);
-
-
-        var partyAdded = await context.SaveChangesAsync();
-
-        if (partyAdded > 0)
+            logger.LogPartyAlreadyPresent(party.Jpdid);
+        }
+        else
         {
-            var accessRequest = new AccessRequest
+            party = new Party
             {
-                Party = party,
-                AccessTypeCode = AccessTypeCode.DigitalEvidenceDisclosure,
-                RequestedOn = clock.GetCurrentInstant()
+                UserId = keycloakUser.Id,
+                Jpdid = keycloakUser.Username,
+                FirstName = keycloakUser.FirstName!,
+                LastName = keycloakUser.LastName!,
+                Email = keycloakUser.Username
             };
 
-            context.AccessRequests.Add(accessRequest);
-
+            context.Parties.Add(party);
             await context.SaveChangesAsync();
+            party = context.Parties.Where(p => p.Jpdid == keycloakUser.Username).FirstOrDefault();
+        }
+
+        if (party != null)
+        {
+            var accessRequest = context.AccessRequests.Where(req => req.PartyId == party.Id && req.AccessTypeCode == AccessTypeCode.DigitalEvidenceDisclosure).FirstOrDefault();
+
+            if (accessRequest != null)
+            {
+                logger.LogAccessRequestAlreadyPresent(party.Jpdid, accessRequest.Id);
+            }
+            else
+            {
+                accessRequest = new AccessRequest
+                {
+                    Party = party,
+                    AccessTypeCode = AccessTypeCode.DigitalEvidenceDisclosure,
+                    RequestedOn = clock.GetCurrentInstant()
+                };
+
+                context.AccessRequests.Add(accessRequest);
+
+                await context.SaveChangesAsync();
+            }
 
             return accessRequest;
         }
@@ -167,6 +182,7 @@ public class InCustodyService(IClock clock, PidpDbContext context, ILogger<InCus
 
 
     }
+
 
 
     /// <summary>
@@ -180,7 +196,7 @@ public class InCustodyService(IClock clock, PidpDbContext context, ILogger<InCus
 
         var msgId = Guid.NewGuid().ToString();
         // publish to the topic for disclosure portal to handle provisioning
-        var delivered = await producer.ProduceAsync(pidpConfiguration.KafkaCluster.DisclosurePublicUserCreationTopic, msgId, accessRequest);
+        var delivered = await producer.ProduceAsync(pidpConfiguration.KafkaCluster.DisclosurePublicUserCreationTopic, msgId, GetInCustoryDisclosureUserModel(accessRequest, value));
 
         if (delivered.Status == Confluent.Kafka.PersistenceStatus.Persisted)
         {
@@ -192,6 +208,26 @@ public class InCustodyService(IClock clock, PidpDbContext context, ILogger<InCus
         }
 
         return Task.CompletedTask;
+    }
+
+
+    private static EdtDisclosureUserProvisioning GetInCustoryDisclosureUserModel(AccessRequest accessRequest, InCustodyParticipantModel model)
+    {
+
+        return new EdtDisclosureUserProvisioning
+        {
+            Key = $"{model.ParticipantId}",
+            UserName = accessRequest.Party.Jpdid,
+            Email = accessRequest.Party.Email,
+            FullName = $"{accessRequest.Party.FirstName} {accessRequest.Party.LastName}",
+            AccountType = "Saml",
+            Role = "User",
+            SystemName = AccessTypeCode.DigitalEvidenceDisclosure.ToString(),
+            AccessRequestId = accessRequest.Id,
+            OrganizationType = "In-custody",
+            OrganizationName = "Public",
+            PersonKey = model.ParticipantId
+        };
     }
 }
 
@@ -219,6 +255,10 @@ public static partial class InCustodyServiceLoggingExtensions
     public static partial void LogIDPNotFound(this ILogger logger, string realm, string idp);
     [LoggerMessage(11, LogLevel.Error, "Failed to complete in-custody onboarding {msg}")]
     public static partial void LogInCustodyServiceException(this ILogger logger, string msg, Exception ex);
+    [LoggerMessage(12, LogLevel.Information, "Party already present {party}")]
+    public static partial void LogPartyAlreadyPresent(this ILogger logger, string party);
+    [LoggerMessage(13, LogLevel.Information, "Access request {accessRequestId} already present for party {party}")]
+    public static partial void LogAccessRequestAlreadyPresent(this ILogger logger, string party, int accessRequestId);
 
 }
 

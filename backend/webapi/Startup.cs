@@ -3,6 +3,7 @@ namespace Pidp;
 using System.Reflection;
 using System.Text.Json;
 using Common.Kafka;
+using Common.Logging;
 using Common.Utils;
 using FluentValidation.AspNetCore;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
@@ -362,6 +363,7 @@ public class Startup
             // For example: 200, 201, 203 -> 2xx
             options.ReduceStatusCodeCardinality();
         });
+        app.UseMiddleware<CorrelationIdMiddleware>();
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseEndpoints(endpoints =>
