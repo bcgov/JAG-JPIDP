@@ -1,10 +1,11 @@
-name: diam-disclosure
+name: diam-cornetservice
  
 on:
   push:
     branches: [develop,test,main]
     paths:
       - "backend/DIAMCornetService/**"
+      - "backend/common/**" 
       - ".github/workflows/build-push-diamcornet.yml"
   workflow_dispatch:
 env:

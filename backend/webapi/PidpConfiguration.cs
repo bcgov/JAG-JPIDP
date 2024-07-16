@@ -11,6 +11,7 @@ public class PidpConfiguration
 
     public string ApplicationUrl { get; set; } = string.Empty;
     public string CorrectionsIDP { get; set; } = "siteminder";
+    public int AUFToolsCaseId { get; set; }
     public AddressAutocompleteClientConfiguration AddressAutocompleteClient { get; set; } = new();
     public ConnectionStringConfiguration ConnectionStrings { get; set; } = new();
     public ChesClientConfiguration ChesClient { get; set; } = new();

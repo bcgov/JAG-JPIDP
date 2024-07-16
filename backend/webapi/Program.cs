@@ -56,6 +56,13 @@ public class Program
         var splunkToken = Environment.GetEnvironmentVariable("SplunkConfig__CollectorToken");
         splunkToken ??= config.GetValue<string>("SplunkConfig:CollectorToken");
 
+
+        if (string.IsNullOrEmpty(splunkHost) || string.IsNullOrEmpty(splunkToken))
+        {
+            Console.WriteLine("Splunk Host or Token is not configured - check Splunk environment");
+            Environment.Exit(-1);
+        }
+
         try
         {
             if (PidpConfiguration.IsDevelopment())
@@ -101,6 +108,8 @@ public class Program
         }
 
 
+
+
         Log.Logger = loggerConfiguration.CreateLogger();
 
         if (string.IsNullOrEmpty(splunkHost))
@@ -109,7 +118,8 @@ public class Program
         }
         else
         {
-            Log.Warning($"*** Splunk logging to {splunkHost} ***");
+            Log.Information($"*** Splunk logging to {splunkHost} ***");
+
         }
 
     }
