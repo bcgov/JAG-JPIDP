@@ -5,6 +5,7 @@ using common.Constants.Auth;
 using Common.Authorization;
 using Common.Constants.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Pidp.Extensions;
 

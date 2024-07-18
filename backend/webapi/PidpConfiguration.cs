@@ -1,8 +1,6 @@
 namespace Pidp;
 
-using Common.Constants.Auth;
 using Common.Models.EDT;
-using Pidp.Infrastructure.Auth;
 
 public class PidpConfiguration
 {
@@ -155,7 +153,6 @@ public class PidpConfiguration
     {
         public string Url { get; set; } = string.Empty;
         public string RealmUrl { get; set; } = string.Empty;
-        public string TokenUrl => KeycloakUrls.Token(RealmConstants.BCPSRealm, this.RealmUrl);
         public string AdministrationUrl { get; set; } = string.Empty;
         public string AdministrationClientId { get; set; } = string.Empty;
         public string AdministrationClientSecret { get; set; } = string.Empty;
