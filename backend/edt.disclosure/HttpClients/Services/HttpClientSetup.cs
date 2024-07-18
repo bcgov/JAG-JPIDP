@@ -1,6 +1,8 @@
 namespace edt.disclosure.HttpClients;
 
 using System.Net.Http.Headers;
+using Common.Authorization;
+using Common.Constants.Auth;
 using edt.disclosure.HttpClients.Keycloak;
 using edt.disclosure.HttpClients.Services.EdtDisclosure;
 using EdtDisclosureService.Extensions;
@@ -25,7 +27,7 @@ public static class HttpClientSetup
         services.AddHttpClientWithBaseAddress<IKeycloakAdministrationClient, KeycloakAdministrationClient>(config.Keycloak.AdministrationUrl)
     .WithBearerToken(new KeycloakAdministrationClientCredentials
     {
-        Address = config.Keycloak.TokenUrl,
+        Address = KeycloakUrls.Token(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl),
         ClientId = config.Keycloak.AdministrationClientId,
         ClientSecret = config.Keycloak.AdministrationClientSecret
     });

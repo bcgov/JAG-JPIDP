@@ -1,6 +1,8 @@
 namespace edt.casemanagement.Infrastructure.Auth;
 
 using System.Security.Claims;
+using Common.Authorization;
+using Common.Constants.Auth;
 using EdtService.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -20,11 +22,11 @@ public static class AuthenticationSetup
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
         {
-            options.Authority = config.Keycloak.RealmUrl;
+            options.Authority = KeycloakUrls.Authority(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl);
             //options.Audience = Resources.PidpApi;
             options.RequireHttpsMetadata = false;
             options.Audience = Clients.PidpApi;
-            options.MetadataAddress = config.Keycloak.WellKnownConfig;
+            options.MetadataAddress = KeycloakUrls.WellKnownConfig(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl);
             options.Events = new JwtBearerEvents
             {
                 OnTokenValidated = async context => await OnTokenValidatedAsync(context)

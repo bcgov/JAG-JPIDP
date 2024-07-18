@@ -14,5 +14,8 @@ public static class KeycloakUrls
     /// Returns the URL for the OAuth well-known config.
     /// </summary>
     /// <param name="realmUrl">URL of the keycloak instance up to the realm name; I.e. "[base url]/auth/realms/[realm name]"</param>
-    public static string WellKnownConfig(string realmUrl) => Url.Combine(realmUrl, ".well-known/openid-configuration");
+    public static string WellKnownConfig(string realm, string realmUrl) => Url.Combine(realmUrl, realm, ".well-known/openid-configuration");
+
+    public static string Authority(string realm, string realmUrl) => Url.Combine(realmUrl, realm);
+
 }
