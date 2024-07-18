@@ -1,6 +1,8 @@
 namespace Pidp.Infrastructure.HttpClients;
 
 using System.Net;
+using Common.Authorization;
+using Common.Constants.Auth;
 using Common.Models.CORNET;
 using Confluent.Kafka;
 using IdentityModel.Client;
@@ -52,7 +54,7 @@ public static class HttpClientSetup
 
         services.AddHttpClientWithBaseAddress<IJumClient, JumClient>(config.JumClient.Url).WithBearerToken(new KeycloakAdministrationClientCredentials
         {
-            Address = config.Keycloak.TokenUrl,
+            Address = KeycloakUrls.Token(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl),
             ClientId = config.Keycloak.AdministrationClientId,
             ClientSecret = config.Keycloak.AdministrationClientSecret
         });
@@ -61,7 +63,7 @@ public static class HttpClientSetup
         services.AddHttpClientWithBaseAddress<IKeycloakAdministrationClient, KeycloakAdministrationClient>(config.Keycloak.AdministrationUrl)
             .WithBearerToken(new KeycloakAdministrationClientCredentials
             {
-                Address = config.Keycloak.TokenUrl,
+                Address = KeycloakUrls.Token(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl),
                 ClientId = config.Keycloak.AdministrationClientId,
                 ClientSecret = config.Keycloak.AdministrationClientSecret
             });
