@@ -1,6 +1,8 @@
 namespace ISLInterfaces.Infrastructure.Auth;
 
 using System.Security.Claims;
+using Common.Authorization;
+using Common.Constants.Auth;
 using Common.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
@@ -12,6 +14,7 @@ public static class AuthenticationSetup
 
         var keycloakOptions = new KeycloakConfiguration();
         config.GetSection(ISLInterfacesConfiguration.KeycloakConfig).Bind(keycloakOptions);
+        var realmUrl = keycloakOptions.RealmUrl;
 
         Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
@@ -20,10 +23,10 @@ public static class AuthenticationSetup
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
         {
-            options.Authority = keycloakOptions.RealmUrl;
+            options.Authority = KeycloakUrls.Authority(RealmConstants.BCPSRealm, realmUrl);
             options.RequireHttpsMetadata = false;
             options.Audience = Clients.PidpService;
-            options.MetadataAddress = keycloakOptions.WellKnownConfig;
+            options.MetadataAddress = KeycloakUrls.WellKnownConfig(RealmConstants.BCPSRealm, realmUrl);
             options.Events = new JwtBearerEvents
             {
                 OnChallenge = async context => await OnChallenge(context),

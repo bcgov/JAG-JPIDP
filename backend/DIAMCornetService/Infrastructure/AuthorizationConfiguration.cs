@@ -1,5 +1,7 @@
 namespace DIAMCornetService.Infrastructure;
 
+using Common.Authorization;
+using Common.Constants.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
@@ -15,10 +17,10 @@ public static class AuthorizationConfiguration
         })
              .AddJwtBearer(options =>
              {
-                 options.Authority = config.Keycloak.RealmUrl;
+                 options.Authority = KeycloakUrls.Authority(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl);
                  options.RequireHttpsMetadata = false;
                  options.Audience = "DIAM-INTERNAL";
-                 options.MetadataAddress = config.Keycloak.WellKnownConfig;
+                 options.MetadataAddress = KeycloakUrls.WellKnownConfig(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl);
                  options.TokenValidationParameters = new TokenValidationParameters()
                  {
                      ValidateIssuerSigningKey = true,
