@@ -16,6 +16,12 @@ public static class KeycloakUrls
     /// <param name="realmUrl">URL of the keycloak instance up to the realm name; I.e. "[base url]/auth/realms/[realm name]"</param>
     public static string WellKnownConfig(string realm, string realmUrl) => Url.Combine(realmUrl, realm, ".well-known/openid-configuration");
 
+    /// <summary>
+    /// Get the authority path
+    /// </summary>
+    /// <param name="realm"></param>
+    /// <param name="realmUrl"></param>
+    /// <returns></returns>
     public static string Authority(string realm, string realmUrl) => Url.Combine(realmUrl, realm);
 
 }
