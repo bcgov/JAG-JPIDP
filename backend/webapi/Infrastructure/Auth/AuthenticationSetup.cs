@@ -2,6 +2,7 @@ namespace Pidp.Infrastructure.Auth;
 
 using System.Security.Claims;
 using common.Constants.Auth;
+using Common.Constants.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,11 +32,11 @@ public static class AuthenticationSetup
                 ValidAlgorithms = new List<string>() { "RS256" }
 
             };
-            options.Authority = config.Keycloak.RealmUrl;
+            options.Authority = config.Keycloak.RealmUrl + "/" + RealmConstants.BCPSRealm;
             options.IncludeErrorDetails = true;
             options.RequireHttpsMetadata = true;
             options.Audience = Clients.PidpService;
-            options.MetadataAddress = config.Keycloak.WellKnownConfig;
+            options.MetadataAddress = KeycloakUrls.WellKnownConfig(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl);
             options.Events = new JwtBearerEvents
             {
                 OnTokenValidated = async context => await OnTokenValidatedAsync(context),

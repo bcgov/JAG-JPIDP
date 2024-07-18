@@ -45,7 +45,7 @@ public class KeycloakAdministrationClient : BaseClient, IKeycloakAdministrationC
         return response.IsSuccess;
     }
 
-    public async Task<Client?> GetClient(string clientId)
+    public async Task<Client?> GetClient(string realm, string clientId)
     {
         var result = await this.GetAsync<IEnumerable<Client>>("clients");
 
@@ -67,7 +67,7 @@ public class KeycloakAdministrationClient : BaseClient, IKeycloakAdministrationC
     public async Task<Role?> GetClientRole(string realm, string clientId, string roleName)
     {
         // Need ID of Client (not the same as ClientId!) to fetch roles.
-        var client = await this.GetClient(clientId);
+        var client = await this.GetClient(realm, clientId);
         if (client == null)
         {
             return null;
@@ -92,7 +92,7 @@ public class KeycloakAdministrationClient : BaseClient, IKeycloakAdministrationC
 
     public async Task<Role?> GetRealmRole(string realm, string roleName)
     {
-        var result = await GetAsync<Role>($"{realm}/roles/{WebUtility.UrlEncode(roleName)}");
+        var result = await this.GetAsync<Role>($"{realm}/roles/{WebUtility.UrlEncode(roleName)}");
 
         if (!result.IsSuccess)
         {
