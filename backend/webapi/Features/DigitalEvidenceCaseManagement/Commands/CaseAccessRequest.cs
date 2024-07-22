@@ -81,51 +81,60 @@ public class CaseAccessRequest
                     return DomainResult.Failed();
                 }
 
-                using var trx = this.context.Database.BeginTransaction();
-
-                try
+                using (var trx = this.context.Database.BeginTransaction())
                 {
-                    // not a tools request and no key provided
-                    if (!command.ToolsCaseRequest && string.IsNullOrEmpty(command.Key))
+                    try
                     {
-                        // case has no RCC number - we'll record and move on
-                        this.logger.LogCaseMissingKey(command.CaseId, dto.Jpdid);
-                    }
-
-                    if (command.ToolsCaseRequest)
-                    {
-                        var toolsCase = await this.caseMgmtClient.GetCase(this.config.AUFToolsCaseId);
-                        if (toolsCase == null)
+                        // not a tools request and no key provided
+                        if (!command.ToolsCaseRequest && string.IsNullOrEmpty(command.Key))
                         {
-                            throw new AccessRequestException("Tools case not found");
+                            // case has no RCC number - we'll record and move on
+                            this.logger.LogCaseMissingKey(command.CaseId, dto.Jpdid);
+                        }
+
+                        if (command.ToolsCaseRequest)
+                        {
+                            var toolsCase = await this.caseMgmtClient.GetCase(this.config.AUFToolsCaseId);
+                            if (toolsCase == null)
+                            {
+                                throw new AccessRequestException("Tools case not found");
+                            }
+                            else
+                            {
+                                this.logger.LogRequestToolsCase(toolsCase.Id, dto.Jpdid);
+                                command.Key = toolsCase.Key;
+                                command.CaseId = toolsCase.Id;
+                                command.Name = toolsCase.Name;
+                                command.AgencyFileNumber = "AUF Tools Case";
+                            }
+                        }
+
+                        var subAgencyRequest = await this.SubmitAgencyCaseRequest(command);
+
+
+                        var addedRows = await this.context.SaveChangesAsync();
+                        if (addedRows > 0)
+                        {
+                            this.logger.LogRequestCase(command.RequestId, command.AgencyFileNumber, command.PartyId);
+                            await trx.CommitAsync();
+
+                            await this.PublishSubAgencyAccessRequest(dto, subAgencyRequest);
                         }
                         else
                         {
-                            this.logger.LogRequestToolsCase(toolsCase.Id, dto.Jpdid);
-                            command.Key = toolsCase.Key;
-                            command.CaseId = toolsCase.Id;
-                            command.Name = toolsCase.Name;
-                            command.AgencyFileNumber = "AUF Tools Case";
+                            this.logger.LogDigitalEvidenceAccessTrxFailed($"Failed to store record for Request:{command.RequestId} Party:{command.PartyId} {command.AgencyFileNumber}");
+
                         }
+
                     }
+                    catch (Exception ex)
+                    {
 
-                    var subAgencyRequest = await this.SubmitAgencyCaseRequest(command); //save all trx at once for production(remove this and handle using idempotent)
-
-                    // var exportedEvent = this.AddOutbox(command, subAgencyRequest, dto);
-
-                    await this.PublishSubAgencyAccessRequest(dto, subAgencyRequest);
-
-                    await this.context.SaveChangesAsync();
-                    await trx.CommitAsync();
+                        this.logger.LogDigitalEvidenceAccessTrxFailed(ex.Message.ToString());
+                        await trx.RollbackAsync();
+                        return DomainResult.Failed();
+                    }
                 }
-                catch (Exception ex)
-                {
-
-                    this.logger.LogDigitalEvidenceAccessTrxFailed(ex.Message.ToString());
-                    await trx.RollbackAsync();
-                    return DomainResult.Failed();
-                }
-
                 return DomainResult.Success();
 
             }
@@ -228,4 +237,6 @@ public static partial class SubmittingAgencyLoggingExtensions
     public static partial void LogCaseMissingKey(this ILogger logger, int caseId, string? username);
     [LoggerMessage(4, LogLevel.Information, "Tools case {caseId} request - for user {username}.")]
     public static partial void LogRequestToolsCase(this ILogger logger, int caseId, string? username);
+    [LoggerMessage(5, LogLevel.Information, "Saved request {requestId} for {agencyFileNumber} party: {partyId}")]
+    public static partial void LogRequestCase(this ILogger logger, int requestId, string? agencyFileNumber, int partyId);
 }
