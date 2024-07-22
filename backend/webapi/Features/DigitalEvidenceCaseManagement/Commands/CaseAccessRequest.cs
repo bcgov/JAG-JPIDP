@@ -115,7 +115,7 @@ public class CaseAccessRequest
                         var addedRows = await this.context.SaveChangesAsync();
                         if (addedRows > 0)
                         {
-                            this.logger.LogRequestCase(command.RequestId, command.AgencyFileNumber, command.PartyId);
+                            this.logger.LogRequestCase(command.RequestId, command.AgencyFileNumber, command.PartyId, subAgencyRequest.RequestId);
                             await trx.CommitAsync();
 
                             await this.PublishSubAgencyAccessRequest(dto, subAgencyRequest);
@@ -202,8 +202,6 @@ public class CaseAccessRequest
 
             this.context.SubmittingAgencyRequests.Add(subAgencyAccessRequest);
 
-            await this.context.SaveChangesAsync();
-
             return subAgencyAccessRequest;
         }
 
@@ -237,6 +235,6 @@ public static partial class SubmittingAgencyLoggingExtensions
     public static partial void LogCaseMissingKey(this ILogger logger, int caseId, string? username);
     [LoggerMessage(4, LogLevel.Information, "Tools case {caseId} request - for user {username}.")]
     public static partial void LogRequestToolsCase(this ILogger logger, int caseId, string? username);
-    [LoggerMessage(5, LogLevel.Information, "Saved request {requestId} for {agencyFileNumber} party: {partyId}")]
-    public static partial void LogRequestCase(this ILogger logger, int requestId, string? agencyFileNumber, int partyId);
+    [LoggerMessage(5, LogLevel.Information, "Saved request {subAgencyRequestId} for {requestId} for {agencyFileNumber} party: {partyId}")]
+    public static partial void LogRequestCase(this ILogger logger, int requestId, string? agencyFileNumber, int partyId, int subAgencyRequestId);
 }
