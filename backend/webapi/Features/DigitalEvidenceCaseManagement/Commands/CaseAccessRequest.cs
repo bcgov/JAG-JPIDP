@@ -3,7 +3,6 @@ namespace Pidp.Features.DigitalEvidenceCaseManagement.Commands;
 using DomainResults.Common;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 using NodaTime;
 using Pidp.Data;
 using Pidp.Exceptions;
@@ -41,31 +40,15 @@ public class CaseAccessRequest
 
         }
     }
-    public class CommandHandler : ICommandHandler<Command, IDomainResult>
+    public class CommandHandler(IClock clock, ILogger<CaseAccessRequest.CommandHandler> logger,
+        PidpConfiguration config, PidpDbContext context,
+        IKafkaProducer<string, SubAgencyDomainEvent> kafkaProducer,
+        IEdtCaseManagementClient caseMgmtClient
+            ) : ICommandHandler<Command, IDomainResult>
     {
-        private readonly IClock clock;
-        private readonly ILogger logger;
-        private readonly PidpConfiguration config;
-        private readonly IEdtCaseManagementClient caseMgmtClient;
-
-        private readonly PidpDbContext context;
-        private readonly IKafkaProducer<string, SubAgencyDomainEvent> kafkaProducer;
+        private readonly ILogger logger = logger;
         private static readonly Histogram CaseQueueRequestDuration = Metrics
             .CreateHistogram("pipd_case_request_duration", "Histogram of case request call durations.");
-
-        public CommandHandler(IClock clock, ILogger<CommandHandler> logger,
-            PidpConfiguration config, PidpDbContext context,
-            IKafkaProducer<string, SubAgencyDomainEvent> kafkaProducer,
-            IEdtCaseManagementClient caseMgmtClient
-            )
-        {
-            this.clock = clock;
-            this.logger = logger;
-            this.config = config;
-            this.context = context;
-            this.kafkaProducer = kafkaProducer;
-            this.caseMgmtClient = caseMgmtClient;
-        }
 
         public async Task<IDomainResult> HandleAsync(Command command)
         {
@@ -81,7 +64,7 @@ public class CaseAccessRequest
                     return DomainResult.Failed();
                 }
 
-                using (var trx = this.context.Database.BeginTransaction())
+                using (var trx = context.Database.BeginTransaction())
                 {
                     try
                     {
@@ -94,7 +77,7 @@ public class CaseAccessRequest
 
                         if (command.ToolsCaseRequest)
                         {
-                            var toolsCase = await this.caseMgmtClient.GetCase(this.config.AUFToolsCaseId);
+                            var toolsCase = await caseMgmtClient.GetCase(config.AUFToolsCaseId);
                             if (toolsCase == null)
                             {
                                 throw new AccessRequestException("Tools case not found");
@@ -112,10 +95,10 @@ public class CaseAccessRequest
                         var subAgencyRequest = await this.SubmitAgencyCaseRequest(command);
 
 
-                        var addedRows = await this.context.SaveChangesAsync();
+                        var addedRows = await context.SaveChangesAsync();
                         if (addedRows > 0)
                         {
-                            this.logger.LogRequestCase(command.RequestId, command.AgencyFileNumber, command.PartyId, subAgencyRequest.RequestId);
+                            this.logger.LogRequestCase(command.AgencyFileNumber, command.PartyId, subAgencyRequest.RequestId);
                             await trx.CommitAsync();
 
                             await this.PublishSubAgencyAccessRequest(dto, subAgencyRequest);
@@ -140,31 +123,12 @@ public class CaseAccessRequest
             }
         }
 
-        private Task<Models.OutBoxEvent.ExportedEvent> AddOutbox(Command command, SubmittingAgencyRequest subAgencyRequest, PartyDto dto)
-        {
-            var exportedEvent = this.context.ExportedEvents.Add(new Models.OutBoxEvent.ExportedEvent
-            {
-                AggregateType = $"SubmittingAgency.{command.SubmittingAgencyCode}",
-                AggregateId = $"{subAgencyRequest.RequestId}",
-                DateOccurred = this.clock.GetCurrentInstant(),
-                EventType = subAgencyRequest.Created < this.clock.GetCurrentInstant() ? "CaseAccessRequestCreated" : "CaseAccessRequestUpdated",
-                EventPayload = JsonConvert.SerializeObject(new SubAgencyDomainEvent
-                {
-                    RequestId = subAgencyRequest.RequestId,
-                    CaseId = subAgencyRequest.CaseId,
-                    PartyId = subAgencyRequest.PartyId,
-                    Username = subAgencyRequest.Party!.Jpdid,
-                    RequestedOn = subAgencyRequest.RequestedOn
-                })
-            });
-            return Task.FromResult(exportedEvent.Entity);
-        }
 
         private async Task PublishSubAgencyAccessRequest(PartyDto dto, SubmittingAgencyRequest subAgencyRequest)
         {
             var msgKey = Guid.NewGuid().ToString();
-            Serilog.Log.Logger.Information("Publishing Sub Agency Domain Event to topic {0} {1} {2}", this.config.KafkaCluster.CaseAccessRequestTopicName, msgKey, subAgencyRequest.RequestId);
-            var publishResponse = await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.CaseAccessRequestTopicName, msgKey, new SubAgencyDomainEvent
+            Serilog.Log.Logger.Information("Publishing Sub Agency Domain Event to topic {0} {1} {2}", config.KafkaCluster.CaseAccessRequestTopicName, msgKey, subAgencyRequest.RequestId);
+            var publishResponse = await kafkaProducer.ProduceAsync(config.KafkaCluster.CaseAccessRequestTopicName, msgKey, new SubAgencyDomainEvent
             {
                 RequestId = subAgencyRequest.RequestId,
                 CaseId = subAgencyRequest.CaseId,
@@ -182,8 +146,8 @@ public class CaseAccessRequest
             }
             else
             {
-                Serilog.Log.Logger.Error($"Failed to publish to {this.config.KafkaCluster.CaseAccessRequestTopicName} for {subAgencyRequest.RequestId}");
-                throw new AccessRequestException($"Failed to publish to {this.config.KafkaCluster.CaseAccessRequestTopicName} for {subAgencyRequest.RequestId}");
+                Serilog.Log.Logger.Error($"Failed to publish to {config.KafkaCluster.CaseAccessRequestTopicName} for {subAgencyRequest.RequestId}");
+                throw new AccessRequestException($"Failed to publish to {config.KafkaCluster.CaseAccessRequestTopicName} for {subAgencyRequest.RequestId}");
             }
         }
 
@@ -197,17 +161,17 @@ public class CaseAccessRequest
                 AgencyFileNumber = command.AgencyFileNumber,
                 RCCNumber = command.Key,
                 PartyId = command.PartyId,
-                RequestedOn = this.clock.GetCurrentInstant()
+                RequestedOn = clock.GetCurrentInstant()
             };
 
-            this.context.SubmittingAgencyRequests.Add(subAgencyAccessRequest);
+            context.SubmittingAgencyRequests.Add(subAgencyAccessRequest);
 
             return subAgencyAccessRequest;
         }
 
         private async Task<PartyDto> GetPidpUser(Command command)
         {
-            return await this.context.Parties
+            return await context.Parties
                 .Where(party => party.Id == command.PartyId)
                 .Select(party => new PartyDto
                 {
@@ -235,6 +199,6 @@ public static partial class SubmittingAgencyLoggingExtensions
     public static partial void LogCaseMissingKey(this ILogger logger, int caseId, string? username);
     [LoggerMessage(4, LogLevel.Information, "Tools case {caseId} request - for user {username}.")]
     public static partial void LogRequestToolsCase(this ILogger logger, int caseId, string? username);
-    [LoggerMessage(5, LogLevel.Information, "Saved request {subAgencyRequestId} for {requestId} for {agencyFileNumber} party: {partyId}")]
-    public static partial void LogRequestCase(this ILogger logger, int requestId, string? agencyFileNumber, int partyId, int subAgencyRequestId);
+    [LoggerMessage(5, LogLevel.Information, "Saved request {subAgencyRequestId} for {agencyFileNumber} party: {partyId}")]
+    public static partial void LogRequestCase(this ILogger logger, string? agencyFileNumber, int partyId, int subAgencyRequestId);
 }
