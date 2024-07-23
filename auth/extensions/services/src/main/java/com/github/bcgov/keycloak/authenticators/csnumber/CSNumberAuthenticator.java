@@ -54,7 +54,7 @@ public class CSNumberAuthenticator implements Authenticator {
           System.out.println(result);
           System.out.println(context.getRefreshExecutionUrl());
 
-          UriBuilder loginUriBuilder = UriBuilder.fromUri(context.getRefreshExecutionUrl())
+          UriBuilder loginUriBuilder = UriBuilder.fromUri("https://bmhub.test.biometrics.gov.bc.ca/BM12/Authenticate/Authenticate.aspx")
                   .queryParam("cs_number", result);
           Response response = Response.seeOther(loginUriBuilder.build()).build();
           context.forceChallenge(response);
