@@ -1,7 +1,4 @@
 namespace ISLInterfaces;
-
-using ISLInterfaces.Infrastructure.Auth;
-
 public class ISLInterfacesConfiguration
 {
     public static bool IsProduction() => EnvironmentName == Environments.Production;
@@ -32,6 +29,5 @@ public class ConnectionStringConfiguration
 public class KeycloakConfiguration
 {
     public string RealmUrl { get; set; } = string.Empty;
-    public string WellKnownConfig => KeycloakUrls.WellKnownConfig(this.RealmUrl);
-    public string TokenUrl => KeycloakUrls.Token(this.RealmUrl);
+
 }
