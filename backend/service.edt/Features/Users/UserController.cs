@@ -1,8 +1,8 @@
 namespace edt.service.Controllers;
 
+using Common.Constants.Auth;
 using Common.Models.EDT;
 using edt.service.Features.Users;
-using edt.service.Infrastructure.Auth;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 
 [Route("api/[controller]")]
 [ApiController]
-[Authorize(Policy = Policies.AdminAuthentication)]
+[Authorize(Policy = Policies.DiamInternalAuthentication)]
 public class UserController : ControllerBase
 {
     private readonly IMediator _mediator;

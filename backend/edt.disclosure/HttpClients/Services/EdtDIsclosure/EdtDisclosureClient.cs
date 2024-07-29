@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Threading.Tasks;
 using AutoMapper;
-using common.Constants.Auth;
+using Common.Constants.Auth;
 using Common.Models;
 using Common.Models.EDT;
 using edt.disclosure.Exceptions;

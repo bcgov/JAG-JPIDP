@@ -1,7 +1,6 @@
 namespace ApprovalFlow.Auth;
 
 using System.Security.Claims;
-using common.Constants.Auth;
 using Common.Authorization;
 using Common.Constants.Auth;
 using Common.Extensions;

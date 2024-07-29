@@ -1,7 +1,7 @@
 namespace Pidp.Infrastructure.Auth;
 
 using System.Security.Claims;
-using common.Constants.Auth;
+using Common.Constants.Auth;
 using Common.Authorization;
 using Common.Constants.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

@@ -1,14 +1,15 @@
 namespace Pidp.Extensions;
 
-using NodaTime;
-using NodaTime.Text;
+
 using System.Security.Claims;
 using System.Text.Json;
 
 using Pidp.Infrastructure.Auth;
 
+
 public static class ClaimsPrincipalExtensions
 {
+
     /// <summary>
     /// Returns the UserId of the logged in user (from the 'sub' claim). If there is no logged in user, this will return Guid.Empty
     /// </summary>
@@ -24,14 +25,19 @@ public static class ClaimsPrincipalExtensions
     /// <summary>
     /// Returns the Birthdate Claim of the User, parsed in ISO format (yyyy-MM-dd)
     /// </summary>
-    public static LocalDate? GetBirthdate(this ClaimsPrincipal user)
+    public static DateOnly? GetBirthdate(this ClaimsPrincipal user)
     {
-        var birthdate = user.FindFirstValue(Claims.Birthdate);
+        var birthdateString = user.FindFirstValue(Claims.Birthdate);
 
-        var parsed = LocalDatePattern.Iso.Parse(birthdate);
-        if (parsed.Success)
+        if (string.IsNullOrEmpty(birthdateString))
         {
-            return parsed.Value;
+            return null;
+        }
+
+        var parsedDateOk = DateOnly.TryParseExact(birthdateString, "yyyy-MM-dd", out var result);
+        if (parsedDateOk)
+        {
+            return result;
         }
         else
         {

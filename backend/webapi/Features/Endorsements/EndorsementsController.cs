@@ -1,6 +1,6 @@
 namespace Pidp.Features.Endorsements;
 
-using common.Constants.Auth;
+using Common.Constants.Auth;
 using DomainResults.Common;
 using DomainResults.Mvc;
 using Microsoft.AspNetCore.Authorization;

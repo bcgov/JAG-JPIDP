@@ -177,6 +177,8 @@ public class PidpConfiguration
         public string ClientSecret { get; set; } = string.Empty;
         public int MaxClientValidations { get; set; } = 5;
         public string DateOfBirthField { get; set; } = "Date of Birth";
+        public string OneTimeCode { get; set; } = "OTC";
+
     }
 
     public class EdtCaseManagementClientConfiguration

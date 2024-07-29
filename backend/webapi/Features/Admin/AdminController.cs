@@ -1,6 +1,6 @@
 namespace Pidp.Features.Admin;
 
-using common.Constants.Auth;
+using Common.Constants.Auth;
 using Common.Models.AccessRequests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
