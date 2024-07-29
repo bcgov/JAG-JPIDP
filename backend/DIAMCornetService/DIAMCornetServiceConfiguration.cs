@@ -1,7 +1,4 @@
 namespace DIAMCornetService;
-
-using Common.Authorization;
-
 public class DIAMCornetServiceConfiguration
 {
 
@@ -42,7 +39,6 @@ public class DIAMCornetServiceConfiguration
     public class KeycloakConfiguration
     {
         public string RealmUrl { get; set; } = string.Empty;
-        public string WellKnownConfig => KeycloakUrls.WellKnownConfig(this.RealmUrl);
     }
 
     public class ConnectionStringConfiguration
