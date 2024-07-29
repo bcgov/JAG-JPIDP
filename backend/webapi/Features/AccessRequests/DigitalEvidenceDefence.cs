@@ -2,7 +2,7 @@ namespace Pidp.Features.AccessRequests;
 
 using System.Diagnostics;
 using System.Linq;
-using common.Constants.Auth;
+using Common.Constants.Auth;
 using Common.Models.Approval;
 using Common.Models.EDT;
 using Confluent.Kafka;

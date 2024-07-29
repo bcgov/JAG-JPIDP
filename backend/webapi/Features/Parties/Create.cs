@@ -3,14 +3,12 @@ namespace Pidp.Features.Parties;
 using System.Security.Claims;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
-using NodaTime;
 using Pidp.Data;
 using Pidp.Extensions;
 using Pidp.Infrastructure.Auth;
 using Pidp.Models;
 using Pidp.Models.Lookups;
 using Pidp.Models.UserInfo;
-using Quartz.Impl.Triggers;
 
 public class Create
 {
@@ -18,7 +16,7 @@ public class Create
     {
         public Guid UserId { get; set; }
         public string? Jpdid { get; set; }
-        public LocalDate? Birthdate { get; set; }
+        public DateOnly? Birthdate { get; set; }
         public string? Gender { get; set; }
         public string FirstName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
@@ -190,7 +188,7 @@ public class Create
 
                 var outOfCustodyType = await this.GetAndAddUserTypeLookup(PublicUserType.OutOfCustodyAccused.ToString(), "Out of custody accused");
 
-                if ( outOfCustodyType != null)
+                if (outOfCustodyType != null)
                 {
                     var partyUserType = new PartyUserType
                     {
