@@ -1,4 +1,4 @@
-name: diam-webapi
+name: diam-maintenance
  
 on:
   push:
