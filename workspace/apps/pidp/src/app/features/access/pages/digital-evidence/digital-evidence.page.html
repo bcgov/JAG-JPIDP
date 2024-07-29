@@ -207,7 +207,7 @@
           </div>
           <div
             *ngIf="!showDataMismatchError && userValidationMessage && userCodeStatus !== 'error' && userCodeStatus !== 'too_many_attempts' ">
-            <div class="user-notification field-highlight mt-3">
+            <div class="user-notification field-highlight mt-3" [class]="userCodeStatus === 'valid' ? 'success' : 'warning'">
               <mat-icon
                 class="col-4"
                 [class]="userCodeStatus === 'valid' ? 'valid-icon' : 'error-icon'"
