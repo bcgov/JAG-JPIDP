@@ -334,9 +334,6 @@ public class ValidateUser
                             }
                             else
                             {
-
-
-
                                 // we'll check against keycloak user as this will be sync with BCSC
                                 var keycloakDOB = keycloakUser.Attributes.First(attr => attr.Key.Equals(configuration.Keycloak.BirthdateField));
                                 if (keycloakDOB.Value != null)
