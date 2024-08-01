@@ -1,6 +1,5 @@
 namespace edt.disclosure.HttpClients.Services.EdtDisclosure;
 
-using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -29,7 +28,6 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
     private readonly Counter<long> getUserCounter;
     private readonly Counter<long> addUserCounter;
 
-    private readonly ActivitySource activitySource;
 
 
     public EdtDisclosureClient(
@@ -50,7 +48,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
     public async Task<EdtUserDto?> GetUser(string userKey)
     {
-        using var activity = this.activitySource.StartActivity("get edt user");
+
 
         Log.Logger.Information("Checking if user key {0} already present", userKey);
         var result = await this.GetAsync<EdtUserDto?>($"api/v1/users/key:{userKey}");
@@ -84,14 +82,23 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
     /// <exception cref="EdtServiceException"></exception>
     public async Task<string> GetVersion()
     {
-        var result = await this.GetAsync<Common.Models.EDT.EdtVersion?>($"api/v1/version");
+        var result = await this.GetAsync<EdtVersion?>($"api/v1/version");
 
         if (!result.IsSuccess)
         {
             throw new EdtDisclosureServiceException($"Failed to communicate with EDT {string.Join(",", result.Errors)}");
         }
 
-        return result.Value.Version;
+        if (result.Value != null && result.Value.Version != null)
+        {
+            return result.Value.Version;
+        }
+        else
+        {
+            throw new EdtDisclosureServiceException($"Failed to communicate with EDT {string.Join(",", result.Errors)}");
+
+        }
+
     }
 
 
@@ -101,7 +108,8 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
 
         // check user is present
         var user = await this.GetUser(accessRequest.Username);
-        CourtLocationCaseModel courtLocation = null;
+        CourtLocationCaseModel? courtLocation = null;
+        ;
 
         if (user == null)
         {
@@ -113,7 +121,7 @@ public class EdtDisclosureClient : BaseClient, IEdtDisclosureClient
             // get the id of the case
             courtLocation = await this.FindLocationCase(this.configuration.EdtClient.CourtLocationKeyPrefix + accessRequest.CourtLocationKey);
         }
-        catch (ResourceNotFoundException ex)
+        catch (ResourceNotFoundException)
         {
             if (this.configuration.EdtClient.CreateCourtLocations)
             {

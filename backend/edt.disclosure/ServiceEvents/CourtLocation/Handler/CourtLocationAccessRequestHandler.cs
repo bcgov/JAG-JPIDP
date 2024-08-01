@@ -15,34 +15,22 @@ using Prometheus;
 /// <summary>
 /// Handle requests to access court location case folders
 /// </summary>
-public class CourtLocationAccessRequestHandler : IKafkaHandler<string, CourtLocationDomainEvent>
+public class CourtLocationAccessRequestHandler(
+EdtDisclosureServiceConfiguration configuration,
+IKeycloakAdministrationClient keycloakAdministrationClient,
+IKafkaProducer<string, GenericProcessStatusResponse> producer,
+DisclosureDataStoreDbContext context,
+IClock clock,
+IEdtDisclosureClient edtClient,
+ ILogger<CourtLocationAccessRequestHandler> logger) : IKafkaHandler<string, CourtLocationDomainEvent>
 {
-    private readonly EdtDisclosureServiceConfiguration configuration;
-    private readonly IEdtDisclosureClient edtClient;
-    private readonly ILogger logger;
-    private readonly IKeycloakAdministrationClient keycloakAdministrationClient;
-    private readonly IKafkaProducer<string, GenericProcessStatusResponse> producer;
-    private readonly DisclosureDataStoreDbContext context;
+    private readonly EdtDisclosureServiceConfiguration configuration = configuration;
+    private readonly IEdtDisclosureClient edtClient = edtClient;
+    private readonly IKeycloakAdministrationClient keycloakAdministrationClient = keycloakAdministrationClient;
+    private readonly IKafkaProducer<string, GenericProcessStatusResponse> producer = producer;
+    private readonly DisclosureDataStoreDbContext context = context;
     private static readonly Histogram CourtLocationRequestDuration = Metrics.CreateHistogram("court_location_request_duration", "Histogram of court location request call durations.");
-    private readonly IClock clock;
-
-    public CourtLocationAccessRequestHandler(
-    EdtDisclosureServiceConfiguration configuration,
-    IKeycloakAdministrationClient keycloakAdministrationClient,
-    IKafkaProducer<string, GenericProcessStatusResponse> producer,
-    DisclosureDataStoreDbContext context,
-    IClock clock,
-    IEdtDisclosureClient edtClient,
-     ILogger logger)
-    {
-        this.configuration = configuration;
-        this.keycloakAdministrationClient = keycloakAdministrationClient;
-        this.logger = logger;
-        this.context = context;
-        this.clock = clock;
-        this.edtClient = edtClient;
-        this.producer = producer;
-    }
+    private readonly IClock clock = clock;
 
     public async Task<Task> HandleAsync(string consumerName, string key, CourtLocationDomainEvent courtLocationEvent)
     {
@@ -101,7 +89,7 @@ public class CourtLocationAccessRequestHandler : IKafkaHandler<string, CourtLoca
                         PartId = courtLocationEvent.Username,
                         Id = courtLocationEvent.RequestId,
                         Status = "Error",
-                        ErrorList = new List<string> { result.Exception.Message },
+                        ErrorList = [result.Exception.Message],
                         EventTime = SystemClock.Instance.GetCurrentInstant()
                     });
 
@@ -123,7 +111,7 @@ public class CourtLocationAccessRequestHandler : IKafkaHandler<string, CourtLoca
                     PartId = courtLocationEvent.Username,
                     Id = courtLocationEvent.RequestId,
                     Status = "Error",
-                    ErrorList = new List<string> { ex.Message },
+                    ErrorList = [ex.Message],
                     EventTime = SystemClock.Instance.GetCurrentInstant()
                 });
 
