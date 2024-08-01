@@ -1,6 +1,8 @@
 namespace edt.service.Infrastructure.Auth;
 
 using System.Security.Claims;
+using Common.Authorization;
+using Common.Constants.Auth;
 using edt.service;
 using edt.service.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -25,10 +27,10 @@ public static class AuthenticationSetup
         })
         .AddJwtBearer(options =>
         {
-            options.Authority = config.Keycloak.RealmUrl;
+            options.Authority = KeycloakUrls.Authority(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl);
             options.RequireHttpsMetadata = false;
             options.Audience = "DIAM-INTERNAL";
-            options.MetadataAddress = config.Keycloak.WellKnownConfig;
+            options.MetadataAddress = KeycloakUrls.WellKnownConfig(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl);
             options.TokenValidationParameters = new TokenValidationParameters()
             {
                 ValidateIssuerSigningKey = true,
@@ -90,6 +92,13 @@ public static class AuthenticationSetup
         });
         services.AddAuthorization(options =>
         {
+            options.AddPolicy(Policies.DiamInternalAuthentication, policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
+            {
+
+                var hasClaim = context.User.HasClaim(c => c.Type == Claims.AuthorizedParties && c.Value == Clients.DiamInternal);
+                return hasClaim;
+            }));
+
             options.FallbackPolicy = new AuthorizationPolicyBuilder()
                 .RequireAuthenticatedUser()
                 .Build();
@@ -104,7 +113,7 @@ public static class AuthenticationSetup
             && identity.IsAuthenticated)
         {
             // Flatten the Resource Access claim
-            identity.AddClaims(identity.GetResourceAccessRoles(Clients.PidpApi)
+            identity.AddClaims(identity.GetResourceAccessRoles(Clients.DiamInternal)
                 .Select(role => new Claim(ClaimTypes.Role, role)));
         }
 

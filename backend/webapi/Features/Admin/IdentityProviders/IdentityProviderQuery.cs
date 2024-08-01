@@ -27,7 +27,7 @@ public class IdentityProviderQueryHandler : IQueryHandler<IdentityProviderQuery,
 
     public async Task<List<IdentityProvider>> HandleAsync(IdentityProviderQuery query)
     {
-        var providers = await this.keycloakAdministrationClient.GetIdentityProviders();
+        var providers = await this.keycloakAdministrationClient.GetIdentityProviders(Common.Constants.Auth.RealmConstants.BCPSRealm);
         return providers.ToList();
     }
 }

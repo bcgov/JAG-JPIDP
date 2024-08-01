@@ -1,5 +1,6 @@
 namespace edt.casemanagement.ServiceEvents.CaseManagement.Handler;
 
+using Common.Constants.Auth;
 using edt.casemanagement.Data;
 using edt.casemanagement.Exceptions;
 using edt.casemanagement.HttpClients.Services.EdtCore;
@@ -54,7 +55,7 @@ public class CaseAccessRequestHandler : IKafkaHandler<string, SubAgencyDomainEve
 
         using (CaseRequestDuration.NewTimer())
         {
-            var userInfo = await this.keycloakAdministrationClient.GetUser(caseEvent.UserId);
+            var userInfo = await this.keycloakAdministrationClient.GetUser(RealmConstants.BCPSRealm, caseEvent.UserId);
 
 
             if (userInfo == null)

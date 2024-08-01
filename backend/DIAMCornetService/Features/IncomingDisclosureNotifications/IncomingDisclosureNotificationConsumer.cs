@@ -5,20 +5,18 @@ using System;
 using System.Threading;
 using Confluent.Kafka;
 
-public class IncomingDisclosureNotificationConsumer(ConsumerConfig config, IServiceScopeFactory serviceScopeFactory, DIAMCornetServiceConfiguration configuration)
+public class IncomingDisclosureNotificationConsumer(ILogger<IncomingDisclosureNotificationConsumer> logger, ConsumerConfig config, DIAMCornetServiceConfiguration configuration)
 {
-    private readonly IServiceScopeFactory serviceScopeFactory = serviceScopeFactory;
-    private readonly ConsumerConfig config = config;
-    private readonly DIAMCornetServiceConfiguration configuration = configuration;
+
 
     public void StartConsuming(CancellationToken cancellationToken)
     {
 
 
-        using (var consumer = new ConsumerBuilder<Ignore, string>(this.config).Build())
+        using (var consumer = new ConsumerBuilder<Ignore, string>(config).Build())
         {
             // subscribe to this topic
-            consumer.Subscribe(this.configuration.KafkaCluster.ParticipantCSNumberMappingTopic);
+            consumer.Subscribe(configuration.KafkaCluster.ParticipantCSNumberMappingTopic);
 
             try
             {
@@ -27,7 +25,7 @@ public class IncomingDisclosureNotificationConsumer(ConsumerConfig config, IServ
                     var consumeResult = consumer.Consume(cancellationToken);
 
                     // Handle the message, e.g., process consumeResult.Message
-                    Console.WriteLine($"Received message: {consumeResult.Message.Value}");
+                    logger.LogInformation($"Received message: {consumeResult.Message.Value}");
                 }
             }
             catch (OperationCanceledException)

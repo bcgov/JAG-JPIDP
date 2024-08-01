@@ -1,6 +1,6 @@
 namespace ApprovalFlow.Features.Approvals;
 
-using common.Constants.Auth;
+using Common.Constants.Auth;
 using Common.Models.Approval;
 using DomainResults.Common;
 using MediatR;

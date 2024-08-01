@@ -73,13 +73,13 @@ public class UserRepresentation
     public string? LastName { get; set; }
     public string? FirstName { get; set; }
 
-    public List<FederatedIdentityRepresentation> FederatedIdentities { get; set; }
+    public List<FederatedIdentityRepresentation> FederatedIdentities { get; set; } = [];
 
     public bool Enabled { get; set; } = true; // enabled by default
 
-  //  public List<Group> Groups { get; set; } =  new List<Group>();
+    //  public List<Group> Groups { get; set; } =  new List<Group>();
 
-    public Dictionary<string, string[]> Attributes { get; set; } = new();
+    public Dictionary<string, string[]> Attributes { get; set; } = [];
 
     internal void SetLdapOrgDetails(LdapLoginResponse.OrgDetails orgDetails) => this.SetAttribute("org_details", JsonSerializer.Serialize(orgDetails, new JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
 
@@ -92,13 +92,24 @@ public class UserRepresentation
 
     public void SetPhoneExtension(string phoneExtension) => this.SetAttribute("phoneExtension", phoneExtension);
 
-    private void SetAttribute(string key, string value) => this.Attributes[key] = new string[] { value };
+    private void SetAttribute(string key, string value) => this.Attributes[key] = [value];
 }
-
 public class FederatedIdentityRepresentation
 {
-    public string IdentityProvider { get; set; }
-    public string UserId { get; set; }
-    public string UserName { get; set; }
+    public string? IdentityProvider { get; set; }
+    public string? UserId { get; set; }
+    public string? UserName { get; set; }
 
 }
+
+public class ExtendedUserRepresentation : UserRepresentation
+{
+    public Guid Id { get; set; }
+    public string? Username { get; set; }
+    public bool EmailVerified { get; set; }
+
+}
+
+
+
+

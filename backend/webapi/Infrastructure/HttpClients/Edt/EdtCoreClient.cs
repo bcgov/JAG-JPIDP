@@ -6,11 +6,8 @@ using Common.Exceptions;
 using Common.Models.EDT;
 using Prometheus;
 
-public class EdtCoreClient : BaseClient, IEdtCoreClient
+public class EdtCoreClient(HttpClient httpClient, ILogger<EdtCoreClient> logger) : BaseClient(httpClient, logger), IEdtCoreClient
 {
-
-    public EdtCoreClient(HttpClient httpClient, ILogger<EdtCoreClient> logger) : base(httpClient, logger) { }
-
     private static readonly Histogram PersonLookupByKey = Metrics.CreateHistogram("edt_user_lookup_by_key_duration", "Histogram of person key searches.");
     private static readonly Counter MergedUsersCounter = Metrics.CreateCounter("edt_merged_users_total", "Number of user queries returning merged users");
     private static readonly Counter NonMatchedUsersCount = Metrics.CreateCounter("edt_user_lookup_missing_total", "Number of user queries returning no users");
@@ -93,6 +90,9 @@ public class EdtCoreClient : BaseClient, IEdtCoreClient
         return personList;
     }
 
+
+
+
     private async Task<EdtPersonDto> GetPrimaryPerson(EdtPersonDto sourcePerson)
     {
 
@@ -117,8 +117,37 @@ public class EdtCoreClient : BaseClient, IEdtCoreClient
 
         }
 
-        Serilog.Log.Warning($"We did not find any primary user for source person {sourcePerson}");
+        Logger.LogWarning($"We did not find any primary user for source person {sourcePerson}");
         NonMatchedUsersCount.Inc();
         return null;
+    }
+
+    /// <summary>
+    /// Find persons based on the lookup model
+    /// </summary>
+    /// <param name="personLookupModel"></param>
+    /// <returns></returns>
+    public async Task<List<EdtPersonDto>?> FindPersons(PersonLookupModel personLookupModel)
+    {
+        logger.LogInformation($"Edt Person search requested {personLookupModel.LastName} {personLookupModel.FirstName} {personLookupModel.DateOfBirth} ");
+
+        var wrapper = new PersonLookupWrapper { PersonLookup = personLookupModel };
+
+        var result = await this.PostAsync<List<EdtPersonDto>?>("person/search", wrapper);
+
+        if (result.IsSuccess)
+        {
+            return result.Value;
+        }
+        else
+        {
+            logger.LogWarning($"Failed to query EDT  FindPersons {string.Join(",", result.Errors)}");
+            return [];
+        }
+    }
+
+    protected class PersonLookupWrapper
+    {
+        public PersonLookupModel? PersonLookup { get; set; }
     }
 }

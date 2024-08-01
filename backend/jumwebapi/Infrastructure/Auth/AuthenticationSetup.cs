@@ -1,3 +1,5 @@
+using Common.Authorization;
+using Common.Constants.Auth;
 using Confluent.Kafka;
 using jumwebapi.Extensions;
 using jumwebapi.Kafka.Producer;
@@ -50,10 +52,10 @@ namespace jumwebapi.Infrastructure.Auth
             })
             .AddJwtBearer(options =>
             {
-                options.Authority = config.Keycloak.RealmUrl;
+                options.Authority = KeycloakUrls.Authority(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl);
                 options.RequireHttpsMetadata = false;
                 options.Audience = Resources.JumApi;
-                options.MetadataAddress = config.Keycloak.WellKnownConfig;
+                options.MetadataAddress = KeycloakUrls.WellKnownConfig(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl);
                 options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters()
                 {
                     ValidateIssuerSigningKey = true,

@@ -11,9 +11,9 @@ public class EdtPersonDto
     public string? LastName { get; set; }
     public EdtPersonAddress? Address { get; set; } = new EdtPersonAddress();
     public string? Role { get; set; } = "Defence";
-    public bool? IsActive { get; set; } = true;
-    public List<EdtField> Fields { get; set; } = new List<EdtField>();
-    public List<IdentifierModel> Identifiers { get; set; } = new List<IdentifierModel>();
+    public bool IsActive { get; set; } = true;
+    public List<EdtField> Fields { get; set; } = [];
+    public List<IdentifierModel> Identifiers { get; set; } = [];
 
 }
 

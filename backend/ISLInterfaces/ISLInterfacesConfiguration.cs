@@ -1,7 +1,4 @@
 namespace ISLInterfaces;
-
-using ISLInterfaces.Infrastructure.Auth;
-
 public class ISLInterfacesConfiguration
 {
     public static bool IsProduction() => EnvironmentName == Environments.Production;
@@ -10,9 +7,16 @@ public class ISLInterfacesConfiguration
     public KeycloakConfiguration Keycloak { get; set; } = new();
     public const string KeycloakConfig = "Keycloak";
     public const string DatabaseConnectionInfoConfig = "DatabaseConnectionInfo";
-
+    public SplunkConfiguration SplunkConfig { get; set; } = new();
     public ConnectionStringConfiguration DatabaseConnectionInfo { get; set; } = new();
 }
+
+public class SplunkConfiguration
+{
+    public string Host { get; set; } = string.Empty;
+    public string CollectorToken { get; set; } = string.Empty;
+}
+
 
 public class ConnectionStringConfiguration
 {
@@ -25,6 +29,5 @@ public class ConnectionStringConfiguration
 public class KeycloakConfiguration
 {
     public string RealmUrl { get; set; } = string.Empty;
-    public string WellKnownConfig => KeycloakUrls.WellKnownConfig(this.RealmUrl);
-    public string TokenUrl => KeycloakUrls.Token(this.RealmUrl);
+
 }

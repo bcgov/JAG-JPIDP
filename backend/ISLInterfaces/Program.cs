@@ -13,6 +13,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using Prometheus;
 using Serilog;
+using Serilog.Sinks.SystemConsole.Themes;
 
 public class Program
 {
@@ -70,6 +71,46 @@ public class Program
             app.UseSwagger();
             app.UseSwaggerUI();
         }
+        var loggerConfig = new LoggerConfiguration();
+
+        var name = Assembly.GetExecutingAssembly().GetName();
+        var outputTemplate = "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}";
+
+        var splunkHost = Environment.GetEnvironmentVariable("SplunkConfig__Host");
+        splunkHost ??= builder.Configuration.GetValue<string>("SplunkConfig:Host");
+        var splunkToken = Environment.GetEnvironmentVariable("SplunkConfig__CollectorToken");
+        splunkToken ??= builder.Configuration.GetValue<string>("SplunkConfig:CollectorToken");
+
+        var loggerConfiguration = new LoggerConfiguration()
+            .MinimumLevel.Information()
+            .Filter.ByExcluding("RequestPath like '/health%'")
+            .Filter.ByExcluding("RequestPath like '/metrics%'")
+            .Enrich.FromLogContext()
+            .Enrich.WithMachineName()
+            .Enrich.WithProperty("Assembly", $"{name.Name}")
+            .Enrich.WithProperty("Version", $"{name.Version}")
+            .WriteTo.Console(
+                outputTemplate: outputTemplate,
+                theme: AnsiConsoleTheme.Code
+            );
+
+        // trigger build
+        if (string.IsNullOrEmpty(splunkHost) || string.IsNullOrEmpty(splunkToken))
+        {
+            Console.WriteLine("Splunk Host or Token is not configured - check Splunk environment");
+            Environment.Exit(-1);
+        }
+
+        Log.Information($"Logging to splunk host {splunkHost}");
+        loggerConfig
+            .WriteTo.EventCollector(splunkHost, splunkToken);
+
+
+        Log.Logger = loggerConfiguration.CreateLogger();
+
+        Log.Information($"Logging to splunk host {splunkHost}");
+
+
 
 
         Action<ResourceBuilder> configureResource = r => r.AddService(
@@ -90,10 +131,10 @@ public class Program
         });
         app.UseMetricServer();
         app.MapControllers();
+        Log.Logger.Information("### ISL Interface Service running");
 
         app.Run();
 
-        Log.Logger.Information("### ISL Interface Service running");
 
     }
 

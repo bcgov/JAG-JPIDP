@@ -1,7 +1,6 @@
 namespace Pidp;
 
 using Common.Models.EDT;
-using Pidp.Infrastructure.Auth;
 
 public class PidpConfiguration
 {
@@ -10,6 +9,7 @@ public class PidpConfiguration
     private static readonly string? EnvironmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
 
     public string ApplicationUrl { get; set; } = string.Empty;
+    public string CorrectionsIDP { get; set; } = "siteminder";
     public int AUFToolsCaseId { get; set; }
     public AddressAutocompleteClientConfiguration AddressAutocompleteClient { get; set; } = new();
     public ConnectionStringConfiguration ConnectionStrings { get; set; } = new();
@@ -101,8 +101,6 @@ public class PidpConfiguration
     public class KeycloakConfiguration
     {
         public string RealmUrl { get; set; } = string.Empty;
-        public string WellKnownConfig => KeycloakUrls.WellKnownConfig(this.RealmUrl);
-        public string TokenUrl => KeycloakUrls.Token(this.RealmUrl);
         public string AdministrationUrl { get; set; } = string.Empty;
         public string AdministrationClientId { get; set; } = string.Empty;
         public string AdministrationClientSecret { get; set; } = string.Empty;
@@ -132,6 +130,7 @@ public class PidpConfiguration
         public string ApprovalCreationTopic { get; set; } = string.Empty;
         public string ProcessResponseTopic { get; set; } = string.Empty;
         public string UserAccountChangeTopicName { get; set; } = string.Empty;
+        public string ParticipantCSNumberMappingTopic { get; set; } = string.Empty;
         public string NotificationTopicName { get; set; } = string.Empty;
         public string UserAccountChangeNotificationTopicName { get; set; } = string.Empty;
         public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;
@@ -154,7 +153,6 @@ public class PidpConfiguration
     {
         public string Url { get; set; } = string.Empty;
         public string RealmUrl { get; set; } = string.Empty;
-        public string TokenUrl => KeycloakUrls.Token(this.RealmUrl);
         public string AdministrationUrl { get; set; } = string.Empty;
         public string AdministrationClientId { get; set; } = string.Empty;
         public string AdministrationClientSecret { get; set; } = string.Empty;
@@ -179,6 +177,8 @@ public class PidpConfiguration
         public string ClientSecret { get; set; } = string.Empty;
         public int MaxClientValidations { get; set; } = 5;
         public string DateOfBirthField { get; set; } = "Date of Birth";
+        public string OneTimeCode { get; set; } = "OTC";
+
     }
 
     public class EdtCaseManagementClientConfiguration

@@ -5,79 +5,71 @@ using Common.Kafka;
 using Common.Kafka.Deserializer;
 using Confluent.Kafka;
 using IdentityModel.Client;
-using Serilog;
 
 
 public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TValue : class
 {
-    private const string EXPIRY_CLAIM = "exp";
-    private const string SUBJECT_CLAIM = "sub";
-    private readonly ConsumerConfig config;
-    private IKafkaHandler<TKey, TValue> handler;
-    private IConsumer<TKey, TValue> consumer;
-    private string topic;
+    private readonly ConsumerConfig _config;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
+    private readonly ILogger<KafkaConsumer<TKey, TValue>> _logger;
+    private IKafkaHandler<TKey, TValue> _handler;
+    private IConsumer<TKey, TValue> _consumer;
+    private string _topic;
 
-    private readonly IServiceScopeFactory serviceScopeFactory;
-
-    public KafkaConsumer(ConsumerConfig config, IServiceScopeFactory serviceScopeFactory)
+    public KafkaConsumer(ConsumerConfig config, IServiceScopeFactory serviceScopeFactory, ILogger<KafkaConsumer<TKey, TValue>> logger)
     {
-        this.serviceScopeFactory = serviceScopeFactory;
-        this.config = config;
-
+        _config = config;
+        _serviceScopeFactory = serviceScopeFactory;
+        _logger = logger;
     }
 
     public async Task Consume(string topic, CancellationToken stoppingToken)
     {
-        using var scope = this.serviceScopeFactory.CreateScope();
+        using var scope = _serviceScopeFactory.CreateScope();
 
-        Log.Logger.Information("DIAM Cornet Starting consumer for topic {0}", topic);
+        _logger.LogInformation("DIAM Cornet Starting consumer for topic {0}", topic);
 
-        this.handler = scope.ServiceProvider.GetRequiredService<IKafkaHandler<TKey, TValue>>();
-        this.consumer = new ConsumerBuilder<TKey, TValue>(this.config)
+        _handler = scope.ServiceProvider.GetRequiredService<IKafkaHandler<TKey, TValue>>();
+        _consumer = new ConsumerBuilder<TKey, TValue>(_config)
             .SetLogHandler((consumer, log) => Console.WriteLine($"CON _______________________ {log}"))
             .SetErrorHandler((consumer, log) => Console.WriteLine($"CON ERR _______________________ {log}"))
-            .SetOAuthBearerTokenRefreshHandler(OauthTokenRefreshCallback).SetValueDeserializer(new DefaultKafkaDeserializer<TValue>()).Build();
-        this.topic = topic;
+            .SetOAuthBearerTokenRefreshHandler(OauthTokenRefreshCallback)
+            .SetValueDeserializer(new DefaultKafkaDeserializer<TValue>())
+            .Build();
+        _topic = topic;
 
-        await Task.Run(() => this.StartConsumerLoop(stoppingToken), stoppingToken);
+        await Task.Run(() => StartConsumerLoop(stoppingToken), stoppingToken);
     }
 
-
-    /// <summary>
-    /// Start consuming messages
-    /// </summary>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
     private async Task StartConsumerLoop(CancellationToken cancellationToken)
     {
-
-        Log.Logger.Information("Start consuming from {0}", this.topic);
-        this.consumer.Subscribe(this.topic);
+        _logger.LogInformation("Start consuming from {0}", _topic);
+        _consumer.Subscribe(_topic);
 
         while (!cancellationToken.IsCancellationRequested)
         {
             try
             {
-                var result = this.consumer.Consume(cancellationToken);
+                var result = _consumer.Consume(cancellationToken);
 
                 if (result != null)
                 {
-                    var consumerResult = await this.handler.HandleAsync(this.consumer.Name, result.Message.Key, result.Message.Value);
+                    var consumerResult = await _handler.HandleAsync(_consumer.Name, result.Message.Key, result.Message.Value);
 
                     if (consumerResult.Status == TaskStatus.RanToCompletion && consumerResult.Exception == null)
                     {
-                        Log.Logger.Information($"Marking complete {result.Message.Key}");
+                        _logger.LogInformation($"Marking complete {result.Message.Key}");
 
-                        this.consumer.Commit(result);
+                        _consumer.Commit(result);
                     }
                     else
                     {
-                        Log.Logger.Information($"Error processing message {result.Message.Key} {consumerResult.Exception}");
+                        _logger.LogInformation($"Error processing message {result.Message.Key} {consumerResult.Exception}");
                     }
                 }
                 else
                 {
-                    Log.Logger.Information("No messages received");
+                    _logger.LogInformation("No messages received");
                     continue;
                 }
             }
@@ -87,8 +79,7 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
             }
             catch (ConsumeException e)
             {
-                // Consumer errors should generally be ignored (or logged) unless fatal.
-                Log.Logger.Information("Consumer error ontopic {0} [{1}]", this.topic, e.Message);
+                _logger.LogInformation("Consumer error on topic {0} [{1}]", _topic, e.Message);
 
                 if (e.Error.IsFatal)
                 {
@@ -97,7 +88,7 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
             }
             catch (Exception e)
             {
-                Log.Logger.Information("General consumer error on topic {0} [{1}]", this.topic, e.Message);
+                _logger.LogInformation("General consumer error on topic {0} [{1}]", _topic, e.Message);
 
                 Console.WriteLine($"Unexpected error: {e}");
                 break;
@@ -105,24 +96,26 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
         }
     }
 
-    /// <summary>
-    /// Releases all resources used by the current instance of the consumer
-    /// </summary>
-    public void Dispose() => this.consumer.Dispose();
+    public void Dispose()
+    {
+        _consumer.Dispose();
+    }
 
-    public void Close() => this.consumer.Close();
+    public void Close()
+    {
+        _consumer.Close();
+    }
 
     private static async void OauthTokenRefreshCallback(IClient client, string config)
     {
         try
         {
-
             var settingsFile = DIAMCornetServiceConfiguration.IsDevelopment() ? "appsettings.Development.json" : "appsettings.json";
-
 
             var clusterConfig = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile(settingsFile).Build();
+                .AddJsonFile(settingsFile)
+                .Build();
 
             var tokenEndpoint = Environment.GetEnvironmentVariable("KafkaCluster__SaslOauthbearerTokenEndpointUrl");
             var clientId = Environment.GetEnvironmentVariable("KafkaCluster__SaslOauthbearerConsumerClientId");
@@ -131,9 +124,7 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
             clientSecret ??= clusterConfig.GetValue<string>("KafkaCluster:SaslOauthbearerConsumerClientSecret");
             clientId ??= clusterConfig.GetValue<string>("KafkaCluster:SaslOauthbearerConsumerClientId");
             tokenEndpoint ??= clusterConfig.GetValue<string>("KafkaCluster:SaslOauthbearerTokenEndpointUrl");
-            Log.Logger.Debug("Pidp Kafka Consumer getting token {0} {1}", tokenEndpoint, clientId);
             var accessTokenClient = new HttpClient();
-
 
             var accessToken = await accessTokenClient.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
             {
@@ -142,27 +133,27 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
                 ClientSecret = clientSecret,
                 GrantType = "client_credentials"
             });
+
             var tokenTicks = GetTokenExpirationTime(accessToken.AccessToken);
             var subject = GetTokenSubject(accessToken.AccessToken);
             var tokenDate = DateTimeOffset.FromUnixTimeSeconds(tokenTicks);
             var timeSpan = new DateTime() - tokenDate;
             var ms = tokenDate.ToUnixTimeMilliseconds();
-            Log.Logger.Debug("Consumer got token {0}", ms);
 
             client.OAuthBearerSetToken(accessToken.AccessToken, ms, subject);
         }
         catch (Exception ex)
         {
-            Log.Logger.Error(ex.Message);
             client.OAuthBearerSetTokenFailure(ex.ToString());
         }
     }
+
     private static long GetTokenExpirationTime(string token)
     {
         var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
         var jwtSecurityToken = handler.ReadJwtToken(token);
 
-        var tokenExp = jwtSecurityToken.Claims.First(claim => claim.Type.Equals(KafkaConsumer<TKey, TValue>.EXPIRY_CLAIM, StringComparison.Ordinal)).Value;
+        var tokenExp = jwtSecurityToken.Claims.First(claim => claim.Type.Equals("exp", StringComparison.Ordinal)).Value;
         var ticks = long.Parse(tokenExp, CultureInfo.InvariantCulture);
         return ticks;
     }
@@ -171,8 +162,6 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
     {
         var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
         var jwtSecurityToken = handler.ReadJwtToken(token);
-        return jwtSecurityToken.Claims.First(claim => claim.Type.Equals(KafkaConsumer<TKey, TValue>.SUBJECT_CLAIM, StringComparison.Ordinal)).Value;
-
+        return jwtSecurityToken.Claims.First(claim => claim.Type.Equals("sub", StringComparison.Ordinal)).Value;
     }
-
 }

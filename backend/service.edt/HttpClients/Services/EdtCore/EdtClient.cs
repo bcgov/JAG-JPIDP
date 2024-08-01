@@ -24,6 +24,7 @@ public class EdtClient : BaseClient, IEdtClient
     private static readonly Histogram ParticipantCreationDuration = Metrics.CreateHistogram("edt_participant_creation_duration", "Histogram of edt participant creations.");
     private static readonly Histogram ParticipantModificationDuration = Metrics.CreateHistogram("edt_participant_modification_duration", "Histogram of edt participant modifications.");
     private static readonly Histogram DisclosureLinkageDuration = Metrics.CreateHistogram("edt_person_disclosure_linkage", "Histogram of edt participant to folio linkage events.");
+    private static readonly Histogram PersonSearchDuration = Metrics.CreateHistogram("edt_person_saerch_duration", "Histogram of edt person searches.");
 
     private readonly Counter<long> getPersonCounter;
     private readonly Counter<long> addPersonCounter;
@@ -912,6 +913,58 @@ public class EdtClient : BaseClient, IEdtClient
             }
 
             return response;
+        }
+    }
+
+    /// <summary>
+    /// Search for a person
+    /// </summary>
+    /// <param name="personLookup">The person lookup model containing search criteria</param>
+    /// <returns>A list of EdtPersonDto objects matching the search criteria</returns>
+    public async Task<List<EdtPersonDto>> SearchForPerson(PersonLookupModel personLookup)
+    {
+        using (PersonSearchDuration.NewTimer())
+        {
+            Logger.LogInformation($"Searching for person {personLookup.LastName} {personLookup.FirstName} {personLookup.DateOfBirth}");
+
+            // construct the filter
+            List<string> filterParams = [];
+
+
+            if (!string.IsNullOrEmpty(personLookup.LastName))
+            {
+                filterParams.Add($"LastName:{personLookup.LastName}");
+            }
+            if (!string.IsNullOrEmpty(personLookup.FirstName))
+            {
+                filterParams.Add($"FirstName:{personLookup.FirstName}");
+            }
+            if (personLookup.DateOfBirth != null)
+            {
+                filterParams.Add($"Date of Birth:{personLookup.DateOfBirth}");
+            }
+
+
+            var filter = string.Join(",", filterParams);
+
+            Logger.LogInformation($"Searching filter {filter}");
+
+            var result = await this.GetAsync<PagedItemsResponse<EdtPersonDto>>($"api/v2/org-units/1/persons?IncludeInactive={personLookup.IncludeInactive}&filter={filter}");
+
+            if (result.IsSuccess)
+            {
+                if (result.Value.Total == 0)
+                {
+                    Logger.LogInformation($"No person found for {personLookup.LastName} {personLookup.FirstName} {personLookup.DateOfBirth}");
+                    return [];
+                }
+                return result.Value.Items;
+            }
+            else
+            {
+                Logger.LogError($"Failed to search for person {personLookup.LastName} {personLookup.FirstName} {personLookup.DateOfBirth}");
+                return [];
+            }
         }
     }
 
