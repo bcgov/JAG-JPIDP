@@ -17,7 +17,7 @@ public class CorrelationIdMiddleware(RequestDelegate next, ILogger<CorrelationId
         context.Response.Headers.Append(CorrelationIdHeader, correlationId);
         using (LogContext.PushProperty(CorrelationIdHeader, correlationId))
         {
-            logger.LogInformation($"CorrelationId: {correlationId} {context.Request.GetEncodedUrl}");
+            logger.LogTrace($"CorrelationId: {correlationId} {context.Request.GetEncodedUrl}");
             await next(context);
         }
     }
