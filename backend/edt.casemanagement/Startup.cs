@@ -3,6 +3,7 @@ namespace edt.casemanagement;
 
 using System.Reflection;
 using System.Text.Json;
+using Common.Logging;
 using edt.casemanagement.Data;
 using edt.casemanagement.HttpClients;
 using edt.casemanagement.HttpClients.Services.EdtCore;
@@ -309,6 +310,8 @@ public class Startup
         });
         app.UseRouting();
         app.UseCors("CorsPolicy");
+        app.UseMiddleware<CorrelationIdMiddleware>();
+
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseEndpoints(endpoints =>

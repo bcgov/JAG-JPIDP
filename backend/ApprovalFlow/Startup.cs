@@ -9,6 +9,7 @@ using ApprovalFlow.Data;
 using ApprovalFlow.Kafka;
 using ApprovalFlow.Telemetry;
 using Common.Constants.Telemetry;
+using Common.Logging;
 using DIAM.Common.Helpers.Transformers;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
@@ -262,6 +263,8 @@ public class Startup
         app.UseRouting();
 
         app.UseCors("CorsPolicy");
+        app.UseMiddleware<CorrelationIdMiddleware>();
+
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseWebSockets(); // websocket support for auto-ui updates

@@ -3,6 +3,7 @@ namespace jumwebapi;
 using System.Reflection;
 using System.Security.Claims;
 using FluentValidation.AspNetCore;
+using global::Common.Logging;
 using jumwebapi.Common;
 using jumwebapi.Core.Http;
 using jumwebapi.Data;
@@ -297,6 +298,7 @@ public class Startup
         app.UseCors("CorsPolicy");
         app.UseMetricServer();
         app.UseHttpMetrics();
+        app.UseMiddleware<CorrelationIdMiddleware>();
 
         app.UseAuthentication();
         app.UseAuthorization();
