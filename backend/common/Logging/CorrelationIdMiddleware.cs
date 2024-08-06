@@ -9,6 +9,7 @@ using Serilog.Context;
 public class CorrelationIdMiddleware(RequestDelegate next, ILogger<CorrelationIdMiddleware> logger)
 {
     public const string CorrelationIdHeader = "X-Correlation-ID";
+
     public async Task InvokeAsync(HttpContext context)
     {
         var correlationId = context.Request.Headers[CorrelationIdHeader].FirstOrDefault() ?? Guid.NewGuid().ToString();

@@ -3,6 +3,7 @@ namespace edt.service;
 
 using System.Reflection;
 using System.Text.Json;
+using Common.Logging;
 using edt.service.Data;
 using edt.service.HttpClients;
 using edt.service.Infrastructure.Auth;
@@ -321,6 +322,9 @@ public class Startup
             // For example: 200, 201, 203 -> 2xx
             options.ReduceStatusCodeCardinality();
         });
+
+        app.UseMiddleware<CorrelationIdMiddleware>();
+
         app.UseAuthentication();
         app.UseRouting();
         app.UseAuthorization();

@@ -30,7 +30,7 @@ public static class HttpClientSetup
                 ClientSecret = config.ChesClient.ClientSecret
             });
 
-        services.AddHttpClientWithBaseAddress<IKeycloakAdministrationClient, KeycloakAdministrationClient>(config.Keycloak.AdministrationUrl)
+        services.AddHttpClientWithBaseAddress<IKeycloakAdministrationClient, KeycloakAdministrationClient>(KeycloakUrls.Authority(realm: RealmConstants.BCPSRealm, config.Keycloak.AdministrationUrl))
             .WithBearerToken(new KeycloakAdministrationClientCredentials
             {
                 Address = KeycloakUrls.Token(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl),

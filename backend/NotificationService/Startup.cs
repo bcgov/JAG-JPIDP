@@ -1,18 +1,19 @@
 namespace NotificationService;
 
+using System.Reflection;
+using Common.Logging;
+using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Mvc.Versioning;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.OpenApi.Models;
 using NodaTime;
-using Serilog;
-using System.Reflection;
-using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
-using NotificationService.Kafka;
-using NotificationService.HttpClients;
-using NotificationService.Services;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using NotificationService.Data;
-using Microsoft.EntityFrameworkCore;
+using NotificationService.HttpClients;
+using NotificationService.Kafka;
+using NotificationService.Services;
 using Prometheus;
-using Microsoft.AspNetCore.Mvc.Versioning;
+using Serilog;
 
 public class Startup
 {
@@ -155,6 +156,8 @@ public class Startup
 
         app.UseRouting();
         app.UseCors("CorsPolicy");
+        app.UseMiddleware<CorrelationIdMiddleware>();
+
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseEndpoints(endpoints =>
