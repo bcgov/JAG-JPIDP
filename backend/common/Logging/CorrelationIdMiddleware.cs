@@ -17,8 +17,17 @@ public class CorrelationIdMiddleware(RequestDelegate next, ILogger<CorrelationId
         context.Response.Headers.Append(CorrelationIdHeader, correlationId);
         using (LogContext.PushProperty(CorrelationIdHeader, correlationId))
         {
-            logger.LogTrace($"CorrelationId: {correlationId} {context.Request.GetEncodedUrl}");
+            logger.LogCorrelationRequest(correlationId, context.Request.GetDisplayUrl());
             await next(context);
         }
     }
+}
+
+public static partial class CommonLoggingExtensions
+{
+    //--------------------------------------------------------------------------------
+    // Http Logging
+    //--------------------------------------------------------------------------------
+    [LoggerMessage(1, LogLevel.Trace, "CorrelationId: {correlationId} {requestUrl}")]
+    public static partial void LogCorrelationRequest(this ILogger logger, string correlationId, string requestUrl);
 }
