@@ -46,7 +46,7 @@ jobs:
  
       - name: Build Image
         run: |
-          docker -t artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:main artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:main-backup
+          docker tag artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:main artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:main-backup
      
       - name: Docker Push to Artifactory
         run: |
