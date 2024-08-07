@@ -43,12 +43,12 @@ jobs:
       
       - name: Pull Prod Image
         run: |
-          docker pull artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:prod
+          docker pull artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:main
  
       - name: Build Image
         run: |
-          docker -t artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:prod artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:prod-backup
+          docker -t artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:main artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:main-backup
      
       - name: Docker Push to Artifactory
         run: |
-          docker push artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:prod-backup
+          docker push artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:main-backup
