@@ -16,6 +16,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\common\Common.csproj" />
+    <ProjectReference Include="..\CommonModels\CommonModels.csproj" />
+
     <PackageReference Include="YamlDotNet" Version="15.1.6" />
 
   </ItemGroup>

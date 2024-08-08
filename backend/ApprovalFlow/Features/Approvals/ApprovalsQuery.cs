@@ -16,23 +16,34 @@ public class PendingApprovalQueryHandler : IRequestHandler<ApprovalsQuery, IList
 {
     private readonly ApprovalFlowDataStoreDbContext context;
     private readonly IMapper mapper;
-    public PendingApprovalQueryHandler(ApprovalFlowDataStoreDbContext context, IMapper mapper)
+    public PendingApprovalQueryHandler(ApprovalFlowDataStoreDbContext context)
     {
         this.context = context;
-        this.mapper = mapper;
+
+        var config = new MapperConfiguration(cfg =>
+        {
+            cfg.CreateMap<ApprovalRequest, ApprovalModel>();
+            cfg.CreateMap<ApprovalRequestReasons, ReasonModel>();
+            cfg.CreateMap<PersonalIdentity, PersonalIdentityModel>();
+            cfg.CreateMap<Request, RequestModel>();
+
+
+        });
+        this.mapper = config.CreateMapper();
     }
+
 
     public async Task<IList<ApprovalModel>> Handle(ApprovalsQuery request, CancellationToken cancellationToken)
     {
         List<ApprovalRequest> results;
         if (request.PendingOnly)
         {
-            results = this.context.ApprovalRequests.AsSplitQuery().Include(req => req.PersonalIdentities).Include(req => req.Requests).ThenInclude(req => req.History).Where(req => req.Completed == null).ToList();
+            results = this.context.ApprovalRequests.AsSplitQuery().Include(req => req.Reasons).Include(req => req.PersonalIdentities).Include(req => req.Requests).ThenInclude(req => req.History).Where(req => req.Completed == null).ToList();
 
         }
         else
         {
-            results = this.context.ApprovalRequests.AsSplitQuery().Include(req => req.PersonalIdentities).Include(req => req.Requests).ThenInclude(req => req.History).ToList();
+            results = this.context.ApprovalRequests.AsSplitQuery().Include(req => req.Reasons).Include(req => req.PersonalIdentities).Include(req => req.Requests).ThenInclude(req => req.History).ToList();
 
         }
 
@@ -40,7 +51,9 @@ public class PendingApprovalQueryHandler : IRequestHandler<ApprovalsQuery, IList
         if (results.Any())
         {
             Serilog.Log.Information($"Found {results.Count()} results");
-            return this.mapper.Map<List<ApprovalModel>>(results);
+            var mappedResults = this.mapper.Map<List<ApprovalModel>>(results);
+
+            return mappedResults;
         }
         else
         {

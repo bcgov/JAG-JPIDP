@@ -10,7 +10,6 @@ public class ApprovalRequest : BaseAuditable
 {
     [Key]
     public int Id { get; set; }
-    public string Reason { get; set; } = string.Empty;
     [Required]
     public string MessageKey { get; set; } = string.Empty;
     public string UserId { get; set; } = string.Empty;
@@ -21,9 +20,23 @@ public class ApprovalRequest : BaseAuditable
     public string RequiredAccess { get; set; } = string.Empty;
     public Instant? Approved { get; set; }
     public Instant? Completed { get; set; }
-    public ICollection<PersonalIdentity> PersonalIdentities { get; set; } = new List<PersonalIdentity>();
+    public ICollection<PersonalIdentity> PersonalIdentities { get; set; } = [];
+    public ICollection<ApprovalRequestReasons> Reasons { get; set; } = [];
 
-    public ICollection<Request> Requests { get; set; } = new List<Request>();
+    public ICollection<Request> Requests { get; set; } = [];
+
+}
+
+[Table(nameof(ApprovalRequestReasons))]
+public class ApprovalRequestReasons : BaseAuditable
+{
+    [Key]
+    public int Id { get; set; }
+    [Required]
+    public string Reason { get; set; } = string.Empty;
+    public ApprovalRequest ApprovalRequest { get; set; } = default!;
+    public int ApprovalRequestId { get; set; }
+
 
 }
 

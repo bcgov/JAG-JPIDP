@@ -38,6 +38,7 @@ public class ApprovalFlowDataStoreDbContext(DbContextOptions<ApprovalFlowDataSto
         modelBuilder.HasDefaultSchema(config.ConnectionStrings.Schema);
         base.OnModelCreating(modelBuilder);
 
+
         modelBuilder
         .Entity<Request>()
         .Property(d => d.ApprovalType)

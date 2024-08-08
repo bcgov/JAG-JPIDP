@@ -5,10 +5,12 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace ApprovalFlow.Data.Migrations
+namespace ApprovalFlow.Migrations
 {
+    /// <inheritdoc />
     public partial class Initial : Migration
     {
+        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.EnsureSchema(
@@ -21,7 +23,6 @@ namespace ApprovalFlow.Data.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Reason = table.Column<string>(type: "text", nullable: false),
                     MessageKey = table.Column<string>(type: "text", nullable: false),
                     UserId = table.Column<string>(type: "text", nullable: false),
                     IdentityProvider = table.Column<string>(type: "text", nullable: false),
@@ -53,6 +54,30 @@ namespace ApprovalFlow.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_IdempotentConsumers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ApprovalRequestReasons",
+                schema: "approvalflow",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Reason = table.Column<string>(type: "text", nullable: false),
+                    ApprovalRequestId = table.Column<int>(type: "integer", nullable: false),
+                    Created = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
+                    Modified = table.Column<Instant>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ApprovalRequestReasons", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ApprovalRequestReasons_ApprovalRequest_ApprovalRequestId",
+                        column: x => x.ApprovalRequestId,
+                        principalSchema: "approvalflow",
+                        principalTable: "ApprovalRequest",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -144,6 +169,12 @@ namespace ApprovalFlow.Data.Migrations
                 column: "RequestId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ApprovalRequestReasons_ApprovalRequestId",
+                schema: "approvalflow",
+                table: "ApprovalRequestReasons",
+                column: "ApprovalRequestId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_PersonalIdentity_ApprovalRequestId",
                 schema: "approvalflow",
                 table: "PersonalIdentity",
@@ -156,10 +187,15 @@ namespace ApprovalFlow.Data.Migrations
                 column: "ApprovalRequestId");
         }
 
+        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
                 name: "ApprovalHistory",
+                schema: "approvalflow");
+
+            migrationBuilder.DropTable(
+                name: "ApprovalRequestReasons",
                 schema: "approvalflow");
 
             migrationBuilder.DropTable(

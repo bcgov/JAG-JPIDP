@@ -5,7 +5,7 @@ using MediatR;
 /// <summary>
 /// Used to approve/deny a request
 /// </summary>
-public class ApproveDenyInput : IRequest<ApprovalModel>
+public class ApprovalResponseInput : IRequest<ApprovalModel>
 {
     public int ApprovalRequestId { get; set; }
     public DateTime Created { get; set; } = DateTime.Now;
