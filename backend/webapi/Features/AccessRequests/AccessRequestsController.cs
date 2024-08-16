@@ -1,6 +1,6 @@
 namespace Pidp.Features.AccessRequests;
 
-using Common.Constants.Auth;
+using common.Constants.Auth;
 using DomainResults.Common;
 using DomainResults.Mvc;
 using Microsoft.AspNetCore.Authorization;

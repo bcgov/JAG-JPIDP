@@ -3,13 +3,13 @@ namespace edt.disclosure;
 
 using System.Reflection;
 using System.Text.Json;
-using Common.Logging;
 using edt.disclosure.Data;
 using edt.disclosure.HttpClients;
 using edt.disclosure.Infrastructure.Telemetry;
 using edt.disclosure.Kafka;
 using edt.disclosure.ServiceEvents.CourtLocation.Handler;
 using FluentValidation.AspNetCore;
+using MediatR;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +20,9 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using NodaTime;
 using NodaTime.Serialization.SystemTextJson;
+using OpenTelemetry;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -55,6 +58,7 @@ public class Startup
         if (!string.IsNullOrEmpty(config.Telemetry.CollectorUrl))
         {
 
+            var meters = new OtelMetrics();
 
             Action<ResourceBuilder> configureResource = r => r.AddService(
                  serviceName: TelemetryConstants.ServiceName,
@@ -68,27 +72,35 @@ public class Startup
                .ConfigureResource(configureResource)
                .WithTracing(builder =>
                {
-                   // Ensure the TracerProvider subscribes to any custom ActivitySources.
-                   builder
-                        .AddSource(Instrumentation.ActivitySourceName)
-                       .SetSampler(new AlwaysOnSampler())
+                   builder.SetSampler(new AlwaysOnSampler())
                        .AddHttpClientInstrumentation()
+                       .AddEntityFrameworkCoreInstrumentation(options => options.SetDbStatementForText = true)
                        .AddAspNetCoreInstrumentation();
+
+                   if (config.Telemetry.LogToConsole)
+                   {
+                       builder.AddConsoleExporter();
+                   }
+
+                   if (config.Telemetry.CollectorUrl != null)
+                   {
+                       builder.AddOtlpExporter(options =>
+                       {
+                           Log.Information("*** OpenTelemetry trace exporter enabled ***");
+
+                           options.Endpoint = new Uri(config.Telemetry.CollectorUrl);
+                           options.Protocol = OtlpExportProtocol.HttpProtobuf;
+                       });
+                   }
                })
                .WithMetrics(builder =>
-               {
-                   builder
-                    .AddMeter(Instrumentation.MeterName)
-                    .AddRuntimeInstrumentation()
-                   .AddHttpClientInstrumentation()
-                   .AddAspNetCoreInstrumentation();
-               });
+                   builder.AddHttpClientInstrumentation()
+                       .AddAspNetCoreInstrumentation()).StartWithHost();
 
         }
 
 
         services
-          .AddSingleton<Instrumentation>()
           .AddAutoMapper(typeof(Startup))
           .AddKafkaConsumer(config)
           .AddHttpClients(config)
@@ -101,7 +113,7 @@ public class Startup
             .UseNpgsql(config.ConnectionStrings.DisclosureDataStore, sql => sql.UseNodaTime())
             .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
 
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Startup).Assembly));
+        services.AddMediatR(typeof(Startup).Assembly);
 
         services.AddHealthChecks()
                 .AddCheck("liveliness", () => HealthCheckResult.Healthy())
@@ -116,6 +128,7 @@ public class Startup
              });
         services.AddHttpClient();
 
+        services.AddSingleton<OtelMetrics>();
 
 
 
@@ -220,8 +233,6 @@ public class Startup
         });
         app.UseRouting();
         app.UseCors("CorsPolicy");
-        app.UseMiddleware<CorrelationIdMiddleware>();
-
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseEndpoints(endpoints =>

@@ -1,7 +1,5 @@
 namespace edt.casemanagement.ServiceEvents;
 
-using System.Diagnostics;
-using System.Globalization;
 using Confluent.Kafka;
 using edt.casemanagement.Infrastructure.Telemetry;
 using edt.casemanagement.Kafka.Interfaces;
@@ -9,6 +7,8 @@ using EdtService.Kafka;
 using IdentityModel.Client;
 using OpenTelemetry.Context.Propagation;
 using Serilog;
+using System.Diagnostics;
+using System.Globalization;
 
 public class KafkaProducer<TKey, TValue> : IDisposable, IKafkaProducer<TKey, TValue> where TValue : class
 {
@@ -27,14 +27,7 @@ public class KafkaProducer<TKey, TValue> : IDisposable, IKafkaProducer<TKey, TVa
     /// https://github.com/confluentinc/confluent-kafka-dotnet/blob/master/test/Confluent.Kafka.IntegrationTests/Tests/OauthBearerToken_PublishConsume.cs
     /// </summary>
     /// <param name="config"></param>
-    public KafkaProducer(ProducerConfig config) => this.producer = new ProducerBuilder<TKey, TValue>(config)
-        // fix annoying logging
-        .SetLogHandler((producer, log) => { })
-        .SetErrorHandler((producer, log) => Log.Error($"Kafka error {log}"))
-        .SetOAuthBearerTokenRefreshHandler(OauthTokenRefreshCallback)
-        .SetValueSerializer(new KafkaSerializer<TValue>()).Build();
-
-
+    public KafkaProducer(ProducerConfig config) => this.producer = new ProducerBuilder<TKey, TValue>(config).SetOAuthBearerTokenRefreshHandler(OauthTokenRefreshCallback).SetValueSerializer(new KafkaSerializer<TValue>()).Build();
     public async Task ProduceAsyncDeprecated(string topic, TKey key, TValue value) => await this.producer.ProduceAsync(topic, new Message<TKey, TValue> { Key = key, Value = value });
 
     public async Task<DeliveryResult<TKey, TValue>> ProduceAsync(string topic, TKey key, TValue value)

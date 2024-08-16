@@ -1,10 +1,8 @@
-namespace jumwebapi.PipelineBehaviours;
-
-
-using FluentValidation;
+﻿using FluentValidation;
 using MediatR;
 using ValidationException = FluentValidation.ValidationException;
 
+namespace jumwebapi.PipelineBehaviours;
 public class ValidationBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse> where TRequest : IRequest<TResponse>
 {
     private readonly IEnumerable<IValidator<TRequest>> _validators;
@@ -12,8 +10,7 @@ public class ValidationBehaviour<TRequest, TResponse> : IPipelineBehavior<TReque
     {
         _validators = validators;
     }
-
-    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    public async Task<TResponse> Handle(TRequest request, CancellationToken cancellationToken, RequestHandlerDelegate<TResponse> next)
     {
         if (_validators.Any())
         {

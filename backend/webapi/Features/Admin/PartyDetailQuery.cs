@@ -26,7 +26,7 @@ public class PartyDetailQueryHandler : IQueryHandler<PartyDetailQuery, PartyMode
         this.context = context;
         this.keycloakAdministrationClient = keycloakAdministrationClient;
         this.jumClient = jumClient;
-        this.httpContextAccessor = httpContextAccessor;
+        this.httpContextAccessor = httpContextAccessor; 
     }
 
     public async Task<PartyModel?> HandleAsync(PartyDetailQuery query)
@@ -49,15 +49,15 @@ public class PartyDetailQueryHandler : IQueryHandler<PartyDetailQuery, PartyMode
             };
 
             // get the keycloak user
-            var keycloakUser = await this.keycloakAdministrationClient.GetUser(Common.Constants.Auth.RealmConstants.BCPSRealm, user.UserId);
+            var keycloakUser = await this.keycloakAdministrationClient.GetUser(user.UserId);
 
-            var client = await this.keycloakAdministrationClient.GetClient(Common.Constants.Auth.RealmConstants.BCPSRealm, "PIDP-SERVICE");
+            var client = await this.keycloakAdministrationClient.GetClient("PIDP-SERVICE");
 
             if (keycloakUser != null && client != null)
             {
                 partyModel.Enabled = keycloakUser.Enabled == true;
                 partyModel.IdentityProvider = keycloakUser.Attributes.GetValueOrDefault("identityProvider").FirstOrDefault();
-                var roles = await this.keycloakAdministrationClient.GetUserClientRoles(Common.Constants.Auth.RealmConstants.BCPSRealm, partyModel.KeycloakUserId, Guid.Parse(client.Id));
+                var roles = await this.keycloakAdministrationClient.GetUserClientRoles(partyModel.KeycloakUserId, Guid.Parse(client.Id));
                 partyModel.Roles = roles.Select(role => role.Name).ToList();
 
             }

@@ -1,16 +1,13 @@
 namespace Pidp.Features.Admin;
 
-using Common.Constants.Auth;
-using Common.Models.AccessRequests;
+using common.Constants.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Pidp.Features.Admin.AccessRequests;
 using Pidp.Infrastructure.Services;
 
 [Route("api/[controller]")]
-//[Authorize(Policy = Policies.AdminAuthentication)]
-[Authorize(Policy = Policies.AdminClientAuthentication)]
+[Authorize(Policy = Policies.AdminAuthentication)]
 public class AdminController : PidpControllerBase
 {
     public AdminController(IPidpAuthorizationService authorizationService) : base(authorizationService) { }
@@ -40,25 +37,6 @@ public class AdminController : PidpControllerBase
         if (userInfo != null)
         {
             return userInfo;
-        }
-        else
-        {
-            return this.NotFound();
-        }
-    }
-
-    [HttpGet("party/requests/{userName}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<List<AccessRequestDTO>>> GetUserAccessRequests([FromServices] IQueryHandler<AccessRequestQuery, List<AccessRequestDTO>> handler,
-                                                                   [FromRoute] AccessRequestQuery query)
-    {
-
-        var userAccessRequests = await handler.HandleAsync(query);
-
-        if (userAccessRequests != null)
-        {
-            return userAccessRequests;
         }
         else
         {

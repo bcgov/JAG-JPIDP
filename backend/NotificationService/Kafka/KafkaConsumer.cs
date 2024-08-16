@@ -28,11 +28,7 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
         using var scope = _serviceScopeFactory.CreateScope();
 
         _handler = scope.ServiceProvider.GetRequiredService<IKafkaHandler<TKey, TValue>>();
-        _consumer = new ConsumerBuilder<TKey, TValue>(_config)
-            // fix annoying logging
-            .SetLogHandler((producer, log) => { })
-            .SetErrorHandler((producer, log) => Log.Error($"Kafka error {log}"))
-            .SetOAuthBearerTokenRefreshHandler(OauthTokenRefreshCallback).SetValueDeserializer(new KafkaDeserializer<TValue>()).Build();
+        _consumer = new ConsumerBuilder<TKey, TValue>(_config).SetOAuthBearerTokenRefreshHandler(OauthTokenRefreshCallback).SetValueDeserializer(new KafkaDeserializer<TValue>()).Build();
         _topic = topic;
 
         await Task.Run(() => StartConsumerLoop(stoppingToken), stoppingToken);

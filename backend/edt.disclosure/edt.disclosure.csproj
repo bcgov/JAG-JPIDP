@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <Version>1.1.6</Version>
+    <Version>1.1.5</Version>
   </PropertyGroup>
 
 
@@ -19,8 +19,8 @@
     <Folder Include="ServiceEvents\UserAccountModification\Models\" />
   </ItemGroup>
   <Target Name="OpenAPI" AfterTargets="Build" Condition="$(Configuration)=='Debug'">
-    <!--<Exec Command="dotnet swagger tofile -output ./API/v1/$(AssemblyName).yaml -yaml $(OutputPath)$(AssemblyName).dll v1" WorkingDirectory="$(ProjectDir)" />
-    <Exec Command="dotnet swagger tofile -output ./API/v1/$(AssemblyName).json $(OutputPath)$(AssemblyName).dll v1" WorkingDirectory="$(ProjectDir)" />-->
+    <Exec Command="dotnet swagger tofile --output ./API/v1/$(AssemblyName).yaml --yaml $(OutputPath)$(AssemblyName).dll v1" WorkingDirectory="$(ProjectDir)" />
+    <Exec Command="dotnet swagger tofile --output ./API/v1/$(AssemblyName).json $(OutputPath)$(AssemblyName).dll v1" WorkingDirectory="$(ProjectDir)" />
   </Target>
 
 </Project>

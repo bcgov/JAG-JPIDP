@@ -5,7 +5,6 @@ on:
     branches:  [develop,test,main]
     paths:
       - "backend/ApprovalFlow/**"
-      - "backend/common/**" 
       - ".github/workflows/build-push-approvalflow.yml"
   workflow_dispatch:
 env:

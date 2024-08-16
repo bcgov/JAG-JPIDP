@@ -33,7 +33,7 @@ internal sealed class KafkaDeserializer<T> : IDeserializer<T>
         }
 
 
-        Serilog.Log.Debug("Deserialized {0}", dataJson);
+        Serilog.Log.Information("Deserialized {0}", dataJson);
 
         var settings = new JsonSerializerSettings
         {

@@ -5,7 +5,6 @@ on:
     branches: [develop,test,main]
     paths:
       - "backend/NotificationService/**"
-      - "backend/common/**" 
       - ".github/workflows/build-push-notification.yml"
   workflow_dispatch:
 env:

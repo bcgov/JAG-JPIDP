@@ -1,0 +1,59 @@
+{{- if .Values.database.autoCreate }}
+{{ $release := .Release.Name }}
+{{ $ocEnv := regexFind "([^-]*$)" .Release.Namespace }}
+{{ $isPR := hasPrefix "pr-" .Release.Name }}
+## Derived release name
+{{ $drn := ternary $release $ocEnv $isPR }}
+#
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "jum.fullname" . }}-createdb
+  annotations:
+    helm.sh/hook: pre-install
+    helm.sh/hook-weight: "-5"
+    helm.sh/hook-delete-policy: hook-succeeded
+  labels:
+    {{- include "jum.labels" . | nindent 4 }}
+spec:
+  template:
+    spec:
+      containers:
+      - name: createdb
+        image: {{ .Values.global.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
+        imagePullPolicy: Always
+        command:
+          - /bin/bash
+          - -c
+          - >
+            createdb -O $(APPUSER) $(PGDATABASE) 2> /dev/null || echo "database already exists"
+        env:
+           - name: PGHOST
+            value:postgresql
+          - name: PGUSER
+            valueFrom:
+              secretKeyRef:
+                name: postgresql
+                key: database-user
+          - name: APPUSER
+            valueFrom:
+              secretKeyRef:
+                name: postgresql
+                key: database-user
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgresql
+                key: database-password
+          - name: PGDATABASE
+            {{- if $isPR }}
+            value: "jum_{{ $drn }}"
+            {{ else }}
+            valueFrom:
+              secretKeyRef:
+                name: postgresql
+                key: database-name
+            {{- end }}
+      restartPolicy: Never
+  backoffLimit: 3
+{{- end }}

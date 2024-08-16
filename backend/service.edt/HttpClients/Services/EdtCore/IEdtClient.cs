@@ -113,13 +113,4 @@ public interface IEdtClient
     /// <returns></returns>
     Task<EdtPersonDto> GetPersonByIdentifier(string identifierType, string identifierValue);
 
-
-    /// <summary>
-    /// Search for a person by names, email, phone number etc
-    /// </summary>
-    /// <param name="personLookup"></param>
-    /// <returns></returns>
-    Task<List<EdtPersonDto>> SearchForPerson(PersonLookupModel personLookup);
-
-
 }

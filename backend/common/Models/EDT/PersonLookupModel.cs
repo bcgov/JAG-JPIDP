@@ -10,7 +10,6 @@ public class PersonLookupModel
     public string? FirstName { get; set; }
     public DateOnly? DateOfBirth { get; set; }
     public List<LookupKeyValueGroup> AttributeValues { get; set; } = [];
-    public bool IncludeInactive { get; set; }
 
     public bool IsValid()
     {

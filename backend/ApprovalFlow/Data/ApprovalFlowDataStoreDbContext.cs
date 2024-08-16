@@ -7,10 +7,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NodaTime;
 
-public class ApprovalFlowDataStoreDbContext(DbContextOptions<ApprovalFlowDataStoreDbContext> options, IClock clock, ApprovalFlowConfiguration config) : DbContext(options)
+public class ApprovalFlowDataStoreDbContext : DbContext
 {
-    private readonly IClock clock = clock;
+    private readonly IClock clock;
 
+    public ApprovalFlowDataStoreDbContext(DbContextOptions<ApprovalFlowDataStoreDbContext> options, IClock clock) : base(options) => this.clock = clock;
     public DbSet<IdempotentConsumer> IdempotentConsumers { get; set; } = default!;
     public DbSet<ApprovalRequest> ApprovalRequests { get; set; } = default!;
     public DbSet<Request> Requests { get; set; } = default!;
@@ -35,7 +36,7 @@ public class ApprovalFlowDataStoreDbContext(DbContextOptions<ApprovalFlowDataSto
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasDefaultSchema(config.ConnectionStrings.Schema);
+        modelBuilder.HasDefaultSchema("approvalflow");
         base.OnModelCreating(modelBuilder);
 
         modelBuilder
@@ -83,15 +84,5 @@ public class ApprovalFlowDataStoreDbContext(DbContextOptions<ApprovalFlowDataSto
 
     public async Task<bool> HasBeenProcessed(string messageId, string consumer) => await this.IdempotentConsumers.AnyAsync(x => x.MessageId == messageId && x.Consumer == consumer);
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        optionsBuilder.UseNpgsql(config.ConnectionStrings.ApprovalFlowDataStore, x => x.MigrationsHistoryTable(config.ConnectionStrings.EfHistoryTable, config.ConnectionStrings.EfHistorySchema));
 
-
-        if (Environment.GetEnvironmentVariable("LOG_SQL") != null && "true".Equals(Environment.GetEnvironmentVariable("LOG_SQL")))
-        {
-            optionsBuilder.LogTo(Console.WriteLine);
-        }
-
-    }
 }

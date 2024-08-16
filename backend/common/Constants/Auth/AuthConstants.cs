@@ -1,4 +1,4 @@
-namespace Common.Constants.Auth;
+namespace common.Constants.Auth;
 
 public static class Claims
 {
@@ -14,7 +14,6 @@ public static class Claims
     public const string PreferredUsername = "preferred_username";
     public const string ResourceAccess = "resource_access";
     public const string Subject = "sub";
-    public const string AuthorizedParties = "azp";
     public const string Roles = "roles";
     public const string BcPersonFamilyName = "BCPerID_last_name";
     public const string BcPersonGivenName = "BCPerID_first_name";
@@ -48,8 +47,6 @@ public static class Clients
 {
     public const string PidpService = "PIDP-SERVICE";
     public const string AdminApi = "DIAM-BCPS-ADMIN";
-    public const string DiamInternal = "DIAM-INTERNAL";
-
 
 }
 
@@ -68,9 +65,6 @@ public static class Policies
     public const string DutyConselIdentityProvider = "duty-counsel-idp-policy";
     public const string BcpsAuthentication = "bcps-authentication-policy";
     public const string AdminAuthentication = "admin-authentication-policy";
-    public const string AdminClientAuthentication = "admin-client-authentication-policy";
-    public const string DiamInternalAuthentication = "diam-internal-authentication-policy";
-
     public const string ApprovalAuthorization = "approval-authentication-policy";
 
 }

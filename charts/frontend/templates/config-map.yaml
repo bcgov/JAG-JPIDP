@@ -1,0 +1,52 @@
+{{- $separator :=  ternary "-" "." (regexMatch "(?:\\..*?){4}" .Values.global.vanityURL) -}}
+{{- $domain := .Values.global.vanityURL -}}
+{{- $fullName := include "frontend.fullname" . -}}
+{{ $release := .Release.Name }}
+{{ $ocEnv := regexFind "([^-]*$)" .Release.Namespace }}
+{{ $isPR := hasPrefix "pr-" .Release.Name }}
+## Derived release name
+{{ $drn := ternary $release $ocEnv $isPR }}
+{{ $isProd := contains "prod" $ocEnv }}
+#
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "frontend.fullname" . }}
+  labels:
+    {{- include "frontend.labels" . | nindent 4 }}
+data:
+  environment.json: |-
+    {
+      "environmentName": "{{ .Values.settings.environmentName }}",
+      "apiEndpoint": "https://{{ .Values.global.vanityURL }}/api/v1",
+      "configEndpoint": "https://{{ .Values.global.vanityURL }}",
+      "applicationUrl": "https://{{ .Values.global.vanityURL }}",
+      "caseManagement": {
+        "showAUFLink": true,
+        "showCaseImportLink": false,
+        "stickyAgencyCodes": [ "RCMP","FAKE"]
+      },
+      "urls": {
+        "subAgencyAufPortalUrl": "{{ .Values.settings.launch.subAgencyAufPortalUrl }}",
+        "bcpsDemsPortalUrl": "{{ .Values.settings.launch.bcpsDemsPortalUrl }}",
+        "bcLawDiscPortalUrl": "{{ .Values.settings.launch.bcLawDiscPortalUrl }}",
+        "publicDiscPortalUrl": "{{ .Values.settings.launch.publicDiscPortalUrl }}"
+      },
+      "launch": {
+        "bcLawDiscPortalLabel": "{{ .Values.settings.launch.bcLawDiscPortalLabel }}",
+        "subAgencyAufPortalLabel": "{{ .Values.settings.launch.subAgencyAufPortalLabel }}",
+        "bcpsDemsPortalLabel" : "{{ .Values.settings.launch.bcpsDemsPortalLabel }}",
+        "outOfCustodyPortalLabel" : "{{ .Values.settings.launch.outOfCustodyPortalLabel }}"
+      },
+      "demsImportURL": "{{ .Values.settings.edtURL }}",
+      "keycloakConfig": {
+        "config": {
+          "url": "{{ .Values.settings.keycloak.url }}",
+          "realm": "{{ .Values.settings.keycloak.realm }}",
+          "clientId": "{{ .Values.settings.keycloak.clientId }}"
+        },
+        "initOptions": {
+          "onLoad": "check-sso"
+        }
+      }
+    }

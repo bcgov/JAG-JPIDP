@@ -79,13 +79,13 @@ public class Program
             Console.WriteLine("Creating the logging directory failed: {0}", e.ToString());
         }
 
-
         var name = Assembly.GetExecutingAssembly().GetName();
         var outputTemplate = "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}";
 
         var loggerConfiguration = new LoggerConfiguration()
             .MinimumLevel.Information()
             .Filter.ByExcluding("RequestPath like '/health%'")
+            .Filter.ByExcluding("RequestPath like '/metrics%'")
             .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
             .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
             .MinimumLevel.Override("System", LogEventLevel.Warning)

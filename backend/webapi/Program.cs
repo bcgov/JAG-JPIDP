@@ -50,6 +50,8 @@ public class Program
          .AddJsonFile($"appsettings.{environmentName}.json", optional: true)
          .Build();
 
+        var seqEndpoint = Environment.GetEnvironmentVariable("Seq__Url");
+        seqEndpoint ??= config.GetValue<string>("Seq:Url");
 
         var splunkHost = Environment.GetEnvironmentVariable("SplunkConfig__Host");
         splunkHost ??= config.GetValue<string>("SplunkConfig:Host");
@@ -57,11 +59,13 @@ public class Program
         splunkToken ??= config.GetValue<string>("SplunkConfig:CollectorToken");
 
 
-        if (string.IsNullOrEmpty(splunkHost) || string.IsNullOrEmpty(splunkToken))
+        if (string.IsNullOrEmpty(seqEndpoint))
         {
-            Console.WriteLine("Splunk Host or Token is not configured - check Splunk environment");
-            Environment.Exit(-1);
+            Console.WriteLine("SEQ Log Host is not configured - check Seq environment");
+            Environment.Exit(100);
         }
+
+
 
         try
         {
@@ -89,6 +93,7 @@ public class Program
             .Enrich.WithMachineName()
             .Enrich.WithProperty("Assembly", $"{name.Name}")
             .Enrich.WithProperty("Version", $"{name.Version}")
+            .WriteTo.Seq(seqEndpoint)
             .WriteTo.Console(
                 outputTemplate: outputTemplate,
                 theme: AnsiConsoleTheme.Code)
@@ -108,8 +113,6 @@ public class Program
         }
 
 
-
-
         Log.Logger = loggerConfiguration.CreateLogger();
 
         if (string.IsNullOrEmpty(splunkHost))
@@ -118,8 +121,7 @@ public class Program
         }
         else
         {
-            Log.Information($"*** Splunk logging to {splunkHost} ***");
-
+            Log.Warning($"*** Splunk logging to {splunkHost} ***");
         }
 
     }

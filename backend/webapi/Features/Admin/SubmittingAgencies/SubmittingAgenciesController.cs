@@ -1,6 +1,6 @@
 namespace Pidp.Features.Admin.SubmittingAgencies;
 
-using Common.Constants.Auth;
+using common.Constants.Auth;
 using DomainResults.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;

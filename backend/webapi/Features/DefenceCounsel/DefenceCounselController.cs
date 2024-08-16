@@ -1,7 +1,7 @@
 namespace Pidp.Features.DefenceCounsel;
 
 
-using Common.Constants.Auth;
+using common.Constants.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Pidp.Features.DefenceCounsel.Query;

@@ -1,10 +1,11 @@
 namespace edt.service.Extensions;
 
-using System.Security.Claims;
-using System.Text.Json;
-using Common.Constants.Auth;
 using NodaTime;
 using NodaTime.Text;
+using System.Security.Claims;
+using System.Text.Json;
+
+using edt.service.Infrastructure.Auth;
 
 public static class ClaimsPrincipalExtensions
 {

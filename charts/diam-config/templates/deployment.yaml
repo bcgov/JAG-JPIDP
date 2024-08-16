@@ -1,0 +1,109 @@
+{{ $release := .Release.Name }}
+{{ $ocEnv := regexFind "([^-]*$)" .Release.Namespace }}
+{{ $domain := .Values.global.vanityURL }}
+{{ $isPR := hasPrefix "pr-" .Release.Name }}
+## Derived release name
+{{ $drn := ternary $release $ocEnv $isPR }}
+{{ $isProd := contains "prod" $ocEnv }}
+#
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "diam-config.fullname" . }}
+  labels:
+    {{- include "diam-config.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "diam-config.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: "8080"
+        vault.hashicorp.com/agent-inject: 'true'
+        vault.hashicorp.com/agent-pre-populate-only: 'true'
+        vault.hashicorp.com/auth-path: auth/k8s-gold
+        vault.hashicorp.com/namespace: platform-services
+        vault.hashicorp.com/agent-requests-cpu: 5m
+        vault.hashicorp.com/agent-limits-cpu: 10m
+        vault.hashicorp.com/agent-requests-mem: 20Mi
+        vault.hashicorp.com/role: {{ .Values.global.vault.role }}  # licenseplate-nonprod or licenseplate-prod are your options
+        vault.hashicorp.com/agent-inject-secret-DIAM-config: {{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-config
+        vault.hashicorp.com/agent-inject-template-DIAM-config: |
+          {{`{{- with secret `}}"{{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-config"{{` }}
+          {{- range $k, $v := .Data.data }}
+          {{ $k }}="{{ $v }}"{{ end -}}
+          {{- end `}} }}
+        {{- if .Values.global.commit_sha }}
+        commit_sha: {{ .Values.global.commit_sha }}
+        {{- end}}
+      {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "diam-config.selectorLabels" . | nindent 8 }}
+    spec:
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecrets.name }}
+      serviceAccountName: {{ .Values.global.licenseplate }}-vault
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.global.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: DOTNET_BUNDLE_EXTRACT_BASE_DIR
+              value: /tmp
+            - name: ApplicationUrl
+              value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"
+            - name: apitag
+              value: {{ .Values.global.image.apitag }}     
+          volumeMounts:
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health/liveness
+              port: http
+              scheme: HTTP
+            timeoutSeconds: 5
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health/liveness
+              port: http
+              scheme: HTTP
+            timeoutSeconds: 10
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 5
+
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+
+

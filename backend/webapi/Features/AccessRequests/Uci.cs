@@ -71,7 +71,7 @@ public class Uci
                 return DomainResult.Failed();
             }
 
-            if (!await this.keycloakClient.AssignClientRole(Common.Constants.Auth.RealmConstants.BCPSRealm, dto.UserId, MohClients.Uci.ClientId, MohClients.Uci.AccessRole))
+            if (!await this.keycloakClient.AssignClientRole(dto.UserId, MohClients.Uci.ClientId, MohClients.Uci.AccessRole))
             {
                 return DomainResult.Failed();
             }

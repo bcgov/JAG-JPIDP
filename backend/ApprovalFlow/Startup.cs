@@ -9,9 +9,9 @@ using ApprovalFlow.Data;
 using ApprovalFlow.Kafka;
 using ApprovalFlow.Telemetry;
 using Common.Constants.Telemetry;
-using Common.Logging;
 using DIAM.Common.Helpers.Transformers;
 using FluentValidation.AspNetCore;
+using MediatR;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +23,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using NodaTime;
 using NodaTime.Serialization.SystemTextJson;
+using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
@@ -96,9 +97,10 @@ public class Startup
                })
                .WithMetrics(builder =>
                    builder.AddHttpClientInstrumentation()
-                       .AddAspNetCoreInstrumentation());
+                       .AddAspNetCoreInstrumentation()).StartWithHost();
 
         }
+
 
         services
           .AddAutoMapper(typeof(Startup))
@@ -113,7 +115,7 @@ public class Startup
             .UseNpgsql(config.ConnectionStrings.ApprovalFlowDataStore, sql => sql.UseNodaTime())
             .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
 
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Startup).Assembly));
+        services.AddMediatR(typeof(Startup).Assembly);
 
         services.AddHealthChecks()
                 .AddCheck("liveliness", () => HealthCheckResult.Healthy())
@@ -263,8 +265,6 @@ public class Startup
         app.UseRouting();
 
         app.UseCors("CorsPolicy");
-        app.UseMiddleware<CorrelationIdMiddleware>();
-
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseWebSockets(); // websocket support for auto-ui updates

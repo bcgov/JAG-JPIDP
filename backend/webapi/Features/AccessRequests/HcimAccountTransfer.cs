@@ -108,7 +108,7 @@ public class HcimAccountTransfer
                 return DomainResult.Success(new Model(authStatus));
             }
 
-            if (!await this.UpdateKeycloakUser(Common.Constants.Auth.RealmConstants.BCPSRealm, dto.UserId, authStatus.OrgDetails, authStatus.HcimUserRole))
+            if (!await this.UpdateKeycloakUser(dto.UserId, authStatus.OrgDetails, authStatus.HcimUserRole))
             {
                 return DomainResult.Failed<Model>();
             }
@@ -128,14 +128,14 @@ public class HcimAccountTransfer
             return DomainResult.Success(new Model(authStatus));
         }
 
-        private async Task<bool> UpdateKeycloakUser(string realm, Guid userId, LdapLoginResponse.OrgDetails orgDetails, string hcimRole)
+        private async Task<bool> UpdateKeycloakUser(Guid userId, LdapLoginResponse.OrgDetails orgDetails, string hcimRole)
         {
-            if (!await this.keycloakClient.UpdateUser(realm, userId, (user) => user.SetLdapOrgDetails(orgDetails)))
+            if (!await this.keycloakClient.UpdateUser(userId, (user) => user.SetLdapOrgDetails(orgDetails)))
             {
                 return false;
             }
 
-            if (!await this.keycloakClient.AssignClientRole(realm, userId, this.hcimClientId, hcimRole))
+            if (!await this.keycloakClient.AssignClientRole(userId, this.hcimClientId, hcimRole))
             {
                 return false;
             }

@@ -2,11 +2,11 @@ namespace Pidp.Features.Admin.SubmittingAgencies;
 
 using System.Threading.Tasks;
 using AutoMapper;
-using AutoMapper.QueryableExtensions;
-using Microsoft.EntityFrameworkCore;
 using Pidp.Data;
 using Pidp.Infrastructure.HttpClients.Keycloak;
+using Microsoft.EntityFrameworkCore;
 using Pidp.Models;
+using AutoMapper.QueryableExtensions;
 
 public record SubmittingAgencyQuery() : IQuery<List<SubmittingAgencyModel>>;
 
@@ -35,7 +35,7 @@ public class SubmittingAgencyQueryHandler : IQueryHandler<SubmittingAgencyQuery,
         {
             if (!string.IsNullOrEmpty(response.IdpHint))
             {
-                var provider = await this.keycloakAdministrationClient.GetIdentityProvider(Common.Constants.Auth.RealmConstants.BCPSRealm, response.IdpHint);
+                var provider = await this.keycloakAdministrationClient.GetIdentityProvider(response.IdpHint);
                 if (provider != null)
                 {
                     response.HasIdentityProvider = true;

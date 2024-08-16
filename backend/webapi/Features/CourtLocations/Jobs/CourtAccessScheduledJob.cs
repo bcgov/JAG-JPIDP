@@ -25,41 +25,37 @@ public class CourtAccessScheduledJob : IJob
         {
             // look for any requests due today that are either provision or remove events
             var pendingRequests = this.courtAccessService.GetRequestsDueToday().Result;
-            if (pendingRequests.Count > 0)
+            Serilog.Log.Information($"{pendingRequests.Count} pending requests found for Court Access Scheduler [JOB]");
+
+            foreach (var request in pendingRequests)
             {
-                Serilog.Log.Information($"{pendingRequests.Count} pending requests found for Court Access Scheduler [JOB]");
+                Serilog.Log.Information($"Processing request {request.RequestId} From {request.ValidFrom} To {request.ValidUntil}");
 
-
-                foreach (var request in pendingRequests)
+                if (request.ValidUntil <= DateTime.UtcNow && request.RequestStatus != CourtLocationAccessStatus.RemovalPending)
                 {
-                    Serilog.Log.Information($"Processing request {request.RequestId} From {request.ValidFrom} To {request.ValidUntil}");
-
-                    if (request.ValidUntil <= DateTime.UtcNow && request.RequestStatus != CourtLocationAccessStatus.RemovalPending)
+                    Serilog.Log.Information($"Decommission request for {request.RequestId}");
+                    var taskStatus = await this.courtAccessService.CreateRemoveCourtAccessDomainEvent(request);
+                    if (taskStatus)
                     {
-                        Serilog.Log.Information($"Decommission request for {request.RequestId}");
-                        var taskStatus = await this.courtAccessService.CreateRemoveCourtAccessDomainEvent(request);
-                        if (taskStatus)
+                        var updated = await this.courtAccessService.SetAccessRequestStatus(request, CourtLocationAccessStatus.RemovalPending.ToString());
+                        if (!updated)
                         {
-                            var updated = await this.courtAccessService.SetAccessRequestStatus(request, CourtLocationAccessStatus.RemovalPending.ToString());
-                            if (!updated)
-                            {
-                                Serilog.Log.Error($"Failed to set status of {request.RequestId} to {CourtLocationAccessStatus.RemovalPending}");
-                            }
-
+                            Serilog.Log.Error($"Failed to set status of {request.RequestId} to {CourtLocationAccessStatus.RemovalPending}");
                         }
+
                     }
-                    else if (request.ValidFrom <= DateTime.UtcNow && request.ValidUntil >= DateTime.Now
-                        && request.RequestStatus != CourtLocationAccessStatus.RemovalPending
-                        && request.RequestStatus != CourtLocationAccessStatus.Submitted
-                        && request.RequestStatus != CourtLocationAccessStatus.Deleted)
-                    {
-                        Serilog.Log.Information($"Provision request for {request.RequestId}");
-                        await this.courtAccessService.CreateAddCourtAccessDomainEvent(request);
-                    }
-                    else
-                    {
-                        Serilog.Log.Information($"Skipping request for {request.RequestId} with status {request.RequestStatus}");
-                    }
+                }
+                else if (request.ValidFrom <= DateTime.UtcNow && request.ValidUntil >= DateTime.Now
+                    && request.RequestStatus != CourtLocationAccessStatus.RemovalPending
+                    && request.RequestStatus != CourtLocationAccessStatus.Submitted
+                    && request.RequestStatus != CourtLocationAccessStatus.Deleted)
+                {
+                    Serilog.Log.Information($"Provision request for {request.RequestId}");
+                    await this.courtAccessService.CreateAddCourtAccessDomainEvent(request);
+                }
+                else
+                {
+                    Serilog.Log.Information($"Skipping request for {request.RequestId} with status {request.RequestStatus}");
                 }
             }
 

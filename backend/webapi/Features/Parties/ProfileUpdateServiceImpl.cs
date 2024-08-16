@@ -43,7 +43,7 @@ public class ProfileUpdateServiceImpl : IProfileUpdateService
         }
 
         // get the user from keycloak
-        var keycloakUserInfo = await this.keycloakAdministrationClient.GetUser(Common.Constants.Auth.RealmConstants.BCPSRealm, party.UserId);
+        var keycloakUserInfo = await this.keycloakAdministrationClient.GetUser(party.UserId);
         if (keycloakUserInfo == null)
         {
             Serilog.Log.Error($"Keycloak user not found for {updatePerson.PartyId} {party.UserId} - likely deleted from Keycloak");
@@ -83,7 +83,7 @@ public class ProfileUpdateServiceImpl : IProfileUpdateService
         if (changesDetected)
         {
             Serilog.Log.Information($"Updating keycloak info for user {party.UserId}");
-            var updated = await this.keycloakAdministrationClient.UpdateUser(Common.Constants.Auth.RealmConstants.BCPSRealm, party.UserId, keycloakUserInfo);
+            var updated = await this.keycloakAdministrationClient.UpdateUser(party.UserId, keycloakUserInfo);
             response = updated;
 
             if (party.AccessRequests.Any())

@@ -157,16 +157,4 @@ public class PidpDbContext : DbContext
         }
 
     }
-    public async Task AddIdempotentConsumer(string messageId, string consumer)
-    {
-        await this.IdempotentConsumers.AddAsync(new IdempotentConsumer
-        {
-            MessageId = messageId,
-            Consumer = consumer
-        });
-        await this.SaveChangesAsync();
-    }
-
-    public async Task<bool> HasMessageBeenProcessed(string messageId, string consumer) => await this.IdempotentConsumers.AnyAsync(x => x.MessageId == messageId && x.Consumer == consumer);
-
 }

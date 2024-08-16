@@ -5,7 +5,6 @@ on:
     branches:  [develop,test,main]
     paths:
       - "backend/edt.casemanagement/**"
-      - "backend/common/**" 
       - ".github/workflows/build-push-casemanagement.yml"
   workflow_dispatch:
 env:

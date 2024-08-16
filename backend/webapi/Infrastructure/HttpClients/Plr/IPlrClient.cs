@@ -1,5 +1,7 @@
 namespace Pidp.Infrastructure.HttpClients.Plr;
 
+using NodaTime;
+
 using Pidp.Models.Lookups;
 
 public interface IPlrClient
@@ -11,7 +13,7 @@ public interface IPlrClient
     /// <param name="collegeCode"></param>
     /// <param name="licenceNumber"></param>
     /// <param name="birthdate"></param>
-    Task<string?> FindCpnAsync(CollegeCode collegeCode, string licenceNumber, DateOnly birthdate);
+    Task<string?> FindCpnAsync(CollegeCode collegeCode, string licenceNumber, LocalDate birthdate);
 
     /// <summary>
     /// Fetches the PLR record(s) corresponding to the given CPN.

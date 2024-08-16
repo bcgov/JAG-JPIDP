@@ -75,7 +75,7 @@ public class PartyDelete
                     continue;
                 }
 
-                if (await this.client.RemoveClientRole(Common.Constants.Auth.RealmConstants.BCPSRealm, party.UserId, role))
+                if (await this.client.RemoveClientRole(party.UserId, role))
                 {
                     this.logger.LogRemoveSuccess(role.Name!, party.UserId);
                 }
@@ -97,7 +97,7 @@ public class PartyDelete
             var mohClient = MohClients.FromAccessType(accessType);
             if (mohClient != null)
             {
-                role = await this.client.GetClientRole(Common.Constants.Auth.RealmConstants.BCPSRealm, mohClient.Value.ClientId, mohClient.Value.AccessRole);
+                role = await this.client.GetClientRole(mohClient.Value.ClientId, mohClient.Value.AccessRole);
 
                 if (role == null)
                 {

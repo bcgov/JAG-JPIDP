@@ -1,6 +1,0 @@
-@edt.notifications_HostAddress = http://localhost:5261
-
-GET {{edt.notifications_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

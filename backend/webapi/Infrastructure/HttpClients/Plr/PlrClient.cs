@@ -1,17 +1,19 @@
 namespace Pidp.Infrastructure.HttpClients.Plr;
 
+using NodaTime;
+
 using Pidp.Models.Lookups;
 
 public class PlrClient : BaseClient, IPlrClient
 {
     public PlrClient(HttpClient client, ILogger<PlrClient> logger) : base(client, logger) { }
 
-    public async Task<string?> FindCpnAsync(CollegeCode collegeCode, string licenceNumber, DateOnly birthdate)
+    public async Task<string?> FindCpnAsync(CollegeCode collegeCode, string licenceNumber, LocalDate birthdate)
     {
         var query = new
         {
             CollegeId = licenceNumber,
-            Birthdate = birthdate,
+            Birthdate = birthdate.ToString(),
             IdentifierTypes = MapToIdentifierTypes(collegeCode)
         };
         var result = await this.GetWithQueryParamsAsync<IEnumerable<PlrRecord>>("records", query);
@@ -95,8 +97,8 @@ public class PlrClient : BaseClient, IPlrClient
 public static partial class PlrClientLoggingExtensions
 {
     [LoggerMessage(1, LogLevel.Warning, "No Records found in PLR with CollegeId = {licenceNumber}, Birthdate = {birthdate}, and any of {identifierTypes} Identifier Types.")]
-    public static partial void LogNoRecordsFound(this ILogger logger, string licenceNumber, DateOnly birthdate, string[] identifierTypes);
+    public static partial void LogNoRecordsFound(this ILogger logger, string licenceNumber, string birthdate, string[] identifierTypes);
 
     [LoggerMessage(2, LogLevel.Warning, "Multiple matching Records found in PLR with CollegeId = {licenceNumber}, Birthdate = {birthdate}, and any of {identifierTypes} Identifier Types.")]
-    public static partial void LogMultipleRecordsFound(this ILogger logger, string licenceNumber, DateOnly birthdate, string[] identifierTypes);
+    public static partial void LogMultipleRecordsFound(this ILogger logger, string licenceNumber, string birthdate, string[] identifierTypes);
 }

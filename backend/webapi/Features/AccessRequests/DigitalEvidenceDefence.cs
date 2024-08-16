@@ -2,7 +2,7 @@ namespace Pidp.Features.AccessRequests;
 
 using System.Diagnostics;
 using System.Linq;
-using Common.Constants.Auth;
+using common.Constants.Auth;
 using Common.Models.Approval;
 using Common.Models.EDT;
 using Confluent.Kafka;
@@ -120,7 +120,7 @@ public class DigitalEvidenceDefence
                         }
 
                         // get the user details from keycloak and check they are valid - otherwise will require an approval step
-                        var keycloakUser = await this.keycloakClient.GetUser(Common.Constants.Auth.RealmConstants.BCPSRealm, dto.UserId);
+                        var keycloakUser = await this.keycloakClient.GetUser(dto.UserId);
 
                         if (keycloakUser == null)
                         {

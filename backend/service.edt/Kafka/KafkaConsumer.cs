@@ -52,12 +52,7 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
         using var scope = this.serviceScopeFactory.CreateScope();
 
         this.handler = scope.ServiceProvider.GetRequiredService<IKafkaHandler<TKey, TValue>>();
-        this.consumer = new ConsumerBuilder<TKey, TValue>(this.config)
-            // suppress annoying kafka logging except errors
-            .SetLogHandler((consumer, log) => { })
-            .SetErrorHandler((consumer, log) => Log.Error($"Kafka Error {log}"))
-            .SetOAuthBearerTokenRefreshHandler(OauthTokenRefreshCallback)
-            .SetValueDeserializer(new KafkaDeserializer<TValue>()).Build();
+        this.consumer = new ConsumerBuilder<TKey, TValue>(this.config).SetOAuthBearerTokenRefreshHandler(OauthTokenRefreshCallback).SetValueDeserializer(new KafkaDeserializer<TValue>()).Build();
         this.topic = topic;
 
         await Task.Run(() => this.StartConsumerLoop(stoppingToken), stoppingToken);
@@ -73,11 +68,6 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
     private async Task StartConsumerLoop(CancellationToken cancellationToken)
     {
 
-        if (string.IsNullOrEmpty(this.topic))
-        {
-            Log.Error("Topic configuration missing for consumer - please check configuration");
-            Environment.Exit(1);
-        }
 
         Log.Logger.Information($"Start consuming from [{this.topic}]");
 
@@ -114,7 +104,7 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error: {e}");
+                Console.WriteLine($"Unexpected error: {e}");
                 break;
             }
         }
@@ -187,11 +177,7 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
     {
         this.config.GroupId = this.configuration.KafkaCluster.RetryConsumerGroupId;
         using var scope = this.serviceScopeFactory.CreateScope();
-        this.retryConsumer = new ConsumerBuilder<TKey, TValue>(this.config)
-            // suppress annoying kafka messages except errors
-            .SetLogHandler((consumer, log) => { })
-            .SetErrorHandler((consumer, log) => Log.Error($"Kafka Error {log}"))
-            .SetOAuthBearerTokenRefreshHandler(OauthTokenRefreshCallback).SetValueDeserializer(new KafkaDeserializer<TValue>()).Build();
+        this.retryConsumer = new ConsumerBuilder<TKey, TValue>(this.config).SetOAuthBearerTokenRefreshHandler(OauthTokenRefreshCallback).SetValueDeserializer(new KafkaDeserializer<TValue>()).Build();
         this.retryTopics = retryTopics.Select(topic => topic.TopicName).ToList();
 
         await Task.Run(() => this.StartRetryConsumerLoop(stoppingToken), stoppingToken);

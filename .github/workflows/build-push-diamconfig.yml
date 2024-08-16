@@ -5,7 +5,6 @@ on:
     branches: [develop,test,main]
     paths:
       - "backend/DIAMConfiguration/**"
-      - "backend/common/**"
       - ".github/workflows/build-push-diamconfig.yml"
   workflow_dispatch:
 env:

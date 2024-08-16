@@ -27,7 +27,7 @@ builder.Services.AddSingleton<IClock>(SystemClock.Instance);
 builder.Services.AddDbContext<DIAMConfigurationDataStoreDbContext>(options => options
     .UseNpgsql(dbConnection, npg =>
     {
-        npg.MigrationsHistoryTable(HistoryRepository.DefaultTableName, builder.Configuration.GetValue<string>("ConfigSchema"));
+        npg.MigrationsHistoryTable(HistoryRepository.DefaultTableName, "diam-config");
         npg.UseNodaTime();
     })
     .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
@@ -72,7 +72,7 @@ if (app.Environment.IsDevelopment())
 
 app.MapGet("/", () => $"DIAM Configuration {Assembly.GetExecutingAssembly().GetName().Version?.ToString()}");
 
-app.MapHealthChecks("/health/liveness").AllowAnonymous();
+app.MapHealthChecks("/health/liveness");
 app.MapMetrics("/metrics");
 
 app.UseSerilogRequestLogging(options => options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>

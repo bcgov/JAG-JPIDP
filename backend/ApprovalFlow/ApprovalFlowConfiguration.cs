@@ -1,4 +1,6 @@
 namespace ApprovalFlow;
+using common.Constants.Auth;
+
 public class ApprovalFlowConfiguration
 {
     public static bool IsProduction() => EnvironmentName == Environments.Production;
@@ -41,14 +43,13 @@ public class ApprovalFlowConfiguration
     public class ConnectionStringConfiguration
     {
         public string ApprovalFlowDataStore { get; set; } = string.Empty;
-        public string Schema { get; set; } = "approvalflow";
-        public string EfHistorySchema { get; set; } = "public";
-        public string EfHistoryTable { get; set; } = "__EFMigrationsHistory";
     }
 
     public class KeycloakConfiguration
     {
         public string RealmUrl { get; set; } = string.Empty;
+        public string WellKnownConfig => KeycloakUrls.WellKnownConfig(this.RealmUrl);
+        public string TokenUrl => KeycloakUrls.Token(this.RealmUrl);
         public string AdministrationUrl { get; set; } = string.Empty;
         public string AdministrationClientId { get; set; } = string.Empty;
         public string AdministrationClientSecret { get; set; } = string.Empty;
@@ -73,7 +74,7 @@ public class ApprovalFlowConfiguration
         public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;
         public string IncomingApprovalCreationTopic { get; set; } = string.Empty;
         public string ApprovalResponseTopic { get; set; } = string.Empty;
-        public string NotificationTopic { get; set; } = string.Empty;
+        public string NotificationTopic { get;set; } = string.Empty;
 
         public string SaslOauthbearerProducerClientId { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientSecret { get; set; } = string.Empty;

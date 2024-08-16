@@ -1,8 +1,7 @@
 namespace ApprovalFlow.Auth;
 
 using System.Security.Claims;
-using Common.Authorization;
-using Common.Constants.Auth;
+using common.Constants.Auth;
 using Common.Extensions;
 using DIAM.Common.Helpers.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -23,11 +22,11 @@ public static class AuthenticationSetup
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
         {
-            options.Authority = KeycloakUrls.Authority(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl);
+            options.Authority = config.Keycloak.RealmUrl;
             options.Audience = Clients.PidpService;
             options.RequireHttpsMetadata = false;
             options.Audience = Clients.AdminApi;
-            options.MetadataAddress = KeycloakUrls.WellKnownConfig(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl);
+            options.MetadataAddress = config.Keycloak.WellKnownConfig;
             options.Events = new JwtBearerEvents
             {
                 OnTokenValidated = async context => await OnTokenValidatedAsync(context)

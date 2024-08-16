@@ -76,7 +76,7 @@ public class SAEforms
                 return DomainResult.Failed();
             }
 
-            if (!await this.keycloakClient.AssignClientRole(Common.Constants.Auth.RealmConstants.BCPSRealm, dto.UserId, MohClients.SAEforms.ClientId, MohClients.SAEforms.AccessRole))
+            if (!await this.keycloakClient.AssignClientRole(dto.UserId, MohClients.SAEforms.ClientId, MohClients.SAEforms.AccessRole))
             {
                 return DomainResult.Failed();
             }

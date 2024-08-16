@@ -1,5 +1,6 @@
 namespace edt.disclosure.Data;
 
+using edt.disclosure.Models;
 using edt.disclosure.ServiceEvents.Models;
 using edt.disclosure.ServiceEvents.UserAccountCreation.Models;
 using Microsoft.EntityFrameworkCore;
@@ -8,14 +9,8 @@ using NodaTime;
 public class DisclosureDataStoreDbContext : DbContext
 {
     private readonly IClock clock;
-    private readonly EdtDisclosureServiceConfiguration configuration;
 
-    public DisclosureDataStoreDbContext(DbContextOptions<DisclosureDataStoreDbContext> options, IClock clock, EdtDisclosureServiceConfiguration configuration) : base(options)
-    {
-        this.clock = clock;
-        this.configuration = configuration;
-    }
-
+    public DisclosureDataStoreDbContext(DbContextOptions<DisclosureDataStoreDbContext> options, IClock clock) : base(options) => this.clock = clock;
     public DbSet<IdempotentConsumer> IdempotentConsumers { get; set; } = default!;
     public DbSet<CourtLocationRequest> CourtLocationRequests { get; set; } = default!;
 
@@ -36,7 +31,7 @@ public class DisclosureDataStoreDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasDefaultSchema(this.configuration.ConnectionStrings.Schema);
+        modelBuilder.HasDefaultSchema("disclosure");
         base.OnModelCreating(modelBuilder);
 
 
@@ -80,15 +75,5 @@ public class DisclosureDataStoreDbContext : DbContext
 
     public async Task<bool> HasBeenProcessed(string messageId, string consumer) => await this.IdempotentConsumers.AnyAsync(x => x.MessageId == messageId && x.Consumer == consumer);
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        optionsBuilder.UseNpgsql(this.configuration.ConnectionStrings.DisclosureDataStore, x => x.MigrationsHistoryTable(this.configuration.ConnectionStrings.EfHistoryTable, this.configuration.ConnectionStrings.EfHistorySchema));
 
-
-        if (Environment.GetEnvironmentVariable("LOG_SQL") != null && "true".Equals(Environment.GetEnvironmentVariable("LOG_SQL")))
-        {
-            optionsBuilder.LogTo(Console.WriteLine);
-        }
-
-    }
 }

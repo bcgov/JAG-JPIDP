@@ -1,9 +1,9 @@
 namespace Pidp.Kafka.Consumer;
 
-using System.Globalization;
 using Confluent.Kafka;
-using IdentityModel.Client;
 using Pidp.Kafka.Interfaces;
+using IdentityModel.Client;
+using System.Globalization;
 using Serilog;
 
 public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TValue : class
@@ -30,10 +30,7 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
         Log.Logger.Information("PIDP Starting consumer for topic {0}", topic);
 
         this.handler = scope.ServiceProvider.GetRequiredService<IKafkaHandler<TKey, TValue>>();
-        this.consumer = new ConsumerBuilder<TKey, TValue>(this.config)
-            .SetLogHandler((consumer, log) => Console.WriteLine($"CON _______________________ {log}"))
-            .SetErrorHandler((consumer, log) => Console.WriteLine($"CON ERR _______________________ {log}"))
-            .SetOAuthBearerTokenRefreshHandler(OauthTokenRefreshCallback).SetValueDeserializer(new KafkaDeserializer<TValue>()).Build();
+        this.consumer = new ConsumerBuilder<TKey, TValue>(this.config).SetOAuthBearerTokenRefreshHandler(OauthTokenRefreshCallback).SetValueDeserializer(new KafkaDeserializer<TValue>()).Build();
         this.topic = topic;
 
         await Task.Run(() => this.StartConsumerLoop(stoppingToken), stoppingToken);

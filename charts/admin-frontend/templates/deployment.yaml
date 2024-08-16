@@ -1,0 +1,111 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "admin-frontend.fullname" . }}
+  labels:
+    {{- include "admin-frontend.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "admin-frontend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: "8080"
+        vault.hashicorp.com/agent-inject: 'true'
+        vault.hashicorp.com/agent-pre-populate-only: 'true'
+        vault.hashicorp.com/auth-path: auth/k8s-gold
+        vault.hashicorp.com/namespace: platform-services
+        vault.hashicorp.com/agent-requests-cpu: 5m
+        vault.hashicorp.com/agent-limits-cpu: 10m
+        vault.hashicorp.com/agent-requests-mem: 20Mi
+        vault.hashicorp.com/role: {{ .Values.global.vault.role }}  # licenseplate-nonprod or licenseplate-prod are your options
+        vault.hashicorp.com/agent-inject-secret-DIAM-Admin-Client: {{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-Admin-Client
+        vault.hashicorp.com/agent-inject-template-DIAM-Admin-Client: |
+          {{`{{- with secret `}}"{{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-Admin-Client"{{` }}
+          {{- range $k, $v := .Data.data }}
+          {{ $k }}="{{ $v }}"{{ end -}}
+          {{- end `}} }}
+        checksum/config: {{ include (print $.Template.BasePath "/config-map.yaml") . | sha256sum }}
+        {{- if .Values.global.commit_sha }}
+        commit_sha: {{ quote .Values.global.commit_sha }}
+        {{- end}}
+      {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "admin-frontend.selectorLabels" . | nindent 8 }}
+    spec:
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecrets.name }}
+      serviceAccountName: {{ .Values.global.licenseplate }}-vault
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+        - name: admin-frontend-config
+          configMap: 
+            name: {{ include "admin-frontend.fullname" . }}
+        - name: admin-frontend-env
+          configMap: 
+            name: admin-frontend-env
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.global.image.registry }}/{{ .Values.image.repository }}:{{ .Values.global.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: admin-frontend-config
+              subPath: environment.json
+              mountPath: /app/assets/environment.json
+            - name: admin-frontend-config
+              subPath: keycloak.json
+              mountPath: /app/keycloak.json
+            - name: admin-frontend-env
+              subPath: .env
+              mountPath: /app/.env
+          envFrom:
+            - secretRef:
+                name: admin-frontend-env-secrets
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/name
+                      operator: In
+                      values:
+                        - {{ include "admin-frontend.name" . }}
+                    - key: app.kubernetes.io/instance
+                      operator: In
+                      values:
+                      - {{ .Release.Name }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

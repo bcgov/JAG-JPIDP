@@ -4,7 +4,6 @@ using System;
 using System.Net.Http.Headers;
 using System.Text;
 using global::Common.Authorization;
-using global::Common.Constants.Auth;
 using IdentityModel.Client;
 using jumwebapi.Extensions;
 using jumwebapi.Infrastructure.Auth;
@@ -30,10 +29,10 @@ public static class HttpClientSetup
                 ClientSecret = config.ChesClient.ClientSecret
             });
 
-        services.AddHttpClientWithBaseAddress<IKeycloakAdministrationClient, KeycloakAdministrationClient>(KeycloakUrls.Authority(realm: RealmConstants.BCPSRealm, config.Keycloak.AdministrationUrl))
+        services.AddHttpClientWithBaseAddress<IKeycloakAdministrationClient, KeycloakAdministrationClient>(config.Keycloak.AdministrationUrl)
             .WithBearerToken(new KeycloakAdministrationClientCredentials
             {
-                Address = KeycloakUrls.Token(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl),
+                Address = config.Keycloak.TokenUrl,
                 ClientId = config.Keycloak.AdministrationClientId,
                 ClientSecret = config.Keycloak.AdministrationClientSecret
             });

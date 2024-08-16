@@ -7,7 +7,6 @@ public class EdtDisclosureServiceConfiguration
     public static bool IsDevelopment() => EnvironmentName == Environments.Development;
     private static readonly string? EnvironmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
 
-    public int DisclosureClientTimeoutSeconds { get; set; } = 360;
     public ConnectionStringConfiguration ConnectionStrings { get; set; } = new();
     public KafkaClusterConfiguration KafkaCluster { get; set; } = new();
     public EdtDisclosureClientConfiguration EdtClient { get; set; } = new();
@@ -73,9 +72,6 @@ public class EdtDisclosureServiceConfiguration
     public class ConnectionStringConfiguration
     {
         public string DisclosureDataStore { get; set; } = string.Empty;
-        public string Schema { get; set; } = "public";
-        public string EfHistorySchema { get; set; } = "public";
-        public string EfHistoryTable { get; set; } = "__EFMigrationsHistory";
     }
 
     public class KeycloakConfiguration

@@ -5,25 +5,15 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 public enum AccessTypeCode
 {
-    [Display(Name = "Special Authority eForms")]
     SAEforms = 1,
-    [Display(Name = "Obsolete")]
     HcimAccountTransfer,
-    [Display(Name = "Obsolete")]
     HcimEnrolment,
-    [Display(Name = "Driver Fitness")]
     DriverFitness,
-    [Display(Name = "Digital Evidence (DEMS)")]
     DigitalEvidence,
-    [Display(Name = "Digital Evidence Case Management")]
     DigitalEvidenceCaseManagement,
-    [Display(Name = "Digital Evidence Disclosure")]
     DigitalEvidenceDisclosure,   // defence/duty will be User in Disclosure
-    [Display(Name = "Digital Evidence Defence")]
     DigitalEvidenceDefence,      // defence/duty will be Participant in Core
-    [Display(Name = "Obsolete")]
     Uci,
-    [Display(Name = "Obsolete")]
     MSTeams
 }
 

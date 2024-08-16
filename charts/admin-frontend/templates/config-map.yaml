@@ -1,0 +1,43 @@
+{{- $separator :=  ternary "-" "." (regexMatch "(?:\\..*?){4}" .Values.global.vanityURL) -}}
+{{- $domain := .Values.global.vanityURL -}}
+{{- $fullName := include "admin-frontend.fullname" . -}}
+{{ $release := .Release.Name }}
+{{ $ocEnv := regexFind "([^-]*$)" .Release.Namespace }}
+{{ $isPR := hasPrefix "pr-" .Release.Name }}
+## Derived release name
+{{ $drn := ternary $release $ocEnv $isPR }}
+{{ $isProd := contains "prod" $ocEnv }}
+#
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "admin-frontend.fullname" . }}
+  labels:
+    {{- include "admin-frontend.labels" . | nindent 4 }}
+data:
+  environment.json: |-
+    {
+      "environmentName": "{{ .Values.settings.environmentName }}",
+      "apiEndpoint": "https://{{ .Values.global.vanityURL }}/api/v1",
+      "applicationUrl": "https://{{ .Values.global.vanityURL }}",
+      "demsImportURL": "{{ .Values.settings.edtURL }}/Edt.aspx#/import/",
+      "keycloakConfig": {
+        "config": {
+          "url": "{{ .Values.settings.keycloak.url }}",
+          "realm": "{{ .Values.settings.keycloak.realm }}",
+          "clientId": "{{ .Values.settings.keycloak.clientId }}"
+        },
+        "initOptions": {
+          "onLoad": "check-sso"
+        }
+      }
+    }
+  keycloak.json: |-
+    {
+      "realm": "BCPS",
+      "auth-server-url": "https://dev.common-sso.justice.gov.bc.ca/auth",
+      "ssl-required": "external",
+      "resource": "DIAM-BCPS-ADMIN",
+      "public-client": true,
+      "confidential-port": 0
+    }

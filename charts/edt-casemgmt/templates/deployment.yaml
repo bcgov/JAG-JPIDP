@@ -1,0 +1,141 @@
+{{ $release := .Release.Name }}
+{{ $ocEnv := regexFind "([^-]*$)" .Release.Namespace }}
+{{ $domain := .Values.global.vanityURL }}
+{{ $isPR := hasPrefix "pr-" .Release.Name }}
+## Derived release name
+{{ $drn := ternary $release $ocEnv $isPR }}
+{{ $isProd := contains "prod" $ocEnv }}
+#
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "edt-casemgmt.fullname" . }}
+  labels:
+    {{- include "edt-casemgmt.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "edt-casemgmt.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: "8080"
+        vault.hashicorp.com/agent-inject: 'true'
+        vault.hashicorp.com/agent-pre-populate-only: 'true'
+        vault.hashicorp.com/auth-path: auth/k8s-gold
+        vault.hashicorp.com/namespace: platform-services
+        vault.hashicorp.com/agent-requests-cpu: 5m
+        vault.hashicorp.com/agent-limits-cpu: 10m
+        vault.hashicorp.com/agent-requests-mem: 20Mi
+        vault.hashicorp.com/role: {{ .Values.global.vault.role }}  # licenseplate-nonprod or licenseplate-prod are your options
+        vault.hashicorp.com/agent-inject-secret-DIAM-common: {{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-common
+        vault.hashicorp.com/agent-inject-template-DIAM-common: |
+          {{`{{- with secret `}}"{{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-common"{{` }}
+          {{- range $k, $v := .Data.data }}
+          {{ $k }}="{{ $v }}"{{ end -}}
+          {{- end `}} }}
+        vault.hashicorp.com/agent-inject-secret-DIAM-edt-casemgmt: {{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-edt-casemgmt
+        vault.hashicorp.com/agent-inject-template-DIAM-edt-casemgmt: |
+          {{`{{- with secret `}}"{{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-edt-casemgmt"{{` }}
+          {{- range $k, $v := .Data.data }}
+          {{ $k }}="{{ $v }}"{{ end -}}
+          {{- end `}} }}
+        vault.hashicorp.com/agent-inject-secret-DIAM-keycloak: {{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-keycloak
+        vault.hashicorp.com/agent-inject-template-DIAM-keycloak: |
+          {{`{{- with secret `}}"{{ .Values.global.vault.role }}/{{ .Values.global.vault.path }}DIAM-keycloak"{{` }}
+          {{- range $k, $v := .Data.data }}
+          {{ $k }}="{{ $v }}"{{ end -}}
+          {{- end `}} }}
+        {{- if .Values.global.commit_sha }}
+        commit_sha: {{ .Values.global.commit_sha }}
+        {{- end}}
+      {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "edt-casemgmt.selectorLabels" . | nindent 8 }}
+    spec:
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecrets.name }}
+      serviceAccountName: {{ .Values.global.licenseplate }}-vault
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.global.image.registry }}/{{ .Values.image.repository }}:{{ .Values.global.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: DOTNET_BUNDLE_EXTRACT_BASE_DIR
+              value: /tmp
+            - name: ApplicationUrl
+              value: "https://{{ if $isProd }}{{else}}{{ $release }}.{{end}}{{ $domain }}"
+            - name: apitag
+              value: {{ .Values.global.image.apitag }}
+          volumeMounts:
+          - name: truststore
+            mountPath: "/opt/kafka/certificates"
+            readOnly: true
+          envFrom:
+            - secretRef:
+                name: ches
+            - configMapRef:
+                name: mail-settings
+            - configMapRef:
+                name: retry-policy
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health/liveness
+              port: http
+              scheme: HTTP
+            timeoutSeconds: 10
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 5
+
+         # startupProbe:
+        #    httpGet:
+         #     path: /health/liveness
+         #     port: http
+          #    scheme: HTTP
+         #   timeoutSeconds: 1
+         #   periodSeconds: 10
+          #  successThreshold: 1
+          #  failureThreshold: 30
+          # readinessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: truststore
+          secret:
+            secretName: kafka-cluster-client-truststore
+        - name: truststore-key
+          secret:
+            secretName: kafka-cluster-client-key
+

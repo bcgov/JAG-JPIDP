@@ -1,13 +1,13 @@
 namespace edt.casemanagement.Kafka;
 
-using System.Collections.Generic;
-using System.Globalization;
-using System.Threading;
 using Confluent.Kafka;
 using edt.casemanagement.Kafka.Interfaces;
 using IdentityModel.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Threading;
 using static edt.casemanagement.EdtServiceConfiguration;
 
 public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TValue : class
@@ -49,13 +49,7 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
         using var scope = this.serviceScopeFactory.CreateScope();
 
         this.handler = scope.ServiceProvider.GetRequiredService<IKafkaHandler<TKey, TValue>>();
-        this.consumer = new ConsumerBuilder<TKey, TValue>(this.config)
-            // fix annoying logging
-            .SetLogHandler((producer, log) => { })
-            .SetErrorHandler((producer, log) => Log.Error($"Kafka error {log}"))
-            .SetOAuthBearerTokenRefreshHandler(OauthTokenRefreshCallback)
-            .SetValueDeserializer(new KafkaDeserializer<TValue>()).Build();
-
+        this.consumer = new ConsumerBuilder<TKey, TValue>(this.config).SetOAuthBearerTokenRefreshHandler(OauthTokenRefreshCallback).SetValueDeserializer(new KafkaDeserializer<TValue>()).Build();
         this.topic = topic;
 
         await Task.Run(() => this.StartConsumerLoop(stoppingToken), stoppingToken);

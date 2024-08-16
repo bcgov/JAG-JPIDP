@@ -2,6 +2,7 @@ namespace Pidp.Models;
 
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using NodaTime;
 using Pidp.Models.UserInfo;
 
 [Table(nameof(Party))]
@@ -14,7 +15,7 @@ public class Party : BaseAuditable, IOwnedResource
 
     public string? Jpdid { get; set; }
 
-    public DateOnly? Birthdate { get; set; }
+    public LocalDate? Birthdate { get; set; }
 
     public string? Gender { get; set; }
 

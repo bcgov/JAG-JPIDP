@@ -1,5 +1,4 @@
-using Common.Constants.Auth;
-using jumwebapi.Data.ef;
+﻿using jumwebapi.Data.ef;
 using jumwebapi.Infrastructure.HttpClients.Keycloak;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,13 +20,13 @@ public class IdentityProviderDataSeeder
     }
     public async Task Seed()
     {
-        _context.Database.EnsureCreated();
-        await _context.Database.MigrateAsync();
+            _context.Database.EnsureCreated();
+            await _context.Database.MigrateAsync();
 
         if (!await _context.IdentityProviders.AnyAsync())
         {
             _logger.LogWarning("Adding IDPs from Keycloak");
-            var idps = await _keycloakClient.IdentityProviders(RealmConstants.BCPSRealm);
+            var idps = await _keycloakClient.IdentityProviders();
             var c = idps.Select(t => new JustinIdentityProvider
             {
                 Alias = t.Alias,
@@ -43,7 +42,7 @@ public class IdentityProviderDataSeeder
             _logger.LogInformation("Keycloaks IDPs added to DataSource.");
         }
     }
-
-
-
+        
+      
+    
 }

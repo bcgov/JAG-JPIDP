@@ -1,6 +1,6 @@
 namespace Pidp.Features.Admin.Kafka;
 
-using Common.Constants.Auth;
+using common.Constants.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

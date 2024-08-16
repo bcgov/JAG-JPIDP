@@ -13,6 +13,7 @@ export interface Field {
   display: boolean;
 }
 
+
 export interface DigitalEvidenceCase {
   name: string;
   description: string;
@@ -35,7 +36,6 @@ export interface DigitalEvidenceCaseAccessRequest {
   partyId: number;
   caseId: number;
   key: string;
-  toolsCaseRequest: boolean;
   agencyFileNumber: string;
   name: string;
 }

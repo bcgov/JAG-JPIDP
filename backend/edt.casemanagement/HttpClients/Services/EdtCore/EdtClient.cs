@@ -1,6 +1,5 @@
 namespace edt.casemanagement.HttpClients.Services.EdtCore;
 
-using System.Diagnostics.Metrics;
 using System.Threading.Tasks;
 using AutoMapper;
 using Common.Models.EDT;
@@ -12,10 +11,11 @@ using edt.casemanagement.Models;
 using edt.casemanagement.ServiceEvents.CaseManagement.Models;
 using Microsoft.Extensions.Logging;
 using NodaTime;
+using Prometheus;
 using Serilog;
 
 public class EdtClient(
-    HttpClient httpClient, Instrumentation instrumentation, EdtServiceConfiguration edtServiceConfiguration,
+    HttpClient httpClient, OtelMetrics meters, EdtServiceConfiguration edtServiceConfiguration,
     IMapper mapper,
     IClock clock,
     CaseManagementDataStoreDbContext context,
@@ -24,19 +24,27 @@ public class EdtClient(
     private readonly IMapper mapper = mapper;
     private readonly IClock clock = clock;
 
+    private readonly OtelMetrics meters = meters;
     private readonly EdtServiceConfiguration configuration = edtServiceConfiguration;
     private readonly CaseManagementDataStoreDbContext context = context;
 
 
-    private readonly Counter<long> searchCount = instrumentation.CaseSearchCount;
-    private readonly Counter<long> processedJobCount = instrumentation.ProcessedJobCount;
-    private readonly Counter<long> processRemovedJob = instrumentation.ProcessRemovedJob;
-    private readonly Histogram<double> caseStatusDuration = instrumentation.CaseStatusDuration;
+    private static readonly Counter SearchCount = Metrics
+        .CreateCounter("case_search_count_total", "Number of case search requests.");
 
+    private static readonly Histogram CaseStatusDuration = Metrics
+        .CreateHistogram("case_status_lookup_duration", "Histogram of case status searches.");
+
+    private static readonly Counter ProcessedJobCount = Metrics
+        .CreateCounter("case_access_count_total", "Number of case access requests.");
+
+    private static readonly Counter ProcessRemovedJob = Metrics
+        .CreateCounter("case_removal_count_total", "Number of case removal requests.");
 
     public async Task<EdtUserDto?> GetUser(string userKey)
     {
 
+        this.meters.GetUser();
         Log.Information("Checking if user key {0} already present", userKey);
         var result = await this.GetAsync<EdtUserDto?>($"api/v1/users/key:{userKey}");
 
@@ -142,7 +150,7 @@ public class EdtClient(
 
         if (result.IsSuccess)
         {
-            this.processedJobCount.Add(1);
+            ProcessedJobCount.Inc();
             Log.Information("Successfully added user {0} to case {1}", userKey, caseId);
 
             var caseGroupId = await this.GetCaseGroupId(caseId, this.configuration.EdtClient.SubmittingAgencyGroup);
@@ -196,7 +204,8 @@ public class EdtClient(
 
         if (result.IsSuccess)
         {
-            this.processRemovedJob.Add(1);
+            ProcessRemovedJob.Inc();
+
             Log.Information("Successfully removed user {0} from case {1}", userId, caseId);
         }
         else
@@ -323,7 +332,8 @@ public class EdtClient(
 
         var caseIdOrKey = query.caseName;
         //' /api/v1/org-units/1/cases/3:105: 23-472018/id
-        this.searchCount.Add(1);
+        SearchCount.Inc();
+
 
 
         if (this.configuration.SearchFieldId == -1 || this.configuration.AlternateSearchFieldId == -1)
@@ -358,19 +368,16 @@ public class EdtClient(
                 {
                     Log.Information("No cases found for {0}", searchString);
 
-
                     // check for merged - switch to alternate search
                     if (this.configuration.AlternateSearchFieldId > 0)
                     {
+                        Log.Information($"Searching by alternate Id");
                         searchString = this.configuration.AlternateSearchFieldId + ":" + caseIdOrKey;
-
-                        Log.Information($"Searching by alternate Id [{searchString}]");
-
                         var alternateSearch = await this.GetAsync<IEnumerable<CaseLookupModel>?>($"api/v1/org-units/1/cases/{searchString}/id");
                         if (alternateSearch.IsSuccess)
                         {
                             var alternateSearchValue = alternateSearch?.Value;
-                            if (alternateSearchValue.Any())
+                            if (alternateSearchValue.Count() > 0)
                             {
                                 foreach (var alternateCase in alternateSearchValue)
                                 {
@@ -378,14 +385,8 @@ public class EdtClient(
 
                                     if (caseInfo != null && caseInfo.Status == "Active")
                                     {
-                                        Log.Information($"Using primary case {caseInfo.Id} [{caseInfo.Status}] [{caseInfo.Name}]");
                                         foundCase = caseInfo;
                                         break;
-                                    }
-                                    else
-                                    {
-                                        Log.Information($"Found inactive case {caseInfo.Id} [{caseInfo.Status}] [{caseInfo.Name}]");
-
                                     }
                                 }
 
@@ -656,27 +657,22 @@ public class EdtClient(
     public async Task<CaseSummaryModel> GetCaseSummary(int caseId)
     {
 
-
-        Log.Debug($"Getting case info for {caseId}");
-
-        var result = await this.GetAsync<CaseSummaryModel>($"api/v1/org-units/1/cases/info/{caseId}");
-        var watch = System.Diagnostics.Stopwatch.StartNew();
-
-        if (result.IsSuccess)
+        using (CaseStatusDuration.NewTimer())
         {
-            watch.Stop();
+            Log.Debug($"Getting case info for {caseId}");
 
-            Log.Information($"Case {caseId} status is {result.Value.Status}");
-            this.caseStatusDuration.Record(watch.ElapsedMilliseconds);
-            return result.Value;
+            var result = await this.GetAsync<CaseSummaryModel>($"api/v1/org-units/1/cases/info/{caseId}");
+
+            if (result.IsSuccess)
+            {
+                Log.Information($"Case {caseId} status is {result.Value.Status}");
+                return result.Value;
+            }
+            else
+            {
+                return null;
+            }
         }
-        else
-        {
-            watch.Stop();
-
-            return null;
-        }
-
 
     }
 

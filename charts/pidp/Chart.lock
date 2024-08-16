@@ -1,0 +1,36 @@
+dependencies:
+- name: frontend
+  repository: file://../frontend
+  version: 0.2.5
+- name: admin-frontend
+  repository: file://../admin-frontend
+  version: 0.3.1
+- name: webapi
+  repository: file://../webapi
+  version: 0.4.0
+- name: edt-service
+  repository: file://../edt-service
+  version: 0.4.0
+- name: diam-config
+  repository: file://../diam-config
+  version: 0.3.0
+- name: edt-casemgmt
+  repository: file://../edt-casemgmt
+  version: 0.4.0
+- name: edt-disclosure
+  repository: file://../edt-disclosure
+  version: 0.10.0
+- name: approvalflow
+  repository: file://../approvalflow
+  version: 0.3.0
+- name: jum-backend
+  repository: file://../jum-backend
+  version: 0.3.0
+- name: jum-notification
+  repository: file://../jum-notification
+  version: 0.3.0
+- name: nginx
+  repository: file://../nginx
+  version: 9.7.3
+digest: sha256:f525c16c6dd11a3120f377d1ebe2ce37f3427f4486065761563272a493ab0040
+generated: "2024-04-17T10:11:24.0874385-07:00"

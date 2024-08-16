@@ -38,7 +38,7 @@ public class FolioLinkageService : IFolioLinkageService
     public async Task<int> ProcessPendingRequests()
     {
 
-        using (var db = new EdtDataStoreDbContext(this.dbOptions, this.clock, this.config))
+        using (var db = new EdtDataStoreDbContext(this.dbOptions, this.clock))
         {
 
             Serilog.Log.Debug($"Before Changes {db.ChangeTracker.DebugView.LongView}");
