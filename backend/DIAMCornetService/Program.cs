@@ -4,6 +4,7 @@ namespace DIAMCornetService;
 using System;
 using System.Reflection;
 using Asp.Versioning;
+using Common.Logging;
 using DIAMCornetService.Data;
 using DIAMCornetService.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -106,6 +107,7 @@ public class Program
 
         app.UseHttpsRedirection();
         app.UseCors();
+        app.UseMiddleware<CorrelationIdMiddleware>();
         app.UseAuthorization();
         app.MapMetrics();
         app.MapHealthChecks("/health/liveness").AllowAnonymous();

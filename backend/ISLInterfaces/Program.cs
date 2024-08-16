@@ -2,6 +2,7 @@
 namespace ISLInterfaces;
 
 using System.Reflection;
+using Common.Logging;
 using ISLInterfaces.Data;
 using ISLInterfaces.Features.CaseAccess;
 using ISLInterfaces.Infrastructure.Auth;
@@ -121,6 +122,7 @@ public class Program
         var resource = ResourceBuilder.CreateDefault().AddService(TelemetryConstants.ServiceName);
 
         app.UseHttpsRedirection();
+        app.UseMiddleware<CorrelationIdMiddleware>();
 
         app.UseAuthorization();
         app.MapHealthChecks("/health/liveness").AllowAnonymous();

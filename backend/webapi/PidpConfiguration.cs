@@ -59,8 +59,10 @@ public class PidpConfiguration
 
     public class DecomissionCaseAccessService
     {
-        public int PeriodicTimer { get; set; }
+        //  public int PeriodicTimer { get; set; }
         public int GracePeriod { get; set; }
+        public string PollCron { get; set; } = "0 * * * * ?";
+
     }
     public class ConnectionStringConfiguration
     {
