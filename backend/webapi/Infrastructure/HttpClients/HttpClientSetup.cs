@@ -7,7 +7,6 @@ using Common.Models.CORNET;
 using Confluent.Kafka;
 using IdentityModel.Client;
 using Pidp.Extensions;
-using Pidp.Features.DigitalEvidenceCaseManagement.BackgroundServices;
 using Pidp.Infrastructure.HttpClients.AddressAutocomplete;
 using Pidp.Infrastructure.HttpClients.Edt;
 using Pidp.Infrastructure.HttpClients.Jum;
@@ -140,8 +139,6 @@ public static class HttpClientSetup
 
         services.AddHostedService<JustinUserChangeService>();
         services.AddHostedService<DomainEventResponseService>();
-        services.AddHostedService<InCustodyMessageConsumer>();
-        services.AddHostedService<DecomissionCaseAccessService>();
 
         return services;
     }
