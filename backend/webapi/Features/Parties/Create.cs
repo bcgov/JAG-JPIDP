@@ -245,17 +245,29 @@ public class Create
 
                     if (agency != null)
                     {
-                        Serilog.Log.Information("User {0} is from agency {1} - automatically assigning organization", user.GetUserId(), agency.Name);
                         var organization = this.GetOrganization(this.context, agency.IdpHint);
 
                         if (organization != null)
                         {
-                            var org = new PartyOrgainizationDetail
+                            // check if user is already assigned to organization
+                            var partyOrg = this.context.PartyOrgainizationDetails.Where(p => p.PartyId == party.Id && p.OrganizationCode == organization.Code).FirstOrDefault();
+
+                            if (partyOrg != null)
                             {
-                                Party = party,
-                                Organization = organization
-                            };
-                            this.context.PartyOrgainizationDetails.Add(org);
+                                Serilog.Log.Information($"User {party.Jpdid} is already assigned to agency {organization.Code}");
+
+                            }
+                            else
+                            {
+                                Serilog.Log.Information($"User {party.Jpdid} is from agency {agency.Name} - automatically assigning organization", user.GetUserId(), agency.Name);
+
+                                var org = new PartyOrgainizationDetail
+                                {
+                                    Party = party,
+                                    Organization = organization
+                                };
+                                this.context.PartyOrgainizationDetails.Add(org);
+                            }
                         }
                     }
                 }

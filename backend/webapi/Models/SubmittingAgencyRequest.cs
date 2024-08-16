@@ -22,6 +22,7 @@ public class SubmittingAgencyRequest : BaseAuditable
     public string? RCCNumber { get; set; } = string.Empty;
     public string Details { get; set; } = string.Empty;
 
+    public Instant? DeletedOn { get; set; }
     public Instant RequestedOn { get; set; }
     [Required]
     public string RequestStatus { get; set; } = AgencyRequestStatus.Submitted;
@@ -38,6 +39,7 @@ public static class AgencyRequestStatus
     public const string Submitted = "Submitted";
     public const string Approved = "Approved";
     public const string Dismissed = "Dismissed";
+    public const string Deleted = "Deleted";
     public const string Expired = "Expired";
     public const string RemovalPending = "Removal Pending";
 }

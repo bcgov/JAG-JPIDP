@@ -1,11 +1,10 @@
 namespace Pidp;
 
-using Avro.Generic;
+using System.Reflection;
 using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Json;
 using Serilog.Sinks.SystemConsole.Themes;
-using System.Reflection;
 
 
 public class Program

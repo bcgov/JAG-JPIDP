@@ -31,6 +31,7 @@ using Pidp.Extensions;
 using Pidp.Features;
 using Pidp.Features.CourtLocations;
 using Pidp.Features.CourtLocations.Jobs;
+using Pidp.Features.DigitalEvidenceCaseManagement.BackgroundServices;
 using Pidp.Features.Organization.OrgUnitService;
 using Pidp.Features.Organization.UserTypeService;
 using Pidp.Features.Parties;
@@ -266,14 +267,21 @@ public class Startup
 
             q.AddJob<CourtAccessScheduledJob>(opts => opts.WithIdentity(jobKey));
 
+            // add case decommision job
+            var decommisionJobKey = new JobKey("Decommission case access trigger");
+            q.AddJob<CaseAccessDecommissionJob>(opts => opts.WithIdentity(decommisionJobKey));
+            Log.Information($"Scheduling Case Decommission with params [{config.BackGroundServices.DecomissionCaseAccessService.PollCron}]");
+
+            // Create a trigger for the job
+            q.AddTrigger(opts => opts
+                .ForJob(decommisionJobKey) // link to the HelloWorldJob
+                .WithIdentity("case-decommission-trigger") // give the trigger a unique name
+                .WithCronSchedule(config.BackGroundServices.DecomissionCaseAccessService.PollCron));
 
         });
 
 
-        services.AddQuartzServer(options =>
-        {
-            options.WaitForJobsToComplete = true;
-        });
+        services.AddQuartzServer(options => options.WaitForJobsToComplete = true);
 
         //services.AddApiVersioning(options =>
         //{

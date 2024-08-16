@@ -2,25 +2,26 @@ namespace Pidp.Kafka.Consumer.Notifications;
 
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using NodaTime;
 using Pidp.Data;
 using Pidp.Kafka.Interfaces;
 using Pidp.Models;
 using Serilog;
 
-public class NotificationAckHandler : IKafkaHandler<string, NotificationAckModel>
+/// <summary>
+/// Handle notifications coming back on topics
+/// </summary>
+/// <param name="context"></param>
+public class NotificationAckHandler(PidpDbContext context, IClock clock) : IKafkaHandler<string, NotificationAckModel>
 {
-    private readonly PidpDbContext context;
-    public NotificationAckHandler(PidpDbContext context) => this.context = context;
-
     public async Task<Task> HandleAsync(string consumerName, string key, NotificationAckModel value)
     {
 
-        using var trx = this.context.Database.BeginTransaction();
+        using var trx = context.Database.BeginTransaction();
 
-
-        Log.Logger.Information("Message received on {0} with key {1}", consumerName, key);
+        Log.Logger.Information($"{value.PartId} {value.EventType} Message received on {consumerName} with key {key}");
         //check whether this message has been processed before   
-        if (await this.context.HasBeenProcessed(key, consumerName))
+        if (await context.HasBeenProcessed(key, consumerName))
         {
             await trx.RollbackAsync();
             return Task.CompletedTask;
@@ -30,7 +31,7 @@ public class NotificationAckHandler : IKafkaHandler<string, NotificationAckModel
         if (value.Subject.Equals(NotificationSubject.None) || value.Subject.Equals(NotificationSubject.AccessRequest))
         {
 
-            var accessRequest = await this.context.AccessRequests
+            var accessRequest = await context.AccessRequests
                 .Where(request => request.Id == value.AccessRequestId).SingleOrDefaultAsync();
             if (accessRequest != null)
             {
@@ -40,9 +41,9 @@ public class NotificationAckHandler : IKafkaHandler<string, NotificationAckModel
                 try
                 {
                     accessRequest.Status = value.Status;
-                    await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
-                    await this.context.SaveChangesAsync();
-                    trx.Commit();
+                    await context.IdempotentConsumer(messageId: key, consumer: consumerName);
+                    await context.SaveChangesAsync();
+                    await trx.CommitAsync();
 
                     return Task.CompletedTask;
                 }
@@ -54,14 +55,14 @@ public class NotificationAckHandler : IKafkaHandler<string, NotificationAckModel
             }
             else
             {
-                Log.Error($"Access request {value.AccessRequestId} is unknown");
+                Log.Error($"{value.PartId} {value.EventType} - access request {value.AccessRequestId} is unknown");
                 return Task.CompletedTask;
             }
         }
 
         if (value.Subject.Equals(NotificationSubject.CaseAccessRequest))
         {
-            var accessRequest = await this.context.SubmittingAgencyRequests
+            var accessRequest = await context.SubmittingAgencyRequests
               .Where(request => request.RequestId == value.AccessRequestId).SingleOrDefaultAsync();
             if (accessRequest != null)
             {
@@ -79,7 +80,10 @@ public class NotificationAckHandler : IKafkaHandler<string, NotificationAckModel
                     if (value.EventType.Equals(CaseEventType.Decommission, StringComparison.Ordinal))
                     {
                         Log.Information("Removing case access request {0}", accessRequest.RequestId);
-                        this.context.Entry(accessRequest).State = EntityState.Deleted;
+                        // soft delete
+                        accessRequest.DeletedOn = clock.GetCurrentInstant();
+                        accessRequest.RequestStatus = AgencyRequestStatus.Deleted;
+                        // context.Entry(accessRequest).State = EntityState.Deleted;
                     }
                     else
                     {
@@ -87,10 +91,12 @@ public class NotificationAckHandler : IKafkaHandler<string, NotificationAckModel
                         accessRequest.Details = value.Details;
                     }
 
-                    await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
-                    await this.context.SaveChangesAsync();
-                    await trx.CommitAsync();
-
+                    var affectedRows = await context.SaveChangesAsync();
+                    if (affectedRows > 0)
+                    {
+                        await context.IdempotentConsumer(messageId: key, consumer: consumerName);
+                        await trx.CommitAsync();
+                    }
                     return Task.CompletedTask;
                 }
                 catch (Exception e)

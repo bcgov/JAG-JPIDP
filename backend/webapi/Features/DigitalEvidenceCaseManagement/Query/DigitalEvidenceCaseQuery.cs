@@ -3,6 +3,9 @@ namespace Pidp.Features.DigitalEvidenceCaseManagement.Query;
 using Pidp.Infrastructure.HttpClients.Edt;
 using Pidp.Infrastructure.HttpClients.Jum;
 
+/// <summary>
+/// Search for a case
+/// </summary>
 public class DigitalEvidenceCaseQuery
 {
 
@@ -12,24 +15,16 @@ public class DigitalEvidenceCaseQuery
         public string PartyId { get; set; } = string.Empty;
     }
 
-    public class QueryHandler : IQueryHandler<Query, Models.DigitalEvidenceCaseModel>
+    public class QueryHandler(IEdtCaseManagementClient client, IJumClient jumClient) : IQueryHandler<Query, Models.DigitalEvidenceCaseModel>
     {
-        private readonly IEdtCaseManagementClient client;
-        private readonly IJumClient jumClient;
-
-        public QueryHandler(IEdtCaseManagementClient client, IJumClient jumClient)
-        {
-            this.jumClient = jumClient;
-            this.client = client;
-        }
-
         public async Task<Models.DigitalEvidenceCaseModel> HandleAsync(Query query)
         {
-            var response = await this.client.FindCase(query.PartyId, query.AgencyFileNumber);
+            var response = await client.FindCase(query.PartyId, query.AgencyFileNumber);
 
             if (response != null && response.Status == "NotFound")
             {
-                var justinResponse = await this.jumClient.GetJustinCaseStatus(query.PartyId, query.AgencyFileNumber, "");
+                Serilog.Log.Information($"[{query.PartyId}] Case {query.AgencyFileNumber} not found in EDT - checking for case in JUSTIN");
+                var justinResponse = await jumClient.GetJustinCaseStatus(query.PartyId, query.AgencyFileNumber, "");
 
                 if (justinResponse != null)
                 {
@@ -37,6 +32,11 @@ public class DigitalEvidenceCaseQuery
                 }
                 Serilog.Log.Information($"JUSTIN case status for {query.AgencyFileNumber} is {justinResponse}");
 
+            }
+
+            if (response == null)
+            {
+                Serilog.Log.Warning($"[{query.PartyId}] Case {query.AgencyFileNumber} not found in EDT or JUSTIN");
             }
 
             return response;
