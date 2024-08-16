@@ -7,13 +7,12 @@ using System.Security.Claims;
 using System.Text.Json.Serialization;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
-using common.Constants.Auth;
+using Common.Constants.Auth;
 using Common.Models.EDT;
 using Common.Models.JUSTIN;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
-using NodaTime;
 using Pidp.Data;
 using Pidp.Extensions;
 using Pidp.Infrastructure;
@@ -254,14 +253,14 @@ public partial class ProfileStatus
                 else
                 {
                     var lookups = this.context.PartyUserTypes
-                            .Include( p => p.UserTypeLookup )
+                            .Include(p => p.UserTypeLookup)
                             .Where(p => p.PartyId == party.Id)
-                            .Select( put => put.UserTypeLookup.Name).ToList();
+                            .Select(put => put.UserTypeLookup.Name).ToList();
                     profile.UserTypes = lookups;
                 }
 
 
-          
+
 
                 var profileStatus = new Model
                 {
@@ -352,7 +351,7 @@ public partial class ProfileStatus
     {
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
-        public LocalDate? Birthdate { get; set; }
+        public DateOnly? Birthdate { get; set; }
         public string? Email { get; set; }
         public string? Gender { get; set; }
         public string? Phone { get; set; }

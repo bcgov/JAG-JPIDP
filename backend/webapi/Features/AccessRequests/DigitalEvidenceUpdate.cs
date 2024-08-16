@@ -125,7 +125,7 @@ public class DigitalEvidenceUpdate
                         else
                         {
                             // determine what has changed
-                            var keycloakUserInfo = await this.keycloakClient.GetUser(party.UserId);
+                            var keycloakUserInfo = await this.keycloakClient.GetUser(Common.Constants.Auth.RealmConstants.BCPSRealm, party.UserId);
 
                             Serilog.Log.Information($"Keycloak user {keycloakUserInfo}");
 
@@ -175,7 +175,7 @@ public class DigitalEvidenceUpdate
 
                                     // deactivate the account
                                     keycloakUserInfo!.Enabled = false;
-                                    var deactivated = await this.UpdateKeycloakUser(party.UserId, keycloakUserInfo);
+                                    var deactivated = await this.UpdateKeycloakUser(Common.Constants.Auth.RealmConstants.BCPSRealm, party.UserId, keycloakUserInfo);
 
                                     if (deactivated)
                                     {
@@ -234,7 +234,7 @@ public class DigitalEvidenceUpdate
                                         if (newRegions.Count > 0)
                                         {
                                             Serilog.Log.Information($"Adding [{string.Join(",", newRegions)}] regions for user {party.Id}");
-                                            var removedGroupsOk = await this.AddKeycloakUserRegions(party.UserId, newRegions);
+                                            var removedGroupsOk = await this.AddKeycloakUserRegions(Common.Constants.Auth.RealmConstants.BCPSRealm, party.UserId, newRegions);
                                             if (regionChanges.From.Count() == 0)
                                             {
                                                 // went from no groups to having groups - user is now active
@@ -245,14 +245,14 @@ public class DigitalEvidenceUpdate
                                         if (removedRegions.Count > 0)
                                         {
                                             Serilog.Log.Information($"Removing [{string.Join(",", newRegions)}] regions for user {party.Id}");
-                                            var removedGroupsOk = await this.RemoveKeycloakUserRegions(party.UserId, removedRegions);
+                                            var removedGroupsOk = await this.RemoveKeycloakUserRegions(Common.Constants.Auth.RealmConstants.BCPSRealm, party.UserId, removedRegions);
                                         }
 
 
                                     }
                                 }
 
-                                var updated = await this.UpdateKeycloakUser(party.UserId, keycloakUserInfo);
+                                var updated = await this.UpdateKeycloakUser(Common.Constants.Auth.RealmConstants.BCPSRealm, party.UserId, keycloakUserInfo);
 
                                 await this.context.SaveChangesAsync();
 
@@ -301,13 +301,13 @@ public class DigitalEvidenceUpdate
 
         }
 
-        private async Task<bool> AddKeycloakUserRegions(Guid userId, IEnumerable<string> groups)
+        private async Task<bool> AddKeycloakUserRegions(string realm, Guid userId, IEnumerable<string> groups)
         {
 
 
             foreach (var group in groups)
             {
-                if (!await this.keycloakClient.AddGrouptoUser(userId, group))
+                if (!await this.keycloakClient.AddGrouptoUser(realm, userId, group))
                 {
                     Serilog.Log.Logger.Error("Failed to add user {0} group {1} to keycloak", userId, group);
                     return false;
@@ -317,13 +317,13 @@ public class DigitalEvidenceUpdate
             return true;
         }
 
-        private async Task<bool> RemoveKeycloakUserRegions(Guid userId, IEnumerable<string> groups)
+        private async Task<bool> RemoveKeycloakUserRegions(string realm, Guid userId, IEnumerable<string> groups)
         {
 
 
             foreach (var group in groups)
             {
-                if (!await this.keycloakClient.RemoveUserFromGroup(userId, group))
+                if (!await this.keycloakClient.RemoveUserFromGroup(realm, userId, group))
                 {
                     Serilog.Log.Logger.Error("Failed to remove user {0} from keycloak group {1} ", userId, group);
                     return false;
@@ -334,11 +334,11 @@ public class DigitalEvidenceUpdate
         }
 
 
-        private async Task<bool> UpdateKeycloakUser(Guid userId, UserRepresentation user)
+        private async Task<bool> UpdateKeycloakUser(string realm, Guid userId, UserRepresentation user)
         {
             Serilog.Log.Information($"Keycloak account update for {user.Email}");
 
-            return await this.keycloakClient.UpdateUser(userId, user);
+            return await this.keycloakClient.UpdateUser(realm, userId, user);
         }
 
         /// <summary>
@@ -412,7 +412,7 @@ public class DigitalEvidenceUpdate
             {
                 var justinAgencies = justinUserInfo.assignedAgencies.Select(agency => agency.agencyName).ToList();
 
-                var groups = await this.keycloakClient.GetUserGroups(party.UserId);
+                var groups = await this.keycloakClient.GetUserGroups(Common.Constants.Auth.RealmConstants.BCPSRealm, party.UserId);
 
                 // check which groups the user is in now
                 var keycloakGroups = groups.Select(group => group.Name).ToList();
@@ -457,7 +457,7 @@ public class DigitalEvidenceUpdate
                 Serilog.Log.Information($"User {party.Id} has no granted agencies in JUSTIN - disabling account");
                 userChangeModel.BooleanChangeTypes.Add(ChangeType.ACTIVATION, new BooleanChangeType(true, false));
                 // see what regions were removed (if any)
-                var groups = await this.keycloakClient.GetUserGroups(party.UserId);
+                var groups = await this.keycloakClient.GetUserGroups(Common.Constants.Auth.RealmConstants.BCPSRealm, party.UserId);
                 var keycloakGroups = groups.Select(group => group.Name).ToList();
                 var keycloakRegions = allRegions.Intersect(keycloakGroups).ToList();
                 if (keycloakRegions.Count > 0)

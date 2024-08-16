@@ -1,6 +1,5 @@
 namespace edt.casemanagement;
 using Common.Configuration;
-using edt.casemanagement.Infrastructure.Auth;
 
 public class EdtServiceConfiguration
 {
@@ -57,13 +56,14 @@ public class EdtServiceConfiguration
     public class ConnectionStringConfiguration
     {
         public string CaseManagementDataStore { get; set; } = string.Empty;
+        public string Schema { get; set; } = "public";
+        public string EfHistorySchema { get; set; } = "public";
+        public string EfHistoryTable { get; set; } = "__EFMigrationsHistory";
     }
 
     public class KeycloakConfiguration
     {
         public string RealmUrl { get; set; } = string.Empty;
-        public string WellKnownConfig => KeycloakUrls.WellKnownConfig(this.RealmUrl);
-        public string TokenUrl => KeycloakUrls.Token(this.RealmUrl);
         public string AdministrationUrl { get; set; } = string.Empty;
         public string AdministrationClientId { get; set; } = string.Empty;
         public string AdministrationClientSecret { get; set; } = string.Empty;

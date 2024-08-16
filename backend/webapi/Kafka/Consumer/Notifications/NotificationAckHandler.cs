@@ -17,9 +17,11 @@ public class NotificationAckHandler(PidpDbContext context, IClock clock) : IKafk
     public async Task<Task> HandleAsync(string consumerName, string key, NotificationAckModel value)
     {
 
+
         using var trx = context.Database.BeginTransaction();
 
         Log.Logger.Information($"{value.PartId} {value.EventType} Message received on {consumerName} with key {key}");
+
         //check whether this message has been processed before   
         if (await context.HasBeenProcessed(key, consumerName))
         {
@@ -35,14 +37,15 @@ public class NotificationAckHandler(PidpDbContext context, IClock clock) : IKafk
                 .Where(request => request.Id == value.AccessRequestId).SingleOrDefaultAsync();
             if (accessRequest != null)
             {
-                Log.Information($"Marking access request {value.AccessRequestId} as {value.Status}");
-
+                Log.Information($"Marking access request {value.AccessRequestId} {value.PartId} as {value.Status}");
 
                 try
                 {
                     accessRequest.Status = value.Status;
+
                     await context.IdempotentConsumer(messageId: key, consumer: consumerName);
                     await context.SaveChangesAsync();
+
                     await trx.CommitAsync();
 
                     return Task.CompletedTask;
@@ -87,17 +90,26 @@ public class NotificationAckHandler(PidpDbContext context, IClock clock) : IKafk
                     }
                     else
                     {
+                        Log.Information($"Flagging {value.Status} for {accessRequest.RequestId}");
                         accessRequest.RequestStatus = value.Status;
-                        accessRequest.Details = value.Details;
+                        accessRequest.Details = string.IsNullOrEmpty(value.Details) ? value.Status : value.Details;
                     }
 
-                    var affectedRows = await context.SaveChangesAsync();
+
+                    var affectedRows = await this.context.SaveChangesAsync();
                     if (affectedRows > 0)
                     {
-                        await context.IdempotentConsumer(messageId: key, consumer: consumerName);
+                        await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
                         await trx.CommitAsync();
+
+                        return Task.CompletedTask;
                     }
-                    return Task.CompletedTask;
+                    else
+                    {
+                        await trx.RollbackAsync();
+                        return Task.FromException(new InvalidOperationException($"Failed to update case record {value.AccessRequestId} - {affectedRows} rows updated"));
+                    }
+
                 }
                 catch (Exception e)
                 {

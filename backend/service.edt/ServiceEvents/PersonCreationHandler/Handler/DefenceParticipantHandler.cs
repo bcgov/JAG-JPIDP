@@ -44,7 +44,6 @@ public class DefenceParticipantHandler : IKafkaHandler<string, EdtPersonProvisio
     {
 
         // check this message is for us
-
         if (accessRequestModel.SystemName != null && !accessRequestModel.SystemName.Equals("DigitalEvidenceDefence", StringComparison.Ordinal))
         {
             Serilog.Log.Logger.Information($"Ignoring message {key} for system {accessRequestModel.SystemName} as we only handle Defence Participant requests");
@@ -53,7 +52,6 @@ public class DefenceParticipantHandler : IKafkaHandler<string, EdtPersonProvisio
 
         // set activity info
         Activity.Current?.AddTag("digitalevidence.access.id", accessRequestModel.AccessRequestId);
-
 
         using var trx = this.context.Database.BeginTransaction();
         try
@@ -69,6 +67,13 @@ public class DefenceParticipantHandler : IKafkaHandler<string, EdtPersonProvisio
             /// call version endpoint via get
             ///
             var edtVersion = await this.CheckEdtServiceVersion();
+
+            // EDT Disclosure Participants should have role = Defence Counsel
+            accessRequestModel.Fields.Add(new EdtField
+            {
+                Name = "Role",
+                Value = "Defence Counsel"
+            });
 
             //check whether edt user already exist
             var result = await this.AddOrUpdatePerson(accessRequestModel);
@@ -106,6 +111,7 @@ public class DefenceParticipantHandler : IKafkaHandler<string, EdtPersonProvisio
                     Status = "Error",
                     TraceId = key
                 });
+
                 if (sentStatus.Status == Confluent.Kafka.PersistenceStatus.Persisted)
                 {
                     Serilog.Log.Information($"Error response sent for person creation {accessRequestModel.AccessRequestId} {accessRequestModel.Key}");
@@ -163,8 +169,6 @@ public class DefenceParticipantHandler : IKafkaHandler<string, EdtPersonProvisio
             {
                 Serilog.Log.Information($"Adding {accessRequestModel.LastName} as a new person");
                 return await this.edtClient.CreatePerson(accessRequestModel);
-
-
             }
             else
             {
@@ -176,7 +180,6 @@ public class DefenceParticipantHandler : IKafkaHandler<string, EdtPersonProvisio
     }
 
     private async Task<string> CheckEdtServiceVersion() => await this.edtClient.GetVersion();
-
 
 }
 public static partial class DefenceParticipantHandlerLoggingExtensions

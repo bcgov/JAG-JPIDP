@@ -3,6 +3,7 @@ namespace jumwebapi;
 using System.Reflection;
 using System.Security.Claims;
 using FluentValidation.AspNetCore;
+using global::Common.Logging;
 using jumwebapi.Common;
 using jumwebapi.Core.Http;
 using jumwebapi.Data;
@@ -96,7 +97,7 @@ public class Startup
          .UseNpgsql(config.ConnectionStrings.JumDatabase, npg => npg.UseNodaTime())
          .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
 
-        services.AddMediatR(typeof(Startup).Assembly);
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Startup).Assembly));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
 
         services.AddSingleton<ProblemDetailsFactory, UserManagerProblemDetailsFactory>();
@@ -297,6 +298,7 @@ public class Startup
         app.UseCors("CorsPolicy");
         app.UseMetricServer();
         app.UseHttpMetrics();
+        app.UseMiddleware<CorrelationIdMiddleware>();
 
         app.UseAuthentication();
         app.UseAuthorization();

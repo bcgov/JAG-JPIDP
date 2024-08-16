@@ -2,7 +2,7 @@ namespace Pidp.Infrastructure.Services;
 
 using System.Linq.Expressions;
 using System.Security.Claims;
-using common.Constants.Auth;
+using Common.Constants.Auth;
 using DomainResults.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;

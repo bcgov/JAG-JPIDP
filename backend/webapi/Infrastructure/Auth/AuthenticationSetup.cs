@@ -1,7 +1,9 @@
 namespace Pidp.Infrastructure.Auth;
 
 using System.Security.Claims;
-using common.Constants.Auth;
+using Common.Constants.Auth;
+using Common.Authorization;
+using Common.Constants.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,11 +33,11 @@ public static class AuthenticationSetup
                 ValidAlgorithms = new List<string>() { "RS256" }
 
             };
-            options.Authority = config.Keycloak.RealmUrl;
+            options.Authority = KeycloakUrls.Authority(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl);
             options.IncludeErrorDetails = true;
             options.RequireHttpsMetadata = true;
             options.Audience = Clients.PidpService;
-            options.MetadataAddress = config.Keycloak.WellKnownConfig;
+            options.MetadataAddress = KeycloakUrls.WellKnownConfig(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl);
             options.Events = new JwtBearerEvents
             {
                 OnTokenValidated = async context => await OnTokenValidatedAsync(context),
@@ -52,20 +54,20 @@ public static class AuthenticationSetup
 
         // Submitting agency logins
         services.AddAuthorizationBuilder().AddPolicy(Policies.SubAgencyIdentityProvider, policy => policy.RequireAuthenticatedUser()
-                              .RequireRole(Roles.SubmittingAgency));
+                                  .RequireRole(Roles.SubmittingAgency));
 
         // BC services card policy
         services.AddAuthorizationBuilder().AddPolicy(Policies.BcscAuthentication, policy => policy.RequireAuthenticatedUser().RequireClaim(Claims.IdentityProvider, ClaimValues.BCServicesCard));
 
         // access to approvals
         services.AddAuthorizationBuilder().AddPolicy(Policies.ApprovalAuthorization, policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
-        {
-            var hasAdminRole = context.User.IsInRole(Roles.Admin);
-            var hasApprovalRole = context.User.IsInRole(Roles.Approver);
-            var hasReadOnlyApprovalRole = context.User.IsInRole(Roles.ApprovalViewer);
-            var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider && (c.Value == ClaimValues.Idir || c.Value == ClaimValues.Adfs));
-            return (hasAdminRole || hasApprovalRole || hasReadOnlyApprovalRole) && hasClaim;
-        }));
+            {
+                var hasAdminRole = context.User.IsInRole(Roles.Admin);
+                var hasApprovalRole = context.User.IsInRole(Roles.Approver);
+                var hasReadOnlyApprovalRole = context.User.IsInRole(Roles.ApprovalViewer);
+                var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider && (c.Value == ClaimValues.Idir || c.Value == ClaimValues.Adfs));
+                return (hasAdminRole || hasApprovalRole || hasReadOnlyApprovalRole) && hasClaim;
+            }));
 
 
         // requires IDIR login
@@ -74,12 +76,12 @@ public static class AuthenticationSetup
 
         // requires VC login (lawyers)
         services.AddAuthorizationBuilder().AddPolicy(Policies.VerifiedCredentialsProvider, policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
-        {
-            var hasDutyRole = context.User.IsInRole(Roles.DutyCounsel);
-            var hasDefenceRole = context.User.IsInRole(Roles.DefenceCounsel);
-            var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider && (c.Value == ClaimValues.VerifiedCredentials || c.Value == ClaimValues.Idir));
-            return (hasDutyRole || hasDefenceRole) && hasClaim;
-        }));
+            {
+                var hasDutyRole = context.User.IsInRole(Roles.DutyCounsel);
+                var hasDefenceRole = context.User.IsInRole(Roles.DefenceCounsel);
+                var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider && (c.Value == ClaimValues.VerifiedCredentials || c.Value == ClaimValues.Idir));
+                return (hasDutyRole || hasDefenceRole) && hasClaim;
+            }));
 
 
         // any DEMS possible user (should be more generic!)
@@ -117,6 +119,12 @@ public static class AuthenticationSetup
             return hasRole && hasClaim;
         }));
 
+        services.AddAuthorizationBuilder().AddPolicy(Policies.AdminClientAuthentication, policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
+        {
+            var hasClaim = context.User.HasClaim(c => c.Type == Claims.AuthorizedParties && c.Value == Clients.DiamInternal);
+            return hasClaim;
+        }));
+
         services.AddAuthorizationBuilder().AddPolicy(Policies.UserOwnsResource, policy => policy.Requirements.Add(new UserOwnsResourceRequirement()));
 
 
@@ -132,13 +140,13 @@ public static class AuthenticationSetup
 
     private static Task OnForbidden(ForbiddenContext context)
     {
-        Serilog.Log.Warning($"Authentication challenge");
+        Serilog.Log.Warning($"Authentication failure {context.Result.Failure}");
         return Task.CompletedTask;
     }
 
     private static Task OnChallenge(JwtBearerChallengeContext context)
     {
-        Serilog.Log.Warning($"Authentication challenge");
+        Serilog.Log.Warning($"Authentication challenge {context.Error}");
         return Task.CompletedTask;
     }
 

@@ -9,6 +9,6 @@ public interface IKeycloakAdministrationClient
     /// Returns null if unccessful.
     /// </summary>
     /// <param name="userId"></param>
-    Task<UserRepresentation?> GetUser(Guid userId);
+    Task<UserRepresentation?> GetUser(string realm, Guid userId);
 
 }

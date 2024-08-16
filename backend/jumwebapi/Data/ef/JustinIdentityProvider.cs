@@ -1,4 +1,5 @@
-﻿using jumwebapi.Infrastructure.HttpClients.Keycloak;
+using Common.Constants.Auth;
+using jumwebapi.Infrastructure.HttpClients.Keycloak;
 using jumwebapi.Models;
 using jumwebapi.Models.Lookups;
 
@@ -59,7 +60,7 @@ public class IdentityProviderDataGenerator : ILookupDataGenerator<JustinIdentity
 
     public async Task<IEnumerable<JustinIdentityProvider>> GenerateAsync()
     {
-        var idps = await _keycloak.IdentityProviders();
+        var idps = await _keycloak.IdentityProviders(RealmConstants.BCPSRealm);
         return idps?.Select(t => new JustinIdentityProvider
         {
             //IdentityProviderId = t.ProviderId
@@ -70,7 +71,8 @@ public class IdentityProviderDataGenerator : ILookupDataGenerator<JustinIdentity
             Name = t.DisplayName,
 
 
-        }); ;
+        });
+        ;
         //return default;
     }
 }
