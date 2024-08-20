@@ -1,5 +1,6 @@
 namespace Pidp.Features.DigitalEvidenceCaseManagement.Commands;
 
+using Confluent.Kafka;
 using DomainResults.Common;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -40,7 +41,7 @@ public class CaseAccessRequest
 
         }
     }
-    public class CommandHandler(IClock clock, ILogger<CaseAccessRequest.CommandHandler> logger,
+    public class CommandHandler(IClock clock, ILogger<CommandHandler> logger,
         PidpConfiguration config, PidpDbContext context,
         IKafkaProducer<string, SubAgencyDomainEvent> kafkaProducer,
         IEdtCaseManagementClient caseMgmtClient
@@ -101,7 +102,14 @@ public class CaseAccessRequest
                             this.logger.LogRequestCase(command.AgencyFileNumber, command.PartyId, subAgencyRequest.RequestId);
                             await trx.CommitAsync();
 
-                            await this.PublishSubAgencyAccessRequest(dto, subAgencyRequest);
+                            var publishedResponse = await this.PublishSubAgencyAccessRequest(dto, subAgencyRequest);
+                            if (publishedResponse.Status != PersistenceStatus.Persisted)
+                            {
+                                this.logger.LogFailedToPublishCase(subAgencyRequest.RequestId, command.PartyId);
+                                subAgencyRequest.RequestStatus = AgencyRequestStatus.Failed;
+                                await context.SaveChangesAsync();
+                                return DomainResult.Failed();
+                            }
                         }
                         else
                         {
@@ -124,7 +132,7 @@ public class CaseAccessRequest
         }
 
 
-        private async Task PublishSubAgencyAccessRequest(PartyDto dto, SubmittingAgencyRequest subAgencyRequest)
+        private async Task<DeliveryResult<string, SubAgencyDomainEvent>> PublishSubAgencyAccessRequest(PartyDto dto, SubmittingAgencyRequest subAgencyRequest)
         {
             var msgKey = Guid.NewGuid().ToString();
             Serilog.Log.Logger.Information("Publishing Sub Agency Domain Event to topic {0} {1} {2}", config.KafkaCluster.CaseAccessRequestTopicName, msgKey, subAgencyRequest.RequestId);
@@ -149,6 +157,8 @@ public class CaseAccessRequest
                 Serilog.Log.Logger.Error($"Failed to publish to {config.KafkaCluster.CaseAccessRequestTopicName} for {subAgencyRequest.RequestId}");
                 throw new AccessRequestException($"Failed to publish to {config.KafkaCluster.CaseAccessRequestTopicName} for {subAgencyRequest.RequestId}");
             }
+
+            return publishResponse;
         }
 
         private async Task<SubmittingAgencyRequest> SubmitAgencyCaseRequest(Command command)
@@ -201,4 +211,6 @@ public static partial class SubmittingAgencyLoggingExtensions
     public static partial void LogRequestToolsCase(this ILogger logger, int caseId, string? username);
     [LoggerMessage(5, LogLevel.Information, "Saved request {subAgencyRequestId} for {agencyFileNumber} party: {partyId}")]
     public static partial void LogRequestCase(this ILogger logger, string? agencyFileNumber, int partyId, int subAgencyRequestId);
+    [LoggerMessage(6, LogLevel.Error, "Failed to publish case request for {subAgencyRequestId}: Party {partyId}")]
+    public static partial void LogFailedToPublishCase(this ILogger logger, int subAgencyRequestId, int partyId);
 }
