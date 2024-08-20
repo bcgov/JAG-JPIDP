@@ -37,6 +37,8 @@
     <PackageReference Include="Quartz" Version="3.9.0" />
     <PackageReference Include="Quartz.AspNetCore" Version="3.9.0" />
     <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.9.0" />
+    <ProjectReference Include="..\CommonModels\CommonModels.csproj" />
+
   </ItemGroup>
 
   <ItemGroup>

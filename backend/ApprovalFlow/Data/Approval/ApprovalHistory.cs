@@ -14,7 +14,7 @@ public class ApprovalHistory : BaseAuditable
     public string DecisionNote { get; set; } = string.Empty;
     public string Approver { get; set; } = string.Empty;
     public int RequestId { get; set; }
-    public Request AccessRequest { get; set; }
+    public Request AccessRequest { get; set; } = default!;
     public Instant? Deleted { get; set; }
     public ApprovalStatus Status { get; set; } = ApprovalStatus.PENDING;
 
