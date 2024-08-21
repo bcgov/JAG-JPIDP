@@ -6,11 +6,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>c27750f6-c52b-45f1-b040-e4c09f34fc0d</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <Version>1.1.6</Version>
+    <Version>1.1.7</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\common\Common.csproj" />
+    <ProjectReference Include="..\CommonModels\CommonModels.csproj" />
+
     <PackageReference Include="Quartz" Version="3.9.0" />
     <PackageReference Include="Quartz.AspNetCore" Version="3.9.0" />
     <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.9.0" />

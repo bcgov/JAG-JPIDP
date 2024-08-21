@@ -4,12 +4,14 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-        <Version>1.1.6</Version>    
+        <Version>1.1.7</Version>    
     <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\common\Common.csproj" />
+    <ProjectReference Include="..\CommonModels\CommonModels.csproj" />
+
   </ItemGroup>
 
   <ItemGroup>

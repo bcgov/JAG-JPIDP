@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
+    <Version>1.1.7</Version>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>3b005920-7fbb-4ccb-a850-eefca1fadd82</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
@@ -14,6 +15,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\common\Common.csproj" />
+    <ProjectReference Include="..\CommonModels\CommonModels.csproj" />
+
   </ItemGroup>
 
   <ItemGroup>
