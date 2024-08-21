@@ -392,3 +392,4 @@ FodyWeavers.xsd
 /BlazorAdmin
 /backend/DIAMAdminServer
 /keycloak/extensions
+/backend/service.edt/appsettings.Development.json
