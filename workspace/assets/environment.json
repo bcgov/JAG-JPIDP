@@ -1,0 +1,36 @@
+{
+  "environmentName": "dev",
+  "apiEndpoint": "https://dev.jpidp.justice.gov.bc.ca/api/v1",
+  "configEndpoint": "https://dev.jpidp.justice.gov.bc.ca",
+  "applicationUrl": "https://dev.jpidp.justice.gov.bc.ca",
+  "caseManagement": {
+    "showAUFLink": false,
+    "showCaseImportLink": false,
+    "showCaseToolsLink": false,
+    "stickyAgencyCodes": ["RCMP", "FAKE"]
+  },
+  "urls": {
+    "subAgencyAufPortalUrl": "https://auf.dev.justice.gov.bc.ca",
+    "bcpsDemsPortalUrl": "https://dems.dev.jag.gov.bc.ca",
+    "bcLawDiscPortalUrl": "https://auf.dev.justice.gov.bc.ca",
+    "publicDiscPortalUrl": "https://dev.disclosure.bcprosecution.gov.bc.ca"
+  },
+  "launch": {
+    "bcLawDiscPortalLabel": "Launch DEMS Agency Upload Facility (AUF)",
+    "subAgencyAufPortalLabel": "Launch DEMS Agency Upload Facility (AUF)",
+    "bcpsDemsPortalLabel": "Launch DEMS",
+    "outOfCustodyPortalLabel": "Launch BCPS Disclosure Portal",
+    "policeToolsCaseAccessLabel": "Access the AUF Tools Case"
+  },
+  "demsImportURL": "https://dems.dev.jag.gov.bc.ca/Edt.aspx#/import/",
+  "keycloakConfig": {
+    "config": {
+      "url": "https://dev.common-sso.justice.gov.bc.ca/auth",
+      "realm": "BCPS",
+      "clientId": "PIDP-WEBAPP"
+    },
+    "initOptions": {
+      "onLoad": "check-sso"
+    }
+  }
+}
