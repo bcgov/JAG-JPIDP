@@ -5,7 +5,7 @@ using NodaTime;
 public class ApprovalModel
 {
     public int Id { get; set; }
-    public string Reason { get; set; } = string.Empty;
+    public List<ReasonModel>? Reasons { get; set; } = [];
     public string RequiredAccess { get; set; } = string.Empty;
     public int NoOfApprovalsRequired { get; set; }
     public Instant? Approved { get; set; }
@@ -17,8 +17,8 @@ public class ApprovalModel
     public string PhoneNumber { get; set; } = string.Empty;
     public string UserId { get; set; } = string.Empty;
     public string IdentityProvider { get; set; } = string.Empty;
-    public List<PersonalIdentityModel> PersonalIdentities { get; set; } = new List<PersonalIdentityModel>();
-    public IEnumerable<RequestModel> Requests { get; set; } = Enumerable.Empty<RequestModel>();
+    public List<PersonalIdentityModel> PersonalIdentities { get; set; } = [];
+    public IEnumerable<RequestModel> Requests { get; set; } = [];
 }
 
 public class ApprovalHistoryModel : AuditModel
@@ -35,14 +35,14 @@ public class RequestModel : AuditModel
     public string RequestType { get; set; }
     public string ApprovalType { get; set; } = string.Empty;
     public ApprovalStatus Status { get; set; } = ApprovalStatus.PENDING;
-    public IEnumerable<ApprovalHistoryModel> History { get; set; } = Enumerable.Empty<ApprovalHistoryModel>();
+    public IEnumerable<ApprovalHistoryModel> History { get; set; } = [];
 
 }
 
 public class AuditModel
 {
-    public Instant Created { get; set; }
-    public Instant Modified { get; set; }
+    public Instant? Created { get; set; }
+    public Instant? Modified { get; set; }
 }
 
 public enum ApprovalStatus

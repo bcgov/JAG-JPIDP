@@ -4,6 +4,10 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Version>1.1.7.2</Version>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>DIAM-Common-Models</Title>
+    <Description>Common models for DIAM services</Description>
   </PropertyGroup>
 
 </Project>
