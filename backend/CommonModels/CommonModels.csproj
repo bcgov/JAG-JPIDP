@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -10,4 +10,10 @@
     <Description>Common models for DIAM services</Description>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="NodaTime" Version="3.1.11" />
+    <PackageReference Include="NodaTime.Serialization.SystemTextJson" Version="1.2.0" />
+    <PackageReference Include="MediatR" Version="12.2.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
 </Project>

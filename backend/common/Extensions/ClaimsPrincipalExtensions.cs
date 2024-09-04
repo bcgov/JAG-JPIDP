@@ -1,10 +1,10 @@
 namespace Common.Extensions;
 
-using common.Constants.Auth;
-using NodaTime;
-using NodaTime.Text;
 using System.Security.Claims;
 using System.Text.Json;
+using Common.Constants.Auth;
+using NodaTime;
+using NodaTime.Text;
 
 
 public static class ClaimsPrincipalExtensions

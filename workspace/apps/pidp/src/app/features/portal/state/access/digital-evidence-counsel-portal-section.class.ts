@@ -29,7 +29,7 @@ export class DigitalEvidenceCounselPortalSection
   ) {
     super();
     this.key = 'digitalEvidenceCounsel';
-    this.heading = 'Digital Evidence and Disclosure Duty Case Access';
+    this.heading = 'Duty Counsel Bail Package Access';
     this.description = `If you act as Duty Counsel then you may manage access to your Duty Counsel court locations.`;
     this.order = this.GetOrder(
       this.profileStatus.status.digitalEvidenceCounsel

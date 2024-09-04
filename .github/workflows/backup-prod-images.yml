@@ -1,0 +1,53 @@
+name: Backup Prod Images
+ 
+on:
+  workflow_dispatch:
+    inputs:
+      application:
+        required: true
+        description: What application do you want to backup?
+        type: choice
+        options:
+          - diam-admin-frontend
+          - diam-approvalflow
+          - diam-casemanagement
+          - diam-config
+          - diam-cornet-service
+          - diam-disclosure
+          - diam-edtcore
+          - diam-frontend
+          - islinterfaces
+          - diam-jumapi
+          - diam-kafka-connectors
+          - diam-maintenance
+          - diam-notification
+          - diam-sso
+          - diam-webapi
+
+env:
+  IMAGE_NAME: ${{ github.event.inputs.application }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+ 
+    steps:
+      - uses: actions/checkout@v3
+      - name: Login to Artifactory 
+        uses: docker/login-action@v1
+        with:
+          registry: artifacts.developer.gov.bc.ca
+          username: ${{ secrets.ARTIFACTORY_USERNAME }}
+          password: ${{ secrets.ARTIFACTORY_PASSWORD }}
+      
+      - name: Pull Prod Image
+        run: |
+          docker pull artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:main
+ 
+      - name: Build Image
+        run: |
+          docker tag artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:main artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:main-backup
+     
+      - name: Docker Push to Artifactory
+        run: |
+          docker push artifacts.developer.gov.bc.ca/de27-general-docker/${{env.IMAGE_NAME}}:main-backup

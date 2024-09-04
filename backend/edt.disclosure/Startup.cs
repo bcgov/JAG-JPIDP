@@ -3,6 +3,7 @@ namespace edt.disclosure;
 
 using System.Reflection;
 using System.Text.Json;
+using Common.Logging;
 using edt.disclosure.Data;
 using edt.disclosure.HttpClients;
 using edt.disclosure.Infrastructure.Telemetry;
@@ -219,6 +220,8 @@ public class Startup
         });
         app.UseRouting();
         app.UseCors("CorsPolicy");
+        app.UseMiddleware<CorrelationIdMiddleware>();
+
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseEndpoints(endpoints =>

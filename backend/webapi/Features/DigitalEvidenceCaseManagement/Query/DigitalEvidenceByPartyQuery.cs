@@ -25,7 +25,7 @@ public class DigitalEvidenceByPartyQuery
         public async Task<List<DigitalEvidenceCaseModel>> HandleAsync(Query query)
         {
             return await this.context.SubmittingAgencyRequests
-                .Where(request => request.PartyId == query.PartyId)
+                .Where(request => request.PartyId == query.PartyId && request.DeletedOn == null)
                 .Select(caseRequest => new DigitalEvidenceCaseModel
                 {
                     Id = caseRequest.CaseId,

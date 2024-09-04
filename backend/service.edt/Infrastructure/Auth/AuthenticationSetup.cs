@@ -92,6 +92,13 @@ public static class AuthenticationSetup
         });
         services.AddAuthorization(options =>
         {
+            options.AddPolicy(Policies.DiamInternalAuthentication, policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
+            {
+
+                var hasClaim = context.User.HasClaim(c => c.Type == Claims.AuthorizedParties && c.Value == Clients.DiamInternal);
+                return hasClaim;
+            }));
+
             options.FallbackPolicy = new AuthorizationPolicyBuilder()
                 .RequireAuthenticatedUser()
                 .Build();
@@ -106,7 +113,7 @@ public static class AuthenticationSetup
             && identity.IsAuthenticated)
         {
             // Flatten the Resource Access claim
-            identity.AddClaims(identity.GetResourceAccessRoles(Clients.PidpApi)
+            identity.AddClaims(identity.GetResourceAccessRoles(Clients.DiamInternal)
                 .Select(role => new Claim(ClaimTypes.Role, role)));
         }
 

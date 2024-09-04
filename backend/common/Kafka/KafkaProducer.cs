@@ -2,6 +2,7 @@ namespace Common.Kafka;
 
 using System.Diagnostics;
 using System.Globalization;
+using System.Text;
 using Common.Configuration;
 using Common.Constants;
 using Common.Constants.Telemetry;
@@ -38,6 +39,35 @@ public class KafkaProducer<TKey, TValue> : IDisposable, IKafkaProducer<TKey, TVa
 
     public async Task ProduceAsyncDeprecated(string topic, TKey key, TValue value) => await this.producer.ProduceAsync(topic, new Message<TKey, TValue> { Key = key, Value = value });
 
+    /// <summary>
+    /// Produce a message to a topic with a key but also with a correlation id in the headers
+    /// </summary>
+    /// <param name="topic"></param>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    /// <param name="correlationId"></param>
+    /// <returns></returns>
+    public async Task<DeliveryResult<TKey, TValue>> ProduceWithCorrelationIdAsync(string topic, TKey key, TValue value, string correlationId)
+    {
+        var message = new Message<TKey, TValue> { Key = key, Value = value };
+        var activity = Diagnostics.Producer.Start(topic, message);
+        try
+        {
+            using var currentActivity = Activity.StartActivity("edt.kafka.produce", ActivityKind.Producer);
+            currentActivity?.SetTag("kafka.topic", topic);
+            currentActivity?.SetTag("kafka.key", key);
+
+            message.Headers.Add("X-Correlation-ID", Encoding.UTF8.GetBytes(correlationId));
+
+            var response = await this.producer.ProduceAsync(topic, message);
+            Log.Information($"Producer response status: {response.Status} partition: {response.Partition} topic:{response.Topic}");
+            return response;
+        }
+        finally
+        {
+            activity?.Stop();
+        }
+    }
 
 
     public async Task<DeliveryResult<TKey, TValue>> ProduceAsync(string topic, TKey key, TValue value)

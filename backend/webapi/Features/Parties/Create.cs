@@ -3,14 +3,12 @@ namespace Pidp.Features.Parties;
 using System.Security.Claims;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
-using NodaTime;
 using Pidp.Data;
 using Pidp.Extensions;
 using Pidp.Infrastructure.Auth;
 using Pidp.Models;
 using Pidp.Models.Lookups;
 using Pidp.Models.UserInfo;
-using Quartz.Impl.Triggers;
 
 public class Create
 {
@@ -18,7 +16,7 @@ public class Create
     {
         public Guid UserId { get; set; }
         public string? Jpdid { get; set; }
-        public LocalDate? Birthdate { get; set; }
+        public DateOnly? Birthdate { get; set; }
         public string? Gender { get; set; }
         public string FirstName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
@@ -190,7 +188,7 @@ public class Create
 
                 var outOfCustodyType = await this.GetAndAddUserTypeLookup(PublicUserType.OutOfCustodyAccused.ToString(), "Out of custody accused");
 
-                if ( outOfCustodyType != null)
+                if (outOfCustodyType != null)
                 {
                     var partyUserType = new PartyUserType
                     {
@@ -245,17 +243,29 @@ public class Create
 
                     if (agency != null)
                     {
-                        Serilog.Log.Information("User {0} is from agency {1} - automatically assigning organization", user.GetUserId(), agency.Name);
                         var organization = this.GetOrganization(this.context, agency.IdpHint);
 
                         if (organization != null)
                         {
-                            var org = new PartyOrgainizationDetail
+                            // check if user is already assigned to organization
+                            var partyOrg = this.context.PartyOrgainizationDetails.Where(p => p.PartyId == party.Id && p.OrganizationCode == organization.Code).FirstOrDefault();
+
+                            if (partyOrg != null)
                             {
-                                Party = party,
-                                Organization = organization
-                            };
-                            this.context.PartyOrgainizationDetails.Add(org);
+                                Serilog.Log.Information($"User {party.Jpdid} is already assigned to agency {organization.Code}");
+
+                            }
+                            else
+                            {
+                                Serilog.Log.Information($"User {party.Jpdid} is from agency {agency.Name} - automatically assigning organization", user.GetUserId(), agency.Name);
+
+                                var org = new PartyOrgainizationDetail
+                                {
+                                    Party = party,
+                                    Organization = organization
+                                };
+                                this.context.PartyOrgainizationDetails.Add(org);
+                            }
                         }
                     }
                 }

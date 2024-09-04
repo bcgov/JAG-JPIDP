@@ -3,7 +3,7 @@ namespace Common.Models.EDT;
 public class EdtField
 {
     public int Id { get; set; }
-    public string? Name { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
     public object? Value { get; set; }
 }
 

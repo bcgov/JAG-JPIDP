@@ -13,10 +13,6 @@ import { RouteUtils } from '@bcgov/shared/utils';
             404
             <span class="d-block d-lg-inline">We couldn't find this page</span>
           </h1>
-
-          <button mat-flat-button (click)="routeToRoot()">
-            Let us help you find your way to your destination
-          </button>
         </div>
       </div>
     </ui-root-route-container>

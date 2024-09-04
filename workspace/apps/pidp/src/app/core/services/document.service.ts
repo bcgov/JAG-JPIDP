@@ -141,9 +141,9 @@ export class DocumentService {
 
   public getDefenceCounselDutyNotice(): string {
     return `
-      By entering your BC Law Society Verified Credential and requesting access to a Duty Counsel disclosure folio you acknowledge that you are assigned as Duty Counsel for the location and on the date(s) you have provided, or that you need temporary access to represent a client prior to full disclosure being made.<br/>
-      You acknowledge that you are bound by the implied undertakings which attach to disclosure: to safeguard the Duty Counsel disclosure and not to use it for any other purpose or in any other context other than for the purpose of making full answer and defence in the criminal case for which it was provided.<br/>
-      You will limit your access to the Duty Counsel folio to those times when you are acting as Duty Counsel, and you will be responsible for ensuring that you do not access disclosure for individuals with whom you may have a conflict.
+      By entering your BC Law Society Member Digital Credential and requesting access to a Duty Counsel Bail Package folio you acknowledge that you are assigned as Duty Counsel for the court location(s) and on the date(s) you have provided.<p/><p/>
+      You will limit your access to the Duty Counsel Bail Package folio to those times when you are acting as Duty Counsel, and you will be responsible for ensuring that you do not access any Bail Package for individuals with whom you may have a conflict.<p/>
+      You acknowledge that you are bound by the implied undertaking which attaches to these materials and will safeguard the information contained therein. You will not use the accessed material for any purpose or in any context other than for the purpose of representing as Duty Counsel those accused for whom the materials were prepared.
     `;
   }
 

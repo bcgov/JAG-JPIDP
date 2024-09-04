@@ -4,11 +4,13 @@ using System.Net;
 using System.Threading.Tasks;
 using Pidp.Models;
 
-public class EdtCaseManagementClient : BaseClient, IEdtCaseManagementClient
+/// <summary>
+/// Handles case requests
+/// </summary>
+/// <param name="httpClient"></param>
+/// <param name="logger"></param>
+public class EdtCaseManagementClient(HttpClient httpClient, ILogger<EdtCaseManagementClient> logger) : BaseClient(httpClient, logger), IEdtCaseManagementClient
 {
-
-    public EdtCaseManagementClient(HttpClient httpClient, ILogger<EdtCaseManagementClient> logger) : base(httpClient, logger) { }
-
     public async Task<DigitalEvidenceCaseModel?> FindCase(string partyId, string caseName)
     {
         Serilog.Log.Information($"Case search on {caseName} by {partyId}");

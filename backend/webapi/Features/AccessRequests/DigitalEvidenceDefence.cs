@@ -2,7 +2,7 @@ namespace Pidp.Features.AccessRequests;
 
 using System.Diagnostics;
 using System.Linq;
-using common.Constants.Auth;
+using Common.Constants.Auth;
 using Common.Models.Approval;
 using Common.Models.EDT;
 using Confluent.Kafka;
@@ -59,7 +59,7 @@ public class DigitalEvidenceDefence
         private readonly IKafkaProducer<string, EdtDisclosureDefenceUserProvisioningModel> kafkaProducer;
         private readonly IKafkaProducer<string, ApprovalRequestModel> approvalKafkaProducer;
         private static readonly Histogram DefenceCommandHistogram = Metrics.CreateHistogram("defence_command_timing", "Histogram of defence command executions.");
-
+        private static readonly char[] Separators = [' ', '-'];
         private readonly IKafkaProducer<string, EdtPersonProvisioningModel> kafkaDefenceCoreProducer;
 
         private readonly string LAW_SOCIETY = "LawSociety";
@@ -283,24 +283,46 @@ public class DigitalEvidenceDefence
             {
                 Serilog.Log.Error($"No member status found for user {keycloakUser}");
                 errors.Add("No member status found for user");
-
-
             }
 
-            if (!string.Join(" ", BCFamilyName).Equals(keycloakUser.LastName.Trim(), StringComparison.OrdinalIgnoreCase))
+            if (errors.Count > 0)
             {
-                Serilog.Log.Error($"User family name does not match between BCSC [{string.Join(" ", BCFamilyName)}] and BCLaw [{keycloakUser.LastName}] {keycloakUser}");
-                errors.Add($"User family name does not match between BCSC [{string.Join(" ", BCFamilyName)}] and BCLaw [{keycloakUser.LastName}]");
-
+                // drop out and return errors
+                return errors;
             }
 
 
-            if (!string.Join(" ", BCFirstName).Equals(keycloakUser.FirstName.Trim(), StringComparison.OrdinalIgnoreCase))
+            var BCFamilyNames = BCFamilyName[0].Split(Separators, StringSplitOptions.RemoveEmptyEntries);
+            var BCFirstNames = BCFirstName[0].Split(Separators, StringSplitOptions.RemoveEmptyEntries);
+            var BCLawFamilyNames = keycloakUser.LastName.Split(Separators, StringSplitOptions.RemoveEmptyEntries);
+            var BCLawFirstNames = keycloakUser.FirstName.Split(Separators, StringSplitOptions.RemoveEmptyEntries);
+
+
+
+            if (BCFamilyNames.Length > 1 || BCLawFamilyNames.Length > 1)
             {
-                Serilog.Log.Error($"User first name does not match between BCSC [{string.Join(" ", BCFirstName)}] and BCLaw [{keycloakUser.FirstName}] {keycloakUser}");
-                errors.Add($"User first name does not match between BCSC [{string.Join(" ", BCFirstName)}] and BCLaw [{keycloakUser.FirstName}]");
+                Serilog.Log.Information($"Multiple family names found in claims [{string.Join(" ", BCFamilyNames)}]:[{string.Join(" ", BCLawFamilyNames)}] - only first will be compared");
 
             }
+            if (!string.Equals(BCLawFamilyNames[0].Trim(), BCFamilyNames[0].Trim(), StringComparison.OrdinalIgnoreCase))
+            {
+                Serilog.Log.Error($"User family name does not match between BCSC [{string.Join(" ", BCFamilyNames)}] and BCLaw [{string.Join(" ", BCLawFamilyNames)}]");
+                errors.Add($"User family name does not match between BCSC [{string.Join(" ", BCFamilyNames)}] and BCLaw [{string.Join(" ", BCLawFamilyNames)}]");
+            }
+
+
+            if (BCFirstNames.Length > 1 || BCLawFirstNames.Length > 1)
+            {
+                Serilog.Log.Logger.Information($"Multiple first names found in claims [{string.Join(" ", BCFirstNames)}]:[{string.Join(" ", BCLawFirstNames)}] - only first will be compared");
+            }
+
+
+            if (!string.Equals(BCFirstNames[0].Trim(), BCLawFirstNames[0].Trim(), StringComparison.OrdinalIgnoreCase))
+            {
+                Serilog.Log.Error($"User first name does not match between BCSC [{string.Join(" ", BCFirstNames)}] and BCLaw [{string.Join(" ", BCLawFirstNames)}]");
+                errors.Add($"User first name does not match between BCSC [{string.Join(" ", BCFirstNames)}] and BCLaw [{string.Join(" ", BCLawFirstNames)}]");
+            }
+
 
             // not practicing - shouldnt get this far but checking just in case!
             if (memberShipStatus != null && !string.Join("", memberShipStatus).Equals("PRAC", StringComparison.Ordinal))
@@ -492,12 +514,20 @@ public class DigitalEvidenceDefence
                 }
             };
 
+            var reasonsList = new List<ApprovalRequestReason>();
+            foreach (var reason in reasonList)
+            {
+                reasonsList.Add(new ApprovalRequestReason
+                {
+                    Reason = reason
+                });
+            }
 
             // use UUIDs for topic keys
             results.Add(await this.approvalKafkaProducer.ProduceAsync(this.config.KafkaCluster.ApprovalCreationTopic, taskId, new ApprovalRequestModel
             {
                 AccessRequests = requests,
-                Reasons = reasonList,
+                Reasons = reasonsList,
                 RequiredAccess = "Defence and Duty Counsel Access",
                 Created = DateTime.Now,
                 PersonalIdentities = identities,
@@ -574,7 +604,10 @@ public static partial class DigitalEvidenceDefenceLoggingExtensions
 {
     [LoggerMessage(1, LogLevel.Warning, "Digital Evidence Access Request denied due to the Party Record not meeting all prerequisites.")]
     public static partial void LogDigitalEvidenceDisclosureAccessRequestDenied(this ILogger logger);
+
     [LoggerMessage(2, LogLevel.Warning, "Digital Evidence Access Request Transaction failed due to the Party Record not meeting all prerequisites.")]
     public static partial void LogDigitalEvidenceDisclosureAccessTrxFailed(this ILogger logger, string ex);
 
+    [LoggerMessage(3, LogLevel.Error, "User first name does not match between BCSC [{bcscFirstName}] and BCLaw [{bclawFirstName}] {keycloakUser}]")]
+    public static partial void LogUserFirstNameMismatch(this ILogger logger, string bcscFirstName, string bclawFirstName, string keycloakUser);
 }
