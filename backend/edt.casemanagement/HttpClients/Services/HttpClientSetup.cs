@@ -1,6 +1,8 @@
 namespace edt.casemanagement.HttpClients;
 
 using System.Net.Http.Headers;
+using Common.Authorization;
+using Common.Constants.Auth;
 using edt.casemanagement.HttpClients.Services.EdtCore;
 using edt.service.HttpClients.Keycloak;
 using EdtService.Extensions;
@@ -24,7 +26,7 @@ public static class HttpClientSetup
         services.AddHttpClientWithBaseAddress<IKeycloakAdministrationClient, KeycloakAdministrationClient>(config.Keycloak.AdministrationUrl)
     .WithBearerToken(new KeycloakAdministrationClientCredentials
     {
-        Address = config.Keycloak.TokenUrl,
+        Address = KeycloakUrls.Token(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl),
         ClientId = config.Keycloak.AdministrationClientId,
         ClientSecret = config.Keycloak.AdministrationClientSecret
     });
@@ -41,7 +43,7 @@ public static class HttpClientSetup
     {
         builder.Services.AddSingleton(credentials)
             .AddTransient<BearerTokenHandler<T>>();
-   
+
         builder.AddHttpMessageHandler<BearerTokenHandler<T>>();
 
         return builder;

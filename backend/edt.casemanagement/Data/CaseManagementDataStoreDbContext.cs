@@ -8,8 +8,14 @@ using NodaTime;
 public class CaseManagementDataStoreDbContext : DbContext
 {
     private readonly IClock clock;
+    private readonly EdtServiceConfiguration configuration;
 
-    public CaseManagementDataStoreDbContext(DbContextOptions<CaseManagementDataStoreDbContext> options, IClock clock) : base(options) => this.clock = clock;
+    public CaseManagementDataStoreDbContext(DbContextOptions<CaseManagementDataStoreDbContext> options, IClock clock, EdtServiceConfiguration configuration) : base(options)
+    {
+
+        this.configuration = configuration;
+        this.clock = clock;
+    }
 
     public DbSet<CaseRequest> CaseRequests { get; set; } = default!;
     public DbSet<CaseSearchRequest> CaseSearchRequests { get; set; } = default!;
@@ -32,7 +38,7 @@ public class CaseManagementDataStoreDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasDefaultSchema("casemgmt");
+        modelBuilder.HasDefaultSchema(this.configuration.ConnectionStrings.Schema);
         base.OnModelCreating(modelBuilder);
 
 
@@ -75,4 +81,15 @@ public class CaseManagementDataStoreDbContext : DbContext
 
     public async Task<bool> HasBeenProcessed(string messageId, string consumer) => await this.IdempotentConsumers.AnyAsync(x => x.MessageId == messageId && x.Consumer == consumer);
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.UseNpgsql(this.configuration.ConnectionStrings.CaseManagementDataStore, x => x.MigrationsHistoryTable(this.configuration.ConnectionStrings.EfHistoryTable, this.configuration.ConnectionStrings.EfHistorySchema));
+
+
+        if (Environment.GetEnvironmentVariable("LOG_SQL") != null && "true".Equals(Environment.GetEnvironmentVariable("LOG_SQL")))
+        {
+            optionsBuilder.LogTo(Console.WriteLine);
+        }
+
+    }
 }

@@ -1,16 +1,12 @@
 namespace edt.service.HttpClients;
 
-using DomainResults.Common;
-using Flurl;
 using System.Net;
+using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
-
+using DomainResults.Common;
 using EdtService.Extensions;
-using Microsoft.Extensions.ObjectPool;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
-using System.Collections.Specialized;
-using System.Net.Mime;
+using Flurl;
 
 public enum PropertySerialization
 {

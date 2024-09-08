@@ -1,6 +1,8 @@
 namespace edt.disclosure.HttpClients;
 
 using System.Net.Http.Headers;
+using Common.Authorization;
+using Common.Constants.Auth;
 using edt.disclosure.HttpClients.Keycloak;
 using edt.disclosure.HttpClients.Services.EdtDisclosure;
 using EdtDisclosureService.Extensions;
@@ -16,12 +18,16 @@ public static class HttpClientSetup
         Log.Logger.Information("Using EDT Disclosure endpoint {0}", config.EdtClient.Url);
 
         services.AddHttpClientWithBaseAddress<IEdtDisclosureClient, EdtDisclosureClient>(config.EdtClient.Url)
-            .ConfigureHttpClient(c => c.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", config.EdtClient.ApiKey));
+            .ConfigureHttpClient(c =>
+            {
+                c.Timeout = TimeSpan.FromSeconds(config.DisclosureClientTimeoutSeconds);
+                c.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", config.EdtClient.ApiKey);
+            });
 
-        services.AddHttpClientWithBaseAddress<IKeycloakAdministrationClient, KeycloakAdministrationClient>(config.Keycloak.AdministrationUrl)
+        services.AddHttpClientWithBaseAddress<IKeycloakAdministrationClient, KeycloakAdministrationClient>(KeycloakUrls.Authority(realm: RealmConstants.BCPSRealm, config.Keycloak.AdministrationUrl))
     .WithBearerToken(new KeycloakAdministrationClientCredentials
     {
-        Address = config.Keycloak.TokenUrl,
+        Address = KeycloakUrls.Token(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl),
         ClientId = config.Keycloak.AdministrationClientId,
         ClientSecret = config.Keycloak.AdministrationClientSecret
     });

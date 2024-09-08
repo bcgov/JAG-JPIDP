@@ -2,9 +2,10 @@ name: diam-approvalflow
  
 on:
   push:
-    branches:  [develop,test,main]
+    branches: [develop,test,main]
     paths:
       - "backend/ApprovalFlow/**"
+      - "backend/common/**" 
       - ".github/workflows/build-push-approvalflow.yml"
   workflow_dispatch:
 env:
@@ -81,8 +82,8 @@ jobs:
 
 
       - name: Update Helm Values and Commit
-        id: helm
-        if: steps.gitops.outcome == 'success'  # Only run if the previous step (publish) was successful
+        id: helm-dev
+        if: github.ref == 'refs/heads/develop' && steps.gitops.outcome == 'success' # Only run if the previous step (publish) was successful
         run: |
 
           echo "Updating ${{ env.BRANCH_NAME }} helm  values to trigger ArgoCD deployment"

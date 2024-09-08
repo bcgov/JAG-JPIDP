@@ -79,6 +79,7 @@
 
 .login-pf body .login-pf-page #kc-content #kc-content-wrapper .kc-social-link > a {
   display: flex;
+  position: relative;
 }
 
 .login-pf body .login-pf-page #kc-content #kc-content-wrapper .kc-social-link > a > .kc-social-title {
@@ -87,6 +88,8 @@
 
 .login-pf body .login-pf-page #kc-content #kc-content-wrapper .kc-social-link > a > .kc-social-icon {
   width: 28px;
+  position: absolute;
+  right: 10px;
 }
 
 .login-pf body .login-pf-page .kc-social-links {
@@ -256,4 +259,34 @@
   .login-pf body .login-pf-page #kc-header #kc-header-wrapper {
     font-size: 1.8rem;
   }
+}
+
+.tooltiptext {
+  visibility: hidden;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  width: 220px;
+  bottom: 100%;
+  left: 50%;
+  margin: 10px -110px;
+  /* Position the tooltip */
+  position: absolute;
+  z-index: 1;
+}
+
+.tooltiptext:before {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -8px;
+  border: 8px solid transparent;
+  border-top: 8px solid #333;
+}
+
+.kc-social-icon:hover .tooltiptext {
+  visibility: visible;
 }

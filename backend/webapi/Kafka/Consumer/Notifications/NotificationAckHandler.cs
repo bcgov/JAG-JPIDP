@@ -35,8 +35,7 @@ public class NotificationAckHandler(PidpDbContext context, IClock clock) : IKafk
                 .Where(request => request.Id == value.AccessRequestId).SingleOrDefaultAsync();
             if (accessRequest != null)
             {
-                Log.Information($"Marking access request {value.AccessRequestId} as {value.Status}");
-
+                Log.Information($"Marking access request {value.AccessRequestId} {value.PartId} as {value.Status}");
 
                 try
                 {
@@ -88,8 +87,9 @@ public class NotificationAckHandler(PidpDbContext context, IClock clock) : IKafk
                     }
                     else
                     {
+                        Log.Information($"Flagging {value.Status} for {accessRequest.RequestId}");
                         accessRequest.RequestStatus = value.Status;
-                        accessRequest.Details = value.Details;
+                        accessRequest.Details = string.IsNullOrEmpty(value.Details) ? value.Status : value.Details;
                     }
 
 

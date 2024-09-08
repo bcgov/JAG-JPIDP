@@ -34,6 +34,7 @@ export const environment: AppEnvironment = {
   caseManagement: {
     showAUFLink: true,
     showCaseImportLink: false,
+    showCaseToolsLink: true,
     stickyAgencyCodes: ['FAKE'],
   },
   environmentName: EnvironmentName.LOCAL,
@@ -68,6 +69,7 @@ export const environment: AppEnvironment = {
     bcpsDemsPortalLabel: 'Launch DEMS',
     outOfCustodyPortalLabel: 'Launch BCPS Disclosure Portal',
     publicDisclosurePortalLabel: 'Access your disclosure material',
+    policeToolsCaseAccessLabel: 'Access the AUF tools case',
   },
   keycloakConfig: {
     config: {

@@ -14,6 +14,8 @@ public static class Claims
     public const string PreferredUsername = "preferred_username";
     public const string ResourceAccess = "resource_access";
     public const string Subject = "sub";
+    public const string AuthorizedParties = "azp";
+
     public const string Roles = "roles";
     public const string BcPersonFamilyName = "BCPerID_last_name";
     public const string BcPersonGivenName = "BCPerID_first_name";

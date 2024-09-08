@@ -103,7 +103,7 @@ public partial class ProfileStatus
             internal override string SectionName => "demographics";
             public string FirstName { get; set; } = string.Empty;
             public string LastName { get; set; } = string.Empty;
-            public LocalDate? Birthdate { get; set; }
+            public DateOnly? Birthdate { get; set; }
             public string? Email { get; set; }
             public string? Phone { get; set; }
             public IEnumerable<string> UserTypes { get; set; }

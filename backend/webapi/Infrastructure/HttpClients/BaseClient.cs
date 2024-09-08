@@ -154,6 +154,21 @@ public class BaseClient
                 return DomainResult.Failed<T>("Response content was null");
             }
 
+            var text = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            // resource was created with empty response
+            if (response.StatusCode == HttpStatusCode.Created && string.IsNullOrEmpty(text))
+            {
+                return DomainResult.Success<T>(default!);
+            }
+
+            // handle empty response
+            //if (text.Equals("[]", StringComparison.Ordinal))
+            //{
+            //    this.Logger.LogEmptyResponseContent();
+            //    return DomainResult.Success<T>(new List());
+            //}
+
             var deserializationResult = await response.Content.ReadFromJsonAsync<T>(cancellationToken: cancellationToken);
             if (deserializationResult == null)
             {
@@ -279,4 +294,6 @@ public static partial class BaseClientLoggingExtensions
 
     [LoggerMessage(4, LogLevel.Error, "Received non-success status code {statusCode} with message: {responseMessage}. [{url}]")]
     public static partial void LogNonSuccessStatusCodeWithURL(this ILogger logger, HttpStatusCode statusCode, string responseMessage, string url);
+    [LoggerMessage(5, LogLevel.Error, "Response content was empty.")]
+    public static partial void LogEmptyResponseContent(this ILogger logger);
 }

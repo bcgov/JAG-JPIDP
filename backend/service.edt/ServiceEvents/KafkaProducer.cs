@@ -25,7 +25,15 @@ public class KafkaProducer<TKey, TValue> : KafkaOauthTokenRefreshHandler, IDispo
     /// https://github.com/confluentinc/confluent-kafka-dotnet/blob/master/test/Confluent.Kafka.IntegrationTests/Tests/OauthBearerToken_PublishConsume.cs
     /// </summary>
     /// <param name="config"></param>
-    public KafkaProducer(ProducerConfig config) => this.producer = new ProducerBuilder<TKey, TValue>(config).SetOAuthBearerTokenRefreshHandler(OauthTokenRefreshCallback).SetValueSerializer(new KafkaSerializer<TValue>()).Build();
+    /// 
+
+    public KafkaProducer(ProducerConfig config) => this.producer = new ProducerBuilder<TKey, TValue>(config)
+        // fix annoying logging
+        .SetLogHandler((producer, log) => { })
+        .SetErrorHandler((producer, log) => Log.Error($"Kafka error {log}"))
+        .SetOAuthBearerTokenRefreshHandler(OauthTokenRefreshCallback)
+        .SetValueSerializer(new KafkaSerializer<TValue>()).Build();
+
     public async Task ProduceAsyncDeprecated(string topic, TKey key, TValue value) => await this.producer.ProduceAsync(topic, new Message<TKey, TValue> { Key = key, Value = value });
 
     public async Task<DeliveryResult<TKey, TValue>> ProduceAsync(string topic, TKey key, TValue value)
@@ -73,7 +81,7 @@ public class KafkaProducer<TKey, TValue> : KafkaOauthTokenRefreshHandler, IDispo
             clientId ??= clusterConfig.GetValue<string>("KafkaCluster:SaslOauthbearerProducerClientId");
             tokenEndpoint ??= clusterConfig.GetValue<string>("KafkaCluster:SaslOauthbearerTokenEndpointUrl");
 
-            Log.Logger.Information("Pidp Kafka Producer getting token {0} {1}", tokenEndpoint, clientId);
+            Log.Logger.Debug("Pidp Kafka Producer getting token {0} {1}", tokenEndpoint, clientId);
             var accessTokenClient = new HttpClient();
 
             Log.Logger.Debug("Producer getting token {0}", tokenEndpoint);
@@ -86,14 +94,22 @@ public class KafkaProducer<TKey, TValue> : KafkaOauthTokenRefreshHandler, IDispo
                 ClientSecret = clientSecret,
                 GrantType = "client_credentials"
             });
-            var tokenTicks = GetTokenExpirationTime(accessToken.AccessToken);
-            var subject = GetTokenSubject(accessToken.AccessToken);
-            var tokenDate = DateTimeOffset.FromUnixTimeSeconds(tokenTicks);
-            var timeSpan = new DateTime() - tokenDate;
-            var ms = tokenDate.ToUnixTimeMilliseconds();
-            Log.Logger.Information("Producer got token {0}", ms);
 
-            client.OAuthBearerSetToken(accessToken.AccessToken, ms, subject);
+            if (string.IsNullOrEmpty(accessToken.AccessToken))
+            {
+                Log.Error("Unable to get new access token - check sso services");
+            }
+            else
+            {
+                var tokenTicks = GetTokenExpirationTime(accessToken.AccessToken);
+                var subject = GetTokenSubject(accessToken.AccessToken);
+                var tokenDate = DateTimeOffset.FromUnixTimeSeconds(tokenTicks);
+                var timeSpan = new DateTime() - tokenDate;
+                var ms = tokenDate.ToUnixTimeMilliseconds();
+                Log.Logger.Debug("Producer got token {0}", ms);
+
+                client.OAuthBearerSetToken(accessToken.AccessToken, ms, subject);
+            }
         }
         catch (Exception ex)
         {

@@ -36,6 +36,9 @@ public class JumWebApiConfiguration
     public class ConnectionStringConfiguration
     {
         public string JumDatabase { get; set; } = string.Empty;
+        public string Schema { get; set; } = "public";
+        public string EfHistorySchema { get; set; } = "public";
+        public string EfHistoryTable { get; set; } = "__EFMigrationsHistory";
     }
 
     public class ChesClientConfiguration
@@ -95,8 +98,6 @@ public class JumWebApiConfiguration
     public class KeycloakConfiguration
     {
         public string RealmUrl { get; set; } = string.Empty;
-        public string WellKnownConfig => KeycloakUrls.WellKnownConfig(this.RealmUrl);
-        public string TokenUrl => KeycloakUrls.Token(this.RealmUrl);
         public string AdministrationUrl { get; set; } = string.Empty;
         public string AdministrationClientId { get; set; } = string.Empty;
         public string AdministrationClientSecret { get; set; } = string.Empty;

@@ -145,15 +145,28 @@
   </ui-page-section>
   <ui-page-section>
     <ui-page-section-subheader icon="table_chart" heading="Case Listing">
-      <div *ngIf="showAUFLink">
-        <button
-          class="mat-elevation-z6"
-          mat-stroked-button
-          type="button"
-          color="primary"
-          (click)="launchAUF()">
-          {{launchDEMSLabel}}
-        </button>
+      <div class="row align-items-start">
+        <div *ngIf="showAUFLink" class="col">
+          <button
+            class="mat-elevation-z6"
+            mat-stroked-button
+            type="button"
+            color="primary"
+            (click)="launchAUF()">
+            {{launchDEMSLabel}}
+          </button>
+        </div>
+        <div *ngIf="showCaseToolsLink" class="col">
+          <button
+            class="mat-elevation-z6"
+            mat-stroked-button
+            type="button"
+            color="primary"
+            [disabled]="hasToolsCaseAccess()"
+            (click)="requestToolsCaseAccess()">
+            {{accessPoliceToolsCaseLabel}}
+          </button>
+        </div>
       </div>
     </ui-page-section-subheader>
     <ng-container>

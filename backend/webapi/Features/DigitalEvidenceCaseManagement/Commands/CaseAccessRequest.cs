@@ -4,10 +4,11 @@ using Confluent.Kafka;
 using DomainResults.Common;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 using NodaTime;
 using Pidp.Data;
+using Pidp.Exceptions;
 using Pidp.Features.AccessRequests;
+using Pidp.Infrastructure.HttpClients.Edt;
 using Pidp.Kafka.Interfaces;
 using Pidp.Models;
 using Pidp.Models.Lookups;
@@ -22,6 +23,7 @@ public class CaseAccessRequest
         public string AgencyFileNumber { get; set; } = string.Empty;
         public int RequestId { get; set; }
         public int CaseId { get; set; }
+        public bool ToolsCaseRequest { get; set; }
         public string? Key { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string CaseGroup { get; set; } = string.Empty;
@@ -31,9 +33,9 @@ public class CaseAccessRequest
     {
         public CommandValidator()
         {
-            this.RuleFor(x => x.AgencyFileNumber).NotEmpty();
+            this.RuleFor(x => x.AgencyFileNumber).NotEmpty().When(x => !x.ToolsCaseRequest);
             this.RuleFor(x => x.PartyId).GreaterThan(0);
-            this.RuleFor(x => x.CaseId).GreaterThan(0);
+            this.RuleFor(x => x.CaseId).GreaterThan(0).When(x => !x.ToolsCaseRequest);
             // BCPSDEMS-1655 - case key not necessary
             // this.RuleFor(command => command.Key).NotEmpty();
 
@@ -45,22 +47,9 @@ public class CaseAccessRequest
         IEdtCaseManagementClient caseMgmtClient
             ) : ICommandHandler<Command, IDomainResult>
     {
-        private readonly IClock clock;
-        private readonly ILogger logger;
-        private readonly PidpConfiguration config;
-        private readonly PidpDbContext context;
-        private readonly IKafkaProducer<string, SubAgencyDomainEvent> kafkaProducer;
+        private readonly ILogger logger = logger;
         private static readonly Histogram CaseQueueRequestDuration = Metrics
             .CreateHistogram("pipd_case_request_duration", "Histogram of case request call durations.");
-
-        public CommandHandler(IClock clock, ILogger<CommandHandler> logger, PidpConfiguration config, PidpDbContext context, IKafkaProducer<string, SubAgencyDomainEvent> kafkaProducer)
-        {
-            this.clock = clock;
-            this.logger = logger;
-            this.config = config;
-            this.context = context;
-            this.kafkaProducer = kafkaProducer;
-        }
 
         public async Task<IDomainResult> HandleAsync(Command command)
         {
@@ -76,22 +65,36 @@ public class CaseAccessRequest
                     return DomainResult.Failed();
                 }
 
-                using var trx = this.context.Database.BeginTransaction();
-
-                try
+                using (var trx = context.Database.BeginTransaction())
                 {
-
-                    if (string.IsNullOrEmpty(command.Key))
+                    try
                     {
-                        // case has no RCC number - we'll record and move on
-                        this.logger.LogCaseMissingKey(command.CaseId, dto.Jpdid);
-                    }
+                        // not a tools request and no key provided
+                        if (!command.ToolsCaseRequest && string.IsNullOrEmpty(command.Key))
+                        {
+                            // case has no RCC number - we'll record and move on
+                            this.logger.LogCaseMissingKey(command.CaseId, dto.Jpdid);
+                        }
 
-                    var subAgencyRequest = await this.SubmitAgencyCaseRequest(command); //save all trx at once for production(remove this and handle using idempotent)
+                        if (command.ToolsCaseRequest)
+                        {
+                            var toolsCase = await caseMgmtClient.GetCase(config.AUFToolsCaseId);
+                            if (toolsCase == null)
+                            {
+                                throw new AccessRequestException("Tools case not found");
+                            }
+                            else
+                            {
+                                this.logger.LogRequestToolsCase(toolsCase.Id, dto.Jpdid);
+                                command.Key = toolsCase.Key;
+                                command.CaseId = toolsCase.Id;
+                                command.Name = toolsCase.Name;
+                                command.AgencyFileNumber = "AUF Tools Case";
+                            }
+                        }
 
-                    // var exportedEvent = this.AddOutbox(command, subAgencyRequest, dto);
+                        var subAgencyRequest = await this.SubmitAgencyCaseRequest(command);
 
-                    await this.PublishSubAgencyAccessRequest(dto, subAgencyRequest);
 
                         var addedRows = await context.SaveChangesAsync();
                         if (addedRows > 0)
@@ -118,41 +121,22 @@ public class CaseAccessRequest
                     catch (Exception ex)
                     {
 
-                    this.logger.LogDigitalEvidenceAccessTrxFailed(ex.Message.ToString());
-                    await trx.RollbackAsync();
-                    return DomainResult.Failed();
+                        this.logger.LogDigitalEvidenceAccessTrxFailed(ex.Message.ToString());
+                        await trx.RollbackAsync();
+                        return DomainResult.Failed();
+                    }
                 }
-
                 return DomainResult.Success();
 
             }
         }
 
-        private Task<Models.OutBoxEvent.ExportedEvent> AddOutbox(Command command, SubmittingAgencyRequest subAgencyRequest, PartyDto dto)
-        {
-            var exportedEvent = this.context.ExportedEvents.Add(new Models.OutBoxEvent.ExportedEvent
-            {
-                AggregateType = $"SubmittingAgency.{command.SubmittingAgencyCode}",
-                AggregateId = $"{subAgencyRequest.RequestId}",
-                DateOccurred = this.clock.GetCurrentInstant(),
-                EventType = subAgencyRequest.Created < this.clock.GetCurrentInstant() ? "CaseAccessRequestCreated" : "CaseAccessRequestUpdated",
-                EventPayload = JsonConvert.SerializeObject(new SubAgencyDomainEvent
-                {
-                    RequestId = subAgencyRequest.RequestId,
-                    CaseId = subAgencyRequest.CaseId,
-                    PartyId = subAgencyRequest.PartyId,
-                    Username = subAgencyRequest.Party!.Jpdid,
-                    RequestedOn = subAgencyRequest.RequestedOn
-                })
-            });
-            return Task.FromResult(exportedEvent.Entity);
-        }
 
         private async Task<DeliveryResult<string, SubAgencyDomainEvent>> PublishSubAgencyAccessRequest(PartyDto dto, SubmittingAgencyRequest subAgencyRequest)
         {
             var msgKey = Guid.NewGuid().ToString();
-            Serilog.Log.Logger.Information("Publishing Sub Agency Domain Event to topic {0} {1} {2}", this.config.KafkaCluster.CaseAccessRequestTopicName, msgKey, subAgencyRequest.RequestId);
-            await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.CaseAccessRequestTopicName, msgKey, new SubAgencyDomainEvent
+            Serilog.Log.Logger.Information("Publishing Sub Agency Domain Event to topic {0} {1} {2}", config.KafkaCluster.CaseAccessRequestTopicName, msgKey, subAgencyRequest.RequestId);
+            var publishResponse = await kafkaProducer.ProduceAsync(config.KafkaCluster.CaseAccessRequestTopicName, msgKey, new SubAgencyDomainEvent
             {
                 RequestId = subAgencyRequest.RequestId,
                 CaseId = subAgencyRequest.CaseId,
@@ -187,18 +171,17 @@ public class CaseAccessRequest
                 AgencyFileNumber = command.AgencyFileNumber,
                 RCCNumber = command.Key,
                 PartyId = command.PartyId,
-                RequestedOn = this.clock.GetCurrentInstant()
+                RequestedOn = clock.GetCurrentInstant()
             };
-            this.context.SubmittingAgencyRequests.Add(subAgencyAccessRequest);
 
-            await this.context.SaveChangesAsync();
+            context.SubmittingAgencyRequests.Add(subAgencyAccessRequest);
 
             return subAgencyAccessRequest;
         }
 
         private async Task<PartyDto> GetPidpUser(Command command)
         {
-            return await this.context.Parties
+            return await context.Parties
                 .Where(party => party.Id == command.PartyId)
                 .Select(party => new PartyDto
                 {

@@ -25,7 +25,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NotificationService", "Noti
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApprovalFlow", "ApprovalFlow\ApprovalFlow.csproj", "{A0C2CCC2-DB68-4F3C-8D47-077A6A0B3A39}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DIAMConfiguration", "DIAMConfiguration\DIAMConfiguration.csproj", "{E581EC7C-EBD3-4110-888D-5334F2712FDC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DIAMConfiguration", "DIAMConfiguration\DIAMConfiguration.csproj", "{E581EC7C-EBD3-4110-888D-5334F2712FDC}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DIAMCornetService", "DIAMCornetService\DIAMCornetService.csproj", "{26BD70B1-DAD6-42FB-97E4-13649A1A6B8F}"
 EndProject

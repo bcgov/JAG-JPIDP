@@ -2,7 +2,8 @@ namespace ApprovalFlow.Auth;
 
 using System.Net;
 using System.Security.Claims;
-using common.Constants.Auth;
+using Common.Authorization;
+using Common.Constants.Auth;
 using Common.Extensions;
 using DIAM.Common.Helpers.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

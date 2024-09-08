@@ -1,6 +1,6 @@
 namespace Pidp.Features.CourtLocations;
 
-using common.Constants.Auth;
+using Common.Constants.Auth;
 using DomainResults.Common;
 using DomainResults.Mvc;
 using Microsoft.AspNetCore.Authorization;

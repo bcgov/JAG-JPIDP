@@ -21,11 +21,10 @@ fetch('/assets/environment.json')
       appConfig.keycloakConfig.config = keycloakConfig.config;
     }
 
-
     return appConfig;
   })
   .catch((err) => {
-    console.warn('Config error - revert to local %o', err);
+    console.warn('Config error - revert to local: ' + err);
     return APP_DI_CONFIG;
   })
   .then((appConfig: AppConfig) => {
