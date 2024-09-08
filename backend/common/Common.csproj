@@ -5,7 +5,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <Version>1.1.5</Version>
+    <Version>1.1.7.1</Version>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>DIAM-Common</Title>
   </PropertyGroup>
   <ItemGroup>
 
@@ -80,6 +82,9 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Authorization\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CommonConstants\CommonConstants.csproj" />
   </ItemGroup>
 
 </Project>

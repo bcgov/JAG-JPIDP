@@ -38,7 +38,7 @@ public class ApprovalsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [Authorize(Policy = Policies.ApprovalAuthorization)]
 
-    public async Task<ActionResult<ApprovalModel>> PostApprovalResponse([FromBody] ApproveDenyInput command)
+    public async Task<ActionResult<ApprovalModel>> PostApprovalResponse([FromBody] ApprovalResponseInput command)
     {
         var user = HttpContext.User.Identities.First().Claims.FirstOrDefault( claim => claim.Type.Equals(Claims.PreferredUsername))?.Value;
         command.ApproverUserId = user;

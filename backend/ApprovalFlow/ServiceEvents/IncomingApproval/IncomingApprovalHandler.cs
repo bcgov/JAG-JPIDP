@@ -77,6 +77,15 @@ public class IncomingApprovalHandler : IKafkaHandler<string, ApprovalRequestMode
                     });
                 }
 
+                var reasons = new List<ApprovalRequestReasons>();
+                foreach (var reason in incomingRequest.Reasons)
+                {
+                    reasons.Add(new ApprovalRequestReasons
+                    {
+                        Reason = reason.Reason
+                    });
+                }
+
                 var approvalRequest = new ApprovalRequest
                 {
                     MessageKey = key,
@@ -85,10 +94,11 @@ public class IncomingApprovalHandler : IKafkaHandler<string, ApprovalRequestMode
                     IdentityProvider = incomingRequest.IdentityProvider,
                     EMailAddress = incomingRequest.EMailAddress,
                     PhoneNumber = incomingRequest.Phone,
-                    Reason = string.Join(", ", incomingRequest.Reasons),
+                    Reasons = reasons,
                     NoOfApprovalsRequired = incomingRequest.NoOfApprovalsRequired > 0 ? incomingRequest.NoOfApprovalsRequired : 1,
                     Requests = accessRequests
                 };
+
 
                 foreach (var identity in incomingRequest.PersonalIdentities)
                 {

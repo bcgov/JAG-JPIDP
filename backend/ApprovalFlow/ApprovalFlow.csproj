@@ -4,13 +4,16 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>1.1.5</Version>
+    <Version>1.1.7</Version>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
 
    <ItemGroup>
     <ProjectReference Include="..\common\Common.csproj" />
-  </ItemGroup>
+     <ProjectReference Include="..\CommonModels\CommonModels.csproj" />
+     <ProjectReference Include="..\CommonConstants\CommonConstants.csproj" />
+
+   </ItemGroup>
 
    <ItemGroup>
      <Folder Include="API\v1\" />

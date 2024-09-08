@@ -1,124 +1,177 @@
 <ui-page [formGroup]="formState.form">
   <ui-page-header>{{ title }}</ui-page-header>
   <ui-page-section>
-    <ui-page-section-subheader icon="assignment" heading="Digital Evidence and Disclosure Duty Case Access">
+    <ui-page-section-subheader
+      icon="assignment"
+      heading="Duty Counsel Bail Package Access">
       <ng-container uiPageSectionSubheaderDesc>
         <div class="small-text" [innerHTML]="defenceCounselDutyNotice"></div>
       </ng-container>
-
     </ui-page-section-subheader>
     <section>
       <div class="row">
         <mat-form-field>
-          <input type="text" placeholder="Select court location" matInput aria-label="Court location name"
-            formControlName="courtLocation" [matAutocomplete]="auto" />
-          <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSelectLocation($event)"
-            [displayWith]="getLocationDisplay">
-            <mat-option *ngFor="let location of filteredOptions" [value]="location">
+          <input
+            type="text"
+            placeholder="Select court location"
+            matInput
+            formControlName="courtLocation"
+            aria-label="Court location name"
+            [matAutocomplete]="auto" />
+          <mat-autocomplete
+            #auto="matAutocomplete"
+            [displayWith]="getLocationDisplay"
+            (optionSelected)="onSelectLocation($event)">
+            <mat-option
+              *ngFor="let location of filteredOptions"
+              [value]="location">
               {{ location.name }}
             </mat-option>
           </mat-autocomplete>
-          <mat-icon matSuffix (click)="clearLocation()" *ngIf="this.formState.courtLocation.valid"
-            matTooltip="Clear input">delete_outline</mat-icon>
+          <mat-icon
+            *ngIf="this.formState.courtLocation.valid"
+            matSuffix
+            matTooltip="Clear input"
+            (click)="clearLocation()"
+            >delete_outline</mat-icon
+          >
         </mat-form-field>
       </div>
       <div class="row">
-
         <mat-form-field>
-          <mat-label>Request access for the following time period (max 90 days)</mat-label>
-          <mat-date-range-input [rangePicker]="picker" [min]="minDate" [max]="maxDate" required>
-            <input matStartDate formControlName="dateFrom" placeholder="Start Date">
-            <input matEndDate formControlName="dateTo" placeholder="End Date">
+          <mat-label
+            >Request access for the following time period (max 90
+            days)</mat-label
+          >
+          <mat-date-range-input
+            required
+            [rangePicker]="picker"
+            [min]="minDate"
+            [max]="maxDate">
+            <input
+              matStartDate
+              formControlName="dateFrom"
+              placeholder="Start Date" />
+            <input matEndDate formControlName="dateTo" placeholder="End Date" />
           </mat-date-range-input>
           <mat-hint>DD MMM YYYY – DD MMM YYYY</mat-hint>
-          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker-toggle
+            matSuffix
+            [for]="picker"></mat-datepicker-toggle>
           <mat-date-range-picker #picker></mat-date-range-picker>
         </mat-form-field>
-
-
       </div>
-      <button mat-stroked-button type="button" tabindex="3" style="margin-left: 10px;" color="primary"
-        (click)="requestAccess()" [disabled]="!formComplete()">
+      <button
+        mat-stroked-button
+        type="button"
+        tabindex="3"
+        style="margin-left: 10px"
+        color="primary"
+        [disabled]="!formComplete()"
+        (click)="requestAccess()">
         Submit
       </button>
-
     </section>
-
   </ui-page-section>
   <ui-page-section>
-    <ui-page-section-subheader icon="table_chart" heading="Current Court Access"><mat-slide-toggle
-        formControlName="showDeleted" color="primary">Show
-        expired/deleted</mat-slide-toggle>
+    <ui-page-section-subheader icon="table_chart" heading="Current Court Access"
+      ><mat-slide-toggle formControlName="showDeleted" color="primary"
+        >Show expired/deleted</mat-slide-toggle
+      >
     </ui-page-section-subheader>
 
     <ng-container>
-
-      <div style="width:100%" fxLayout="row" fxLayoutAlign="start end" fxLayoutGap="0">
-
+      <div
+        style="width: 100%"
+        fxLayout="row"
+        fxLayoutAlign="start end"
+        fxLayoutGap="0">
         <div fxFlex>
-
-          <table mat-table [dataSource]="dataSource" class="mat-elevation-z4" matSort #courtTblSortWithObject="matSort"
-            matSortActive="courtLocation" matSortDirection="desc">
+          <table
+            class="mat-elevation-z4"
+            mat-table
+            matSort
+            #courtTblSortWithObject="matSort"
+            matSortActive="courtLocation"
+            matSortDirection="desc"
+            [dataSource]="dataSource">
             <ng-container matColumnDef="courtLocation">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Court</th>
-              <td *matCellDef="let request" mat-cell>{{ request.courtLocation.name }}</td>
+              <th *matHeaderCellDef mat-header-cell mat-sort-header>Court</th>
+              <td *matCellDef="let request" mat-cell>
+                {{ request.courtLocation.name }}
+              </td>
             </ng-container>
             <ng-container matColumnDef="requestedOn">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Requested</th>
-              <td *matCellDef="let request" mat-cell>{{ request.requestedOn | date: 'MM-dd-yy hh:mm' }}
-
+              <th *matHeaderCellDef mat-header-cell mat-sort-header>
+                Requested
+              </th>
+              <td *matCellDef="let request" mat-cell>
+                {{ request.requestedOn | date: 'MM-dd-yy hh:mm' }}
               </td>
             </ng-container>
             <ng-container matColumnDef="validFrom">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Valid From</th>
-              <td *matCellDef="let request" mat-cell>{{ request.validFrom | date: 'dd MMM' }}
-
+              <th *matHeaderCellDef mat-header-cell mat-sort-header>
+                Valid From
+              </th>
+              <td *matCellDef="let request" mat-cell>
+                {{ request.validFrom | date: 'dd MMM' }}
               </td>
             </ng-container>
             <ng-container matColumnDef="validUntil">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Valid Until</th>
-              <td *matCellDef="let request" mat-cell>{{ request.validUntil | date: 'dd MMM' }}
-
+              <th *matHeaderCellDef mat-header-cell mat-sort-header>
+                Valid Until
+              </th>
+              <td *matCellDef="let request" mat-cell>
+                {{ request.validUntil | date: 'dd MMM' }}
               </td>
             </ng-container>
             <ng-container matColumnDef="requestStatus">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
-              <td *matCellDef="let request" mat-cell>{{ request.requestStatus }}
-                <mat-icon class="warning-icon" matTooltip="{{request.details}}"
-                  *ngIf="request.requestStatus === 'Error'">error</mat-icon>
+              <th *matHeaderCellDef mat-header-cell mat-sort-header>Status</th>
+              <td *matCellDef="let request" mat-cell>
+                {{ request.requestStatus }}
+                <mat-icon
+                  *ngIf="request.requestStatus === 'Error'"
+                  class="warning-icon"
+                  matTooltip="{{request.details}}"
+                  >error</mat-icon
+                >
               </td>
             </ng-container>
             <ng-container matColumnDef="action">
-              <th *matHeaderCellDef mat-header-cell>Action </th>
-              <td *matCellDef="let request" mat-cell class="centered-column"><i
+              <th *matHeaderCellDef mat-header-cell>Action</th>
+              <td *matCellDef="let request" class="centered-column" mat-cell>
+                <i
                   matTooltip="Remove access to this location"
-                  (click)="onRemoveAccess(request)"><mat-icon>delete_outline</mat-icon></i>
+                  (click)="onRemoveAccess(request)"
+                  ><mat-icon>delete_outline</mat-icon></i
+                >
               </td>
             </ng-container>
             <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
-            <tr class="mat-row" *matNoDataRow>
+            <tr *matNoDataRow class="mat-row">
               <td class="mat-cell" [attr.colspan]="displayedColumns.length">
                 You have no active requests.<br />
-                You may request access to court locations for up to 90 days at a time.
+                You may request access to court locations for up to 90 days at a
+                time.
               </td>
             </tr>
             <tr *matRowDef="let row; columns: displayedColumns" mat-row></tr>
-
           </table>
-
         </div>
-
       </div>
       <br />
       <br />
     </ng-container>
-
   </ui-page-section>
 
   <ui-page-footer>
-    <button mat-stroked-button uiPageFooterAction type="button" color="primary" (click)="onBack()">
+    <button
+      mat-stroked-button
+      uiPageFooterAction
+      type="button"
+      color="primary"
+      (click)="onBack()">
       Back
     </button>
   </ui-page-footer>
-
 </ui-page>

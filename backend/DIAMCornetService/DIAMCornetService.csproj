@@ -3,25 +3,24 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
     <Version>1.1.7</Version>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>3b005920-7fbb-4ccb-a850-eefca1fadd82</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
 
-  
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.20.1" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\common\Common.csproj" />
     <ProjectReference Include="..\CommonModels\CommonModels.csproj" />
 
   </ItemGroup>
 
-  
   <ItemGroup>
-    <Folder Include="API\v1\" />
+    <Folder Include="Data\Migrations\" />
   </ItemGroup>
-
-  <Target Name="OpenAPI" AfterTargets="Build" Condition="$(Configuration)=='Debug'">
-
-  </Target>
 
 </Project>

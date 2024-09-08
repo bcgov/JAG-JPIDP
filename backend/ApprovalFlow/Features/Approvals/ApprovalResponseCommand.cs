@@ -14,7 +14,7 @@ using DIAM.Common.Models;
 using Newtonsoft.Json;
 using Serilog;
 
-public class ApprovalResponseCommand : IRequestHandler<ApproveDenyInput, ApprovalModel>
+public class ApprovalResponseCommand : IRequestHandler<ApprovalResponseInput, ApprovalModel>
 {
     private readonly ApprovalFlowDataStoreDbContext dbContext;
     private readonly IClock clock;
@@ -36,7 +36,7 @@ public class ApprovalResponseCommand : IRequestHandler<ApproveDenyInput, Approva
 
 
 
-    public class CommandValidator : AbstractValidator<ApproveDenyInput>
+    public class CommandValidator : AbstractValidator<ApprovalResponseInput>
     {
         public CommandValidator()
         {
@@ -44,7 +44,7 @@ public class ApprovalResponseCommand : IRequestHandler<ApproveDenyInput, Approva
         }
     }
 
-    public async Task<ApprovalModel> Handle(ApproveDenyInput input, CancellationToken cancellationToken)
+    public async Task<ApprovalModel> Handle(ApprovalResponseInput input, CancellationToken cancellationToken)
     {
         Serilog.Log.Information($"Handling incoming approval request {input.ApprovalRequestId} Approver {input.ApproverUserId} - Approved {input.Approved}");
 

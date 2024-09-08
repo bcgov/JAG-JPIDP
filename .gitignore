@@ -388,3 +388,8 @@ FodyWeavers.xsd
 /diam-config/.idea/workspace.xml
 /diam-admin-react
 /Infra/terraform/keycloak
+/auth
+/BlazorAdmin
+/backend/DIAMAdminServer
+/keycloak/extensions
+/backend/service.edt/appsettings.Development.json
