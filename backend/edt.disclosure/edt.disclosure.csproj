@@ -5,12 +5,14 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <Version>1.1.5</Version>
+    <Version>1.1.7</Version>
   </PropertyGroup>
 
 
   <ItemGroup>
     <ProjectReference Include="..\common\Common.csproj" />
+    <ProjectReference Include="..\CommonModels\CommonModels.csproj" />
+
   </ItemGroup>
 
 

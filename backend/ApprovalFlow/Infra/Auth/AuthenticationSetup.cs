@@ -1,12 +1,14 @@
 namespace ApprovalFlow.Auth;
 
+using System.Net;
 using System.Security.Claims;
 using common.Constants.Auth;
 using Common.Extensions;
 using DIAM.Common.Helpers.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
-
+using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 
 public static class AuthenticationSetup
 {
@@ -22,14 +24,56 @@ public static class AuthenticationSetup
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
         {
-            options.Authority = config.Keycloak.RealmUrl;
-            options.Audience = Clients.PidpService;
+            options.Authority = KeycloakUrls.Authority(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl);
             options.RequireHttpsMetadata = false;
-            options.Audience = Clients.AdminApi;
-            options.MetadataAddress = config.Keycloak.WellKnownConfig;
+            options.Audience = Clients.PidpService;
+            options.MetadataAddress = KeycloakUrls.WellKnownConfig(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl);
             options.Events = new JwtBearerEvents
             {
-                OnTokenValidated = async context => await OnTokenValidatedAsync(context)
+                OnTokenValidated = async context => await OnTokenValidatedAsync(context),
+                OnAuthenticationFailed = context =>
+                {
+                    context.Response.OnStarting(async () =>
+                    {
+                        context.NoResult();
+                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                        context.Response.ContentType = "application/json";
+                        var response =
+                            JsonConvert.SerializeObject("The access token provided is not valid.");
+                        if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
+                        {
+                            context.Response.Headers.Add("Token-Expired", "true");
+                            response = JsonConvert.SerializeObject("The access token provided has expired.");
+                        }
+                        await context.Response.WriteAsync(response);
+                    });
+
+                    return Task.CompletedTask;
+
+
+                },
+                OnChallenge = context =>
+                {
+                    context.HandleResponse();
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    context.Response.ContentType = "application/json";
+
+                    if (string.IsNullOrEmpty(context.Error))
+                        context.Error = "invalid_token";
+                    if (string.IsNullOrEmpty(context.ErrorDescription))
+                        context.ErrorDescription = "This request requires a valid JWT access token to be provided";
+
+                    return context.Response.WriteAsync(JsonConvert.SerializeObject(new
+                    {
+                        error = context.Error,
+                        error_description = context.ErrorDescription
+                    }));
+                },
+                OnForbidden = context =>
+                {
+                    context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                    return Task.CompletedTask;
+                }
             };
         });
 
@@ -48,10 +92,10 @@ public static class AuthenticationSetup
         services.AddAuthorizationBuilder().AddPolicy(Policies.ApprovalAuthorization, policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
             {
                 var hasAdminRole = context.User.IsInRole(Roles.Admin);
+                var isDIAMInternal = context.User.Claims.Any(c => c.Type == Claims.AuthorizedParties && c.Value == Clients.DiamInternal);
                 var hasApprovalRole = context.User.IsInRole(Roles.Approver);
                 var hasReadOnlyApprovalRole = context.User.IsInRole(Roles.ApprovalViewer);
-                var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider && (c.Value == ClaimValues.Idir || c.Value == ClaimValues.Adfs));
-                return (hasAdminRole || hasApprovalRole || hasReadOnlyApprovalRole) && hasClaim;
+                return (hasAdminRole || hasApprovalRole || hasReadOnlyApprovalRole || isDIAMInternal);
             }));
 
 

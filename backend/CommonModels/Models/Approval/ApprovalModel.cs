@@ -5,7 +5,7 @@ using NodaTime;
 public class ApprovalModel
 {
     public int Id { get; set; }
-    public string Reason { get; set; } = string.Empty;
+    public List<ReasonModel> Reasons { get; set; } = [];
     public string RequiredAccess { get; set; } = string.Empty;
     public int NoOfApprovalsRequired { get; set; }
     public Instant? Approved { get; set; }
@@ -29,10 +29,18 @@ public class ApprovalHistoryModel : AuditModel
     public Instant? Deleted { get; set; }
 }
 
+public class ReasonModel : AuditModel
+{
+    public int Id { get; set; }
+    public string Reason { get; set; } = string.Empty;
+    public int ApprovalRequestId { get; set; }
+
+}
+
 public class RequestModel : AuditModel
 {
     public int RequestId { get; set; }
-    public string RequestType { get; set; }
+    public string RequestType { get; set; } = string.Empty;
     public string ApprovalType { get; set; } = string.Empty;
     public ApprovalStatus Status { get; set; } = ApprovalStatus.PENDING;
     public IEnumerable<ApprovalHistoryModel> History { get; set; } = Enumerable.Empty<ApprovalHistoryModel>();

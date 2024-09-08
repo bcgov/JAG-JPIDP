@@ -1,6 +1,6 @@
 namespace Pidp.Features.Parties;
 
-using NodaTime;
+using System.Security.Claims;
 using Pidp.Extensions;
 using Pidp.Models;
 using Pidp.Models.Lookups;
@@ -9,6 +9,7 @@ using Serilog;
 
 public partial class ProfileStatus
 {
+    private static readonly char[] Separators = [' ', '-'];
 
     public static bool PermitIDIRCaseManagement()
     {
@@ -177,9 +178,19 @@ public partial class ProfileStatus
                     var familyName = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("family_name", StringComparison.OrdinalIgnoreCase));
                     var givenName = profile.User?.Claims.FirstOrDefault(claim => claim.Type.Equals("given_name", StringComparison.OrdinalIgnoreCase));
 
-                    if (familyName == null || givenName == null || bCServicesCardLastName == null ||
-                        !bCServicesCardLastName.Value.Equals(familyName.Value, StringComparison.OrdinalIgnoreCase) ||
-                        bCServicesCardFirstName == null || !bCServicesCardFirstName.Value.Equals(givenName.Value, StringComparison.OrdinalIgnoreCase))
+                    if (bCServicesCardLastName == null || bCServicesCardFirstName == null || familyName == null || givenName == null)
+                    {
+                        Log.Warning($"VC Credential missing for {profile.User.GetUserId()} [{familyName}] [{bCServicesCardLastName}] [{givenName}] [{bCServicesCardFirstName}]");
+                        this.Alerts.Add(Alert.VerifiedCredentialMismatch);
+                        this.StatusCode = StatusCode.Error;
+                        return;
+                    }
+
+                    // check the names match - we wont prevent moving ahead but will warn in the UI
+                    var namesMatch = ValidateNames(bCServicesCardLastName, familyName, bCServicesCardFirstName, givenName);
+
+
+                    if (!namesMatch)
                     {
                         Log.Warning($"VC Credential mismatch for {profile.User.GetUserId()} [{familyName}] [{bCServicesCardLastName}] [{givenName}] [{bCServicesCardFirstName}]");
                         this.Alerts.Add(Alert.VerifiedCredentialMismatch);
@@ -248,6 +259,29 @@ public partial class ProfileStatus
 
 
                 this.StatusCode = StatusCode.Complete;
+            }
+
+            private static bool ValidateNames(Claim bCServicesCardLastName, Claim familyName, Claim bCServicesCardFirstName, Claim givenName)
+            {
+                var valid = true;
+                var bcLastNames = bCServicesCardLastName.Value.Split(Separators, StringSplitOptions.TrimEntries);
+                var familyNames = familyName.Value.Split(Separators, StringSplitOptions.TrimEntries);
+                var bcFirstNames = bCServicesCardFirstName.Value.Split(Separators, StringSplitOptions.TrimEntries);
+                var givenNames = givenName.Value.Split(Separators, StringSplitOptions.TrimEntries);
+
+                if (!string.Equals(bcLastNames[0].Trim(), familyNames[0].Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    Log.Error($"User family name does not match between BCSC [{string.Join(" ", familyNames)}] and BCLaw [{string.Join(" ", bcLastNames)}]");
+                    valid = false;
+                }
+
+                if (!string.Equals(bcFirstNames[0].Trim(), givenNames[0].Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    Log.Error($"User family name does not match between BCSC [{string.Join(" ", bcFirstNames)}] and BCLaw [{string.Join(" ", givenNames)}]");
+                    valid = false;
+                }
+
+                return valid;
             }
         }
 

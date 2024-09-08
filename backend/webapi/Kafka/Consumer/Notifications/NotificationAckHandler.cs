@@ -20,7 +20,7 @@ public class NotificationAckHandler(PidpDbContext context, IClock clock) : IKafk
         using var trx = context.Database.BeginTransaction();
 
         Log.Logger.Information($"{value.PartId} {value.EventType} Message received on {consumerName} with key {key}");
-        //check whether this message has been processed before   
+        //check whether this message has been processed before
         if (await context.HasBeenProcessed(key, consumerName))
         {
             await trx.RollbackAsync();
@@ -41,6 +41,7 @@ public class NotificationAckHandler(PidpDbContext context, IClock clock) : IKafk
                 try
                 {
                     accessRequest.Status = value.Status;
+
                     await context.IdempotentConsumer(messageId: key, consumer: consumerName);
                     await context.SaveChangesAsync();
                     await trx.CommitAsync();
@@ -90,6 +91,7 @@ public class NotificationAckHandler(PidpDbContext context, IClock clock) : IKafk
                         accessRequest.RequestStatus = value.Status;
                         accessRequest.Details = value.Details;
                     }
+
 
                     var affectedRows = await context.SaveChangesAsync();
                     if (affectedRows > 0)

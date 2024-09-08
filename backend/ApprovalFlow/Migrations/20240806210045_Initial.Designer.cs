@@ -10,18 +10,19 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace ApprovalFlow.Data.Migrations
+namespace ApprovalFlow.Migrations
 {
     [DbContext(typeof(ApprovalFlowDataStoreDbContext))]
-    [Migration("20230905223125_Initial")]
+    [Migration("20240806210045_Initial")]
     partial class Initial
     {
+        /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("approvalflow")
-                .HasAnnotation("ProductVersion", "6.0.8")
+                .HasAnnotation("ProductVersion", "8.0.6")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -103,10 +104,6 @@ namespace ApprovalFlow.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Reason")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("RequiredAccess")
                         .IsRequired()
                         .HasColumnType("text");
@@ -118,6 +115,34 @@ namespace ApprovalFlow.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ApprovalRequest", "approvalflow");
+                });
+
+            modelBuilder.Entity("ApprovalFlow.Data.Approval.ApprovalRequestReasons", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ApprovalRequestId")
+                        .HasColumnType("integer");
+
+                    b.Property<Instant>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Instant>("Modified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApprovalRequestId");
+
+                    b.ToTable("ApprovalRequestReasons", "approvalflow");
                 });
 
             modelBuilder.Entity("ApprovalFlow.Data.Approval.PersonalIdentity", b =>
@@ -237,6 +262,17 @@ namespace ApprovalFlow.Data.Migrations
                     b.Navigation("AccessRequest");
                 });
 
+            modelBuilder.Entity("ApprovalFlow.Data.Approval.ApprovalRequestReasons", b =>
+                {
+                    b.HasOne("ApprovalFlow.Data.Approval.ApprovalRequest", "ApprovalRequest")
+                        .WithMany("Reasons")
+                        .HasForeignKey("ApprovalRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ApprovalRequest");
+                });
+
             modelBuilder.Entity("ApprovalFlow.Data.Approval.PersonalIdentity", b =>
                 {
                     b.HasOne("ApprovalFlow.Data.Approval.ApprovalRequest", "ApprovalRequest")
@@ -262,6 +298,8 @@ namespace ApprovalFlow.Data.Migrations
             modelBuilder.Entity("ApprovalFlow.Data.Approval.ApprovalRequest", b =>
                 {
                     b.Navigation("PersonalIdentities");
+
+                    b.Navigation("Reasons");
 
                     b.Navigation("Requests");
                 });

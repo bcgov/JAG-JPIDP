@@ -39,6 +39,7 @@ public class ApprovalFlowDataStoreDbContext : DbContext
         modelBuilder.HasDefaultSchema("approvalflow");
         base.OnModelCreating(modelBuilder);
 
+
         modelBuilder
         .Entity<Request>()
         .Property(d => d.ApprovalType)
