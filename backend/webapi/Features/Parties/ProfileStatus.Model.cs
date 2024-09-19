@@ -121,7 +121,7 @@ public partial class ProfileStatus
             // submitting agency user details are locked
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
-                this.StatusCode = profile.UserIsBcServicesCard ? StatusCode.LockedComplete : profile.DemographicsEntered || profile.SubmittingAgency != null ?
+                this.StatusCode = profile.UserIsBcServicesCard || profile.UserIsIdir ? StatusCode.LockedComplete : profile.DemographicsEntered || profile.SubmittingAgency != null ?
                     (profile.SubmittingAgency != null || profile.UserIsBcps) ? StatusCode.HiddenComplete : StatusCode.Complete :
 
                     StatusCode.Incomplete;
@@ -282,6 +282,34 @@ public partial class ProfileStatus
                 }
 
                 return valid;
+            }
+        }
+
+        public class JamPor : ProfileSection
+        {
+            internal override string SectionName => "jamPor";
+            public JamPor(ProfileStatusDto profile) : base(profile) { }
+
+            protected override void SetAlertsAndStatus(ProfileStatusDto profile)
+            {
+                if (!profile.UserIsIdir)
+                {
+                    this.StatusCode = StatusCode.Hidden;
+                    return;
+                }
+                this.StatusCode = StatusCode.Available;
+
+                if (profile.AccessRequestStatus.Any())
+                {
+                    var request = profile.AccessRequestStatus.First();
+                    if (request != null)
+                    {
+                        this.StatusCode = Enum.Parse<StatusCode>(request);
+                    }
+
+                }
+
+
             }
         }
 

@@ -18,7 +18,11 @@
     </div> -->
     <div class="col-12">
       <ng-container *ngFor="let alert of alerts">
-        <ui-alert type="warn" icon="error_outline" iconType="outlined" [heading]="alert.heading">
+        <ui-alert
+          type="warn"
+          icon="error_outline"
+          iconType="outlined"
+          [heading]="alert.heading">
           <ng-container uiAlertContent>{{ alert.content }} </ng-container>
         </ui-alert>
       </ng-container>
@@ -33,9 +37,15 @@
           </ng-container>
         </ui-page-section-subheader>
 
-        <ui-card-summary *ngFor="let section of (state$ | async)?.profile" [heading]="section.heading"
-          [order]="section.order" [statusType]="section.statusType" [status]="section.status"
-          [actionLabel]="section.action.label" [order]="section.order" [actionDisabled]="section.action.disabled"
+        <ui-card-summary
+          *ngFor="let section of (state$ | async)?.profile"
+          [heading]="section.heading"
+          [order]="section.order"
+          [statusType]="section.statusType"
+          [status]="section.status"
+          [actionLabel]="section.action.label"
+          [order]="section.order"
+          [actionDisabled]="section.action.disabled"
           (action)="onCardAction(section)">
           <ng-container uiCardSummaryHint>{{ section.hint }}</ng-container>
           <ng-container uiCardSummaryContent>
@@ -48,16 +58,23 @@
 
       <ui-page-section [hidden]="hideOrganization()">
         <ui-scroll-target targetId="organization"></ui-scroll-target>
-        <ui-page-section-subheader icon="corporate_fare" heading="Organization Information">
+        <ui-page-section-subheader
+          icon="corporate_fare"
+          heading="Organization Information">
           <ng-container uiPageSectionSubheaderDesc>
             Provide your organization's details to gain access to the systems
             you are eligible for.
           </ng-container>
         </ui-page-section-subheader>
 
-        <ui-card-summary *ngFor="let section of (state$ | async)?.organization" [heading]="section.heading"
-          [statusType]="section.statusType" [status]="section.status" [order]="section.order"
-          [actionLabel]="section.action.label" [actionDisabled]="section.action.disabled"
+        <ui-card-summary
+          *ngFor="let section of (state$ | async)?.organization"
+          [heading]="section.heading"
+          [statusType]="section.statusType"
+          [status]="section.status"
+          [order]="section.order"
+          [actionLabel]="section.action.label"
+          [actionDisabled]="section.action.disabled"
           (action)="onCardAction(section)">
           <ng-container uiCardSummaryHint>{{ section.hint }}</ng-container>
           <ng-container uiCardSummaryContent>
@@ -70,18 +87,28 @@
 
       <ui-page-section>
         <ui-scroll-target targetId="access"></ui-scroll-target>
-        <ui-page-section-subheader icon="assignment" heading="Applications Access">
-          <ng-container uiPageSectionSubheaderDesc *ngIf="!hideDemographics()">
+        <ui-page-section-subheader
+          icon="assignment"
+          heading="Applications Access">
+          <ng-container *ngIf="!hideDemographics()" uiPageSectionSubheaderDesc>
             Complete your profile to gain access to the systems you are eligible
             for.
           </ng-container>
         </ui-page-section-subheader>
 
-        <ui-card-summary *ngFor="let section of (state$ | async)?.access" [heading]="section.heading"
-          [launchString]="section.launch?.label" [launchURL]="section.launch?.url"
-          [launchHidden]="section.launch?.hidden" [launchDisabled]="section.launch?.disabled"
-          [statusType]="section.statusType" [status]="section.status" [actionLabel]="section.action.label"
-          [order]="section.order" [actionDisabled]="section.action.disabled" (action)="onCardAction(section)">
+        <ui-card-summary
+          *ngFor="let section of (state$ | async)?.access"
+          [heading]="section.heading"
+          [launchString]="section.launch?.label"
+          [launchURL]="section.launch?.url"
+          [launchHidden]="section.launch?.hidden"
+          [launchDisabled]="section.launch?.disabled"
+          [statusType]="section.statusType"
+          [status]="section.status"
+          [actionLabel]="section.action.label"
+          [order]="section.order"
+          [actionDisabled]="section.action.disabled"
+          (action)="onCardAction(section)">
           <ng-container uiCardSummaryHint>{{ section.hint }}</ng-container>
           <ng-container uiCardSummaryContent>
             {{ section.description }}
@@ -91,15 +118,23 @@
 
       <ui-page-section *permittedRoles="[Role.ADMIN]">
         <ui-scroll-target targetId="admin"></ui-scroll-target>
-        <ui-page-section-subheader icon="admin_panel_settings" heading="Admin Panel">
+        <ui-page-section-subheader
+          icon="admin_panel_settings"
+          heading="Admin Panel">
           <ng-container uiPageSectionSubheaderDesc>
             Manage Users and Access Requests.
           </ng-container>
         </ui-page-section-subheader>
 
-        <ui-card-summary *ngFor="let section of (state$ | async)?.admin" [heading]="section.heading"
-          [statusType]="section.statusType" [status]="section.status" [actionLabel]="section.action.label"
-          [order]="section.order" [actionDisabled]="section.action.disabled" (action)="onCardAction(section)">
+        <ui-card-summary
+          *ngFor="let section of (state$ | async)?.admin"
+          [heading]="section.heading"
+          [statusType]="section.statusType"
+          [status]="section.status"
+          [actionLabel]="section.action.label"
+          [order]="section.order"
+          [actionDisabled]="section.action.disabled"
+          (action)="onCardAction(section)">
           <ng-container uiCardSummaryHint>{{ section.hint }}</ng-container>
           <ng-container uiCardSummaryContent>
             {{ section.description }}
@@ -115,10 +150,17 @@
           </ng-container>
         </ui-page-section-subheader>
 
-        <ng-container *ngIf="(state$ | async)?.training?.length; else noTraining">
-          <ui-card-summary *ngFor="let section of (state$ | async)?.training" [heading]="section.heading"
-            [statusType]="section.statusType" [status]="section.status" [actionLabel]="section.action.label"
-            [order]="section.order" [actionDisabled]="section.action.disabled" (action)="onCardAction(section)">
+        <ng-container
+          *ngIf="(state$ | async)?.training?.length; else noTraining">
+          <ui-card-summary
+            *ngFor="let section of (state$ | async)?.training"
+            [heading]="section.heading"
+            [statusType]="section.statusType"
+            [status]="section.status"
+            [actionLabel]="section.action.label"
+            [order]="section.order"
+            [actionDisabled]="section.action.disabled"
+            (action)="onCardAction(section)">
             <ng-container uiCardSummaryHint>{{ section.hint }}</ng-container>
             <ng-container uiCardSummaryContent>
               {{ section.description }}

@@ -270,7 +270,7 @@ public partial class ProfileStatus
                     new Model.OrganizationDetails(profile),
 
                     new Model.Demographics(profile),
-
+                    new Model.JamPor(profile),
                     new Model.DigitalEvidence(profile),
                     new Model.DigitalEvidenceCaseManagement(profile),
                     new Model.DefenseAndDutyCounsel(profile),

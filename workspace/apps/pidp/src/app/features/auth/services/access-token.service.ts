@@ -72,7 +72,8 @@ export class AccessTokenService implements IAccessTokenService {
   }
 
   public roles(): string[] {
-    return this.keycloakService.getUserRoles();
+    const roles = this.keycloakService.getUserRoles();
+    return roles;
   }
 
   public groups(): string[] {

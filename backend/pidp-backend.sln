@@ -29,13 +29,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DIAMConfiguration", "DIAMCo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DIAMCornetService", "DIAMCornetService\DIAMCornetService.csproj", "{26BD70B1-DAD6-42FB-97E4-13649A1A6B8F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorAdmin", "..\BlazorAdmin\BlazorAdmin.csproj", "{880F2E51-C74F-47C7-A764-0D58F249AF7B}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ISLInterfaces", "ISLInterfaces\ISLInterfaces.csproj", "{903D1136-0AD7-4309-82D6-7DBC8622F1BA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommonModels", "CommonModels\CommonModels.csproj", "{C68B0390-61AB-467B-ABBB-95A92F7388EA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommonModels", "CommonModels\CommonModels.csproj", "{C68B0390-61AB-467B-ABBB-95A92F7388EA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommonConstants", "CommonConstants\CommonConstants.csproj", "{E228744D-BDEE-4D75-B7DC-12C789094F3A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommonConstants", "CommonConstants\CommonConstants.csproj", "{E228744D-BDEE-4D75-B7DC-12C789094F3A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -95,10 +93,6 @@ Global
 		{26BD70B1-DAD6-42FB-97E4-13649A1A6B8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{26BD70B1-DAD6-42FB-97E4-13649A1A6B8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{26BD70B1-DAD6-42FB-97E4-13649A1A6B8F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{880F2E51-C74F-47C7-A764-0D58F249AF7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{880F2E51-C74F-47C7-A764-0D58F249AF7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{880F2E51-C74F-47C7-A764-0D58F249AF7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{880F2E51-C74F-47C7-A764-0D58F249AF7B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{903D1136-0AD7-4309-82D6-7DBC8622F1BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{903D1136-0AD7-4309-82D6-7DBC8622F1BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{903D1136-0AD7-4309-82D6-7DBC8622F1BA}.Release|Any CPU.ActiveCfg = Release|Any CPU

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NodaTime;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Pidp.Data;
 namespace Pidp.Data.Migrations
 {
     [DbContext(typeof(PidpDbContext))]
-    partial class PidpDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240919161151_JamPOC")]
+    partial class JamPOC
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1014,21 +1017,6 @@ namespace Pidp.Data.Migrations
                         {
                             Code = 8,
                             Name = "Digital Evidence Defence"
-                        },
-                        new
-                        {
-                            Code = 13,
-                            Name = "JUSTIN Law Enforcement"
-                        },
-                        new
-                        {
-                            Code = 11,
-                            Name = "JUSTIN Protection Order"
-                        },
-                        new
-                        {
-                            Code = 12,
-                            Name = "JUSTIN Request for Crown"
                         });
                 });
 
@@ -5086,13 +5074,9 @@ namespace Pidp.Data.Migrations
                     b.ToTable("HcimEnrolment", "diam");
                 });
 
-            modelBuilder.Entity("Pidp.Models.JustinAppAccessRequest", b =>
+            modelBuilder.Entity("Pidp.Models.JustingModernizationRequest", b =>
                 {
                     b.HasBaseType("Pidp.Models.AccessRequest");
-
-                    b.Property<string>("JustinUserId")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<string>("OrganizationName")
                         .IsRequired()
@@ -5110,7 +5094,7 @@ namespace Pidp.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.ToTable("JustinAppAccessRequest", "diam");
+                    b.ToTable("JustingModernizationRequest", "diam");
                 });
 
             modelBuilder.Entity("Pidp.Models.FacilityAddress", b =>
@@ -5540,11 +5524,11 @@ namespace Pidp.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Pidp.Models.JustinAppAccessRequest", b =>
+            modelBuilder.Entity("Pidp.Models.JustingModernizationRequest", b =>
                 {
                     b.HasOne("Pidp.Models.AccessRequest", null)
                         .WithOne()
-                        .HasForeignKey("Pidp.Models.JustinAppAccessRequest", "Id")
+                        .HasForeignKey("Pidp.Models.JustingModernizationRequest", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

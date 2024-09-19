@@ -104,6 +104,10 @@ public static class AuthenticationSetup
         services.AddAuthorizationBuilder().AddPolicy(Policies.IdirAuthentication, policy => policy.RequireAuthenticatedUser()
                         .RequireClaim(Claims.IdentityProvider, ClaimValues.Idir));
 
+        // requires JAM_POR IDIR login
+        services.AddAuthorizationBuilder().AddPolicy(Policies.AllJAMIdentityProvider, policy => policy.RequireAuthenticatedUser()
+                        .RequireClaim(Claims.IdentityProvider, ClaimValues.AzureAd));
+
         // requires VC login (lawyers)
         services.AddAuthorizationBuilder().AddPolicy(Policies.VerifiedCredentialsProvider, policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
             {
@@ -131,6 +135,7 @@ public static class AuthenticationSetup
             var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider &&
                                                        (c.Value == ClaimValues.BCServicesCard ||
                                                         c.Value == ClaimValues.Idir ||
+                                                              c.Value == ClaimValues.Idir ||
                                                         c.Value == ClaimValues.Bcps ||
                                                         c.Value == ClaimValues.VerifiedCredentials));
 
