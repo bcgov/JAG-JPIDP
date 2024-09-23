@@ -79,7 +79,7 @@ export class JamPorPortalSection
     const label = config.launch.jamPorPortalLabel;
 
     const url = config.urls.jamPorPortalUrl;
-    debugger;
+
     return {
       hidden: false,
       label: label,

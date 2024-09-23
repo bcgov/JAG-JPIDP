@@ -101,8 +101,7 @@ public static class AuthenticationSetup
         {
             var hasSARole = context.User.IsInRole(Roles.JAM_POR);
             var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider && (
-                                                        c.Value == ClaimValues.AzureAd ||
-                                                        c.Value == ClaimValues.VerifiedCredentials));
+                                                        c.Value == ClaimValues.AzureAd));
             return hasSARole || hasClaim;
         }));
 

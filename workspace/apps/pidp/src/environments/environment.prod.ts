@@ -62,7 +62,7 @@ export const environment: AppEnvironment = {
     publicDiscPortalUrl: 'https://dev.disclosure.bcprosecution.gov.bc.ca/',
     bcpsDemsPortalUrl: 'https://dems.dev.jag.gov.bc.ca/',
     subAgencyAufPortalUrl: 'https://auf.dev.justice.gov.bc.ca/',
-    jamPorPortalUrl: 'https://por.jag.gov.bc.ca',
+    jamPorPortalUrl: 'https://por.dev.jag.gov.bc.ca/',
   },
   launch: {
     bcLawDiscPortalLabel: 'Launch DEMS Agency Upload Facility (AUF)',
