@@ -86,7 +86,7 @@ public class JamAccessHandler
                 {
                     KeycloakId = dto.UserId.ToString(),
                     PartyId = command.PartyId,
-                    ParticipantId = "" + claims.PartId,
+                    ParticipantId = claims.PartId,
                     UserId = claims.UserId,
                     UPN = dto.Email,
                     AccessRequestId = jamProjectUser.Id,

@@ -22,16 +22,18 @@ public class JAMProvisioningService(JAMServiceDbContext context, ILogger<JAMProv
         }
 
 
+        var existingUser = await keycloakService.GetUserByUPN(jamProvisioningRequest.UPN);
 
-        logger.LogInformation($"Handling JAM Provisioning Request for {jamProvisioningRequest.PartyId} Target app {jamProvisioningRequest.TargetApplication}");
 
 
-        var participantIdDouble = double.Parse(jamProvisioningRequest.ParticipantId);
+        logger.LogInformation($"Handling JAM Provisioning Request for {jamProvisioningRequest.PartyId} {jamProvisioningRequest.ParticipantId} Target app {jamProvisioningRequest.TargetApplication}");
+
+
         List<string> roles = [];
-        if (participantIdDouble > 0)
+        if (jamProvisioningRequest.ParticipantId > 0)
         {
             // call JUSTIN ORDS endpoint to get roles for user for requested application
-            roles = await justinClient.GetParticipantRolesByApplicationNameAndParticipantId(jamProvisioningRequest.TargetApplication, participantIdDouble);
+            roles = await justinClient.GetParticipantRolesByApplicationNameAndParticipantId(jamProvisioningRequest.TargetApplication, jamProvisioningRequest.ParticipantId);
         }
         else
         {
