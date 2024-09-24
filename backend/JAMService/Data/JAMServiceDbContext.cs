@@ -5,7 +5,7 @@ using JAMService.Entities;
 using Microsoft.EntityFrameworkCore;
 
 public class JAMServiceDbContext(DbContextOptions<JAMServiceDbContext> options
-       , IConfiguration configuration) : DbContext(options)
+       , JAMServiceConfiguration configuration) : DbContext(options)
 {
 
     public DbSet<IdempotentConsumer> IdempotentConsumers { get; set; } = default!;
@@ -18,7 +18,7 @@ public class JAMServiceDbContext(DbContextOptions<JAMServiceDbContext> options
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
 
-        var schema = configuration.GetValue<string>("DatabaseConnectionInfo:Schema");
+        var schema = configuration.DatabaseConnectionInfo.Schema;
 
         modelBuilder.HasDefaultSchema(schema);
         base.OnModelCreating(modelBuilder);
@@ -29,6 +29,9 @@ public class JAMServiceDbContext(DbContextOptions<JAMServiceDbContext> options
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
+
+        optionsBuilder.UseNpgsql(configuration.DatabaseConnectionInfo.JAMServiceConnection, x => x.MigrationsHistoryTable(configuration.DatabaseConnectionInfo.EfHistoryTable, configuration.DatabaseConnectionInfo.EfHistorySchema));
+
 
         if (Environment.GetEnvironmentVariable("LOG_SQL") != null && "true".Equals(Environment.GetEnvironmentVariable("LOG_SQL"), StringComparison.Ordinal))
         {
