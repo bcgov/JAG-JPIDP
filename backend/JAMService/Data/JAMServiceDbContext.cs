@@ -1,6 +1,7 @@
 namespace JAMService.Data;
 
 using Common.Models;
+using JAMService.Entities;
 using Microsoft.EntityFrameworkCore;
 
 public class JAMServiceDbContext(DbContextOptions<JAMServiceDbContext> options
@@ -8,6 +9,8 @@ public class JAMServiceDbContext(DbContextOptions<JAMServiceDbContext> options
 {
 
     public DbSet<IdempotentConsumer> IdempotentConsumers { get; set; } = default!;
+    public DbSet<AppRequest> AppRequests { get; set; } = default!;
+
 
     public async Task<bool> HasBeenProcessed(string messageId, string consumer) => await this.IdempotentConsumers.AnyAsync(x => x.MessageId == messageId && x.Consumer == consumer);
 

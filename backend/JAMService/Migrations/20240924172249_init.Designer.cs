@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace JAMService.Migrations
 {
     [DbContext(typeof(JAMServiceDbContext))]
-    [Migration("20240923224646_init")]
+    [Migration("20240924172249_init")]
     partial class init
     {
         /// <inheritdoc />
