@@ -4,9 +4,10 @@ using System.Threading.Tasks;
 using Common.Exceptions;
 using CommonModels.Models.JUSTIN;
 using JAMService.Data;
+using JAMService.Infrastructure.Clients.KeycloakClient;
 using JAMService.Infrastructure.HttpClients.JustinParticipant;
 
-public class JAMProvisioningService(JAMServiceDbContext context, ILogger<JAMProvisioningService> logger, IJustinParticipantRoleClient justinClient) : IJAMProvisioningService
+public class JAMProvisioningService(JAMServiceDbContext context, ILogger<JAMProvisioningService> logger, IJustinParticipantRoleClient justinClient, IKeycloakService keycloakService) : IJAMProvisioningService
 {
     public async Task<Task> HandleJAMProvisioningRequest(string consumer, string key, JAMProvisioningRequestModel jamProvisioningRequest)
     {

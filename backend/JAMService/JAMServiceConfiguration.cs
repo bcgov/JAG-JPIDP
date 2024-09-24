@@ -36,10 +36,11 @@ public class JAMServiceConfiguration
 
     public class KeycloakAdminConfiguration
     {
-        public string RealmUrl { get; set; } = string.Empty;
-        public string AdministrationUrl { get; set; } = string.Empty;
-        public string AdministrationClientId { get; set; } = string.Empty;
-        public string AdministrationClientSecret { get; set; } = string.Empty;
+        public string KeycloakAdminClient { get; set; } = string.Empty;
+        public string KeycloakAdminSecret { get; set; } = string.Empty;
+        public string KeycloakAdminUser { get; set; } = string.Empty;
+        public string KeycloakAdminPassword { get; set; } = string.Empty;
+        public string BaseUrl { get; set; } = string.Empty;
     }
 
     public class ConnectionStringConfiguration

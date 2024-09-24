@@ -2,6 +2,7 @@
 using JAMService;
 using JAMService.Data;
 using JAMService.Infrastructure;
+using JAMService.Infrastructure.Clients.KeycloakAdminClient;
 using JAMService.Infrastructure.Kafka;
 using Microsoft.EntityFrameworkCore;
 
@@ -32,7 +33,7 @@ builder.Services.ConfigureJUSTINHttpClient(config);
 
 
 // keycloak API client setup
-// builder.Services.AddKeycloakClient(config);
+builder.Services.AddKeycloakClient(config);
 
 
 
