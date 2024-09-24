@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Common.Constants.Auth;
 using JAMService.Infrastructure.Clients.KeycloakClient;
 using Keycloak.Net;
+using Keycloak.Net.Models.Groups;
 using Keycloak.Net.Models.Users;
 
 public class KeycloakService(KeycloakClient client) : IKeycloakService
@@ -43,13 +44,13 @@ public class KeycloakService(KeycloakClient client) : IKeycloakService
         User newUser = null;
         try
         {
-            if(user != null)
+            if (user != null)
             {
                 user.Id = null;
                 var createdUser = await client.CreateUserAsync(realm: realm, user: user);
                 if (createdUser)
                 {
-                     newUser = await GetUserByUPN(user.UserName, realm);
+                    newUser = await GetUserByUPN(user.UserName, realm);
                 }
             }
         }
@@ -60,9 +61,53 @@ public class KeycloakService(KeycloakClient client) : IKeycloakService
 
         return newUser;
     }
+    private async Task<Group> GetAndAddGroup(string groupName, string realm)
+    {
+        try
+        {
+            var group = await client.GetRealmGroupByPathAsync(realm, path: "JAM/POR/POR_READ_ONLY");
 
+            if (group == null)
+            {
+                var createdGroup = await client.CreateGroupAsync(realm, new Keycloak.Net.Models.Groups.Group { Name = groupName });
+
+                if (!createdGroup)
+                {
+                    Serilog.Log.Logger.Error($"Failed to create group");
+                }
+                else
+                {
+                    group = await client.GetGroupAsync(realm, groupName);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Serilog.Log.Logger.Error(ex, $"Failed to get group in keycloak {ex.Message}");
+        }
+
+        return group;
+
+    }
     public async Task<User> UpdateUserApplicationRoles(User user, string applicationName, List<string> roles, string realm)
     {
+        //user came in logged into diam user got created - for POR we have options POR_DELETE_ORDER, POR_READ_ONLY, POR_READ_WRITE
 
+        var groupMapping = new Dictionary<string, string>();
+        foreach (var role in roles)
+        {
+            var group = await this.GetAndAddGroup(role, realm);
+
+            if (group == null)
+            {
+                throw new Exception($"Failed to get group {role} in keycloak");
+            }
+            else
+            {
+                var updatedUser = await client.UpdateUserGroupAsync(realm, user.Id, group.Id, group);
+            }
+        }
+
+        return user;
     }
 }

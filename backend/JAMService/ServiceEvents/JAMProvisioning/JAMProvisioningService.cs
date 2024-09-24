@@ -46,27 +46,31 @@ public class JAMProvisioningService(JAMServiceDbContext context, ILogger<JAMProv
 
 
 
+        roles.Add("POR_READ_ONLY");
 
         // if roles are good - create or update user in Keycloak with appropriate client roles
         if (roles.Count != 0)
         {
             // call keycloak to create or update user with roles
+            // User in BCPS is the original authenticated user
             var existingUserInBCPS = await keycloakService.GetUserByUPN(jamProvisioningRequest.UPN, RealmConstants.BCPSRealm);
             if (existingUserInBCPS != null)
             {
                 logger.LogInformation($"User exists in keycloak BCPS Realm, checking user in ISB Realm");
 
+                //User that is created or updated
                 var existingUserinISB = await keycloakService.GetUserByUPN(jamProvisioningRequest.UPN, RealmConstants.ISBRealm);
                 if (existingUserinISB == null)
                 {
                     logger.LogInformation($"User does not exist in keycloak ISB Realm, creating new user in ISB Realm");
 
-                   existingUserinISB = await keycloakService.CreateNewUser(existingUserinISB, RealmConstants.ISBRealm);
-       
+                    existingUserinISB = await keycloakService.CreateNewUser(existingUserinISB, RealmConstants.ISBRealm);
                 }
-                if(existingUserinISB != null)
+                if (existingUserinISB != null)
                 {
+                    await keycloakService.UpdateUserApplicationRoles(existingUserinISB, jamProvisioningRequest.TargetApplication, roles, RealmConstants.ISBRealm);
 
+                    logger.LogInformation($"User roles have been updated");
                 }
 
             }
