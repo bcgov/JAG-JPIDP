@@ -62,6 +62,11 @@ public class JAMProvisioningService(JAMServiceDbContext context, ILogger<JAMProv
                     logger.LogInformation($"User does not exist in keycloak ISB Realm, creating new user in ISB Realm");
 
                    existingUserinISB = await keycloakService.CreateNewUser(existingUserinISB, RealmConstants.ISBRealm);
+       
+                }
+                if(existingUserinISB != null)
+                {
+
                 }
 
             }
