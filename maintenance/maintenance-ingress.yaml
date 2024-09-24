@@ -1,0 +1,64 @@
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  annotations:
+    route.openshift.io/termination: edge
+  name: diam-prod-pidp
+  namespace: e27db1-prod
+  labels:
+    app.kubernetes.io/instance: diam-prod
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: pidp
+    devops.gov.bc.ca/gitops-app-shared: diam-prod
+spec:
+  ingressClassName: openshift-default
+  rules:
+    - host: jpidp.justice.gov.bc.ca
+      http:
+        paths:
+          - pathType: ImplementationSpecific
+            backend:
+              service:
+                name: diam-prod-maintenance
+                port:
+                  number: 8443
+    - host: accused.bcprosecution.gov.bc.ca
+      http:
+        paths:
+          - pathType: ImplementationSpecific
+            backend:
+              service:
+                name: diam-prod-maintenance
+                port:
+                  number: 8443
+    - host: agencies.justice.gov.bc.ca
+      http:
+        paths:
+          - pathType: ImplementationSpecific
+            backend:
+              service:
+                name: diam-prod-maintenance
+                port:
+                  number: 8443
+    - host: access.bcps.gov.bc.ca
+      http:
+        paths:
+          - pathType: ImplementationSpecific
+            backend:
+              service:
+                name: diam-prod-maintenance
+                port:
+                  number: 8443
+    - host: legalcounsel.justice.gov.bc.ca
+      http:
+        paths:
+          - pathType: ImplementationSpecific
+            backend:
+              service:
+                name: diam-prod-maintenance
+                port:
+                  number: 8443
+status:
+  loadBalancer:
+    ingress:
+      - hostname: router-default.apps.gold.devops.gov.bc.ca
