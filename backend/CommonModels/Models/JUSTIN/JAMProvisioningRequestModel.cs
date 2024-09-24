@@ -1,7 +1,7 @@
 namespace CommonModels.Models.JUSTIN;
 
 
-public class JAMProvisioning
+public class JAMProvisioningRequestModel
 {
     public int AccessRequestId { get; set; }
     public string KeycloakId { get; set; } = string.Empty;

@@ -41,7 +41,7 @@ public class JamAccessHandler
   ILogger<JamAccessHandler.CommandHandler> logger,
   PidpConfiguration config,
   PidpDbContext context,
-  IKafkaProducer<string, JAMProvisioning> kafkaProducer) : ICommandHandler<Command, IDomainResult>
+  IKafkaProducer<string, JAMProvisioningRequestModel> kafkaProducer) : ICommandHandler<Command, IDomainResult>
     {
         private readonly ILogger logger = logger;
 
@@ -82,7 +82,7 @@ public class JamAccessHandler
 
 
 
-                var produceResponse = await kafkaProducer.ProduceAsync(config.KafkaCluster.JamUserProvisioningTopic, uid, new JAMProvisioning
+                var produceResponse = await kafkaProducer.ProduceAsync(config.KafkaCluster.JamUserProvisioningTopic, uid, new JAMProvisioningRequestModel
                 {
                     KeycloakId = dto.UserId.ToString(),
                     PartyId = command.PartyId,

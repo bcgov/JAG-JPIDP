@@ -1,13 +1,24 @@
 namespace Pidp.Infrastructure.HttpClients.Claims;
 
+using Common.Exceptions;
 using CommonModels.Models.JUSTIN;
 
-public class JUSTINClaimClient(HttpClient httpClient, ILogger<JUSTINClaimClient> logger) : BaseClient(httpClient, logger), IJUSTINClaimClient
+public class JUSTINClaimClient(HttpClient httpClient, ILogger<JUSTINClaimClient> logger, PidpConfiguration configuration) : BaseClient(httpClient, logger), IJUSTINClaimClient
 {
 
     public async Task<JUSTINClaimModel?> GetJustinClaims(string userPrincipalName)
     {
-        var response = await this.GetAsync<JUSTINClaimModel>($"https://custom-claim-api-bfc5f3-dev.apps.emerald.devops.gov.bc.ca/api/participants?email={userPrincipalName}");
+
+        var claimUrl = configuration.JustinClaimClient.Url;
+
+        if (string.IsNullOrEmpty(claimUrl))
+        {
+            Logger.LogError("JustinClaimClient Url is not configured");
+            throw new DIAMGeneralException("JustinClaimClient Url is not configured");
+        }
+
+        // todo - move this to configuration
+        var response = await this.GetAsync<JUSTINClaimModel>($"{claimUrl}?email={userPrincipalName}");
 
         if (response.IsSuccess)
         {
