@@ -1,6 +1,7 @@
 namespace JAMService.ServiceEvents.JAMProvisioning;
 
 using System.Threading.Tasks;
+using Common.Constants.Auth;
 using Common.Exceptions;
 using CommonModels.Models.JUSTIN;
 using JAMService.Data;
@@ -22,7 +23,9 @@ public class JAMProvisioningService(JAMServiceDbContext context, ILogger<JAMProv
         }
 
 
-        var existingUser = await keycloakService.GetUserByUPN(jamProvisioningRequest.UPN);
+ 
+
+
 
 
 
@@ -48,6 +51,24 @@ public class JAMProvisioningService(JAMServiceDbContext context, ILogger<JAMProv
         if (roles.Count != 0)
         {
             // call keycloak to create or update user with roles
+            var existingUserInBCPS = await keycloakService.GetUserByUPN(jamProvisioningRequest.UPN, RealmConstants.BCPSRealm);
+            if (existingUserInBCPS != null)
+            {
+                logger.LogInformation($"User exists in keycloak BCPS Realm, checking user in ISB Realm");
+
+                var existingUserinISB = await keycloakService.GetUserByUPN(jamProvisioningRequest.UPN, RealmConstants.ISBRealm);
+                if (existingUserinISB == null)
+                {
+                    logger.LogInformation($"User does not exist in keycloak ISB Realm, creating new user in ISB Realm");
+
+                   existingUserinISB = await keycloakService.CreateNewUser(existingUserinISB, RealmConstants.ISBRealm);
+                }
+
+            }
+            else
+            {
+                throw new DIAMAuthException("User does not exist in BCPS Realm");
+            }
         }
         else
         {
