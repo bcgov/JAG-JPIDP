@@ -8,7 +8,7 @@ public class JAMServiceConfiguration
     public KafkaClusterConfiguration KafkaCluster { get; set; } = new();
     public ConnectionStringConfiguration DatabaseConnectionInfo { get; set; } = new();
     public KeycloakAdminConfiguration KeycloakConfiguration { get; set; } = new();
-
+    public JustinClientAuthentication JustinApplicationRolesClient { get; set; } = new JustinClientAuthentication();
 
     public class KafkaClusterConfiguration
     {
@@ -49,6 +49,17 @@ public class JAMServiceConfiguration
         public string EfHistorySchema { get; set; } = "public";
         public string EfHistoryTable { get; set; } = "__EFMigrationsHistory";
     }
+    public class JustinClientAuthentication
+    {
+        public string ApiKey { get; set; } = string.Empty;
+        public string Method { get; set; } = string.Empty;
+        public string ClientId { get; set; } = string.Empty;
+        public string ClientSecret { get; set; } = string.Empty;
+        public string TokenUrl { get; set; } = string.Empty;
+        public string ServiceUrl { get; set; } = string.Empty;
 
+        public string BasicAuthUsername { get; set; } = string.Empty;
+        public string BasicAuthPassword { get; set; } = string.Empty;
+    }
 
 }

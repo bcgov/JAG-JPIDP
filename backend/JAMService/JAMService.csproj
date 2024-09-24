@@ -16,7 +16,6 @@
   <ItemGroup>
     <Folder Include="Controllers\" />
     <Folder Include="Infrastructure\Kafka\Kafka\" />
-    <Folder Include="Infrastructure\Clients\" />
     <Folder Include="Migrations\" />
   </ItemGroup>
 

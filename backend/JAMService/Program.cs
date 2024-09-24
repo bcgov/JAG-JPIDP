@@ -1,6 +1,7 @@
 
 using JAMService;
 using JAMService.Data;
+using JAMService.Infrastructure;
 using JAMService.Infrastructure.Kafka;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,8 +24,11 @@ builder.Services.AddDbContext<JAMServiceDbContext>(options => options
     .UseNpgsql(config.DatabaseConnectionInfo.JAMServiceConnection, sql => sql.UseNodaTime())
     .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
 
-
+// configure kafka consumers/producers
 builder.Services.AddKafkaClients(config);
+
+// configure JUSTIN ORDS client
+builder.Services.ConfigureJUSTINHttpClient(config);
 
 
 // keycloak API client setup
