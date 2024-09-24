@@ -52,6 +52,11 @@ public class JAMProvisioningService(JAMServiceDbContext context, ILogger<JAMProv
         }
 
 
+        // send notification and completion or error response
+
+
+
+
 
         // store key and consumer
         //context.IdempotentConsumers.Add(

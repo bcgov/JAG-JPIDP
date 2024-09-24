@@ -37,7 +37,7 @@ public class BaseClient
         this.serializationOptions = option switch
         {
             PropertySerialization.CamelCase => new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase },
-            PropertySerialization.SnakeCase => new JsonSerializerOptions { PropertyNamingPolicy = new SnakeCaseNamingPolicy() },
+            PropertySerialization.SnakeCase => new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower },
             _ => throw new NotImplementedException($"{option}")
         };
     }
@@ -139,7 +139,7 @@ public class BaseClient
                     ? await response.Content.ReadAsStringAsync(cancellationToken)
                     : "";
 
-                this.Logger.LogNonSuccessStatusCode(response.StatusCode, responseMessage, url);
+                this.Logger.LogNonSuccessStatusCode(response.StatusCode, responseMessage);
                 return DomainResult.Failed<T>(response.StatusCode == HttpStatusCode.NotFound
                     ? $"The URL {url} was not found"
                     : $"Did not receive a successful status code for {url} [{response.StatusCode}]");
@@ -224,7 +224,7 @@ public class BaseClient
                     ? await response.Content.ReadAsStringAsync(cancellationToken)
                     : "";
 
-                this.Logger.LogNonSuccessStatusCode(response.StatusCode, responseMessage, url);
+                this.Logger.LogNonSuccessStatusCode(response.StatusCode, responseMessage);
                 return DomainResult.Failed<T>(response.StatusCode == HttpStatusCode.NotFound
                     ? $"The URL {url} was not found"
                     : "Did not receive a successful status code");

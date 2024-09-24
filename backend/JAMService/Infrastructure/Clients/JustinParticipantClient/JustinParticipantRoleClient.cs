@@ -1,7 +1,6 @@
 namespace JAMService.Infrastructure.HttpClients.JustinParticipant;
 
 using System.Collections.Generic;
-using global::Common.Models.JUSTIN;
 
 
 
@@ -34,54 +33,6 @@ public class JustinParticipantRoleClient(HttpClient httpClient, ILogger<JustinPa
 
 
     }
-
-
-
-    public async Task<Participant> GetParticipantByUserName(string username, string accessToken)
-    {
-        var result = await this.GetAsync<Party>($"?user_id={username}", accessToken);
-
-        if (!result.IsSuccess)
-        {
-            this.Logger.LogJustinQueryFailure(string.Join(",", result.Errors));
-            return null;
-        }
-        var participants = result.Value;
-        if (participants.participant.participantDetails.Count == 0)
-        {
-            this.Logger.LogNoUserFound(username);
-            return null;
-        }
-        if (participants.participant.participantDetails[0].assignedAgencies.Count == 0)
-        {
-            Serilog.Log.Information($"User {username} has no assigned agencies in JUSTIN - user will be disabled");
-            this.Logger.LogDisabledUserFound(username);
-        }
-        return participants.participant;
-    }
-
-    public async Task<Participant> GetParticipantPartId(decimal partId, string accessToken)
-    {
-        var result = await this.GetAsync<Party>($"?part_id={partId}", accessToken);
-
-        if (!result.IsSuccess)
-        {
-            return null;
-        }
-        var participants = result.Value;
-        if (participants.participant.participantDetails.Count == 0)
-        {
-            this.Logger.LogNoUserWithPartIdFound(partId);
-            return null;
-        }
-        if (participants.participant.participantDetails[0].assignedAgencies.Count == 0)
-        {
-            this.Logger.LogDisabledPartIdFound(partId);
-        }
-        return participants.participant;
-    }
-
-
 }
 public static partial class JustinParticipantClientLoggingExtensions
 {
