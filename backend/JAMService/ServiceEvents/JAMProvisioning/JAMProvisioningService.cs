@@ -6,6 +6,7 @@ using Common.Exceptions;
 using Common.Kafka;
 using Common.Models.Notification;
 using CommonModels.Models.JUSTIN;
+using Confluent.Kafka;
 using DIAM.Common.Models;
 using JAMService.Data;
 using JAMService.Infrastructure.Clients.KeycloakClient;
@@ -97,7 +98,7 @@ public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, I
 
 
         // SUJI  - produce a response - go to DomainEventResponseHandler in webapi
-        var produceResponse = processResponseProducer.ProduceAsync(configuration.KafkaCluster.ProcessResponseTopic, msgKey, new GenericProcessStatusResponse
+        var produceResponse = await processResponseProducer.ProduceAsync(configuration.KafkaCluster.ProcessResponseTopic, msgKey, new GenericProcessStatusResponse
         {
             DomainEvent = "jam-user-provisioning-complete",
             EventTime = clock.GetCurrentInstant(),
@@ -105,6 +106,16 @@ public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, I
             Status = "complete",
             PartId = "" + jamProvisioningRequest.ParticipantId
         });
+
+        if (produceResponse.Status != PersistenceStatus.Persisted)
+        {
+            Serilog.Log.Information($"{msgKey} successfully published to {configuration.KafkaCluster.ProcessResponseTopic} partId is jamProvisioningRequest.ParticipantId");    
+        }
+        else
+        {
+            Serilog.Log.Error($"Failed to published {msgKey} to {configuration.KafkaCluster.ProcessResponseTopic} partId is jamProvisioningRequest.ParticipantId");
+
+        }
 
 
         // JESS
