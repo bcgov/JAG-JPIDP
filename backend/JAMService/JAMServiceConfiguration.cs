@@ -16,7 +16,6 @@ public class JAMServiceConfiguration
         public string ClientId { get; set; } = string.Empty;
         public string ClientSecret { get; set; } = string.Empty;
         public string BootstrapServers { get; set; } = string.Empty;
-        public string IncomingJamProvisioningTopic { get; set; } = string.Empty;
         public string UserAccountChangeNotificationTopicName { get; set; } = string.Empty;
         public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientId { get; set; } = string.Empty;
@@ -31,6 +30,9 @@ public class JAMServiceConfiguration
         public string KafkaAdminClientId { get; set; } = string.Empty;
         public string KafkaAdminClientSecret { get; set; } = string.Empty;
         public string HostnameVerification { get; set; } = "Https";
+        public string IncomingJamProvisioningTopic { get; set; } = string.Empty;
+        public string ProcessResponseTopic { get; set; } = string.Empty;
+
 
     }
 

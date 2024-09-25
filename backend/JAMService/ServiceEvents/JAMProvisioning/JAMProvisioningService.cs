@@ -13,6 +13,14 @@ public class JAMProvisioningService(JAMServiceDbContext context, ILogger<JAMProv
     public async Task<Task> HandleJAMProvisioningRequest(string consumer, string key, JAMProvisioningRequestModel jamProvisioningRequest)
     {
 
+        // get the app
+        var app = context.Applications.FirstOrDefault(a => a.Name == jamProvisioningRequest.TargetApplication);
+
+        if (app == null)
+        {
+            logger.LogError($"Application {jamProvisioningRequest.TargetApplication} not found in database");
+            throw new DIAMConfigurationException($"Application {jamProvisioningRequest.TargetApplication} not found in database");
+        }
 
         // check we havent handled this message before
         //check whether this message has been processed before   
@@ -21,13 +29,6 @@ public class JAMProvisioningService(JAMServiceDbContext context, ILogger<JAMProv
             logger.LogWarning($"Message {key} has already been consumed by {consumer}");
             return Task.CompletedTask;
         }
-
-
- 
-
-
-
-
 
         logger.LogInformation($"Handling JAM Provisioning Request for {jamProvisioningRequest.PartyId} {jamProvisioningRequest.ParticipantId} Target app {jamProvisioningRequest.TargetApplication}");
 
@@ -47,6 +48,8 @@ public class JAMProvisioningService(JAMServiceDbContext context, ILogger<JAMProv
 
 
         roles.Add("POR_READ_ONLY");
+
+
 
         // if roles are good - create or update user in Keycloak with appropriate client roles
         if (roles.Count != 0)

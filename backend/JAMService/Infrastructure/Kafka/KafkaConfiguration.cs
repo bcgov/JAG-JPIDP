@@ -71,6 +71,7 @@ public static class KafkaConfiguration
         services.AddSingleton(producerConfig);
         services.AddScoped<IKafkaHandler<string, JAMProvisioningRequestModel>, IncomingJamProvisioningHandler>();
         services.AddScoped<IJAMProvisioningService, JAMProvisioningService>();
+        services.AddSingleton(typeof(IKafkaProducer<,>), typeof(KafkaProducer<,>));
 
         services.AddSingleton(typeof(IKafkaConsumer<,>), typeof(KafkaConsumer<,>));
 

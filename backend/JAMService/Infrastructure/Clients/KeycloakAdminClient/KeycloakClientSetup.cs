@@ -9,8 +9,9 @@ public static class KeycloakClientSetup
     {
         var client = new KeycloakClient(url: configuration.KeycloakConfiguration.BaseUrl, userName: configuration.KeycloakConfiguration.KeycloakAdminUser, password: configuration.KeycloakConfiguration.KeycloakAdminPassword, options: new KeycloakOptions(prefix: "auth", authenticationRealm: "master"));
 
+        services.AddSingleton(client);
 
-        services.AddSingleton<IKeycloakService>(new KeycloakService(client));
+        services.AddScoped<IKeycloakService, KeycloakService>();
 
         return services;
     }

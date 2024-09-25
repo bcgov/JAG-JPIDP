@@ -2,14 +2,30 @@ namespace JAMService.Infrastructure.Clients.KeycloakAdminClient;
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Common.Constants.Auth;
+using Common.Kafka;
+using DIAM.Common.Models;
+using JAMService.Data;
+using JAMService.Entities;
 using JAMService.Infrastructure.Clients.KeycloakClient;
 using Keycloak.Net;
 using Keycloak.Net.Models.Groups;
 using Keycloak.Net.Models.Users;
 
-public class KeycloakService(KeycloakClient client) : IKeycloakService
+public class KeycloakService(ILogger<KeycloakService> logger,
+    IKafkaProducer<string, GenericProcessStatusResponse> producer,
+    JAMServiceConfiguration configuration, KeycloakClient client,
+    JAMServiceDbContext context) : IKeycloakService
 {
+
+
+
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="userPrincipalName"></param>
+    /// <param name="realm"></param>
+    /// <returns></returns>
     public async Task<User> GetUserByUPN(string userPrincipalName, string realm)
     {
 
@@ -18,9 +34,9 @@ public class KeycloakService(KeycloakClient client) : IKeycloakService
             if (client != null)
             {
 
-                var users = await client.GetUsersAsync(realm: realm,username: userPrincipalName);
+                var users = await client.GetUsersAsync(realm: realm, username: userPrincipalName);
 
-                if(users.Count() == 1)
+                if (users.Count() == 1)
                 {
                     return users.FirstOrDefault();
                 }
@@ -39,6 +55,13 @@ public class KeycloakService(KeycloakClient client) : IKeycloakService
         return null;
     }
 
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="user"></param>
+    /// <param name="realm"></param>
+    /// <returns></returns>
     public async Task<User> CreateNewUser(User user, string realm)
     {
         User newUser = null;
@@ -61,51 +84,137 @@ public class KeycloakService(KeycloakClient client) : IKeycloakService
 
         return newUser;
     }
-    private async Task<Group> GetAndAddGroup(string groupName, string realm)
+
+
+    private async Task<Group>? GetChildGroup(string realm, Group parent, string childName)
     {
         try
         {
-            var group = await client.GetRealmGroupByPathAsync(realm, path: "JAM/POR/POR_READ_ONLY");
+            var group = parent.Subgroups.FirstOrDefault(x => x.Name == childName);
 
             if (group == null)
             {
-                var createdGroup = await client.CreateGroupAsync(realm, new Keycloak.Net.Models.Groups.Group { Name = groupName });
-
-                if (!createdGroup)
+                var newGroup = await client.SetOrCreateGroupChildAsync(realm, parent.Id, new Group() { Name = childName });
+                if (newGroup)
                 {
-                    Serilog.Log.Logger.Error($"Failed to create group");
+                    group = await client.GetRealmGroupByPathAsync(realm: realm, path: parent.Path + "/" + childName);
                 }
                 else
                 {
-                    group = await client.GetGroupAsync(realm, groupName);
+                    Serilog.Log.Logger.Warning($"Failed to create group {childName} in keycloak");
                 }
             }
+
+            return group;
+        }
+        catch (Exception ex)
+        {
+            Serilog.Log.Logger.Error(ex, $"Failed to get or create group {childName} in keycloak {ex.Message}");
+            throw;
+        }
+    }
+
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="groupName"></param>
+    /// <param name="application"></param>
+    /// <param name="realm"></param>
+    /// <returns></returns>
+    private async Task<Group> GetAndAddGroup(string groupName, Application application, string realm)
+    {
+
+        Group? roleLevel = null;
+        try
+        {
+            var rootPath = application.GroupPath.TrimStart('/').Split("/");
+
+            var root = await client.GetRealmGroupByPathAsync(realm: realm, path: rootPath[0]);
+
+            if (root == null)
+            {
+                Serilog.Log.Logger.Warning($"Root group {rootPath[0]} not found in keycloak");
+                var createdRoot = await client.CreateGroupAsync(realm, new Group { Path = rootPath[0] });
+                root = await client.GetRealmGroupByPathAsync(realm: realm, path: rootPath[0]);
+            }
+
+            if (root != null)
+            {
+                // second level
+                var appLevel = await this.GetChildGroup(realm, root, rootPath[1]);
+
+                // role level
+                if (appLevel != null)
+                {
+                    roleLevel = await this.GetChildGroup(realm, appLevel, groupName);
+                }
+
+            }
+
+
         }
         catch (Exception ex)
         {
             Serilog.Log.Logger.Error(ex, $"Failed to get group in keycloak {ex.Message}");
         }
 
-        return group;
+        return roleLevel;
 
     }
+
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="user"></param>
+    /// <param name="applicationName"></param>
+    /// <param name="roles"></param>
+    /// <param name="realm"></param>
+    /// <returns></returns>
+    /// <exception cref="Exception"></exception>
     public async Task<User> UpdateUserApplicationRoles(User user, string applicationName, List<string> roles, string realm)
     {
         //user came in logged into diam user got created - for POR we have options POR_DELETE_ORDER, POR_READ_ONLY, POR_READ_WRITE
-
-        var groupMapping = new Dictionary<string, string>();
-        foreach (var role in roles)
+        try
         {
-            var group = await this.GetAndAddGroup(role, realm);
+            // get all possible roles for app
+            var app = context.Applications.FirstOrDefault(x => x.Name == applicationName);
+            var allAppRoles = context.AppRoleMappings.Where(x => x.ApplicationId == app.Id).Select(x => x.Role).ToList();
 
-            if (group == null)
+            var groupMapping = new Dictionary<string, string>();
+
+            // get all roles that are not applicable to user
+            var rolesNotGranted = allAppRoles.Except(roles).ToList();
+
+            foreach (var role in roles)
             {
-                throw new Exception($"Failed to get group {role} in keycloak");
+                var group = await this.GetAndAddGroup(role, app, realm);
+
+                if (group == null)
+                {
+                    throw new Exception($"Failed to get group {role} in keycloak");
+                }
+                else
+                {
+                    var updatedUser = await client.UpdateUserGroupAsync(realm: realm, userId: user.Id, groupId: group.Id, group: group);
+                    if (updatedUser)
+                    {
+                        Serilog.Log.Information($"Added user {user.Id} to group {group.Name}");
+                    }
+                }
             }
-            else
+
+            foreach (var role in rolesNotGranted)
             {
-                var updatedUser = await client.UpdateUserGroupAsync(realm, user.Id, group.Id, group);
+                logger.LogInformation($"Removing role {role} from user {user.UserName}");
             }
+
+        }
+        catch (Exception ex)
+        {
+            logger.LogError($"Failed to update user {user.UserName} in keycloak {ex.Message}");
+            throw;
         }
 
         return user;
