@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Common.Constants.Auth;
 using Common.Exceptions;
 using Common.Kafka;
+using Common.Models.Notification;
 using CommonModels.Models.JUSTIN;
 using DIAM.Common.Models;
 using JAMService.Data;
@@ -11,7 +12,7 @@ using JAMService.Infrastructure.Clients.KeycloakClient;
 using JAMService.Infrastructure.HttpClients.JustinParticipant;
 using NodaTime;
 
-public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, ILogger<JAMProvisioningService> logger, IJustinParticipantRoleClient justinClient, IKeycloakService keycloakService, IKafkaProducer<string, GenericProcessStatusResponse> processResponseProducer, IKafkaProducer<string, Notif JAMServiceConfiguration configuration) : IJAMProvisioningService
+public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, ILogger<JAMProvisioningService> logger, IJustinParticipantRoleClient justinClient, IKeycloakService keycloakService, IKafkaProducer<string, GenericProcessStatusResponse> processResponseProducer, IKafkaProducer<string, Notification> notificationProducer, JAMServiceConfiguration configuration) : IJAMProvisioningService
 {
     public async Task<Task> HandleJAMProvisioningRequest(string consumer, string key, JAMProvisioningRequestModel jamProvisioningRequest)
     {
