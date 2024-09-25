@@ -205,9 +205,27 @@ public class KeycloakService(ILogger<KeycloakService> logger,
                 }
             }
 
+            // get the roles for the user
+            var userGroups = await client.GetUserGroupsAsync(realm: realm, userId: user.Id);
+
             foreach (var role in rolesNotGranted)
             {
-                logger.LogInformation($"Removing role {role} from user {user.UserName}");
+                var userHasRole = userGroups.Any(x => x.Name == role);
+                if (userHasRole)
+                {
+                    logger.LogInformation($"Removing role {role} from user {user.UserName}");
+                    var deleted = await client.DeleteUserGroupAsync(realm: realm, userId: user.Id, groupId: userGroups.FirstOrDefault(x => x.Name == role).Id);
+                    if (deleted)
+                    {
+                        logger.LogInformation($"Removed user {user.Id} {user.UserName} from group {role}");
+                    }
+                    else
+                    {
+                        logger.LogError($"Failed to remove user {user.Id} {user.UserName} from group {role}");
+
+                    }
+                }
+
             }
 
         }

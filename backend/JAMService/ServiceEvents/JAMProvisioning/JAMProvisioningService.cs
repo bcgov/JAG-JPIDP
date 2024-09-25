@@ -47,8 +47,8 @@ public class JAMProvisioningService(JAMServiceDbContext context, ILogger<JAMProv
 
 
 
-        roles.Add("POR_READ_ONLY");
-
+        //  roles.Add("POR_READ_ONLY");
+        roles.Add("POR_READ_WRITE");
 
 
         // if roles are good - create or update user in Keycloak with appropriate client roles
