@@ -32,6 +32,7 @@ public class JAMServiceConfiguration
         public string HostnameVerification { get; set; } = "Https";
         public string IncomingJamProvisioningTopic { get; set; } = string.Empty;
         public string ProcessResponseTopic { get; set; } = string.Empty;
+        public string NotificationTopic { get; set; } = string.Empty;
 
 
     }

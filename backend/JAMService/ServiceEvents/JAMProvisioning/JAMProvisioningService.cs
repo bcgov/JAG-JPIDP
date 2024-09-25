@@ -6,7 +6,9 @@ using Common.Exceptions;
 using Common.Kafka;
 using Common.Models.Notification;
 using CommonModels.Models.JUSTIN;
+using Confluent.Kafka;
 using DIAM.Common.Models;
+using Google.Protobuf.WellKnownTypes;
 using JAMService.Data;
 using JAMService.Infrastructure.Clients.KeycloakClient;
 using JAMService.Infrastructure.HttpClients.JustinParticipant;
@@ -17,6 +19,7 @@ public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, I
     public async Task<Task> HandleJAMProvisioningRequest(string consumer, string key, JAMProvisioningRequestModel jamProvisioningRequest)
     {
 
+        Keycloak.Net.Models.Users.User sourceUser = null;
         // get the app
         var app = context.Applications.FirstOrDefault(a => a.Name == jamProvisioningRequest.TargetApplication);
 
@@ -60,7 +63,7 @@ public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, I
         {
             // call keycloak to create or update user with roles
             // User in BCPS is the original authenticated user
-            var sourceUser = await keycloakService.GetUserByUPN(jamProvisioningRequest.UPN, RealmConstants.BCPSRealm);
+            sourceUser = await keycloakService.GetUserByUPN(jamProvisioningRequest.UPN, RealmConstants.BCPSRealm);
             if (sourceUser != null)
             {
                 logger.LogInformation($"User exists in keycloak BCPS Realm, checking user in ISB Realm");
@@ -97,7 +100,7 @@ public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, I
 
 
         // SUJI  - produce a response - go to DomainEventResponseHandler in webapi
-        var produceResponse = processResponseProducer.ProduceAsync(configuration.KafkaCluster.ProcessResponseTopic, msgKey, new GenericProcessStatusResponse
+        var produceResponse = await processResponseProducer.ProduceAsync(configuration.KafkaCluster.ProcessResponseTopic, msgKey, new GenericProcessStatusResponse
         {
             DomainEvent = "jam-user-provisioning-complete",
             EventTime = clock.GetCurrentInstant(),
@@ -109,17 +112,29 @@ public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, I
 
         // JESS
         // if complete response was sent then we'll send a notification email too
-
-
-        var delivered = await this.notificationProducer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopic, messageKey, new Notification
+        if (produceResponse.Status == PersistenceStatus.Persisted)
         {
-            To = this.configuration.ApprovalConfig.NotifyEmail,
-            DomainEvent = "jam-user-acccount-provisioning-successful",
-            Subject = this.configuration.ApprovalConfig.Subject,
-            EventData = data
-        });
+            msgKey = Guid.NewGuid().ToString();
+            // create event data
+            var eventData = new Dictionary<string, string>
+                   {
+                       { "FirstName", sourceUser.FirstName },
+                       { "Application", jamProvisioningRequest.TargetApplication},
+                       { "PartyId", jamProvisioningRequest.KeycloakId! },
+                       { "AccessRequestId", "" + jamProvisioningRequest.AccessRequestId }
+                   };
+            var delivered = await notificationProducer.ProduceAsync(configuration.KafkaCluster.NotificationTopic, msgKey, new Notification
+            {
+                To = sourceUser.Email,
+                DomainEvent = "jam-user-acccount-provisioning-successful",
+                EventData = eventData
+            });
 
-
+        }
+        else
+        {
+            Serilog.Log.Error($"Sending failure response for user {jamProvisioningRequest.UserId} has not been completed [{string.Join(",", produceResponse.Exception)}]");
+        }
 
 
         // store key and consumer
