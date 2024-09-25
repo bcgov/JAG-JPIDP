@@ -9,4 +9,6 @@ public class Application
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string GroupPath { get; set; } = string.Empty;
+    public List<string> ValidIDPs { get; set; } = [];
+
 }

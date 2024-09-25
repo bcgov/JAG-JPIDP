@@ -3,12 +3,15 @@ namespace JAMService.ServiceEvents.JAMProvisioning;
 using System.Threading.Tasks;
 using Common.Constants.Auth;
 using Common.Exceptions;
+using Common.Kafka;
 using CommonModels.Models.JUSTIN;
+using DIAM.Common.Models;
 using JAMService.Data;
 using JAMService.Infrastructure.Clients.KeycloakClient;
 using JAMService.Infrastructure.HttpClients.JustinParticipant;
+using NodaTime;
 
-public class JAMProvisioningService(JAMServiceDbContext context, ILogger<JAMProvisioningService> logger, IJustinParticipantRoleClient justinClient, IKeycloakService keycloakService) : IJAMProvisioningService
+public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, ILogger<JAMProvisioningService> logger, IJustinParticipantRoleClient justinClient, IKeycloakService keycloakService, IKafkaProducer<string, GenericProcessStatusResponse> processResponseProducer, IKafkaProducer<string, Notif JAMServiceConfiguration configuration) : IJAMProvisioningService
 {
     public async Task<Task> HandleJAMProvisioningRequest(string consumer, string key, JAMProvisioningRequestModel jamProvisioningRequest)
     {
@@ -47,7 +50,7 @@ public class JAMProvisioningService(JAMServiceDbContext context, ILogger<JAMProv
 
 
 
-        //  roles.Add("POR_READ_ONLY");
+        roles.Add("POR_READ_ONLY");
         roles.Add("POR_READ_WRITE");
 
 
@@ -56,8 +59,8 @@ public class JAMProvisioningService(JAMServiceDbContext context, ILogger<JAMProv
         {
             // call keycloak to create or update user with roles
             // User in BCPS is the original authenticated user
-            var existingUserInBCPS = await keycloakService.GetUserByUPN(jamProvisioningRequest.UPN, RealmConstants.BCPSRealm);
-            if (existingUserInBCPS != null)
+            var sourceUser = await keycloakService.GetUserByUPN(jamProvisioningRequest.UPN, RealmConstants.BCPSRealm);
+            if (sourceUser != null)
             {
                 logger.LogInformation($"User exists in keycloak BCPS Realm, checking user in ISB Realm");
 
@@ -65,9 +68,9 @@ public class JAMProvisioningService(JAMServiceDbContext context, ILogger<JAMProv
                 var existingUserinISB = await keycloakService.GetUserByUPN(jamProvisioningRequest.UPN, RealmConstants.ISBRealm);
                 if (existingUserinISB == null)
                 {
-                    logger.LogInformation($"User does not exist in keycloak ISB Realm, creating new user in ISB Realm");
+                    logger.LogInformation($"User {jamProvisioningRequest.ParticipantId} {jamProvisioningRequest.UserId} does not exist in keycloak ISB Realm, creating new user in ISB Realm");
 
-                    existingUserinISB = await keycloakService.CreateNewUser(existingUserinISB, RealmConstants.ISBRealm);
+                    existingUserinISB = await keycloakService.CreateNewUser(app, sourceUser, RealmConstants.ISBRealm);
                 }
                 if (existingUserinISB != null)
                 {
@@ -89,7 +92,33 @@ public class JAMProvisioningService(JAMServiceDbContext context, ILogger<JAMProv
 
 
         // send notification and completion or error response
+        var msgKey = Guid.NewGuid().ToString();
 
+
+        // SUJI  - produce a response 
+        var produceResponse = processResponseProducer.ProduceAsync(configuration.KafkaCluster.ProcessResponseTopic, msgKey, new GenericProcessStatusResponse
+        {
+            DomainEvent = "jam-user-provisioning-complete",
+            EventTime = clock.GetCurrentInstant(),
+            Id = jamProvisioningRequest.AccessRequestId,
+            Status = "complete",
+            PartId = "" + jamProvisioningRequest.ParticipantId
+
+
+        });
+
+
+        // JESS
+        // if complete response was sent then we'll send a notification email too
+
+
+        var delivered = await this.notificationProducer.ProduceAsync(this.configuration.KafkaCluster.NotificationTopic, messageKey, new Notification
+        {
+            To = this.configuration.ApprovalConfig.NotifyEmail,
+            DomainEvent = "jam-user-acccount-provisioning-successful",
+            Subject = this.configuration.ApprovalConfig.Subject,
+            EventData = data
+        });
 
 
 

@@ -2,6 +2,7 @@ namespace JAMService.Infrastructure.Clients.KeycloakAdminClient;
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Common.Exceptions;
 using Common.Kafka;
 using DIAM.Common.Models;
 using JAMService.Data;
@@ -36,9 +37,13 @@ public class KeycloakService(ILogger<KeycloakService> logger,
 
                 var users = await client.GetUsersAsync(realm: realm, username: userPrincipalName);
 
+
                 if (users.Count() == 1)
                 {
-                    return users.FirstOrDefault();
+                    var user = users.FirstOrDefault();
+                    var userInfo = await client.GetUserAsync(realm: realm, userId: user.Id);
+
+                    return userInfo;
                 }
                 else
                 {
@@ -62,24 +67,64 @@ public class KeycloakService(ILogger<KeycloakService> logger,
     /// <param name="user"></param>
     /// <param name="realm"></param>
     /// <returns></returns>
-    public async Task<User> CreateNewUser(User user, string realm)
+    public async Task<User?> CreateNewUser(Application application, User sourceUser, string realm)
     {
+        if (sourceUser == null)
+        {
+            throw new DIAMUserProvisioningException("Source user is null in call to CreateNewUser()");
+        }
         User newUser = null;
+
         try
         {
-            if (user != null)
+            var sourceUserId = sourceUser.Id;
+
+            var validIdp = application.ValidIDPs;
+
+            var sourceFederatedId = sourceUser.FederatedIdentities.FirstOrDefault(id => validIdp.Contains(id.IdentityProvider));
+
+            if (sourceFederatedId == null)
             {
-                user.Id = null;
-                var createdUser = await client.CreateUserAsync(realm: realm, user: user);
-                if (createdUser)
-                {
-                    newUser = await GetUserByUPN(user.UserName, realm);
-                }
+                logger.LogError($"No federated ID found for user {sourceUser.UserName} - unable to provision account");
+                throw new DIAMUserProvisioningException($"No federated ID found for user {sourceUser.UserName} - unable to provision account");
             }
+
+            var mappedIdp = context.IDPMappers.Where(idp => idp.SourceRealm == "BCPS" && idp.SourceIdp == sourceFederatedId.IdentityProvider).FirstOrDefault();
+
+            var targetIDPAlias = mappedIdp?.TargetIdp ?? sourceFederatedId.IdentityProvider;
+
+            sourceUser.Id = null;
+            sourceUser.FederationLink = null;
+
+            var idp = await client.GetIdentityProviderAsync(realm: realm, identityProviderAlias: "azure-idir");
+
+            //   sourceUser.FederationLink = application.DefaultIDPLink;
+
+
+            var federatedId = new FederatedIdentity
+            {
+                IdentityProvider = mappedIdp.TargetIdp,
+                UserId = sourceFederatedId.UserId,
+                UserName = sourceFederatedId.UserName
+            };
+
+            sourceUser.FederatedIdentities = [federatedId];
+
+            var createdUser = await client.CreateUserAsync(realm: realm, user: sourceUser);
+
+
+
+            if (createdUser)
+            {
+                newUser = await this.GetUserByUPN(sourceUser.UserName, realm);
+            }
+
         }
         catch (Exception ex)
         {
             Serilog.Log.Logger.Error(ex, $"Failed to create user in keycloak {ex.Message}");
+            throw new DIAMUserProvisioningException("Source user is null in call to CreateNewUser()");
+
         }
 
         return newUser;

@@ -6,6 +6,7 @@ using CommonModels.Models.JUSTIN;
 using Confluent.Kafka;
 using JAMService.Features.JAMProvisioning;
 using JAMService.ServiceEvents.JAMProvisioning;
+using NodaTime;
 
 public static class KafkaConfiguration
 {
@@ -72,7 +73,7 @@ public static class KafkaConfiguration
         services.AddScoped<IKafkaHandler<string, JAMProvisioningRequestModel>, IncomingJamProvisioningHandler>();
         services.AddScoped<IJAMProvisioningService, JAMProvisioningService>();
         services.AddSingleton(typeof(IKafkaProducer<,>), typeof(KafkaProducer<,>));
-
+        services.AddSingleton<IClock>(SystemClock.Instance);
         services.AddSingleton(typeof(IKafkaConsumer<,>), typeof(KafkaConsumer<,>));
 
         // start backgrund service
