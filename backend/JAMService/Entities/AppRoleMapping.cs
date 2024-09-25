@@ -9,6 +9,7 @@ public class AppRoleMapping
     public Application? Application { get; set; }
     public int ApplicationId { get; set; }
     public string Role { get; set; } = string.Empty;
+    public string? SourceRole { get; set; } = string.Empty;
     public bool IsRealmGroup { get; set; }
 
 }

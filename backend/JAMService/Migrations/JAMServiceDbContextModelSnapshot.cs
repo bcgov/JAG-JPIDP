@@ -86,6 +86,9 @@ namespace JAMService.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("SourceRole")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ApplicationId");
@@ -98,21 +101,24 @@ namespace JAMService.Migrations
                             Id = 1,
                             ApplicationId = 1,
                             IsRealmGroup = true,
-                            Role = "POR_READ_ONLY"
+                            Role = "POR_READ_ONLY",
+                            SourceRole = ""
                         },
                         new
                         {
                             Id = 2,
                             ApplicationId = 1,
                             IsRealmGroup = true,
-                            Role = "POR_READ_WRITE"
+                            Role = "POR_READ_WRITE",
+                            SourceRole = ""
                         },
                         new
                         {
                             Id = 3,
                             ApplicationId = 1,
                             IsRealmGroup = true,
-                            Role = "POR_DELETE_ORDER"
+                            Role = "POR_DELETE_ORDER",
+                            SourceRole = ""
                         });
                 });
 
@@ -129,6 +135,10 @@ namespace JAMService.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("GroupPath")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("LaunchUrl")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -150,6 +160,7 @@ namespace JAMService.Migrations
                             Id = 1,
                             Description = "JUSTIN Protection Order Registry",
                             GroupPath = "/JAM/POR",
+                            LaunchUrl = "",
                             Name = "JAM_POR",
                             ValidIDPs = new List<string> { "azuread" }
                         });

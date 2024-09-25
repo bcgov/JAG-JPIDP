@@ -26,6 +26,7 @@ namespace JAMService.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "text", nullable: false),
                     Description = table.Column<string>(type: "text", nullable: false),
+                    LaunchUrl = table.Column<string>(type: "text", nullable: false),
                     GroupPath = table.Column<string>(type: "text", nullable: false),
                     ValidIDPs = table.Column<List<string>>(type: "text[]", nullable: false)
                 },
@@ -91,6 +92,7 @@ namespace JAMService.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ApplicationId = table.Column<int>(type: "integer", nullable: false),
                     Role = table.Column<string>(type: "text", nullable: false),
+                    SourceRole = table.Column<string>(type: "text", nullable: true),
                     IsRealmGroup = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
@@ -108,8 +110,8 @@ namespace JAMService.Migrations
             migrationBuilder.InsertData(
                 schema: "jamservice",
                 table: "Applications",
-                columns: new[] { "Id", "Description", "GroupPath", "Name", "ValidIDPs" },
-                values: new object[] { 1, "JUSTIN Protection Order Registry", "/JAM/POR", "JAM_POR", new List<string> { "azuread" } });
+                columns: new[] { "Id", "Description", "GroupPath", "LaunchUrl", "Name", "ValidIDPs" },
+                values: new object[] { 1, "JUSTIN Protection Order Registry", "/JAM/POR", "", "JAM_POR", new List<string> { "azuread" } });
 
             migrationBuilder.InsertData(
                 schema: "jamservice",
@@ -120,12 +122,12 @@ namespace JAMService.Migrations
             migrationBuilder.InsertData(
                 schema: "jamservice",
                 table: "AppRoleMappings",
-                columns: new[] { "Id", "ApplicationId", "IsRealmGroup", "Role" },
+                columns: new[] { "Id", "ApplicationId", "IsRealmGroup", "Role", "SourceRole" },
                 values: new object[,]
                 {
-                    { 1, 1, true, "POR_READ_ONLY" },
-                    { 2, 1, true, "POR_READ_WRITE" },
-                    { 3, 1, true, "POR_DELETE_ORDER" }
+                    { 1, 1, true, "POR_READ_ONLY", "" },
+                    { 2, 1, true, "POR_READ_WRITE", "" },
+                    { 3, 1, true, "POR_DELETE_ORDER", "" }
                 });
 
             migrationBuilder.CreateIndex(

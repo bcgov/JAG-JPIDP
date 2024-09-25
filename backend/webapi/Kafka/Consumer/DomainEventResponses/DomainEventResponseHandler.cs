@@ -120,7 +120,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
                 break;
             }
 
-            case "digitalevidence-processresponse-topic":
+            case "jam-user-provisioning-complete":
             {
                 Serilog.Log.Information($"Handling {value.DomainEvent} for JAM User Provisioning Request {value.Id}");
                 // todo - this could move to a generic service
@@ -192,7 +192,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
 
         }
 
-     }
+    }
 
     private async Task MarkDisclosureFullyProvisioned(GenericProcessStatusResponse processResponse)
     {

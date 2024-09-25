@@ -3,8 +3,6 @@ namespace JAMService.Infrastructure.Clients.KeycloakAdminClient;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Common.Exceptions;
-using Common.Kafka;
-using DIAM.Common.Models;
 using JAMService.Data;
 using JAMService.Entities;
 using JAMService.Infrastructure.Clients.KeycloakClient;
@@ -13,7 +11,6 @@ using Keycloak.Net.Models.Groups;
 using Keycloak.Net.Models.Users;
 
 public class KeycloakService(ILogger<KeycloakService> logger,
-    IKafkaProducer<string, GenericProcessStatusResponse> producer,
     JAMServiceConfiguration configuration, KeycloakClient client,
     JAMServiceDbContext context) : IKeycloakService
 {

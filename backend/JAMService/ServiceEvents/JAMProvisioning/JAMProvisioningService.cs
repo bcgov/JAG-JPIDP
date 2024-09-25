@@ -8,7 +8,6 @@ using Common.Models.Notification;
 using CommonModels.Models.JUSTIN;
 using Confluent.Kafka;
 using DIAM.Common.Models;
-using Google.Protobuf.WellKnownTypes;
 using JAMService.Data;
 using JAMService.Infrastructure.Clients.KeycloakClient;
 using JAMService.Infrastructure.HttpClients.JustinParticipant;
@@ -19,7 +18,17 @@ public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, I
     public async Task<Task> HandleJAMProvisioningRequest(string consumer, string key, JAMProvisioningRequestModel jamProvisioningRequest)
     {
 
-        Keycloak.Net.Models.Users.User sourceUser = null;
+
+
+
+        // check we havent handled this message before
+        //check whether this message has been processed before   
+        if (await context.HasBeenProcessed(key, consumer))
+        {
+            logger.LogWarning($"Message {key} has already been consumed by {consumer}");
+            return Task.CompletedTask;
+        }
+
         // get the app
         var app = context.Applications.FirstOrDefault(a => a.Name == jamProvisioningRequest.TargetApplication);
 
@@ -29,12 +38,12 @@ public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, I
             throw new DIAMConfigurationException($"Application {jamProvisioningRequest.TargetApplication} not found in database");
         }
 
-        // check we havent handled this message before
-        //check whether this message has been processed before   
-        if (await context.HasBeenProcessed(key, consumer))
+
+        var sourceUser = await keycloakService.GetUserByUPN(jamProvisioningRequest.UPN, RealmConstants.BCPSRealm);
+
+        if (sourceUser == null)
         {
-            logger.LogWarning($"Message {key} has already been consumed by {consumer}");
-            return Task.CompletedTask;
+            throw new DIAMUserProvisioningException($"Source user {jamProvisioningRequest.UPN} does not exist in realm {RealmConstants.BCPSRealm}");
         }
 
         logger.LogInformation($"Handling JAM Provisioning Request for {jamProvisioningRequest.PartyId} {jamProvisioningRequest.ParticipantId} Target app {jamProvisioningRequest.TargetApplication}");
@@ -63,32 +72,27 @@ public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, I
         {
             // call keycloak to create or update user with roles
             // User in BCPS is the original authenticated user
-            sourceUser = await keycloakService.GetUserByUPN(jamProvisioningRequest.UPN, RealmConstants.BCPSRealm);
-            if (sourceUser != null)
+
+
+            logger.LogInformation($"User exists in keycloak BCPS Realm, checking user in ISB Realm");
+
+            //User that is created or updated
+            var existingUserinISB = await keycloakService.GetUserByUPN(jamProvisioningRequest.UPN, RealmConstants.ISBRealm);
+            if (existingUserinISB == null)
             {
-                logger.LogInformation($"User exists in keycloak BCPS Realm, checking user in ISB Realm");
+                logger.LogInformation($"User {jamProvisioningRequest.ParticipantId} {jamProvisioningRequest.UserId} does not exist in keycloak ISB Realm, creating new user in ISB Realm");
 
-                //User that is created or updated
-                var existingUserinISB = await keycloakService.GetUserByUPN(jamProvisioningRequest.UPN, RealmConstants.ISBRealm);
-                if (existingUserinISB == null)
-                {
-                    logger.LogInformation($"User {jamProvisioningRequest.ParticipantId} {jamProvisioningRequest.UserId} does not exist in keycloak ISB Realm, creating new user in ISB Realm");
-
-                    existingUserinISB = await keycloakService.CreateNewUser(app, sourceUser, RealmConstants.ISBRealm);
-                }
-                if (existingUserinISB != null)
-                {
-                    await keycloakService.UpdateUserApplicationRoles(existingUserinISB, jamProvisioningRequest.TargetApplication, roles, RealmConstants.ISBRealm);
-
-                    logger.LogInformation($"User roles have been updated");
-                }
-
+                existingUserinISB = await keycloakService.CreateNewUser(app, sourceUser, RealmConstants.ISBRealm);
             }
-            else
+            if (existingUserinISB != null)
             {
-                throw new DIAMAuthException("User does not exist in BCPS Realm");
+                await keycloakService.UpdateUserApplicationRoles(existingUserinISB, jamProvisioningRequest.TargetApplication, roles, RealmConstants.ISBRealm);
+
+                logger.LogInformation($"User roles have been updated");
             }
+
         }
+
         else
         {
             logger.LogWarning($"No roles found for {jamProvisioningRequest.PartyId} in {jamProvisioningRequest.TargetApplication}");
@@ -105,18 +109,18 @@ public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, I
             DomainEvent = "jam-user-provisioning-complete",
             EventTime = clock.GetCurrentInstant(),
             Id = jamProvisioningRequest.AccessRequestId,
-            Status = "complete",
+            Status = "Complete",
             PartId = "" + jamProvisioningRequest.ParticipantId
         });
 
-        if (produceResponse.Status != PersistenceStatus.Persisted)
+        if (produceResponse.Status == PersistenceStatus.Persisted)
         {
-            Serilog.Log.Information($"{msgKey} successfully published to {configuration.KafkaCluster.ProcessResponseTopic} partId is jamProvisioningRequest.ParticipantId");    
+            Serilog.Log.Information($"{msgKey} successfully published to {configuration.KafkaCluster.ProcessResponseTopic} partId is jamProvisioningRequest.ParticipantId");
         }
         else
         {
-            Serilog.Log.Error($"Failed to published {msgKey} to {configuration.KafkaCluster.ProcessResponseTopic} partId is jamProvisioningRequest.ParticipantId");
-
+            Serilog.Log.Error($"Failed to published {msgKey} to {configuration.KafkaCluster.ProcessResponseTopic} partId is {jamProvisioningRequest.ParticipantId}");
+            throw new DIAMGeneralException("Failed to published {msgKey} to {configuration.KafkaCluster.ProcessResponseTopic} partId is {jamProvisioningRequest.ParticipantId}");
         }
 
 
@@ -128,46 +132,50 @@ public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, I
             // create event data
             var eventData = new Dictionary<string, string>
                    {
-                       { "FirstName", sourceUser.FirstName },
-                       { "Application", jamProvisioningRequest.TargetApplication},
-                       { "PartyId", jamProvisioningRequest.KeycloakId! },
-                       { "AccessRequestId", "" + jamProvisioningRequest.AccessRequestId }
+                       { "firstName", sourceUser.FirstName },
+                       { "application", app.Description},
+                       { "appId", app.Name},
+                        { "applicationUrl", app.LaunchUrl },
+                       { "partyId", "" + jamProvisioningRequest.PartyId },
+                       { "accessRequestId", "" + jamProvisioningRequest.AccessRequestId }
                    };
             var delivered = await notificationProducer.ProduceAsync(configuration.KafkaCluster.NotificationTopic, msgKey, new Notification
             {
                 To = sourceUser.Email,
-                DomainEvent = "jam-user-acccount-provisioning-successful",
+                DomainEvent = "jam-bcgov-usercreation-complete",
                 EventData = eventData
             });
 
         }
         else
         {
-            Serilog.Log.Error($"Sending failure response for user {jamProvisioningRequest.UserId} has not been completed [{string.Join(",", produceResponse.Exception)}]");
+            Serilog.Log.Error($"Sending failure response for user {jamProvisioningRequest.UserId} has not been completed [{produceResponse.Message}]");
+            throw new DIAMGeneralException("Failed to publish {msgKey} to {configuration.KafkaCluster.NotificationTopic} partId is {jamProvisioningRequest.ParticipantId}");
+
         }
 
 
         // store key and consumer
-        //context.IdempotentConsumers.Add(
-        //    new Common.Models.IdempotentConsumer()
-        //    {
-        //        Consumer = consumer,
-        //        MessageId = key
-        //    });
+        context.IdempotentConsumers.Add(
+            new Common.Models.IdempotentConsumer()
+            {
+                Consumer = consumer,
+                MessageId = key
+            });
 
-        //var updates = await context.SaveChangesAsync();
+        var updates = await context.SaveChangesAsync();
 
-        //if (updates != 0)
-        //{
-        //    logger.LogInformation($"Stored completed message {key} for {consumer}");
-        //}
-        //else
-        //{
-        //    throw new DIAMGeneralException($"Failed to store message for {key} and {consumer}");
-        //}
+        if (updates != 0)
+        {
+            logger.LogInformation($"Stored completed message {key} for {consumer}");
+        }
+        else
+        {
+            throw new DIAMGeneralException($"Failed to store message for {key} and {consumer}");
+        }
 
-        return Task.FromException(new DIAMGeneralException("testing"));
 
+        return Task.CompletedTask;
     }
 
 }
