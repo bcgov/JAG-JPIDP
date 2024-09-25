@@ -109,6 +109,16 @@ public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, I
             PartId = "" + jamProvisioningRequest.ParticipantId
         });
 
+        if (produceResponse.Status != PersistenceStatus.Persisted)
+        {
+            Serilog.Log.Information($"{msgKey} successfully published to {configuration.KafkaCluster.ProcessResponseTopic} partId is jamProvisioningRequest.ParticipantId");    
+        }
+        else
+        {
+            Serilog.Log.Error($"Failed to published {msgKey} to {configuration.KafkaCluster.ProcessResponseTopic} partId is jamProvisioningRequest.ParticipantId");
+
+        }
+
 
         // JESS
         // if complete response was sent then we'll send a notification email too
