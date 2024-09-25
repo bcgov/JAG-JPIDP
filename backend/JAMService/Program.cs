@@ -1,10 +1,10 @@
-
 using JAMService;
 using JAMService.Data;
 using JAMService.Infrastructure;
 using JAMService.Infrastructure.Clients.KeycloakAdminClient;
 using JAMService.Infrastructure.Kafka;
 using Microsoft.EntityFrameworkCore;
+using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,7 +35,8 @@ builder.Services.ConfigureJUSTINHttpClient(config);
 // keycloak API client setup
 builder.Services.AddKeycloakClient(config);
 
-
+// Add Prometheus metrics
+builder.Services.AddMetrics();
 
 var app = builder.Build();
 
@@ -46,6 +47,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Allow anonymous access to metrics endpoint
+app.UseMetricServer();
 
 // Migrate the database on startup
 using (var scope = app.Services.CreateScope())
@@ -54,11 +57,11 @@ using (var scope = app.Services.CreateScope())
     dbContext.Database.Migrate();
 }
 
-
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
 app.MapControllers();
+
 
 app.Run();
