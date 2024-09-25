@@ -95,7 +95,7 @@ public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, I
         var msgKey = Guid.NewGuid().ToString();
 
 
-        // SUJI  - produce a response 
+        // SUJI  - produce a response - go to DomainEventResponseHandler in webapi
         var produceResponse = processResponseProducer.ProduceAsync(configuration.KafkaCluster.ProcessResponseTopic, msgKey, new GenericProcessStatusResponse
         {
             DomainEvent = "jam-user-provisioning-complete",
@@ -103,8 +103,6 @@ public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, I
             Id = jamProvisioningRequest.AccessRequestId,
             Status = "complete",
             PartId = "" + jamProvisioningRequest.ParticipantId
-
-
         });
 
 
