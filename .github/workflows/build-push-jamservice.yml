@@ -9,7 +9,7 @@ on:
       - ".github/workflows/build-push-jamservice.yml"
   workflow_dispatch:
 env:
-  IMAGE_NAME: jamservice
+  IMAGE_NAME: diam-jamservice
   WORKING_DIRECTORY: ./backend
   BRANCH_NAME: develop
   VALUES_FILE: dev
