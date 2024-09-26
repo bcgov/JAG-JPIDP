@@ -293,19 +293,32 @@ public partial class ProfileStatus
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
 
-                var claims = client.GetJustinClaims(profile.Email).Result;
 
-                if (claims.Errors.Length != 0)
-                {
-                    Log.Error($"User {profile.Email} unable to request JAM access due to missing JUSTIN claims");
-                    this.StatusCode = StatusCode.MissingRequiredClaims;
-                    return;
-                }
-                if (!profile.UserIsIdir)
+                if (!profile.UserIsIdir && !profile.UserIsInSubmittingAgency)
                 {
                     this.StatusCode = StatusCode.Hidden;
                     return;
                 }
+
+                var claims = client.GetJustinClaims(profile.Email).Result;
+
+                if (claims != null && claims.Errors.Length != 0)
+                {
+                    if (profile.UserIsIdir)
+                    {
+                        Log.Error($"User {profile.Email} unable to request JAM access due to missing JUSTIN claims");
+                        this.StatusCode = StatusCode.MissingRequiredClaims;
+                        return;
+                    }
+                    else // user is in sub agency
+                    {
+                        Log.Error($"User {profile.Email} unable to request JAM access due to missing JUSTIN claims");
+                        this.StatusCode = StatusCode.Hidden;
+                        return;
+                    }
+
+                }
+
                 this.StatusCode = StatusCode.Available;
 
                 if (profile.AccessRequestStatus.Any())
