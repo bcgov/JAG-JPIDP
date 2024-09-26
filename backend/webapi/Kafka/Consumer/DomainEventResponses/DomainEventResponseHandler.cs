@@ -120,7 +120,7 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
                 break;
             }
 
-            case "jam-user-provisioning-complete":
+            case "jam-bcgov-provisioning-complete":
             {
                 Serilog.Log.Information($"Handling {value.DomainEvent} for JAM User Provisioning Request {value.Id}");
                 // todo - this could move to a generic service
