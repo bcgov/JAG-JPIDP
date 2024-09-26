@@ -8,6 +8,7 @@ using Confluent.Kafka;
 using IdentityModel.Client;
 using Pidp.Extensions;
 using Pidp.Infrastructure.HttpClients.AddressAutocomplete;
+using Pidp.Infrastructure.HttpClients.Claims;
 using Pidp.Infrastructure.HttpClients.Edt;
 using Pidp.Infrastructure.HttpClients.Jum;
 using Pidp.Infrastructure.HttpClients.Keycloak;
@@ -49,7 +50,13 @@ public static class HttpClientSetup
             ClientId = config.EdtClient.ClientId,
             ClientSecret = config.EdtClient.ClientSecret
         });
-        ;
+
+        services.AddHttpClientWithBaseAddress<IJUSTINClaimClient, JUSTINClaimClient>(config.JustinClaimClient.Url).WithBearerToken(new InternalHttpRequestCredentials
+        {
+            Address = config.JustinClaimClient.TokenUrl,
+            ClientId = config.JustinClaimClient.ClientId,
+            ClientSecret = config.JustinClaimClient.ClientSecret
+        });
 
         services.AddHttpClientWithBaseAddress<IJumClient, JumClient>(config.JumClient.Url).WithBearerToken(new KeycloakAdministrationClientCredentials
         {

@@ -35,11 +35,13 @@ export interface AppEnvironment extends EnvironmentConfig {
     publicDisclosurePortalLabel: string;
     subAgencyAufPortalLabel: string;
     bcpsDemsPortalLabel: string;
+    jamPorPortalLabel: string;
     outOfCustodyPortalLabel: string;
     policeToolsCaseAccessLabel: string;
   };
   urls: {
     bcscSupport: string;
+    jamPorPortalUrl: string;
     bcscMobileSetup: string;
     specialAuthority: string;
     doctorsTechnologyOffice: string;

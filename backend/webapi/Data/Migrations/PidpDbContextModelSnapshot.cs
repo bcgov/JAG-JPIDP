@@ -19,7 +19,7 @@ namespace Pidp.Data.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("diam")
-                .HasAnnotation("ProductVersion", "8.0.2")
+                .HasAnnotation("ProductVersion", "8.0.6")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -1014,6 +1014,21 @@ namespace Pidp.Data.Migrations
                         {
                             Code = 8,
                             Name = "Digital Evidence Defence"
+                        },
+                        new
+                        {
+                            Code = 13,
+                            Name = "JUSTIN Law Enforcement"
+                        },
+                        new
+                        {
+                            Code = 11,
+                            Name = "JUSTIN Protection Order"
+                        },
+                        new
+                        {
+                            Code = 12,
+                            Name = "JUSTIN Request for Crown"
                         });
                 });
 
@@ -4377,7 +4392,7 @@ namespace Pidp.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<LocalDate?>("Birthdate")
+                    b.Property<DateOnly?>("Birthdate")
                         .HasColumnType("date");
 
                     b.Property<string>("Cpn")
@@ -5071,6 +5086,33 @@ namespace Pidp.Data.Migrations
                     b.ToTable("HcimEnrolment", "diam");
                 });
 
+            modelBuilder.Entity("Pidp.Models.JustinAppAccessRequest", b =>
+                {
+                    b.HasBaseType("Pidp.Models.AccessRequest");
+
+                    b.Property<string>("JustinUserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OrganizationName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OrganizationType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ParticipantId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TargetApplication")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.ToTable("JustinAppAccessRequest", "diam");
+                });
+
             modelBuilder.Entity("Pidp.Models.FacilityAddress", b =>
                 {
                     b.HasBaseType("Pidp.Models.Address");
@@ -5494,6 +5536,15 @@ namespace Pidp.Data.Migrations
                     b.HasOne("Pidp.Models.AccessRequest", null)
                         .WithOne()
                         .HasForeignKey("Pidp.Models.HcimEnrolment", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Pidp.Models.JustinAppAccessRequest", b =>
+                {
+                    b.HasOne("Pidp.Models.AccessRequest", null)
+                        .WithOne()
+                        .HasForeignKey("Pidp.Models.JustinAppAccessRequest", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

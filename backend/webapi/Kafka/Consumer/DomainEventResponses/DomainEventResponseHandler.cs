@@ -119,6 +119,14 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
                 await this.MarkCourtLocationProcessResponse(value);
                 break;
             }
+
+            case "jam-user-provisioning-complete":
+            {
+                Serilog.Log.Information($"Handling {value.DomainEvent} for JAM User Provisioning Request {value.Id}");
+                // todo - this could move to a generic service
+                await this.MarkJAMUserProvisionProcessResponse(value);
+                break;
+            }
             default:
             {
                 Serilog.Log.Warning($"Ignoring unhandled domain event process {value.DomainEvent}");
@@ -159,6 +167,29 @@ public class DomainEventResponseHandler : IKafkaHandler<string, GenericProcessSt
         if (updated > 0)
         {
             Serilog.Log.Information($"Process marked as complete for {accessRequest.RequestId}");
+        }
+
+    }
+
+    private async Task MarkJAMUserProvisionProcessResponse(GenericProcessStatusResponse processResponse)
+    {
+        var accessRequest = this.context.AccessRequests.Include(req => req.Party).Where(req => req.Id == processResponse.Id).FirstOrDefault();
+        if (accessRequest != null)
+        {
+
+            if (processResponse.Status == "Complete")
+            {
+                accessRequest.Status = "Complete";
+            }
+            else
+            {
+                accessRequest.Status = processResponse.Status;
+                accessRequest.Details = string.Join(",", processResponse.ErrorList);
+            }
+
+            var updated = await this.context.SaveChangesAsync();
+
+
         }
 
     }

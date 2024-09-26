@@ -20,8 +20,8 @@ public class CaseAccessDecommissionJob(PidpDbContext dbContext, IKafkaProducer<s
     /// <returns></returns>
     private async Task<DeliveryResult<string, SubAgencyDomainEvent>> PublishSubAgencyAccessRequest(SubmittingAgencyRequest caseAccessRequest)
     {
-
-        var publishResponse = await kafkaProducer.ProduceAsync(config.KafkaCluster.CaseAccessRequestTopicName, $"{caseAccessRequest.RequestId}", new SubAgencyDomainEvent
+        var uuid = Guid.NewGuid().ToString();
+        var publishResponse = await kafkaProducer.ProduceAsync(config.KafkaCluster.CaseAccessRequestTopicName, uuid, new SubAgencyDomainEvent
         {
             RequestId = caseAccessRequest.RequestId,
             PartyId = caseAccessRequest.PartyId,

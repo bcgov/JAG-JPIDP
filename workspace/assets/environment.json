@@ -20,7 +20,8 @@
     "subAgencyAufPortalLabel": "Launch DEMS Agency Upload Facility (AUF)",
     "bcpsDemsPortalLabel": "Launch DEMS",
     "outOfCustodyPortalLabel": "Launch BCPS Disclosure Portal",
-    "policeToolsCaseAccessLabel": "Access the AUF Tools Case"
+    "policeToolsCaseAccessLabel": "Access the AUF Tools Case",
+    "jamPorPortalLabel": "Access JAM POP"
   },
   "demsImportURL": "https://dems.dev.jag.gov.bc.ca/Edt.aspx#/import/",
   "keycloakConfig": {

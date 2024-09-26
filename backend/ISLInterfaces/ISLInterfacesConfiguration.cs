@@ -9,6 +9,7 @@ public class ISLInterfacesConfiguration
     public const string DatabaseConnectionInfoConfig = "DatabaseConnectionInfo";
     public SplunkConfiguration SplunkConfig { get; set; } = new();
     public ConnectionStringConfiguration DatabaseConnectionInfo { get; set; } = new();
+
 }
 
 public class SplunkConfiguration
@@ -16,6 +17,7 @@ public class SplunkConfiguration
     public string Host { get; set; } = string.Empty;
     public string CollectorToken { get; set; } = string.Empty;
 }
+
 
 
 public class ConnectionStringConfiguration

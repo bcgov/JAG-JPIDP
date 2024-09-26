@@ -158,7 +158,7 @@ $theme-typography: mat.define-typography-config();
 // Generate reuseable classes based on different
 // types of alerts
 $types: success, info, warn, danger, muted, greyed, completed, available,
-  pending, pending-approval;
+  pending, pending-approval, missing-claims;
 
 /**
  * @description

@@ -23,6 +23,7 @@ export type AlertType =
   | 'available'
   | 'secondary'
   | 'light'
+  | 'missing-claims'
   | 'pending-approval';
 
 @Component({

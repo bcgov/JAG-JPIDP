@@ -59,6 +59,18 @@ public class DigitalEvidence : AccessRequest
     public List<AssignedRegion> AssignedRegions { get; set; } = new List<AssignedRegion>();
 }
 
+
+[Table(nameof(JustinAppAccessRequest))]
+public class JustinAppAccessRequest : AccessRequest
+{
+    public string OrganizationType { get; set; } = string.Empty;
+    public string OrganizationName { get; set; } = string.Empty;
+    public string ParticipantId { get; set; } = string.Empty;
+    public string TargetApplication { get; set; } = string.Empty;
+    public string JustinUserId { get; set; } = string.Empty;
+
+}
+
 [Table(nameof(DigitalEvidenceDisclosure))]
 public class DigitalEvidenceDisclosure : AccessRequest
 {

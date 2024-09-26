@@ -11,6 +11,7 @@ import { DigitalEvidenceModule } from './pages/digital-evidence/digital-evidence
 import { DriverFitnessModule } from './pages/driver-fitness/driver-fitness.module';
 import { HcimAccountTransferModule } from './pages/hcim-account-transfer/hcim-account-transfer.module';
 import { HcimEnrolmentModule } from './pages/hcim-enrolment/hcim-enrolment.module';
+import { JamPorModule } from './pages/jam-por/jam-por.module';
 import { MsTeamsModule } from './pages/ms-teams/ms-teams.module';
 import { PharmanetModule } from './pages/pharmanet/pharmanet.module';
 import { SaEformsModule } from './pages/sa-eforms/sa-eforms.module';
@@ -86,6 +87,12 @@ const routes: Routes = [
       import('./pages/digital-evidence/digital-evidence.module').then(
         (m) => m.DigitalEvidenceModule
       ),
+  },
+  {
+    path: AccessRoutes.JAM_POR,
+
+    loadChildren: (): Promise<JamPorModule> =>
+      import('./pages/jam-por/jam-por.module').then((m) => m.JamPorModule),
   },
   {
     path: AccessRoutes.DIGITAL_EVIDENCE_CASE_MANAGEMENT,
