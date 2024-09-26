@@ -38,6 +38,9 @@ builder.Services.AddKeycloakClient(config);
 // Add Prometheus metrics
 builder.Services.AddMetrics();
 
+builder.Services.AddHealthChecks();
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -60,8 +63,7 @@ using (var scope = app.Services.CreateScope())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
-
+app.MapHealthChecks("/health/liveness").AllowAnonymous();
 app.MapControllers();
-
 
 app.Run();
