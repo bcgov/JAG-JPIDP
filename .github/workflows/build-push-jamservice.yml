@@ -9,7 +9,7 @@ on:
       - ".github/workflows/build-push-jamservice.yml"
   workflow_dispatch:
 env:
-  IMAGE_NAME: jam-service
+  IMAGE_NAME: jamservice
   WORKING_DIRECTORY: ./backend
   BRANCH_NAME: develop
   VALUES_FILE: dev
@@ -95,7 +95,7 @@ jobs:
           echo "Updating tag apitag: to ${{ steps.short_sha.outputs.SHORT_SHA }}"
 
           sed -i "s/apitag: .*/apitag: ${{ env.VALUES_FILE }}-${{ steps.short_sha.outputs.SHORT_SHA }} # Image Updated on $DATETIME/" ../deploy/${{ env.VALUES_FILE }}_values.yaml
-          sed -i "s/apitag: .*/apitag: ${{ env.VALUES_FILE }}-${{ steps.short_sha.outputs.SHORT_SHA }} # Image Updated on $DATETIME/" jam-service/values.yaml
+          sed -i "s/apitag: .*/apitag: ${{ env.VALUES_FILE }}-${{ steps.short_sha.outputs.SHORT_SHA }} # Image Updated on $DATETIME/" jamservice/values.yaml
           
           # Commit and push the changes
           git config --global user.email "actions@github.com"
@@ -107,7 +107,7 @@ jobs:
           
           # Repackage Helm Chart      
 
-          cd jam-service
+          cd jamservice
 
           helm dependency build
 
