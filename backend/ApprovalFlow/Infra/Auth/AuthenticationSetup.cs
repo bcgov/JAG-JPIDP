@@ -135,7 +135,7 @@ public static class AuthenticationSetup
             var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider &&
                                                        (c.Value == ClaimValues.BCServicesCard ||
                                                         c.Value == ClaimValues.Idir ||
-                                                              c.Value == ClaimValues.Idir ||
+                                                        c.Value == ClaimValues.AzureAd ||
                                                         c.Value == ClaimValues.Bcps ||
                                                         c.Value == ClaimValues.VerifiedCredentials));
 
