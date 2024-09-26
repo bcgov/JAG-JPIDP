@@ -67,6 +67,7 @@ export class JamPorPortalSection
         demographicsComplete &&
         this.getStatusCode() !== StatusCode.REQUIRESAPPROVAL &&
         this.getStatusCode() !== StatusCode.APPROVED &&
+        this.getStatusCode() !== StatusCode.MISSINGREQUIREDCLAIMS &&
         this.getStatusCode() !== StatusCode.ERROR &&
         this.getStatusCode() !== StatusCode.DENIED
       ),
@@ -100,6 +101,8 @@ export class JamPorPortalSection
       ? 'Your request has been denied - please contact JUSTIM JAM support for more information on why the request was denied.'
       : this.getStatusCode() === StatusCode.PENDING
       ? 'Your request is pending and should complete shortly'
+      : this.getStatusCode() === StatusCode.MISSINGREQUIREDCLAIMS
+      ? 'Your account needs to be setup in JUSTIN in order to proceed'
       : this.getStatusCode() === StatusCode.ERROR
       ? 'Your request resulted in an error - please contact JUSTIM JAM Support at the email below'
       : 'Request access to JAM POP';
@@ -121,6 +124,8 @@ export class JamPorPortalSection
       ? 'danger'
       : this.getStatusCode() === StatusCode.ERROR
       ? 'danger'
+      : this.getStatusCode() === StatusCode.MISSINGREQUIREDCLAIMS
+      ? 'missing-claims'
       : 'greyed';
   }
 
@@ -147,6 +152,8 @@ export class JamPorPortalSection
       ? 'Approved - awaiting completion'
       : statusCode === StatusCode.DENIED
       ? 'Request reviewed and denied'
+      : statusCode === StatusCode.MISSINGREQUIREDCLAIMS
+      ? 'Your account does not have the correct access'
       : statusCode === StatusCode.ERROR
       ? 'Request Failed'
       : 'Incomplete';

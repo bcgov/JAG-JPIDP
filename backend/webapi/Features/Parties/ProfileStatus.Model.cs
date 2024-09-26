@@ -2,6 +2,7 @@ namespace Pidp.Features.Parties;
 
 using System.Security.Claims;
 using Pidp.Extensions;
+using Pidp.Infrastructure.HttpClients.Claims;
 using Pidp.Models;
 using Pidp.Models.Lookups;
 using Prometheus;
@@ -285,13 +286,21 @@ public partial class ProfileStatus
             }
         }
 
-        public class JamPor : ProfileSection
+        public class JamPor(IJUSTINClaimClient client, ProfileStatusDto profile) : ProfileSection(profile)
         {
             internal override string SectionName => "jamPor";
-            public JamPor(ProfileStatusDto profile) : base(profile) { }
 
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
+
+                var claims = client.GetJustinClaims(profile.Email).Result;
+
+                if (claims.Errors.Length != 0)
+                {
+                    Log.Error($"User {profile.Email} unable to request JAM access due to missing JUSTIN claims");
+                    this.StatusCode = StatusCode.MissingRequiredClaims;
+                    return;
+                }
                 if (!profile.UserIsIdir)
                 {
                     this.StatusCode = StatusCode.Hidden;

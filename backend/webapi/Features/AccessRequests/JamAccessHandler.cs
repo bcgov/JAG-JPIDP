@@ -107,6 +107,8 @@ public class JamAccessHandler
 
         }
 
+
+
         private async Task<JustinAppAccessRequest> SubmitJamApplicationAccessRequest(Command command, JUSTINClaimModel claims)
         {
             var jamRequest = new JustinAppAccessRequest

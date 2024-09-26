@@ -16,6 +16,7 @@ using Microsoft.EntityFrameworkCore;
 using Pidp.Data;
 using Pidp.Extensions;
 using Pidp.Infrastructure;
+using Pidp.Infrastructure.HttpClients.Claims;
 using Pidp.Infrastructure.HttpClients.Jum;
 using Pidp.Infrastructure.HttpClients.Plr;
 using Pidp.Models;
@@ -89,7 +90,8 @@ public partial class ProfileStatus
             PriorStepRequired,
             RequiresApproval,
             Approved,
-            Denied
+            Denied,
+            MissingRequiredClaims
         }
     }
 
@@ -105,12 +107,14 @@ public partial class ProfileStatus
         private readonly IPlrClient client;
         private readonly IJumClient jumClient;
         private readonly PidpDbContext context;
+        private readonly IJUSTINClaimClient justinClaimClient;
         private readonly IHttpContextAccessor httpContextAccessor;
         private readonly IProfileUpdateService profileUpdateService;
 
         public CommandHandler(
             IMapper mapper,
             IPlrClient client,
+            IJUSTINClaimClient justinClaimClient,
             IJumClient jumClient,
             PidpDbContext context,
             IHttpContextAccessor httpContextAccessor,
@@ -121,6 +125,7 @@ public partial class ProfileStatus
             this.context = context;
             this.jumClient = jumClient;
             this.httpContextAccessor = httpContextAccessor;
+            this.justinClaimClient = justinClaimClient;
             this.profileUpdateService = profileUpdateService;
         }
 
@@ -270,7 +275,7 @@ public partial class ProfileStatus
                     new Model.OrganizationDetails(profile),
 
                     new Model.Demographics(profile),
-                    new Model.JamPor(profile),
+                    new Model.JamPor(this.justinClaimClient, profile),
                     new Model.DigitalEvidence(profile),
                     new Model.DigitalEvidenceCaseManagement(profile),
                     new Model.DefenseAndDutyCounsel(profile),
