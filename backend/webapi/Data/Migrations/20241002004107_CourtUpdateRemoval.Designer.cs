@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NodaTime;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Pidp.Data;
 namespace Pidp.Data.Migrations
 {
     [DbContext(typeof(PidpDbContext))]
-    partial class PidpDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241002004107_CourtUpdateRemoval")]
+    partial class CourtUpdateRemoval
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1163,71 +1166,6 @@ namespace Pidp.Data.Migrations
                     b.HasKey("Code");
 
                     b.ToTable("CourtLocation", "diam");
-
-                    b.HasData(
-                        new
-                        {
-                            Code = "3561",
-                            Active = true,
-                            Name = "Abbotsford Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "2011",
-                            Active = true,
-                            Name = "North Vancouver Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "3531",
-                            Active = true,
-                            Name = "Port Coquitlam Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "2025",
-                            Active = true,
-                            Name = "Richmond Provincial Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "3585-A",
-                            Active = true,
-                            Name = "Surrey Provincial Court-Adult",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "3585-Y",
-                            Active = true,
-                            Name = "Surrey Provincial Court-IPV and Youth",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "2042",
-                            Active = true,
-                            Name = "Downtown Community Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "2040",
-                            Active = true,
-                            Name = "Vancouver Provincial Court ",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "2045",
-                            Active = true,
-                            Name = "Robson Square Provincial Court-Youth",
-                            Staffed = true
-                        });
                 });
 
             modelBuilder.Entity("Pidp.Models.Lookups.CourtSubLocation", b =>
