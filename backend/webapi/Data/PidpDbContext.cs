@@ -104,6 +104,21 @@ public class PidpDbContext : DbContext
         //.Property(x => x.JsonEventPayload).HasColumnName("EventPayload");
 
 
+        // add court locations
+
+        modelBuilder.Entity<CourtLocation>().HasData(
+            new CourtLocation { Code = "3561", Name = "Abbotsford Law Courts", Active = true, Staffed = true },
+            new CourtLocation { Code = "2011", Name = "North Vancouver Provincial Court", Active = true, Staffed = true },
+            new CourtLocation { Code = "3531", Name = "Port Coquitlam Law Courts", Active = true, Staffed = true },
+            new CourtLocation { Code = "2025", Name = "Richmond Provincial Courts", Active = true, Staffed = true },
+            new CourtLocation { Code = "3585-A", Name = "Surrey Provincial Court-Adult", Active = true, Staffed = true },
+            new CourtLocation { Code = "3585-Y", Name = "Surrey Provincial Court-IPV and Youth", Active = true, Staffed = true },
+            new CourtLocation { Code = "2042", Name = "Downtown Community Court", Active = true, Staffed = true },
+            new CourtLocation { Code = "2040", Name = "Vancouver Provincial Court ", Active = true, Staffed = true },
+            new CourtLocation { Code = "2045", Name = "Robson Square Provincial Court-Youth", Active = true, Staffed = true }
+        );
+
+
         // Adds Quartz.NET PostgreSQL schema to EntityFrameworkCore
         modelBuilder.AddQuartz(builder => builder.UsePostgreSql());
 
