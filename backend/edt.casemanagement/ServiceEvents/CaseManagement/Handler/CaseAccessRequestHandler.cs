@@ -112,7 +112,7 @@ public class CaseAccessRequestHandler : IKafkaHandler<string, SubAgencyDomainEve
                                         EventType = caseEvent.EventType
                                     });
 
-                                    Serilog.Log.Information($"Response {producerResponse}");
+                                    Serilog.Log.Information($"Response for {uniqueKey} - {producerResponse.Status}");
 
                                 }
                             }

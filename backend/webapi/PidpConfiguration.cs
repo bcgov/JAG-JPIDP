@@ -30,7 +30,7 @@ public class PidpConfiguration
     public List<PersonLookupType> EdtPersonLookups { get; set; } = [];
     public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
     public CronConfig CourtAccess { get; set; } = new();
-    public CronConfig SanityCheck { get; set; } = new CronConfig();
+    public SanityCronConfig SanityCheck { get; set; } = new SanityCronConfig();
     public VerifiableCredentialsConfiguration VerifiableCredentials { get; set; } = new VerifiableCredentialsConfiguration();
     public TelemeteryConfiguration Telemetry { get; set; } = new TelemeteryConfiguration();
 
@@ -64,8 +64,9 @@ public class PidpConfiguration
         //  public int PeriodicTimer { get; set; }
         public int GracePeriod { get; set; }
         public string PollCron { get; set; } = "0 * * * * ?";
-
     }
+
+
     public class ConnectionStringConfiguration
     {
         public string PidpDatabase { get; set; } = string.Empty;
@@ -85,6 +86,14 @@ public class PidpConfiguration
         public string CollectorUrl { get; set; } = string.Empty;
         public string AzureConnectionString { get; set; } = string.Empty;
         public bool LogToConsole { get; set; }
+
+    }
+
+    public class SanityCronConfig
+    {
+        public string PollCron { get; set; } = "0 * * * * ?";
+        public int RepublishDelayMinutes { get; set; } = 5;
+        public int FailureDelayMinutes { get; set; } = 15;
 
     }
 
