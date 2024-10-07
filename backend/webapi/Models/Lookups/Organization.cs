@@ -28,6 +28,10 @@ public class Organization
 
 public class OrganizationDataGenerator : ILookupDataGenerator<Organization>
 {
+    /// <summary>
+    /// this is terrible!
+    /// </summary>
+    /// <returns></returns>
     public IEnumerable<Organization> Generate() => new[]
     {
         new Organization { Code = OrganizationCode.JusticeSector,        Name = "Justice Sector", IdpHint = "ADFS"},
