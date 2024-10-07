@@ -241,9 +241,33 @@ public class Create
 
                     var agency = submittingAgencies.Find(agency => agency.IdpHint.Equals(idp, StringComparison.Ordinal));
 
+
+
                     if (agency != null)
                     {
                         var organization = this.GetOrganization(this.context, agency.IdpHint);
+
+                        if (organization == null)
+                        {
+                            Serilog.Log.Warning($"Agency {agency.Name} [{agency.IdpHint}] is not in organization table - adding");
+
+                            var added = await this.context.Organizations.AddAsync(new Organization
+                            {
+                                IdpHint = agency.IdpHint,
+                                Name = agency.Name
+                            });
+
+                            if (added.State == EntityState.Added)
+                            {
+                                organization = added.Entity;
+                            }
+                            else
+                            {
+                                Serilog.Log.Error($"Failed to add organization {agency.Name} [{agency.IdpHint}]");
+                            }
+
+
+                        }
 
                         if (organization != null)
                         {

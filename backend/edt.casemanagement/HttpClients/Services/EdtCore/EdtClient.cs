@@ -580,9 +580,15 @@ public class EdtClient(
     /// <param name="accessRequest"></param>
     /// <returns></returns>
     /// <exception cref="EdtServiceException"></exception>
-    public async Task<Task> HandleCaseRequest(string userKey, SubAgencyDomainEvent accessRequest)
+    public async Task<Task> HandleCaseRequest(SubAgencyDomainEvent accessRequest)
     {
         // get the edt user
+        var userKey = accessRequest.Username;
+
+        if (userKey == null)
+        {
+            throw new DIAMAuthException($"No user key provided in access request {accessRequest.RequestId}");
+        }
 
         var edtUser = await this.GetUser(userKey);
         var response = false;
