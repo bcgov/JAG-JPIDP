@@ -75,7 +75,7 @@ jobs:
       - name: Get short SHA
         id: short_sha
         run: |
-          echo "::set-output name=SHORT_SHA::$(git rev-parse --short HEAD)"
+          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           echo "Short SHA: $SHORT_SHA"
   
       - name: Update Helm Dev Values and Commit
