@@ -15,12 +15,14 @@ env:
   VALUES_FILE: dev
  
 jobs:
+
   build:
     runs-on: ubuntu-latest
+    concurrency: $${{ github.ref_name }}-helm
     if: github.event_name == 'push'
  
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
   
       - name: Set environment for branch
         run: |
@@ -80,15 +82,12 @@ jobs:
           echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           echo "Short SHA: $SHORT_SHA"
 
-      - name: Acquire lock
-        id: lock
-        uses: einaregilsson/lock-action@master
-        with:
-          lock_key: commit-lock
+
   
       - name: Update Helm Values and Commit
+
         id: helm
-        if: steps.gitops.outcome == 'success' && steps.lock.outputs.lock_acquired == 'true' # Only run if the previous step (publish) was successful
+        if: steps.gitops.outcome == 'success'  # Only run if the previous step (publish) was successful
         run: |
 
           echo "Updating ${{ env.BRANCH_NAME }} helm values to trigger ArgoCD deployment "
@@ -126,11 +125,5 @@ jobs:
           git push origin ${{ env.BRANCH_NAME }}  # Update the branch name as needed       
 
 
-      - name: Release lock
-        if: steps.lock.outputs.lock_acquired == 'true'
-        uses: einaregilsson/lock-action@master
-        with:
-          lock_key: commit-lock
-          release: true
           
   
