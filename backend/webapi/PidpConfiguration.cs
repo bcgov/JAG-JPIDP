@@ -21,6 +21,8 @@ public class PidpConfiguration
     public BackGroundServicesConfiguration BackGroundServices { get; set; } = new();
     public PlrClientConfiguration PlrClient { get; set; } = new();
     public JumClientConfiguration JumClient { get; set; } = new();
+    public JUSTINClaimClientConfiguration JustinClaimClient { get; set; } = new JUSTINClaimClientConfiguration();
+
     public EdtClientConfiguration EdtClient { get; set; } = new EdtClientConfiguration();
     public EdtCaseManagementClientConfiguration EdtCaseManagementClient { get; set; } = new EdtCaseManagementClientConfiguration();
     public EdtClientConfiguration EdtDisclosureClient { get; set; } = new EdtClientConfiguration();
@@ -28,7 +30,7 @@ public class PidpConfiguration
     public List<PersonLookupType> EdtPersonLookups { get; set; } = [];
     public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
     public CronConfig CourtAccess { get; set; } = new();
-    public CronConfig SanityCheck { get; set; } = new CronConfig();
+    public SanityCronConfig SanityCheck { get; set; } = new SanityCronConfig();
     public VerifiableCredentialsConfiguration VerifiableCredentials { get; set; } = new VerifiableCredentialsConfiguration();
     public TelemeteryConfiguration Telemetry { get; set; } = new TelemeteryConfiguration();
 
@@ -62,8 +64,9 @@ public class PidpConfiguration
         //  public int PeriodicTimer { get; set; }
         public int GracePeriod { get; set; }
         public string PollCron { get; set; } = "0 * * * * ?";
-
     }
+
+
     public class ConnectionStringConfiguration
     {
         public string PidpDatabase { get; set; } = string.Empty;
@@ -86,6 +89,14 @@ public class PidpConfiguration
 
     }
 
+    public class SanityCronConfig
+    {
+        public string PollCron { get; set; } = "0 * * * * ?";
+        public int RepublishDelayMinutes { get; set; } = 5;
+        public int FailureDelayMinutes { get; set; } = 15;
+
+    }
+
     public class CronConfig
     {
         public string PollCron { get; set; } = "0 * * * * ?";
@@ -98,6 +109,16 @@ public class PidpConfiguration
         public string ClientId { get; set; } = string.Empty;
         public string ClientSecret { get; set; } = string.Empty;
         public string TokenUrl { get; set; } = string.Empty;
+    }
+
+    public class JUSTINClaimClientConfiguration
+    {
+        public bool Enabled { get; set; }
+        public string Url { get; set; } = string.Empty;
+        public string ClientId { get; set; } = string.Empty;
+        public string ClientSecret { get; set; } = string.Empty;
+        public string TokenUrl { get; set; } = string.Empty;
+
     }
 
     public class KeycloakConfiguration
@@ -114,6 +135,8 @@ public class PidpConfiguration
     {
         public string Url { get; set; } = string.Empty;
     }
+
+
     public class KafkaClusterConfiguration
     {
         public string Url { get; set; } = string.Empty;
@@ -126,6 +149,7 @@ public class PidpConfiguration
         public string CaseAccessRequestTopicName { get; set; } = string.Empty;
         public string ProbeRequestTopicName { get; set; } = string.Empty;
         public string PersonCreationTopic { get; set; } = string.Empty;
+        public string JamUserProvisioningTopic { get; set; } = string.Empty;
         public string DisclosureDefenceUserCreationTopic { get; set; } = string.Empty;
         public string DisclosurePublicUserCreationTopic { get; set; } = string.Empty;
         public string DisclosureUserModificationTopic { get; set; } = string.Empty;

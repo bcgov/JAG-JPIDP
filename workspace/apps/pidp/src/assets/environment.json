@@ -15,14 +15,16 @@
     "subAgencyAufPortalUrl": "https://auf.dev.justice.gov.bc.ca",
     "bcpsDemsPortalUrl": "https://dems.dev.jag.gov.bc.ca",
     "bcLawDiscPortalUrl": "https://auf.dev.justice.gov.bc.ca",
-    "publicDiscPortalUrl": "https://dev.disclosure.bcprosecution.gov.bc.ca"
+    "publicDiscPortalUrl": "https://dev.disclosure.bcprosecution.gov.bc.ca",
+    "jamPorPortalUrl": "https://por.jag.gov.bc.ca"
   },
   "launch": {
     "bcLawDiscPortalLabel": "Launch DEMS Agency Upload Facility (AUF)",
     "subAgencyAufPortalLabel": "Launch DEMS Agency Upload Facility (AUF)",
     "bcpsDemsPortalLabel": "Launch DEMS",
     "outOfCustodyPortalLabel": "Launch BCPS Disclosure Portal",
-    "policeToolsCaseAccessLabel": "Access the AUF Tools Case"
+    "policeToolsCaseAccessLabel": "Access the AUF Tools Case",
+    "jamPorPortalLabel": "Access JUSTIN Protection Order Portal"
   },
   "demsImportURL": "https://dems.dev.jag.gov.bc.ca/Edt.aspx#/import/",
   "keycloakConfig": {

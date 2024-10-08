@@ -14,6 +14,7 @@ export class AccessRoutes {
 
   public static UCI = 'uci';
   public static MS_TEAMS = 'ms-teams';
+  public static JAM_POR = 'jam/por';
 
   /**
    * @description

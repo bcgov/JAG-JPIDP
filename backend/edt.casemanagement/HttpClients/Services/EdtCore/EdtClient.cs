@@ -3,6 +3,7 @@ namespace edt.casemanagement.HttpClients.Services.EdtCore;
 using System.Diagnostics.Metrics;
 using System.Threading.Tasks;
 using AutoMapper;
+using Common.Exceptions;
 using Common.Models.EDT;
 using edt.casemanagement.Data;
 using edt.casemanagement.Exceptions;
@@ -87,7 +88,7 @@ public class EdtClient(
     public async Task<IEnumerable<KeyIdPair>> GetUserCases(string userKey)
     {
         var result = await this.GetAsync<IEnumerable<KeyIdPair>>($"api/v1/org-units/1/users/{userKey}/cases");
-        Log.Information("Got user cases {0} user {1}", result, userKey);
+        Log.Information($"Got user cases {string.Join(",", result.Value)} user {userKey}");
 
         if (result.IsSuccess)
         {
@@ -102,15 +103,16 @@ public class EdtClient(
     public async Task<IEnumerable<UserCaseGroup>> GetUserCaseGroups(string userKey, int caseId)
     {
         var result = await this.GetAsync<IEnumerable<UserCaseGroup>>($"api/v1/cases/{caseId}/users/{userKey}/groups");
-        Log.Information("Got user cases {0} user {1}", result, userKey);
 
         if (result.IsSuccess)
         {
+            Log.Information($"Got user case groups {string.Join(",", result.Value)} user: {userKey} case: {caseId}");
+
             return result.Value;
         }
         else
         {
-            throw new CaseAssignmentException($"Unable to get user case groups for user {userKey} and case {caseId}");
+            throw new CaseAssignmentException($"User not assigned to case groups for user {userKey} and case {caseId}");
         }
 
     }
@@ -191,19 +193,46 @@ public class EdtClient(
 
     public async Task<bool> RemoveUserFromCase(string userId, int caseId)
     {
-        // var result = await this.PostAsync<>($"api/v1/version");
-        var result = await this.DeleteAsync($"api/v1/cases/{caseId}/users/{userId}");
+        try
+        {
+            // check user is actually on the case
+            var userCaseGroups = await this.GetUserCaseGroups(userId, caseId);
 
-        if (result.IsSuccess)
-        {
-            this.processRemovedJob.Add(1);
-            Log.Information("Successfully removed user {0} from case {1}", userId, caseId);
+            if (!userCaseGroups.Any())
+            {
+                Log.Logger.Information("User {0} not assigned to case {1}", userId, caseId);
+                return true;
+            }
+
+
+            // var result = await this.PostAsync<>($"api/v1/version");
+            var result = await this.DeleteAsync($"api/v1/cases/{caseId}/users/{userId}");
+
+            if (result.IsSuccess)
+            {
+                this.processRemovedJob.Add(1);
+                Log.Information("Successfully removed user {0} from case {1}", userId, caseId);
+            }
+            else if (result.Errors.Contains("not found"))
+            {
+                Log.Logger.Warning($"User {userId} not assigned to case {caseId} - marking as complete");
+                return true;
+            }
+            else
+            {
+                Log.Error("Failed to remove user {0} from case {1} [{3}]", userId, caseId, string.Join(',', result.Errors));
+            }
+            return result.IsSuccess;
         }
-        else
+        catch (CaseAssignmentException ce)
         {
-            Log.Error("Failed to remove user {0} from case {1} [{3}]", userId, caseId, string.Join(',', result.Errors));
+            if (ce.Message.Contains("User not assigned to case"))
+            {
+                // the user is not on the case
+                return true;
+            }
+            throw;
         }
-        return result.IsSuccess;
     }
 
     public async Task<CaseModel> GetCase(int caseId)
@@ -429,11 +458,18 @@ public class EdtClient(
 
                 if (foundCase.Status == "Inactive")
                 {
-                    var primaryAgencyFileField = foundCase?.Fields.First(field => field.Name.Equals("Primary Agency File ID"));
-                    if (primaryAgencyFileField.Value != null && !string.IsNullOrEmpty(primaryAgencyFileField.Value.ToString()))
+                    var altFieldName = this.configuration.EdtClient.AlternateSearchField;
+                    Logger.LogInformation($"Searching for alternate case using {altFieldName}");
+                    var alternateLookupField = foundCase?.Fields.First(field => field.Name.Equals(altFieldName));
+                    if (alternateLookupField.Value == null)
                     {
-                        Log.Information($"Checking if case {caseId} was merged - primary file id {primaryAgencyFileField.Value.ToString()}");
-                        var primarySearchString = primaryAgencyFileField.Id + ":" + primaryAgencyFileField.Value.ToString();
+                        Logger.LogError($"Field {alternateLookupField} is not one of the return field values - check field configuration");
+                        throw new DIAMConfigurationException($"Field {alternateLookupField} is not one of the return field values - check field configuration");
+                    }
+                    if (alternateLookupField.Value != null && !string.IsNullOrEmpty(alternateLookupField.Value.ToString()))
+                    {
+                        Log.Information($"Checking if case {caseId} was merged - primary file id {alternateLookupField.Value.ToString()}");
+                        var primarySearchString = alternateLookupField.Id + ":" + alternateLookupField.Value.ToString();
 
                         var primarySearch = await this.GetAsync<IEnumerable<CaseLookupModel>?>($"api/v1/org-units/1/cases/{primarySearchString}/id");
 
@@ -544,9 +580,15 @@ public class EdtClient(
     /// <param name="accessRequest"></param>
     /// <returns></returns>
     /// <exception cref="EdtServiceException"></exception>
-    public async Task<Task> HandleCaseRequest(string userKey, SubAgencyDomainEvent accessRequest)
+    public async Task<Task> HandleCaseRequest(SubAgencyDomainEvent accessRequest)
     {
         // get the edt user
+        var userKey = accessRequest.Username;
+
+        if (userKey == null)
+        {
+            throw new DIAMAuthException($"No user key provided in access request {accessRequest.RequestId}");
+        }
 
         var edtUser = await this.GetUser(userKey);
         var response = false;

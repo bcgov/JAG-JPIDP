@@ -64,18 +64,14 @@ public class CaseAccessRequestHandler : IKafkaHandler<string, SubAgencyDomainEve
             }
             else
             {
-
-
-
-                var partId = userInfo.Attributes.GetValueOrDefault("partId").FirstOrDefault();
+                var partId = userInfo.Attributes.TryGetValue("partId", out var value) ? value.FirstOrDefault() : "";
                 if (string.IsNullOrEmpty(partId))
                 {
-                    // get the EDT user info
                     Serilog.Log.Error("No partId found for {0} - possible attempt to bypass security", caseEvent.UserId);
                 }
                 else
                 {
-                    var result = await this.edtClient.HandleCaseRequest(partId, caseEvent);
+                    var result = await this.edtClient.HandleCaseRequest(caseEvent);
 
                     if (result != null && result.IsCompleted)
                     {
@@ -116,7 +112,7 @@ public class CaseAccessRequestHandler : IKafkaHandler<string, SubAgencyDomainEve
                                         EventType = caseEvent.EventType
                                     });
 
-                                    Serilog.Log.Information($"Response {producerResponse}");
+                                    Serilog.Log.Information($"Response for {uniqueKey} - {producerResponse.Status}");
 
                                 }
                             }

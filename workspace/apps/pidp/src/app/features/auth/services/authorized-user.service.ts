@@ -22,7 +22,7 @@ export class AuthorizedUserService {
   public constructor(
     private accessTokenService: AccessTokenService,
     private lookupService: LookupService
-  ) { }
+  ) {}
 
   /**
    * @description
@@ -85,7 +85,7 @@ export class AuthorizedUserService {
       case IdentityProvider.AZUREAD:
         return new IdirResolver(userIdentity);
 
-      case IdentityProvider.IDIR, IdentityProvider.AZUREIDIR:
+      case (IdentityProvider.IDIR, IdentityProvider.AZUREIDIR):
         return new IdirResolver(userIdentity);
       case IdentityProvider.BCSC:
         return new BcscResolver(userIdentity);
@@ -96,11 +96,14 @@ export class AuthorizedUserService {
       case IdentityProvider.BCPS:
         return new BcpsResolver(userIdentity);
       default:
-        console.error("Unknown provider %s", userIdentity.accessTokenParsed?.identity_provider);
+        console.error(
+          'Unknown provider %s',
+          userIdentity.accessTokenParsed?.identity_provider
+        );
         throw new Error(
           'Identity provider not [' +
-          userIdentity.accessTokenParsed?.identity_provider +
-          '] recognized'
+            userIdentity.accessTokenParsed?.identity_provider +
+            '] recognized'
         );
     }
   }

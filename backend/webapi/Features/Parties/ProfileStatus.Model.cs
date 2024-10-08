@@ -2,6 +2,7 @@ namespace Pidp.Features.Parties;
 
 using System.Security.Claims;
 using Pidp.Extensions;
+using Pidp.Infrastructure.HttpClients.Claims;
 using Pidp.Models;
 using Pidp.Models.Lookups;
 using Prometheus;
@@ -121,7 +122,7 @@ public partial class ProfileStatus
             // submitting agency user details are locked
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
-                this.StatusCode = profile.UserIsBcServicesCard ? StatusCode.LockedComplete : profile.DemographicsEntered || profile.SubmittingAgency != null ?
+                this.StatusCode = profile.UserIsBcServicesCard || profile.UserIsIdir ? StatusCode.LockedComplete : profile.DemographicsEntered || profile.SubmittingAgency != null ?
                     (profile.SubmittingAgency != null || profile.UserIsBcps) ? StatusCode.HiddenComplete : StatusCode.Complete :
 
                     StatusCode.Incomplete;
@@ -282,6 +283,55 @@ public partial class ProfileStatus
                 }
 
                 return valid;
+            }
+        }
+
+        public class JamPor(IJUSTINClaimClient client, ProfileStatusDto profile) : ProfileSection(profile)
+        {
+            internal override string SectionName => "jamPor";
+
+            protected override void SetAlertsAndStatus(ProfileStatusDto profile)
+            {
+
+
+                if (!profile.UserIsIdir && !profile.UserIsInSubmittingAgency)
+                {
+                    this.StatusCode = StatusCode.Hidden;
+                    return;
+                }
+
+                var claims = client.GetJustinClaims(profile.Email).Result;
+
+                if (claims != null && claims.Errors.Length != 0)
+                {
+                    if (profile.UserIsIdir)
+                    {
+                        Log.Error($"User {profile.Email} unable to request JAM access due to missing JUSTIN claims");
+                        this.StatusCode = StatusCode.MissingRequiredClaims;
+                        return;
+                    }
+                    else // user is in sub agency
+                    {
+                        Log.Error($"User {profile.Email} unable to request JAM access due to missing JUSTIN claims");
+                        this.StatusCode = StatusCode.Hidden;
+                        return;
+                    }
+
+                }
+
+                this.StatusCode = StatusCode.Available;
+
+                if (profile.AccessRequestStatus.Any())
+                {
+                    var request = profile.AccessRequestStatus.First();
+                    if (request != null)
+                    {
+                        this.StatusCode = Enum.Parse<StatusCode>(request);
+                    }
+
+                }
+
+
             }
         }
 
