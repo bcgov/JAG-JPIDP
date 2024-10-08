@@ -56,18 +56,6 @@ public class Program
         var splunkToken = Environment.GetEnvironmentVariable("SplunkConfig__CollectorToken");
         splunkToken ??= config.GetValue<string>("SplunkConfig:CollectorToken");
 
-
-
-        var seqEndpoint = Environment.GetEnvironmentVariable("Seq__Url");
-        seqEndpoint ??= config.GetValue<string>("Seq:Url");
-
-        if (string.IsNullOrEmpty(seqEndpoint))
-        {
-            Console.WriteLine("SEQ Log Host is not configured - check Seq environment");
-            Environment.Exit(100);
-        }
-
-
         try
         {
             if (EdtServiceConfiguration.IsDevelopment())
@@ -94,7 +82,6 @@ public class Program
             .Enrich.WithMachineName()
             .Enrich.WithProperty("Assembly", $"{name.Name}")
             .Enrich.WithProperty("Version", $"{name.Version}")
-            .WriteTo.Seq(seqEndpoint)
             .WriteTo.Console(
                 outputTemplate: outputTemplate,
                 theme: AnsiConsoleTheme.Code)
