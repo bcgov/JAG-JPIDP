@@ -82,7 +82,6 @@ public class Program
             .Enrich.WithMachineName()
             .Enrich.WithProperty("Assembly", $"{name.Name}")
             .Enrich.WithProperty("Version", $"{name.Version}")
-            .WriteTo.Seq(seqEndpoint)
             .WriteTo.Console(
                 outputTemplate: outputTemplate,
                 theme: AnsiConsoleTheme.Code)
