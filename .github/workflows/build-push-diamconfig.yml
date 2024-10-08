@@ -17,10 +17,12 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    concurrency: $${{ github.ref_name }}-helm
+
     if: github.event_name == 'push'
  
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
   
       - name: Set environment for branch
         run: |
