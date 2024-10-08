@@ -56,17 +56,6 @@ public class Program
         splunkToken ??= config.GetValue<string>("SplunkConfig:CollectorToken");
 
 
-
-        var seqEndpoint = Environment.GetEnvironmentVariable("Seq__Url");
-        seqEndpoint ??= config.GetValue<string>("Seq:Url");
-
-        if (string.IsNullOrEmpty(seqEndpoint))
-        {
-            Console.WriteLine("SEQ Log Host is not configured - check Seq environment");
-            Environment.Exit(100);
-        }
-
-
         try
         {
             if (EdtDisclosureServiceConfiguration.IsDevelopment())
