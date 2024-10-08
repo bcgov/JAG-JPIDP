@@ -17,7 +17,8 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    concurrency: $${{ github.ref_name }}-helm
+    concurrency: ${{ github.action }}-helm
+
 
     if: github.event_name == 'push'
  
