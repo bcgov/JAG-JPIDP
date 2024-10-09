@@ -13,6 +13,14 @@ public class AccessRequestsController : PidpControllerBase
 {
     public AccessRequestsController(IPidpAuthorizationService authorizationService) : base(authorizationService) { }
 
+
+    // get all access requests
+    //[HttpGet()]
+    //[Authorize(Policy = Policies.AdminAuthentication)]
+    //[ProducesResponseType(StatusCodes.Status200OK)]
+    //[ProducesResponseType(StatusCodes.Status400BadRequest)]
+
+
     [HttpGet("{partyId}")]
     [Authorize(Policy = Policies.AnyPartyIdentityProvider)]
     [ProducesResponseType(StatusCodes.Status200OK)]
