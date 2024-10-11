@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 public enum AccessTypeCode
 {
+    // needs to move to config
     [Display(Name = "Special Authority eForms")]
     SAEforms = 1,
     [Display(Name = "Obsolete")]
@@ -24,7 +25,13 @@ public enum AccessTypeCode
     [Display(Name = "Obsolete")]
     Uci,
     [Display(Name = "Obsolete")]
-    MSTeams
+    MSTeams,
+    [Display(Name = "JAM_POR")]
+    JAMPOR,
+    [Display(Name = "JAM_RCC")]
+    JAMRCC,
+    [Display(Name = "JAM_LEA")]
+    JAMLEA
 }
 
 [Table("AccessTypeLookup")]
@@ -50,6 +57,9 @@ public class AccessTypeDataGenerator : ILookupDataGenerator<AccessType>
         new AccessType { Code = AccessTypeCode.MSTeams,                             Name = "MS Teams for Clinical Use" },
         new AccessType { Code = AccessTypeCode.DigitalEvidenceDisclosure,           Name = "Digital Evidence Disclosure" },
         new AccessType { Code = AccessTypeCode.DigitalEvidenceDefence,              Name = "Digital Evidence Defence" },
+                new AccessType { Code = AccessTypeCode.JAMLEA,              Name = "JUSTIN Law Enforcement" },
+                                new AccessType { Code = AccessTypeCode.JAMPOR,              Name = "JUSTIN Protection Order" },
+                                                                new AccessType { Code = AccessTypeCode.JAMRCC,              Name = "JUSTIN Request for Crown" },
 
     };
 }

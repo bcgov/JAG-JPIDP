@@ -64,13 +64,9 @@ public class CaseAccessRequestHandler : IKafkaHandler<string, SubAgencyDomainEve
             }
             else
             {
-
-
-
-                var partId = userInfo.Attributes.GetValueOrDefault("partId").FirstOrDefault();
+                var partId = userInfo.Attributes.TryGetValue("partId", out var value) ? value.FirstOrDefault() : "";
                 if (string.IsNullOrEmpty(partId))
                 {
-                    // get the EDT user info
                     Serilog.Log.Error("No partId found for {0} - possible attempt to bypass security", caseEvent.UserId);
                 }
                 else

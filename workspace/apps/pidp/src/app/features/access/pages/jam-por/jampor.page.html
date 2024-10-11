@@ -1,0 +1,60 @@
+<ui-page [formGroup]="formState.form" (submitted)="onSubmit()">
+  <ui-page-header>{{ title }}</ui-page-header>
+
+  <ui-alert
+    *ngIf="pending"
+    type="primary"
+    icon="pending_outline"
+    iconType="outlined"
+    heading="Access request is processing">
+    <ng-container uiAlertContent>
+      <p>
+        Thank you for submitting your request.<br />
+        Your JAM POP account is being finalized.<br />
+      </p>
+
+      <div *ngIf="!userIsBCPS">If you need JAM support, please email ...</div>
+    </ng-container>
+  </ui-alert>
+
+  <ui-page-section>
+    <ui-page-section-subheader
+      icon="assignment"
+      heading="JUSTIN Protection Order Portal">
+      <ng-container uiPageSectionSubheaderDesc>
+        <div *ngIf="!pending && !completed">
+          By clicking the submit button you are requesting access to the JAM POP
+          Application.<br />
+        </div>
+        <b
+          >If you already have a valid Protection Order account in JUSTIN your
+          account will be validated and enabled for access via DIAM</b
+        >
+        <p>
+          You will be notified via email once the process is complete and you
+          will be able to access POP from the DIAM applications page.
+        </p>
+      </ng-container>
+    </ui-page-section-subheader>
+  </ui-page-section>
+  <ui-page-footer [mode]="completed ? 'reverse' : 'normal'">
+    <button
+      mat-stroked-button
+      uiPageFooterAction
+      type="button"
+      [color]="(completed || pending) ? 'primary' : 'secondary'"
+      (click)="onBack()">
+      {{ completed || pending ? 'Back' : 'Back' }}
+    </button>
+
+    <button
+      *ngIf="!(completed || pending)"
+      mat-flat-button
+      uiPageFooterAction
+      type="button"
+      color="primary"
+      (click)="onRequestAccess()">
+      Submit
+    </button>
+  </ui-page-footer>
+</ui-page>

@@ -27,15 +27,22 @@ public class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
+        var config = new ISLInterfacesConfiguration();
+        builder.Configuration.Bind(config); // Bind configuration
+        builder.Services.AddLogging(builder => builder.AddConsole());
+        builder.Services.AddSingleton(config);
+
+
         // keycloak controls auth
         builder.Services.AddKeycloakAuth(builder.Configuration);
+
+
 
         // db info
         var dbConnection = builder.Configuration.GetValue<string>("DatabaseConnectionInfo:DiamDatabase");
         var histogramAggregation = builder.Configuration.GetValue("HistogramAggregation", defaultValue: "explicit")!.ToLowerInvariant();
 
         builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
-
 
         builder.Services.AddDbContext<DiamReadOnlyContext>(options => options
             .UseNpgsql(dbConnection, sql => sql.UseNodaTime())
@@ -49,6 +56,8 @@ public class Program
                 .AddMeter(Instrumentation.MeterName)
                 .AddMeter("Microsoft.AspNetCore.Hosting")
         );
+
+
 
 
         // single service right now

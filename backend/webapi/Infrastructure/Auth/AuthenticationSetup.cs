@@ -1,7 +1,6 @@
 namespace Pidp.Infrastructure.Auth;
 
 using System.Security.Claims;
-using Common.Constants.Auth;
 using Common.Authorization;
 using Common.Constants.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -96,6 +95,16 @@ public static class AuthenticationSetup
             return hasSARole || hasClaim;
         }));
 
+
+        // any JAM_POR possible user (should be more generic!)
+        services.AddAuthorizationBuilder().AddPolicy(Policies.AllJAMIdentityProvider, policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
+        {
+            var hasSARole = context.User.IsInRole(Roles.JAM_POR);
+            var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider && (
+                                                        c.Value == ClaimValues.AzureAd));
+            return hasSARole || hasClaim;
+        }));
+
         // any party requirement
         services.AddAuthorizationBuilder().AddPolicy(Policies.AnyPartyIdentityProvider, policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
         {
@@ -104,6 +113,7 @@ public static class AuthenticationSetup
                                                        (c.Value == ClaimValues.BCServicesCard ||
                                                         c.Value == ClaimValues.Idir ||
                                                         c.Value == ClaimValues.Bcps ||
+                                                        c.Value == ClaimValues.AzureAd ||
                                                         c.Value == ClaimValues.VerifiedCredentials));
 
             return hasRole || hasClaim;

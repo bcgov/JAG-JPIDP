@@ -37,6 +37,7 @@ public class PidpDbContext : DbContext
     public DbSet<DigitalEvidence> DigitalEvidences { get; set; } = default!;
     public DbSet<DigitalEvidenceDisclosure> DigitalEvidenceDisclosures { get; set; } = default!;
     public DbSet<DigitalEvidenceDefence> DigitalEvidenceDefences { get; set; } = default!;
+    public DbSet<JustinAppAccessRequest> JAMRequests { get; set; } = default!;
 
     public DbSet<PartyLicenceDeclaration> PartyLicenceDeclarations { get; set; } = default!;
     public DbSet<Party> Parties { get; set; } = default!;

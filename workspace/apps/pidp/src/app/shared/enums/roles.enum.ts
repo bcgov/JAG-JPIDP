@@ -8,5 +8,6 @@ export enum Role {
    */
   USER = 'USER',
   ADMIN = 'ADMIN',
+  JAM_POR = 'JAM_POR',
   FEATURE_PIDP_DEMO = 'feature_pidp_demo',
 }

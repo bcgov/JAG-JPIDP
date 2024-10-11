@@ -65,6 +65,15 @@ public class AccessRequestsController : PidpControllerBase
      => await this.AuthorizePartyBeforeHandleAsync(command.PartyId, handler, command)
         .ToActionResult();
 
+    [HttpPost("justin-modernization")]
+    [Authorize(Policy = Policies.AllJAMIdentityProvider)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CreateJamPorEnrolment([FromServices] ICommandHandler<JamAccessHandler.Command, IDomainResult> handler,
+                                                      [FromBody] JamAccessHandler.Command command)
+ => await this.AuthorizePartyBeforeHandleAsync(command.PartyId, handler, command)
+    .ToActionResult();
+
 
     [HttpPost("digital-evidence-disclosure")]
     [Authorize(Policy = Policies.BcscAuthentication)]
