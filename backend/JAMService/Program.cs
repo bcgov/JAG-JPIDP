@@ -1,3 +1,4 @@
+using System.Reflection;
 using JAMService;
 using JAMService.Data;
 using JAMService.Infrastructure;
@@ -5,6 +6,9 @@ using JAMService.Infrastructure.Clients.KeycloakAdminClient;
 using JAMService.Infrastructure.Kafka;
 using Microsoft.EntityFrameworkCore;
 using Prometheus;
+using Serilog;
+using Serilog.Events;
+using Serilog.Sinks.SystemConsole.Themes;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +43,43 @@ builder.Services.AddKeycloakClient(config);
 builder.Services.AddMetrics();
 
 builder.Services.AddHealthChecks();
+
+var name = Assembly.GetExecutingAssembly().GetName();
+var outputTemplate = "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}";
+
+var loggerConfiguration = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .Filter.ByExcluding("RequestPath like '/health%'")
+    .Filter.ByExcluding("RequestPath like '/metrics%'")
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
+    .MinimumLevel.Override("System", LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .Enrich.WithMachineName()
+    .Enrich.WithProperty("Assembly", $"{name.Name}")
+    .Enrich.WithProperty("Version", $"{name.Version}")
+    .WriteTo.Console(
+        outputTemplate: outputTemplate,
+        theme: AnsiConsoleTheme.Code);
+
+
+if (!string.IsNullOrEmpty(config.SplunkConfig.Host))
+{
+    loggerConfiguration.WriteTo.EventCollector(config.SplunkConfig.Host, config.SplunkConfig.CollectorToken);
+}
+
+Log.Logger = loggerConfiguration.CreateLogger();
+
+if (string.IsNullOrEmpty(config.SplunkConfig.Host))
+{
+    Log.Warning("*** Splunk Host is not configured - check Splunk environment *** ");
+}
+
+else
+{
+    Log.Information($"*** Splunk logging to {config.SplunkConfig.Host} ***");
+}
+
 
 
 var app = builder.Build();
