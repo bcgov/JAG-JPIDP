@@ -9,5 +9,7 @@ public class AccessRequestDTO
     public DateTime RequestDate { get; set; }
     public string? Status { get; set; }
     public string? RequestType { get; set; }
+    public string? Errors { get; set; }
+    public string? KeycloakId { get; set; }
     public Dictionary<string, string> RequestData { get; set; } = [];
 }

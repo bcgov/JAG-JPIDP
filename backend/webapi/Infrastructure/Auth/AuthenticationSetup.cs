@@ -135,6 +135,12 @@ public static class AuthenticationSetup
             return hasClaim;
         }));
 
+        services.AddAuthorizationBuilder().AddPolicy(Policies.DiamInternalAuthentication, policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
+        {
+            var hasClaim = context.User.HasClaim(c => c.Type == Claims.AuthorizedParties && c.Value == Clients.DiamInternal);
+            return hasClaim;
+        }));
+
         services.AddAuthorizationBuilder().AddPolicy(Policies.UserOwnsResource, policy => policy.Requirements.Add(new UserOwnsResourceRequirement()));
 
 
