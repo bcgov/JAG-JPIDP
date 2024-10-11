@@ -71,7 +71,7 @@ public class CaseAccessRequestHandler : IKafkaHandler<string, SubAgencyDomainEve
                 }
                 else
                 {
-                    var result = await this.edtClient.HandleCaseRequest(partId, caseEvent);
+                    var result = await this.edtClient.HandleCaseRequest(caseEvent);
 
                     if (result != null && result.IsCompleted)
                     {
@@ -112,7 +112,7 @@ public class CaseAccessRequestHandler : IKafkaHandler<string, SubAgencyDomainEve
                                         EventType = caseEvent.EventType
                                     });
 
-                                    Serilog.Log.Information($"Response {producerResponse}");
+                                    Serilog.Log.Information($"Response for {uniqueKey} - {producerResponse.Status}");
 
                                 }
                             }

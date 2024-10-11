@@ -35,6 +35,8 @@ using Pidp.Features.DigitalEvidenceCaseManagement.BackgroundServices;
 using Pidp.Features.Organization.OrgUnitService;
 using Pidp.Features.Organization.UserTypeService;
 using Pidp.Features.Parties;
+using Pidp.Features.SanityChecks.CaseRequests;
+using Pidp.Features.SanityChecks.Onboarding;
 using Pidp.Helpers.Middleware;
 using Pidp.Infrastructure;
 using Pidp.Infrastructure.Auth;
@@ -158,6 +160,7 @@ public class Startup
         services.AddScoped<IOrgUnitService, OrgUnitService>();
         services.AddScoped<ICourtAccessService, CourtAccessService>();
         services.AddScoped<IProfileUpdateService, ProfileUpdateServiceImpl>();
+        services.AddScoped<ICaseSanityChecks, CaseSanityChecks>();
 
         services.AddSingleton(typeof(IKafkaProducer<,>), typeof(KafkaProducer<,>));
 
@@ -254,8 +257,18 @@ public class Startup
                     pgOptions.ConnectionString = config.ConnectionStrings.PidpDatabase;
                     pgOptions.TablePrefix = "quartz.qrtz_";
                 });
-                store.UseJsonSerializer();
+                store.UseNewtonsoftJsonSerializer();
             });
+
+            // Create a "key" for the job
+            var sanityCheckKey = new JobKey("Sanity Checks");
+            q.AddJob<SanityCheckTask>(opts => opts.WithIdentity(sanityCheckKey));
+            Log.Information($"Scheduling Sanity Checks with params [{config.SanityCheck.PollCron}]");
+            q.AddTrigger(opts => opts
+                .ForJob(sanityCheckKey)
+                .WithIdentity("SanityCheck-trigger")
+                .WithCronSchedule(config.SanityCheck.PollCron));
+
 
             // Create a "key" for the job
             var jobKey = new JobKey("Court access trigger");
@@ -266,7 +279,7 @@ public class Startup
 
             // Create a trigger for the job
             q.AddTrigger(opts => opts
-                .ForJob(jobKey) // link to the HelloWorldJob
+                .ForJob(jobKey)
                 .WithIdentity("CourtAccess-trigger") // give the trigger a unique name
                 .WithCronSchedule(config.CourtAccess.PollCron));
 

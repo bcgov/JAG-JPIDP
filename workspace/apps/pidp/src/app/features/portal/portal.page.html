@@ -44,7 +44,6 @@
           [statusType]="section.statusType"
           [status]="section.status"
           [actionLabel]="section.action.label"
-          [order]="section.order"
           [actionDisabled]="section.action.disabled"
           (action)="onCardAction(section)">
           <ng-container uiCardSummaryHint>{{ section.hint }}</ng-container>
@@ -141,55 +140,6 @@
           </ng-container>
         </ui-card-summary>
       </ui-page-section>
-
-      <ui-page-section *permittedRoles="[Role.FEATURE_PIDP_DEMO]">
-        <ui-scroll-target targetId="training"></ui-scroll-target>
-        <ui-page-section-subheader icon="school" heading="Training">
-          <ng-container uiPageSectionSubheaderDesc>
-            Complete these trainings.
-          </ng-container>
-        </ui-page-section-subheader>
-
-        <ng-container
-          *ngIf="(state$ | async)?.training?.length; else noTraining">
-          <ui-card-summary
-            *ngFor="let section of (state$ | async)?.training"
-            [heading]="section.heading"
-            [statusType]="section.statusType"
-            [status]="section.status"
-            [actionLabel]="section.action.label"
-            [order]="section.order"
-            [actionDisabled]="section.action.disabled"
-            (action)="onCardAction(section)">
-            <ng-container uiCardSummaryHint>{{ section.hint }}</ng-container>
-            <ng-container uiCardSummaryContent>
-              {{ section.description }}
-            </ng-container>
-          </ui-card-summary>
-        </ng-container>
-        <ng-template #noTraining>
-          <p class="lead">No training available at this time.</p>
-        </ng-template>
-      </ui-page-section>
-
-      <!-- <ui-page-section>
-        <ui-scroll-target targetId="history"></ui-scroll-target>
-        <ui-page-section-subheader icon="history" heading="History">
-          <ng-container uiPageSectionSubheaderDesc>
-            View information pertaining to your profile and interaction with the
-            systems you use for work.
-          </ng-container>
-        </ui-page-section-subheader>
-
-        <ui-card-summary *ngFor="let section of (state$ | async)?.history" [heading]="section.heading"
-          [actionLabel]="section.action.label" [actionDisabled]="section.action.disabled"
-          (action)="onCardAction(section)">
-          <ng-container uiCardSummaryHint>{{ section.hint }}</ng-container>
-          <ng-container uiCardSummaryContent>
-            {{ section.description }}
-          </ng-container>
-        </ui-card-summary>
-      </ui-page-section> -->
     </div>
     <div class="col-12">
       <app-get-support>

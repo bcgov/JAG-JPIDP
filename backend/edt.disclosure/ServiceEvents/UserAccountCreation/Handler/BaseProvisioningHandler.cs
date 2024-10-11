@@ -150,7 +150,7 @@ public abstract class BaseProvisioningHandler
             throw new EdtDisclosureServiceException($"Failed to add user {user.Id} to all case groups for folio {caseId}");
         }
 
-        Serilog.Log.Information($"Added groups {addGroupCount} to user {user.Id} folio {caseId}");
+        Serilog.Log.Information($"Added groups {addGroupCount} [{string.Join(",", caseGroupArr)}] to user {user.Id} folio {caseId}");
 
         // once linkage is complete we need to publish back to core the ID for the folio and the user info
         var msgKey = Guid.NewGuid().ToString();

@@ -218,7 +218,8 @@
               *ngIf="showCaseImportLink && case.requestStatus === 'Complete'"
               (click)="onUploadToCase(case)"
               ><mat-icon class="me-2">file_upload</mat-icon></i
-            ><i
+            >
+            <i
               *ngIf="case.requestStatus === 'Complete'"
               (click)="onRemoveCase(case)"
               ><mat-icon>delete_outline</mat-icon></i
