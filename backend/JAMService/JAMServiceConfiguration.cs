@@ -9,6 +9,14 @@ public class JAMServiceConfiguration
     public ConnectionStringConfiguration DatabaseConnectionInfo { get; set; } = new();
     public KeycloakAdminConfiguration KeycloakConfiguration { get; set; } = new();
     public JustinClientAuthentication JustinApplicationRolesClient { get; set; } = new JustinClientAuthentication();
+    public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
+
+    public class SplunkConfiguration
+    {
+        public string Host { get; set; } = string.Empty;
+        public string CollectorToken { get; set; } = string.Empty;
+    }
+
 
     public class KafkaClusterConfiguration
     {
