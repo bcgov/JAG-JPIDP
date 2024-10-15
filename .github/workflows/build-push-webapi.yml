@@ -15,12 +15,14 @@ env:
   VALUES_FILE: dev
  
 jobs:
+
   build:
     runs-on: ubuntu-latest
+
     if: github.event_name == 'push'
  
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
   
       - name: Set environment for branch
         run: |
@@ -77,19 +79,23 @@ jobs:
       - name: Get short SHA
         id: short_sha
         run: |
-          echo "::set-output name=SHORT_SHA::$(git rev-parse --short HEAD)"
+          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           echo "Short SHA: $SHORT_SHA"
+
+
   
       - name: Update Helm Values and Commit
+
         id: helm
-        if: steps.gitops.outcome == 'success' # Only run if the previous step (publish) was successful
+        if: steps.gitops.outcome == 'success'  # Only run if the previous step (publish) was successful
         run: |
 
           echo "Updating ${{ env.BRANCH_NAME }} helm values to trigger ArgoCD deployment "
             
           # Navigate to the directory containing your Helm values file for the environment develop -> DEV, test -> test
           cd gitops/charts
-            
+
+
           # Update the Helm values file with the new image tag and version
           DATETIME=$(date +'%Y-%m-%d %H:%M:%S')  # Get current date and time
           echo "Updating tag apitag: to ${{ steps.short_sha.outputs.SHORT_SHA }}"
@@ -114,6 +120,10 @@ jobs:
           git add .
             
           git commit -m "Update ${{ env.BRANCH_NAME }} API image tag"
+          # pull any changes
+          git pull origin ${{ env.BRANCH_NAME }}
           git push origin ${{ env.BRANCH_NAME }}  # Update the branch name as needed       
+
+
           
   

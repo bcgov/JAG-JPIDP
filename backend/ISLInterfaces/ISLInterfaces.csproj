@@ -4,7 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-        <Version>1.1.7</Version>
+        <Version>1.1.8</Version>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>    
   </PropertyGroup>
 
@@ -13,7 +13,7 @@
       <ProjectReference Include="..\common\Common.csproj" />
      <ProjectReference Include="..\CommonModels\CommonModels.csproj" />
 
-     <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.8.1" />
+     <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.9.0" />
 
    </ItemGroup>
 

@@ -108,12 +108,13 @@ public class EdtClient : BaseClient, IEdtClient
 
         // Get existing groups assigned to user
         var currentlyAssignedGroups = await this.GetAssignedOUGroups(userIdOrKey);
+        var additionalGroupConfig = this.configuration.EdtClient.AdditionalBCPSGroups.Split(",", StringSplitOptions.TrimEntries);
 
         Log.Information($"User {userIdOrKey} is assigned to {currentlyAssignedGroups.Count} groups");
         foreach (var currentAssignedGroup in currentlyAssignedGroups)
         {
             var assignedRegion = assignedRegions.Find(region => region.RegionName.Equals(currentAssignedGroup.Name))!;
-            if (assignedRegion == null)
+            if (assignedRegion == null && !additionalGroupConfig.Contains(assignedRegion.RegionName))
             {
                 Log.Logger.Information("User {0} is in group {1} that is no longer valid", userIdOrKey, currentAssignedGroup.Name);
                 var result = await this.RemoveUserFromGroup(userIdOrKey, currentAssignedGroup);
