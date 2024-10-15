@@ -1,18 +1,16 @@
 namespace JAMService.Infrastructure.HttpClients.JustinParticipant;
 
-using System.Collections.Generic;
-
-
+using CommonModels.Models.JUSTIN;
 
 public class JustinParticipantRoleClient(HttpClient httpClient, ILogger<JustinParticipantRoleClient> logger) : BaseClient(httpClient, logger), IJustinParticipantRoleClient
 {
-    public async Task<List<string>> GetParticipantRolesByApplicationNameAndParticipantId(string application, double participantId)
+    public async Task<DbRoles> GetParticipantRolesByApplicationNameAndParticipantId(string application, double participantId)
     {
-        var result = await this.GetAsync<List<string>>($"?appId={application}&partId={participantId}");
+        var result = await this.GetAsync<DbRoles>($"?app={application}&partId={participantId}");
         if (!result.IsSuccess)
         {
             this.Logger.LogJustinQueryFailure(string.Join(",", result.Errors));
-            return [];
+            return new DbRoles();
         }
 
         return result.Value;
@@ -20,13 +18,13 @@ public class JustinParticipantRoleClient(HttpClient httpClient, ILogger<JustinPa
     }
 
 
-    public async Task<List<string>> GetParticipantRolesByApplicationNameAndUPN(string application, string UPN)
+    public async Task<DbRoles> GetParticipantRolesByApplicationNameAndUPN(string application, string UPN)
     {
-        var result = await this.GetAsync<List<string>>($"?appId={application}&UPN={UPN}");
+        var result = await this.GetAsync<DbRoles>($"?app={application}&UPN={UPN}");
         if (!result.IsSuccess)
         {
             this.Logger.LogJustinQueryFailure(string.Join(",", result.Errors));
-            return [];
+            return new DbRoles();
         }
 
         return result.Value;

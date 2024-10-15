@@ -18,7 +18,7 @@ namespace JAMService.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("jamservice")
-                .HasAnnotation("ProductVersion", "8.0.6")
+                .HasAnnotation("ProductVersion", "8.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -79,15 +79,22 @@ namespace JAMService.Migrations
                     b.Property<int>("ApplicationId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("ExactSourceRoleMatch")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsRealmGroup")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("Role")
+                    b.Property<List<string>>("SourceRoles")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text[]");
 
-                    b.Property<string>("SourceRole")
-                        .HasColumnType("text");
+                    b.Property<List<string>>("TargetRoles")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.HasKey("Id");
 
@@ -98,27 +105,53 @@ namespace JAMService.Migrations
                     b.HasData(
                         new
                         {
-                            Id = 1,
-                            ApplicationId = 1,
+                            Id = -1,
+                            ApplicationId = -1,
+                            Description = "Read-only: Current protection orders and expired",
+                            ExactSourceRoleMatch = true,
                             IsRealmGroup = true,
-                            Role = "POR_READ_ONLY",
-                            SourceRole = ""
+                            SourceRoles = new List<string> { "POS_VIEW_ALL_USER", "POS_USER" },
+                            TargetRoles = new List<string> { "POR_READ_ONLY" }
                         },
                         new
                         {
-                            Id = 2,
-                            ApplicationId = 1,
+                            Id = -2,
+                            ApplicationId = -1,
+                            Description = "Read-only: Current protection orders and expired",
+                            ExactSourceRoleMatch = true,
                             IsRealmGroup = true,
-                            Role = "POR_READ_WRITE",
-                            SourceRole = ""
+                            SourceRoles = new List<string> { "POS_SEL_USER", "POS_USER" },
+                            TargetRoles = new List<string> { "POR_READ_ONLY" }
                         },
                         new
                         {
-                            Id = 3,
-                            ApplicationId = 1,
+                            Id = -3,
+                            ApplicationId = -1,
+                            Description = "Regular user: Admin without remove orders permission",
+                            ExactSourceRoleMatch = true,
                             IsRealmGroup = true,
-                            Role = "POR_DELETE_ORDER",
-                            SourceRole = ""
+                            SourceRoles = new List<string> { "POS_USER" },
+                            TargetRoles = new List<string> { "POR_READ_WRITE" }
+                        },
+                        new
+                        {
+                            Id = -4,
+                            ApplicationId = -1,
+                            Description = "Admin with remove orders permission",
+                            ExactSourceRoleMatch = true,
+                            IsRealmGroup = true,
+                            SourceRoles = new List<string> { "POS_USER", "POS_REMOVE_USER" },
+                            TargetRoles = new List<string> { "POR_READ_WRITE", "POR_DELETE_ORDER" }
+                        },
+                        new
+                        {
+                            Id = -5,
+                            ApplicationId = -1,
+                            Description = "BAE Roles, ability to see results on sealed orders queries",
+                            ExactSourceRoleMatch = true,
+                            IsRealmGroup = true,
+                            SourceRoles = new List<string> { "POS_USER", "POS_REMOVE_USER", "POS_JUSTIN" },
+                            TargetRoles = new List<string> { "POR_READ_WRITE", "POR_DELETE_ORDER" }
                         });
                 });
 
@@ -135,6 +168,10 @@ namespace JAMService.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("GroupPath")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("JUSTINAppName")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -157,9 +194,10 @@ namespace JAMService.Migrations
                     b.HasData(
                         new
                         {
-                            Id = 1,
+                            Id = -1,
                             Description = "JUSTIN Protection Order Registry",
                             GroupPath = "/JAM/POR",
+                            JUSTINAppName = "POR",
                             LaunchUrl = "",
                             Name = "JAM_POR",
                             ValidIDPs = new List<string> { "azuread" }
@@ -197,7 +235,7 @@ namespace JAMService.Migrations
                     b.HasData(
                         new
                         {
-                            Id = 1,
+                            Id = -1,
                             SourceIdp = "azuread",
                             SourceRealm = "BCPS",
                             TargetIdp = "azure-idir",

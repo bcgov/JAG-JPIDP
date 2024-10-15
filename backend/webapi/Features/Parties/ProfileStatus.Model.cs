@@ -108,8 +108,9 @@ public partial class ProfileStatus
             public string? Email { get; set; }
             public string? Phone { get; set; }
             public IEnumerable<string> UserTypes { get; set; }
+            private bool AllowTestJAMAccounts { get; set; }
 
-            public Demographics(ProfileStatusDto profile) : base(profile)
+            public Demographics(ProfileStatusDto profile, bool allowTestJAMAccounts) : base(profile)
             {
                 this.FirstName = profile.FirstName;
                 this.LastName = profile.LastName;
@@ -117,12 +118,13 @@ public partial class ProfileStatus
                 this.Email = profile.Email;
                 this.Phone = profile.Phone;
                 this.UserTypes = profile.UserTypes;
+                this.AllowTestJAMAccounts = allowTestJAMAccounts;
             }
 
             // submitting agency user details are locked
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
-                this.StatusCode = profile.UserIsBcServicesCard || profile.UserIsIdir ? StatusCode.LockedComplete : profile.DemographicsEntered || profile.SubmittingAgency != null ?
+                this.StatusCode = profile.UserIsBcServicesCard || profile.UserIsIdir || profile.UserIsTestJAMAccount ? StatusCode.LockedComplete : profile.DemographicsEntered || profile.SubmittingAgency != null ?
                     (profile.SubmittingAgency != null || profile.UserIsBcps) ? StatusCode.HiddenComplete : StatusCode.Complete :
 
                     StatusCode.Incomplete;
@@ -292,9 +294,10 @@ public partial class ProfileStatus
 
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
+                var provider = profile.User.GetIdentityProvider();
 
 
-                if (!profile.UserIsIdir && !profile.UserIsInSubmittingAgency)
+                if (!profile.UserIsIdir && !profile.UserIsTestJAMAccount || profile.UserIsInSubmittingAgency)
                 {
                     this.StatusCode = StatusCode.Hidden;
                     return;
