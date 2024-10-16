@@ -119,7 +119,7 @@ public class CourtAccessService : ICourtAccessService
         var requests = this.context.CourtLocationAccessRequests
             .Include(req => req.Party)
             .Include(req => req.CourtLocation)
-            .Where((req) => (req.MessageId == null && req.ValidFrom <= DateTimeOffset.Now && req.DeletedOn == null) || (req.MessageId != null && req.ValidUntil <= DateTimeOffset.Now && req.DeletedOn == null)).ToList();
+            .Where((req) => (req.MessageId == null && req.ValidFrom <= DateTimeOffset.UtcNow && req.DeletedOn == null) || (req.MessageId != null && req.ValidUntil <= DateTimeOffset.UtcNow && req.DeletedOn == null)).ToList();
 
         if (requests.Count > 0)
         {
