@@ -33,6 +33,7 @@ public class PidpConfiguration
     public SanityCronConfig SanityCheck { get; set; } = new SanityCronConfig();
     public VerifiableCredentialsConfiguration VerifiableCredentials { get; set; } = new VerifiableCredentialsConfiguration();
     public TelemeteryConfiguration Telemetry { get; set; } = new TelemeteryConfiguration();
+    public bool AllowUserPassTestAccounts { get; set; }
 
     // ------- Configuration Objects -------
 

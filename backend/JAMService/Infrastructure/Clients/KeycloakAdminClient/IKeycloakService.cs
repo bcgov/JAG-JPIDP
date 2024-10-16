@@ -8,6 +8,6 @@ public interface IKeycloakService
     public Task<User> GetUserByUPN(string userPrincipalName, string realm);
     public Task<User?> CreateNewUser(Application application, User sourceUser, string realm);
 
-    public Task<User> UpdateUserApplicationRoles(User user, string applicationName, List<string> roles, string realm);
+    public Task<User> UpdateUserApplicationRoles(User user, Application app, List<string> roles, string realm);
 
 }

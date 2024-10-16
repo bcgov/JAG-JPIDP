@@ -5,10 +5,10 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Pidp.Data;
 using Pidp.Extensions;
-using Pidp.Infrastructure.Auth;
 using Pidp.Models;
 using Pidp.Models.Lookups;
 using Pidp.Models.UserInfo;
+using ClaimValues = Common.Constants.Auth.ClaimValues;
 
 public class Create
 {
@@ -32,8 +32,8 @@ public class Create
             var user = accessor?.HttpContext?.User;
 
             this.RuleFor(x => x.UserId).NotEmpty().Equal(user.GetUserId());
-            this.RuleFor(x => x.FirstName).NotEmpty().MatchesUserClaim(user, Claims.GivenName);
-            this.RuleFor(x => x.LastName).NotEmpty().MatchesUserClaim(user, Claims.FamilyName);
+            this.RuleFor(x => x.FirstName).NotEmpty().MatchesUserClaim(user, Infrastructure.Auth.Claims.GivenName);
+            this.RuleFor(x => x.LastName).NotEmpty().MatchesUserClaim(user, Infrastructure.Auth.Claims.FamilyName);
 
 
             // get the SubmittingAgencies list from the result
@@ -52,14 +52,23 @@ public class Create
             {
                 this.Include<AbstractValidator<Command>>(x =>
                 {
+                    if (config.AllowUserPassTestAccounts)
+                    {
+                        if (user.GetIdentityProvider() == null || user.GetIdentityProvider().Equals(ClaimValues.KeycloakUserPass))
+                        {
+                            return new UserPassValidator(user);
+                        }
+                    }
+
                     // we need to quit hardcoding this stuff :-(
                     return user.GetIdentityProvider() switch
                     {
-                        ClaimValues.BCServicesCard => new BcscValidator(user),
+                        Common.Constants.Auth.ClaimValues.BCServicesCard => new BcscValidator(user),
                         ClaimValues.Phsa => new PhsaValidator(),
                         ClaimValues.Bcps => new BcpsValidator(user),
                         ClaimValues.Idir => new IdirValidator(user),
                         ClaimValues.AzureAd => new IdirValidator(user),
+                        ClaimValues.KeycloakUserPass => new UserPassValidator(user),
                         ClaimValues.VerifiedCredentials => new VerifiedCredentialsValidator(user, config),
                         _ => throw new NotImplementedException($"Given Identity Provider {user.GetIdentityProvider()} is not supported")
                     };
@@ -86,7 +95,7 @@ public class Create
         {
             public BcscValidator(ClaimsPrincipal? user)
             {
-                this.RuleFor(x => x.Jpdid).NotEmpty().MatchesUserClaim(user, Claims.PreferredUsername);
+                this.RuleFor(x => x.Jpdid).NotEmpty().MatchesUserClaim(user, Infrastructure.Auth.Claims.PreferredUsername);
                 this.RuleFor(x => x.Birthdate).NotEmpty().Equal(user?.GetBirthdate()).WithMessage($"Must match the \"birthdate\" Claim on the current User");
             }
         }
@@ -96,7 +105,7 @@ public class Create
             {
                 //this.RuleFor(x => x.Hpdid).Empty();
                 this.RuleFor(x => x.Birthdate).Empty();
-                this.RuleFor(x => x.Jpdid).NotEmpty().MatchesUserClaim(user, Claims.PreferredUsername);
+                this.RuleFor(x => x.Jpdid).NotEmpty().MatchesUserClaim(user, Infrastructure.Auth.Claims.PreferredUsername);
                 //this.RuleFor(x => x.Roles).NotEmpty().Contains("");
                 //this.RuleFor(x => x.Birthdate).NotEmpty().Equal(user?.GetBirthdate()).WithMessage($"Must match the \"birthdate\" Claim on the current User");
             }
@@ -111,11 +120,19 @@ public class Create
             }
         }
 
+        private class UserPassValidator : AbstractValidator<Command>
+        {
+            public UserPassValidator(ClaimsPrincipal? user)
+            {
+                this.RuleFor(x => x.Jpdid).ToString().StartsWith("tst");
+            }
+        }
+
         private class IdirValidator : AbstractValidator<Command>
         {
             public IdirValidator(ClaimsPrincipal? user)
             {
-                this.RuleFor(x => x.Jpdid).NotEmpty().MatchesUserClaim(user, Claims.PreferredUsername);
+                this.RuleFor(x => x.Jpdid).NotEmpty().MatchesUserClaim(user, Infrastructure.Auth.Claims.PreferredUsername);
                 this.RuleFor(x => x.Birthdate).Empty();
             }
         }
@@ -136,11 +153,13 @@ public class Create
     {
         private readonly PidpDbContext context;
         private readonly IHttpContextAccessor httpContextAccessor;
+        private readonly PidpConfiguration pidpConfiguration;
 
-        public CommandHandler(PidpDbContext context, IHttpContextAccessor httpContextAccessor)
+        public CommandHandler(PidpDbContext context, IHttpContextAccessor httpContextAccessor, PidpConfiguration configuration)
         {
             this.context = context;
             this.httpContextAccessor = httpContextAccessor;
+            this.pidpConfiguration = configuration;
         }
 
         public async Task<int> HandleAsync(Command command)
@@ -179,6 +198,38 @@ public class Create
                 };
 
                 this.context.Parties.Add(party);
+            }
+
+            if (this.pidpConfiguration.AllowUserPassTestAccounts && user.GetIdentityProvider() == null && user.Claims.FirstOrDefault(c => c.Type == "preferred_username").Value.StartsWith("tst"))
+            {
+                user.Claims.Append(new Claim(ClaimTypes.AuthenticationMethod, ClaimValues.KeycloakUserPass));
+                var jamTestOrg = this.GetOrganization(this.context, ClaimValues.KeycloakUserPass);
+                // right now we only have one org using verified credentials - this might change in future
+                if (jamTestOrg == null)
+                {
+                    Serilog.Log.Information("No organization exists for JAM Test accounts - adding new entry");
+                    jamTestOrg = new Organization
+                    {
+                        IdpHint = ClaimValues.KeycloakUserPass,
+                        Name = "Test Keycloak Account"
+                    };
+                    this.context.Organizations.Add(jamTestOrg);
+                }
+
+
+                if (jamTestOrg != null)
+                {
+                    var org = new PartyOrgainizationDetail
+                    {
+                        Party = party,
+                        Organization = jamTestOrg
+                    };
+                    Serilog.Log.Information($"Adding {user.GetUserId} to organization {jamTestOrg.Code}");
+                    this.context.PartyOrgainizationDetails.Add(org);
+
+                    await this.context.SaveChangesAsync();
+                    return party.Id;
+                }
             }
 
             // if user is public user (BCSC) we'll set the org as public user

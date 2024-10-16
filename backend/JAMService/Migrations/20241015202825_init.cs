@@ -28,6 +28,7 @@ namespace JAMService.Migrations
                     Description = table.Column<string>(type: "text", nullable: false),
                     LaunchUrl = table.Column<string>(type: "text", nullable: false),
                     GroupPath = table.Column<string>(type: "text", nullable: false),
+                    JUSTINAppName = table.Column<string>(type: "text", nullable: false),
                     ValidIDPs = table.Column<List<string>>(type: "text[]", nullable: false)
                 },
                 constraints: table =>
@@ -90,9 +91,11 @@ namespace JAMService.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Description = table.Column<string>(type: "text", nullable: true),
                     ApplicationId = table.Column<int>(type: "integer", nullable: false),
-                    Role = table.Column<string>(type: "text", nullable: false),
-                    SourceRole = table.Column<string>(type: "text", nullable: true),
+                    ExactSourceRoleMatch = table.Column<bool>(type: "boolean", nullable: false),
+                    TargetRoles = table.Column<List<string>>(type: "text[]", nullable: false),
+                    SourceRoles = table.Column<List<string>>(type: "text[]", nullable: false),
                     IsRealmGroup = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
@@ -110,24 +113,26 @@ namespace JAMService.Migrations
             migrationBuilder.InsertData(
                 schema: "jamservice",
                 table: "Applications",
-                columns: new[] { "Id", "Description", "GroupPath", "LaunchUrl", "Name", "ValidIDPs" },
-                values: new object[] { 1, "JUSTIN Protection Order Registry", "/JAM/POR", "", "JAM_POR", new List<string> { "azuread" } });
+                columns: new[] { "Id", "Description", "GroupPath", "JUSTINAppName", "LaunchUrl", "Name", "ValidIDPs" },
+                values: new object[] { -1, "JUSTIN Protection Order Registry", "/JAM/POR", "POR", "", "JAM_POR", new List<string> { "azuread" } });
 
             migrationBuilder.InsertData(
                 schema: "jamservice",
                 table: "IDPMappers",
                 columns: new[] { "Id", "SourceIdp", "SourceRealm", "TargetIdp", "TargetRealm" },
-                values: new object[] { 1, "azuread", "BCPS", "azure-idir", "ISB" });
+                values: new object[] { -1, "azuread", "BCPS", "azure-idir", "ISB" });
 
             migrationBuilder.InsertData(
                 schema: "jamservice",
                 table: "AppRoleMappings",
-                columns: new[] { "Id", "ApplicationId", "IsRealmGroup", "Role", "SourceRole" },
+                columns: new[] { "Id", "ApplicationId", "Description", "ExactSourceRoleMatch", "IsRealmGroup", "SourceRoles", "TargetRoles" },
                 values: new object[,]
                 {
-                    { 1, 1, true, "POR_READ_ONLY", "" },
-                    { 2, 1, true, "POR_READ_WRITE", "" },
-                    { 3, 1, true, "POR_DELETE_ORDER", "" }
+                    { -5, -1, "BAE Roles, ability to see results on sealed orders queries", true, true, new List<string> { "POS_USER", "POS_REMOVE_USER", "POS_JUSTIN" }, new List<string> { "POR_READ_WRITE", "POR_DELETE_ORDER" } },
+                    { -4, -1, "Admin with remove orders permission", true, true, new List<string> { "POS_USER", "POS_REMOVE_USER" }, new List<string> { "POR_READ_WRITE", "POR_DELETE_ORDER" } },
+                    { -3, -1, "Regular user: Admin without remove orders permission", true, true, new List<string> { "POS_USER" }, new List<string> { "POR_READ_WRITE" } },
+                    { -2, -1, "Read-only: Current protection orders and expired", true, true, new List<string> { "POS_SEL_USER", "POS_USER" }, new List<string> { "POR_READ_ONLY" } },
+                    { -1, -1, "Read-only: Current protection orders and expired", true, true, new List<string> { "POS_VIEW_ALL_USER", "POS_USER" }, new List<string> { "POR_READ_ONLY" } }
                 });
 
             migrationBuilder.CreateIndex(

@@ -61,7 +61,22 @@ public static class ClaimsPrincipalExtensions
     /// <summary>
     /// Returns the Identity Provider of the User, or null if User is null
     /// </summary>
-    public static string? GetIdentityProvider(this ClaimsPrincipal? user) => user?.FindFirstValue(Claims.IdentityProvider);
+    public static string? GetIdentityProvider(this ClaimsPrincipal? user)
+    {
+        if (user == null || !user.Claims.Any())
+        {
+            return null;
+        }
+        if (user?.FindFirstValue(Claims.IdentityProvider) == null && user.Claims.FirstOrDefault(c => c.Type == "preferred_username").Value.StartsWith("tst"))
+        {
+            return ClaimValues.KeycloakUserPass;
+        }
+        else
+        {
+            return user?.FindFirstValue(Claims.IdentityProvider);
+        }
+
+    }
 
     /// <summary>
     /// check wheather the user is a valid bcps user using ad groups

@@ -41,6 +41,7 @@ public static class ClaimValues
     public const string SubmittingAgency = "SUBMITTING_AGENCY";
     public const string VerifiedCredentials = "verified";
     public const string AzureAd = "azuread";
+    public const string KeycloakUserPass = "keycloak-user-pass";
 }
 
 public static class Clients

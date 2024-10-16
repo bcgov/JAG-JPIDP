@@ -27,15 +27,17 @@ public class JAMServiceDbContext(DbContextOptions<JAMServiceDbContext> options
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(JAMServiceDbContext).Assembly);
 
         var app = modelBuilder.Entity<Application>().HasData(
-             new Application { Id = 1, Name = "JAM_POR", Description = "JUSTIN Protection Order Registry", GroupPath = "/JAM/POR", ValidIDPs = ["azuread"] });
+             new Application { Id = -1, Name = "JAM_POR", Description = "JUSTIN Protection Order Registry", GroupPath = "/JAM/POR", ValidIDPs = ["azuread"], JUSTINAppName = "POR" });
 
-        modelBuilder.Entity<AppRoleMapping>().HasData(new AppRoleMapping { ApplicationId = 1, Id = 1, IsRealmGroup = true, Role = "POR_READ_ONLY" });
-        modelBuilder.Entity<AppRoleMapping>().HasData(new AppRoleMapping { ApplicationId = 1, Id = 2, IsRealmGroup = true, Role = "POR_READ_WRITE" });
-        modelBuilder.Entity<AppRoleMapping>().HasData(new AppRoleMapping { ApplicationId = 1, Id = 3, IsRealmGroup = true, Role = "POR_DELETE_ORDER" });
+        modelBuilder.Entity<AppRoleMapping>().HasData(new AppRoleMapping { ApplicationId = -1, Id = -1, IsRealmGroup = true, Description = "Read-only: Current protection orders and expired", SourceRoles = ["POS_VIEW_ALL_USER", "POS_USER"], TargetRoles = ["POR_READ_ONLY"] });
+        modelBuilder.Entity<AppRoleMapping>().HasData(new AppRoleMapping { ApplicationId = -1, Id = -2, IsRealmGroup = true, Description = "Read-only: Current protection orders and expired", SourceRoles = ["POS_SEL_USER", "POS_USER"], TargetRoles = ["POR_READ_ONLY"] });
+        modelBuilder.Entity<AppRoleMapping>().HasData(new AppRoleMapping { ApplicationId = -1, Id = -3, IsRealmGroup = true, Description = "Regular user: Admin without remove orders permission", SourceRoles = ["POS_USER"], TargetRoles = ["POR_READ_WRITE"] });
+        modelBuilder.Entity<AppRoleMapping>().HasData(new AppRoleMapping { ApplicationId = -1, Id = -4, IsRealmGroup = true, Description = "Admin with remove orders permission", SourceRoles = ["POS_USER", "POS_REMOVE_USER"], TargetRoles = ["POR_READ_WRITE", "POR_DELETE_ORDER"] });
+        modelBuilder.Entity<AppRoleMapping>().HasData(new AppRoleMapping { ApplicationId = -1, Id = -5, IsRealmGroup = true, Description = "BAE Roles, ability to see results on sealed orders queries", SourceRoles = ["POS_USER", "POS_REMOVE_USER", "POS_JUSTIN"], TargetRoles = ["POR_READ_WRITE", "POR_DELETE_ORDER"] });
 
 
         var mapping = modelBuilder.Entity<IDPMapper>().HasData(
-             new IDPMapper { Id = 1, SourceRealm = "BCPS", SourceIdp = "azuread", TargetRealm = "ISB", TargetIdp = "azure-idir" });
+             new IDPMapper { Id = -1, SourceRealm = "BCPS", SourceIdp = "azuread", TargetRealm = "ISB", TargetIdp = "azure-idir" });
 
     }
 

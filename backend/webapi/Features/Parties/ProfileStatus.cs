@@ -26,7 +26,12 @@ using Prometheus;
 
 public partial class ProfileStatus
 {
+    private readonly PidpConfiguration configuration;
 
+    public ProfileStatus(PidpConfiguration configuration)
+    {
+        this.configuration = configuration;
+    }
     private static readonly Histogram ProfileDuration = Metrics.CreateHistogram("pidp_profile_duration", "Histogram of profile duration requests.");
 
 
@@ -106,6 +111,7 @@ public partial class ProfileStatus
         private readonly IMapper mapper;
         private readonly IPlrClient client;
         private readonly IJumClient jumClient;
+        private readonly PidpConfiguration pidpConfiguration;
         private readonly PidpDbContext context;
         private readonly IJUSTINClaimClient justinClaimClient;
         private readonly IHttpContextAccessor httpContextAccessor;
@@ -118,7 +124,8 @@ public partial class ProfileStatus
             IJumClient jumClient,
             PidpDbContext context,
             IHttpContextAccessor httpContextAccessor,
-            IProfileUpdateService profileUpdateService)
+            IProfileUpdateService profileUpdateService,
+            PidpConfiguration configuration)
         {
             this.mapper = mapper;
             this.client = client;
@@ -127,6 +134,7 @@ public partial class ProfileStatus
             this.httpContextAccessor = httpContextAccessor;
             this.justinClaimClient = justinClaimClient;
             this.profileUpdateService = profileUpdateService;
+            this.pidpConfiguration = configuration;
         }
 
         public async Task<Model> HandleAsync(Command command)
@@ -274,7 +282,7 @@ public partial class ProfileStatus
                     new Model.AccessAdministrator(profile),
                     new Model.OrganizationDetails(profile),
 
-                    new Model.Demographics(profile),
+                    new Model.Demographics(profile, this.pidpConfiguration.AllowUserPassTestAccounts),
                     new Model.JamPor(this.justinClaimClient, profile),
                     new Model.DigitalEvidence(profile),
                     new Model.DigitalEvidenceCaseManagement(profile),
@@ -414,6 +422,9 @@ public partial class ProfileStatus
         public bool UserIsIdirCaseManagement => this.User.GetIdentityProvider() == ClaimValues.Idir && this.PermitIDIRDEMS() && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpService).Contains(Roles.SubmittingAgency);
         public bool UserIsDutyCounsel => (this.User.GetIdentityProvider() == ClaimValues.VerifiedCredentials && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpService).Contains(Roles.DutyCounsel))
                   || (this.PermitIDIRDEMS() && (this.User.GetIdentityProvider() == ClaimValues.Idir || this.User.GetIdentityProvider() == ClaimValues.AzureAd) && this.User?.Identity is ClaimsIdentity claimsIdentity && claimsIdentity.GetResourceAccessRoles(Clients.PidpService).Contains(Roles.DutyCounsel));
+
+        public bool UserIsTestJAMAccount => this.User.GetIdentityProvider() == ClaimValues.KeycloakUserPass;
+
 
         public bool UserIsInLawSociety => this.User.GetIdentityProvider() == ClaimValues.VerifiedCredentials;
 
