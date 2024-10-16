@@ -49,6 +49,8 @@ public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, I
                 throw new DIAMConfigurationException($"Application {jamProvisioningRequest.TargetApplication} not found in database");
             }
 
+            var allValidAppRoles = app.RoleMappings.Select(rm => rm.TargetRoles).SelectMany(r => r).Distinct().ToList();
+
 
             var sourceUser = await keycloakService.GetUserByUPN(jamProvisioningRequest.UPN, RealmConstants.BCPSRealm);
 
@@ -123,6 +125,9 @@ public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, I
 
             if (existingUserinISB != null)
             {
+                // determine if existing roles are being updated
+                var existingUserRoles = existingUserinISB.Groups.Intersect(allValidAppRoles).ToList();
+
                 if (dbRolesListing != null && dbRolesListing.Roles.Count > 0 && keycloakRoles.Count > 0)
                 {
                     logger.LogInformation($"User {jamProvisioningRequest.ParticipantId} {jamProvisioningRequest.UserId} will be added to roles [{string.Join(",", dbRolesListing)}]");
@@ -133,6 +138,12 @@ public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, I
                     logger.LogWarning($"No roles found for {jamProvisioningRequest.PartyId} in {jamProvisioningRequest.TargetApplication} - user will be removed from all roles for app");
                     domainEvent = "jam-bcgov-account-disabled";
                 }
+
+                // get the roles being removed or added
+                var rolesToAdd = keycloakRoles.Except(existingUserRoles).ToList();
+                var rolesToRemove = existingUserRoles.Except(keycloakRoles).ToList();
+
+                logger.LogInformation($"User {jamProvisioningRequest.ParticipantId} {jamProvisioningRequest.UserId} will have roles added [{string.Join(",", rolesToAdd)}] and removed [{string.Join(",", rolesToRemove)}]");
 
                 await keycloakService.UpdateUserApplicationRoles(existingUserinISB, app, keycloakRoles, RealmConstants.ISBRealm);
 
@@ -230,6 +241,13 @@ public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, I
         // go through app roles and find the keycloak roles
         // Filter the Application objects based on the matching roles
         var appRoles = context.AppRoleMappings.Where(appRoleMap => appRoleMap.Application == app).ToList();
+
+        // get all possible source roles for this app
+        var validSourceRoles = context.AppRoleMappings
+            .Where(appRoleMap => appRoleMap.Application == app)
+            .SelectMany(appRoleMap => appRoleMap.SourceRoles)
+            .ToList();
+
         List<string> dbRolesList = [];
 
         if (dbRolesListing != null)
@@ -240,12 +258,16 @@ public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, I
             }
         }
 
+        // remove unknown roles
+        dbRolesList = dbRolesList.Where(validSourceRoles.Contains).ToList();
+        var ignoredRoles = dbRolesList.Except(validSourceRoles).ToList();
+
         foreach (var appRoleMap in appRoles)
         {
             var sourceRoles = appRoleMap.SourceRoles;
             if (sourceRoles.SequenceEqual(dbRolesList))
             {
-                logger.LogInformation($"Found matching roles for {appRoleMap.Description} for [{dbRolesListing}]");
+                logger.LogInformation($"Found matching roles for {appRoleMap.Description} for [{dbRolesListing}], Ignoring roles:[{ignoredRoles}]");
                 return appRoleMap.TargetRoles.ToList();
             }
 
