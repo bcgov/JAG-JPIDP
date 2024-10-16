@@ -2,6 +2,9 @@ namespace JAMService.Entities;
 
 using System.ComponentModel.DataAnnotations;
 
+/// <summary>
+/// Represents a mapping of roles between two applications - e.g. JUSTIN and Keycloak
+/// </summary>
 public class AppRoleMapping
 {
     [Key]
