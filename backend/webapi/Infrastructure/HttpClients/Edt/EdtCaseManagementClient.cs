@@ -53,7 +53,19 @@ public class EdtCaseManagementClient(HttpClient httpClient, ILogger<EdtCaseManag
             return null;
         }
 
-        return result.Value;
+        // map the agency file number
+        if (result.Value != null)
+        {
+            var caseInfo = result.Value;
+            var agencyFileNoField = result.Value.Fields.FirstOrDefault(f => f.Name == "Agency File No.");
+            if (agencyFileNoField != null)
+            {
+                caseInfo.AgencyFileNumber = string.IsNullOrEmpty(agencyFileNoField.Value.ToString()) ? "" : agencyFileNoField.Value.ToString();
+            }
+            return caseInfo;
+        }
+
+        return null;
 
     }
 }
