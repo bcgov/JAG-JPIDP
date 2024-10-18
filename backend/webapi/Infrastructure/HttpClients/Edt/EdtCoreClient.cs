@@ -4,19 +4,30 @@ using System.Net;
 using System.Threading.Tasks;
 using Common.Exceptions;
 using Common.Models.EDT;
+using Pidp.Data;
 using Prometheus;
 
-public class EdtCoreClient(HttpClient httpClient, ILogger<EdtCoreClient> logger) : BaseClient(httpClient, logger), IEdtCoreClient
+public class EdtCoreClient(HttpClient httpClient, ILogger<EdtCoreClient> logger, PidpDbContext dbContext, IEdtCaseManagementClient edtCaseManagement) : BaseClient(httpClient, logger), IEdtCoreClient
 {
-    private static readonly Histogram PersonLookupByKey = Metrics.CreateHistogram("edt_user_lookup_by_key_duration", "Histogram of person key searches.");
+    private static readonly Histogram PersonLookupByKey = Metrics.CreateHistogram("edt_person_lookup_by_key_duration", "Histogram of person key searches.");
+    private static readonly Histogram UserLookupByKey = Metrics.CreateHistogram("edt_user_lookup_by_key_duration", "Histogram of user key searches.");
+    private static readonly Histogram UserCasesLookup = Metrics.CreateHistogram("edt_user_cases_lookup_by_key_duration", "Histogram of user case searches.");
+
     private static readonly Counter MergedUsersCounter = Metrics.CreateCounter("edt_merged_users_total", "Number of user queries returning merged users");
     private static readonly Counter NonMatchedUsersCount = Metrics.CreateCounter("edt_user_lookup_missing_total", "Number of user queries returning no users");
-    private static readonly Counter PreExistingPersonsCount = Metrics.CreateCounter("edt_user_lookup_by_key_total", "Number of user queries returning a user from a key");
+    private static readonly Counter PreExistingPersonsCount = Metrics.CreateCounter("edt_person_lookup_by_key_total", "Number of person queries returning a user from a key");
 
+    /// <summary>
+    /// Retrieves a person from EDT based on the provided key.
+    /// </summary>
+    /// <param name="key">The key to search for.</param>
+    /// <returns>The <see cref="EdtPersonDto"/> if found; otherwise, null.</returns>
     public async Task<EdtPersonDto?> GetPersonByKey(string key)
     {
         if (string.IsNullOrEmpty(key))
+        {
             return null;
+        }
 
         if (key.Length > 100)
         {
@@ -31,7 +42,6 @@ public class EdtCoreClient(HttpClient httpClient, ILogger<EdtCoreClient> logger)
 
             if (result.IsSuccess)
             {
-
                 Serilog.Log.Information($"Person found {result.Value.Id} for key {key}");
                 PreExistingPersonsCount.Inc();
                 return result.Value;
@@ -50,7 +60,12 @@ public class EdtCoreClient(HttpClient httpClient, ILogger<EdtCoreClient> logger)
         }
     }
 
-
+    /// <summary>
+    /// Retrieves a list of persons from EDT based on the provided identifier type and value.
+    /// </summary>
+    /// <param name="identitiferType">The identifier type.</param>
+    /// <param name="identifierValue">The identifier value.</param>
+    /// <returns>The list of <see cref="EdtPersonDto"/> if found; otherwise, null.</returns>
     public async Task<List<EdtPersonDto>?> GetPersonsByIdentifier(string identitiferType, string identifierValue)
     {
         Serilog.Log.Information($"Edt Person search requested {identitiferType} {identifierValue}");
@@ -68,7 +83,7 @@ public class EdtCoreClient(HttpClient httpClient, ILogger<EdtCoreClient> logger)
             foreach (var person in result.Value)
             {
                 Serilog.Log.Information($"Checking possible person {person.LastName} {person.Id} for identifier {identifierValue}");
-                if ((bool)!person.IsActive)
+                if (!person.IsActive)
                 {
                     Serilog.Log.Information($"User with identifier {identifierValue} is inactive - checking for PrimaryID for merged participants");
                     var primaryPerson = await this.GetPrimaryPerson(person);
@@ -83,21 +98,20 @@ public class EdtCoreClient(HttpClient httpClient, ILogger<EdtCoreClient> logger)
                     personList.Add(person);
                 }
             }
-
         }
-
 
         return personList;
     }
 
-
-
-
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="sourcePerson"></param>
+    /// <returns></returns>
     private async Task<EdtPersonDto> GetPrimaryPerson(EdtPersonDto sourcePerson)
     {
-
         var primaryIDCount = sourcePerson.Identifiers.Select(identifier => identifier.IdentifierType.Equals("PrimaryID")).ToList().Count;
-        if ((bool)sourcePerson.IsActive && primaryIDCount == 0)
+        if (sourcePerson.IsActive && primaryIDCount == 0)
         {
             return sourcePerson;
         }
@@ -114,7 +128,6 @@ public class EdtCoreClient(HttpClient httpClient, ILogger<EdtCoreClient> logger)
             {
                 return await this.GetPrimaryPerson(primaryPerson.Value);
             }
-
         }
 
         Logger.LogWarning($"We did not find any primary user for source person {sourcePerson}");
@@ -123,10 +136,10 @@ public class EdtCoreClient(HttpClient httpClient, ILogger<EdtCoreClient> logger)
     }
 
     /// <summary>
-    /// Find persons based on the lookup model
+    /// Finds persons based on the provided person lookup model.
     /// </summary>
-    /// <param name="personLookupModel"></param>
-    /// <returns></returns>
+    /// <param name="personLookupModel">The person lookup model.</param>
+    /// <returns>The list of <see cref="EdtPersonDto"/> if found; otherwise, an empty list.</returns>
     public async Task<List<EdtPersonDto>?> FindPersons(PersonLookupModel personLookupModel)
     {
         logger.LogInformation($"Edt Person search requested {personLookupModel.LastName} {personLookupModel.FirstName} {personLookupModel.DateOfBirth} ");
@@ -142,7 +155,75 @@ public class EdtCoreClient(HttpClient httpClient, ILogger<EdtCoreClient> logger)
         else
         {
             logger.LogWarning($"Failed to query EDT  FindPersons {string.Join(",", result.Errors)}");
-            return [];
+            return new List<EdtPersonDto>();
+        }
+    }
+
+    /// <summary>
+    /// Retrieves a user from EDT based on the provided key.
+    /// </summary>
+    /// <param name="key">The key to search for.</param>
+    /// <returns>The <see cref="EdtUserDto"/> if found; otherwise, null.</returns>
+    public async Task<EdtUserDto?> GetUserByKey(string key)
+    {
+        if (string.IsNullOrEmpty(key))
+        {
+            return null;
+        }
+
+        if (key.Length > 100)
+        {
+            throw new DIAMGeneralException($"Key too long for query GetUserByKey({key})");
+        }
+
+        using (UserLookupByKey.NewTimer())
+        {
+            var result = await this.GetAsync<EdtUserDto?>($"user/party/{key}");
+
+            if (result.IsSuccess)
+            {
+                return result.Value;
+            }
+            else
+            {
+                logger.LogWarning($"Failed to query EDT  GetUser {string.Join(",", result.Errors)}");
+                return null;
+            }
+        }
+    }
+
+
+
+    /// <summary>
+    /// Retrieves a list of user cases from EDT based on the provided user ID.
+    /// </summary>
+    /// <param name="userId">The user ID to search for.</param>
+    /// <returns>The list of <see cref="UserCaseSearchResponseModel"/> if found; otherwise, null.</returns>
+    public async Task<List<UserCaseSearchResponseModel>?> GetUserCases(string userId)
+    {
+        if (string.IsNullOrEmpty(userId))
+        {
+            return null;
+        }
+
+        if (userId.Length > 100)
+        {
+            throw new DIAMGeneralException($"User Id too long for query GetUserCases({userId})");
+        }
+
+        using (UserCasesLookup.NewTimer())
+        {
+            var result = await this.GetAsync<List<UserCaseSearchResponseModel>?>($"user/party/cases/{userId}");
+
+            if (result.IsSuccess)
+            {
+                return result.Value;
+            }
+            else
+            {
+                logger.LogWarning($"Failed to query EDT for user cases {string.Join(",", result.Errors)}");
+                return null;
+            }
         }
     }
 
