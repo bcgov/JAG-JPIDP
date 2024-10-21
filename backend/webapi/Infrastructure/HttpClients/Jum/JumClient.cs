@@ -4,6 +4,7 @@ using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Common.Models.JUSTIN;
+using CommonModels.Models.JUSTIN;
 using Pidp.Models;
 using Prometheus;
 
@@ -22,9 +23,9 @@ public class JumClient : BaseClient, IJumClient
     /// <param name="caseId"></param>
     /// <param name="accessToken"></param>
     /// <returns></returns>
-    public async Task<CaseStatus> GetJustinCaseStatus(string partyId, string caseId, string accessToken)
+    public async Task<CaseStatusWrapper> GetJustinCaseStatus(string partyId, string caseId, string accessToken)
     {
-        var result = await this.GetAsync<CaseStatus>($"justin-case/{WebUtility.UrlEncode(caseId)}", accessToken);
+        var result = await this.GetAsync<CaseStatusWrapper>($"justin-case/{WebUtility.UrlEncode(caseId)}", accessToken);
 
         if (!result.IsSuccess)
         {

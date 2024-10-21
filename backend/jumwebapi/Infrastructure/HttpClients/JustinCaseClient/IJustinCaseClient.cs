@@ -1,8 +1,8 @@
 namespace jumwebapi.Infrastructure.HttpClients.JustinCases;
 
-using global::Common.Models.JUSTIN;
+using CommonModels.Models.JUSTIN;
 
 public interface IJustinCaseClient
 {
-    Task<CaseStatus> GetCaseStatus(string caseId, string accessToken);
+    Task<CaseStatusWrapper> GetCaseStatus(string caseId, string accessToken);
 }
