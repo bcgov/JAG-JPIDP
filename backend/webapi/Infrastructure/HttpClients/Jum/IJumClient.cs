@@ -1,6 +1,7 @@
 namespace Pidp.Infrastructure.HttpClients.Jum;
 
 using Common.Models.JUSTIN;
+using CommonModels.Models.JUSTIN;
 using Pidp.Models;
 
 public interface IJumClient
@@ -15,7 +16,7 @@ public interface IJumClient
     Task<Participant?> GetJumUserByPartIdAsync(decimal partId, string accessToken);
     Task<bool> IsJumUser(Participant? justinUser, Party party);
 
-    Task<CaseStatus> GetJustinCaseStatus(string partyId, string caseId, string accessToken);
+    Task<CaseStatusWrapper> GetJustinCaseStatus(string partyId, string caseId, string accessToken);
 
     Task<bool> FlagUserUpdateAsComplete(int messageId, bool isSuccessful);
 }

@@ -297,6 +297,18 @@ public class Startup
                 .WithIdentity("case-decommission-trigger") // give the trigger a unique name
                 .WithCronSchedule(config.BackGroundServices.DecomissionCaseAccessService.PollCron));
 
+            // add case sync job
+            var caseAccessSyncJobKey = new JobKey("Case access sync trigger");
+            q.AddJob<SyncCaseAccessJob>(opts => opts.WithIdentity(caseAccessSyncJobKey));
+            Log.Information($"Scheduling Case Sync with params [{config.BackGroundServices.SyncCaseAccessService.PollCron}]");
+
+            // Create a trigger for the job
+            q.AddTrigger(opts => opts
+                .ForJob(caseAccessSyncJobKey) // link to the HelloWorldJob
+                .WithIdentity("case-sync-access-trigger") // give the trigger a unique name
+                .WithCronSchedule(config.BackGroundServices.SyncCaseAccessService.PollCron));
+
+
         });
 
 

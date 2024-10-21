@@ -27,16 +27,19 @@ public static class AuthenticationSetup
         })
         .AddJwtBearer(options =>
         {
+            options.UseSecurityTokenValidators = true;
             options.Authority = KeycloakUrls.Authority(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl);
             options.RequireHttpsMetadata = false;
             options.Audience = "DIAM-INTERNAL";
             options.MetadataAddress = KeycloakUrls.WellKnownConfig(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl);
             options.TokenValidationParameters = new TokenValidationParameters()
             {
+
                 ValidateIssuerSigningKey = true,
-                ValidateIssuer = false,
+                ValidateIssuer = true,
+                ValidIssuer = KeycloakUrls.Authority(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl),
                 ValidateAudience = false,
-                ValidAlgorithms = new List<string>() { "RS256" }
+                ValidAlgorithms = ["RS256"]
             };
             options.Events = new JwtBearerEvents
             {

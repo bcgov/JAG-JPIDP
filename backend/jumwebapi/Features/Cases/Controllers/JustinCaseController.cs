@@ -1,5 +1,6 @@
 namespace jumwebapi.Features.Cases.Controllers;
 
+using CommonModels.Models.JUSTIN;
 using global::Common.Models.JUSTIN;
 using jumwebapi.Features.Cases.Queries;
 using MediatR;
@@ -22,7 +23,7 @@ public class JustinCaseController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> CaseStatusRequest([Required] string caseId)
+    public async Task<ActionResult<CaseStatusWrapper>> CaseStatusRequest([Required] string caseId)
     {
         Log.Logger.Information($"Getting case status for {caseId}");
         var caseStatus = await this.mediator.Send(new GetCaseStatusQuery(caseId));

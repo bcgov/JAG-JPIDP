@@ -11,11 +11,11 @@ using Pidp.Models;
 /// <param name="logger"></param>
 public class EdtCaseManagementClient(HttpClient httpClient, ILogger<EdtCaseManagementClient> logger) : BaseClient(httpClient, logger), IEdtCaseManagementClient
 {
-    public async Task<DigitalEvidenceCaseModel?> FindCase(string partyId, string caseName)
+    public async Task<DigitalEvidenceCaseModel?> FindCase(string partyId, string caseName, string? rCCNumber)
     {
         Serilog.Log.Information($"Case search on {caseName} by {partyId}");
 
-        var result = await this.GetAsync<DigitalEvidenceCaseModel>($"case/{WebUtility.UrlEncode(partyId)}/{WebUtility.UrlEncode(caseName)}");
+        var result = await this.GetAsync<DigitalEvidenceCaseModel>($"case/{WebUtility.UrlEncode(partyId)}/{WebUtility.UrlEncode(caseName)}/{WebUtility.UrlEncode(rCCNumber)}");
 
         if (!result.IsSuccess)
         {
@@ -53,7 +53,19 @@ public class EdtCaseManagementClient(HttpClient httpClient, ILogger<EdtCaseManag
             return null;
         }
 
-        return result.Value;
+        // map the agency file number
+        if (result.Value != null)
+        {
+            var caseInfo = result.Value;
+            var agencyFileNoField = result.Value.Fields.FirstOrDefault(f => f.Name == "Agency File No.");
+            if (agencyFileNoField != null)
+            {
+                caseInfo.AgencyFileNumber = string.IsNullOrEmpty(agencyFileNoField.Value.ToString()) ? "" : agencyFileNoField.Value.ToString();
+            }
+            return caseInfo;
+        }
+
+        return null;
 
     }
 }

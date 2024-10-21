@@ -1,5 +1,6 @@
 namespace Pidp.Models;
 
+using CommonModels.Models.JUSTIN;
 using NodaTime;
 
 /// <summary>
@@ -7,7 +8,7 @@ using NodaTime;
 /// </summary>
 public class DigitalEvidenceCaseModel
 {
-    public Common.Models.JUSTIN.CaseStatus? JustinStatus { get; set; }
+    public CaseStatusWrapper? JustinStatus { get; set; }
 
     public int Id { get; set; }
     public int RequestId { get; set; }
