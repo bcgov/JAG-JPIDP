@@ -46,18 +46,18 @@ public class CaseController : ControllerBase
     }
 
 
-    [HttpGet("{partyId}/{caseName}")]
+    [HttpGet("{partyId}/{caseName}/{RCCNumber?}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<CaseModel>> SearchCases([FromRoute] string partyId, [FromRoute] string caseName)
+    public async Task<ActionResult<CaseModel>> SearchCases([FromRoute] string partyId, [FromRoute] string caseName, [FromRoute] string? RCCNumber)
     {
         using (CaseFindDuration.NewTimer())
         {
 
             try
             {
-                var response = await this._mediator.Send(new CaseLookupQuery(partyId, caseName));
+                var response = await this._mediator.Send(new CaseLookupQuery(partyId, caseName, RCCNumber));
                 if (response == null)
                 {
                     return this.NotFound();

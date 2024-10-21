@@ -2,15 +2,15 @@ namespace jumwebapi.Features.Cases.Queries;
 
 using System.Threading;
 using System.Threading.Tasks;
-using global::Common.Models.JUSTIN;
+using CommonModels.Models.JUSTIN;
 using jumwebapi.Infrastructure.HttpClients.JustinCases;
 using MediatR;
 using Prometheus;
 
-public record GetCaseStatusQuery(string caseId) : IRequest<CaseStatus>;
+public record GetCaseStatusQuery(string caseId) : IRequest<CaseStatusWrapper>;
 
 
-public class GetCaseStatusQueryHandler : IRequestHandler<GetCaseStatusQuery, CaseStatus>
+public class GetCaseStatusQueryHandler : IRequestHandler<GetCaseStatusQuery, CaseStatusWrapper>
 {
 
     private readonly IJustinCaseClient justinCaseClient;
@@ -24,7 +24,7 @@ public class GetCaseStatusQueryHandler : IRequestHandler<GetCaseStatusQuery, Cas
     }
 
 
-    public async Task<CaseStatus> Handle(GetCaseStatusQuery request, CancellationToken cancellationToken)
+    public async Task<CaseStatusWrapper> Handle(GetCaseStatusQuery request, CancellationToken cancellationToken)
     {
         using (CaseStatusDuration.NewTimer())
         {

@@ -20,6 +20,7 @@ public class EdtServiceConfiguration
     public List<CustomDisplayField> CaseDisplayCustomFields { get; set; } = new();
     public int SearchFieldId { get; set; } = -1;
     public int AlternateSearchFieldId { get; set; } = -1;
+    public int RCCNumberSearchFieldId { get; set; } = -1;
     public SplunkConfiguration SplunkConfig { get; set; } = new SplunkConfiguration();
     public class SplunkConfiguration
     {
@@ -45,6 +46,7 @@ public class EdtServiceConfiguration
         public string SubmittingAgencyGroup { get; set; } = string.Empty;
         public string SearchField { get; set; }
         public string AlternateSearchField { get; set; }
+        public string RCCSearchField { get; set; }
     }
 
     public class EdtDisclosureClientConfiguration
