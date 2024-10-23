@@ -351,7 +351,6 @@ public class EdtClient(
     public async Task<CaseModel> FindCase(CaseLookupQuery query)
     {
 
-
         var caseIdOrKey = query.caseName;
         //' /api/v1/org-units/1/cases/3:105: 23-472018/id
         this.searchCount.Add(1);
@@ -497,13 +496,12 @@ public class EdtClient(
                                             Log.Error($"Failed to get primary case for RCC number {query.RCCNumber} for party {query.partyId}");
                                         }
 
-
-                                    }
-
-                                }
                             }
-
                         }
+                    }
+                    else if (foundCase == null && string.IsNullOrEmpty(query.RCCNumber))
+                    {
+                        Log.Warning($"No current case found and RCCNumber not returned from JUSTIN - unable to query by case keys {query.RCCNumber} for party {query.partyId}");
                     }
 
 
