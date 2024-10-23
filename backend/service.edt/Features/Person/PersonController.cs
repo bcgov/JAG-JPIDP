@@ -34,9 +34,9 @@ public class PersonController(IMediator mediator) : ControllerBase
     [HttpGet("key/{key}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<EdtPersonDto>> GetUserByKey([FromRoute] PersonLookupModel lookupModel)
+    public async Task<ActionResult<EdtPersonDto>> GetUserByKey([FromRoute] string key)
     {
-        var search = new PersonSearchQuery(lookupModel);
+        var search = new PersonByKeyQuery(key);
 
         var c = await this.mediator.Send(search);
         if (c == null)

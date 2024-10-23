@@ -221,6 +221,10 @@ public class Startup
                 {
                     config.AlternateSearchFieldId = field.Id;
                 }
+                if (field.Name.Equals(config.EdtClient.RCCSearchField, StringComparison.OrdinalIgnoreCase))
+                {
+                    config.RCCNumberSearchFieldId = field.Id;
+                }
             }
 
 

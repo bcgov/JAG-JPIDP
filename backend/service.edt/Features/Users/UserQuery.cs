@@ -6,6 +6,7 @@ using edt.service.HttpClients.Services.EdtCore;
 using MediatR;
 
 public record UserQuery(string userKey) : IRequest<EdtUserDto>;
+
 public class UserQueryHandler : IRequestHandler<UserQuery, EdtUserDto>
 {
     private readonly IEdtClient edtClient;

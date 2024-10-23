@@ -969,6 +969,18 @@ public class EdtClient : BaseClient, IEdtClient
         }
     }
 
+    public async Task<List<UserCaseSearchResponseModel>> GetUserCases(string userKey)
+    {
+        var result = await this.GetAsync<List<UserCaseSearchResponseModel>?>($"api/v1/org-units/1/users/{userKey}/cases");
+
+        if (!result.IsSuccess)
+        {
+            throw new EdtServiceException(string.Join(",", result.Errors));
+        }
+
+        return result.Value;
+    }
+
     public class AddUserToOuGroup
     {
         public string? UserIdOrKey { get; set; }

@@ -11,18 +11,17 @@ using Microsoft.AspNetCore.Mvc;
 [Route("api/[controller]")]
 [ApiController]
 [Authorize(Policy = Policies.DiamInternalAuthentication)]
-public class UserController : ControllerBase
+public class UserController(IMediator mediator) : ControllerBase
 {
-    private readonly IMediator _mediator;
 
-    [HttpGet("party/{partyId}")]
+    [HttpGet("party/{userKey}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<EdtUserDto>> GetUser([FromServices] IRequestHandler<UserQuery, EdtUserDto> handler,
                                                                        [FromRoute] UserQuery query)
     {
 
-        var c = await this._mediator.Send(query);
+        var c = await mediator.Send(query);
         if (c == null)
         {
             return this.NotFound();
@@ -30,4 +29,25 @@ public class UserController : ControllerBase
         return this.Ok(c);
     }
 
+    [HttpGet("party/cases/{UserId}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<EdtUserDto>> GetUserCases([FromServices] IRequestHandler<UserCasesQuery, List<UserCaseSearchResponseModel>> handler,
+                                                                     [FromRoute] UserCasesQuery query)
+    {
+        try
+        {
+            var c = await mediator.Send(query);
+            if (c == null)
+            {
+                return this.NotFound();
+            }
+            return this.Ok(c);
+        }
+        catch (Exception ex)
+        {
+            // Return a 500 Internal Server Error response
+            return this.StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
 }

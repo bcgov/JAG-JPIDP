@@ -215,19 +215,19 @@ public class KeycloakService(ILogger<KeycloakService> logger,
     /// <param name="realm"></param>
     /// <returns></returns>
     /// <exception cref="Exception"></exception>
-    public async Task<User> UpdateUserApplicationRoles(User user, string applicationName, List<string> roles, string realm)
+    public async Task<User> UpdateUserApplicationRoles(User user, Application app, List<string> roles, string realm)
     {
         //user came in logged into diam user got created - for POR we have options POR_DELETE_ORDER, POR_READ_ONLY, POR_READ_WRITE
         try
         {
             // get all possible roles for app
-            var app = context.Applications.FirstOrDefault(x => x.Name == applicationName);
-            var allAppRoles = context.AppRoleMappings.Where(x => x.ApplicationId == app.Id).Select(x => x.Role).ToList();
 
-            var groupMapping = new Dictionary<string, string>();
+
+
+            var availableAppRoles = app.RoleMappings.ToList().SelectMany(x => x.TargetRoles).Distinct().ToList();
 
             // get all roles that are not applicable to user
-            var rolesNotGranted = allAppRoles.Except(roles).ToList();
+            var rolesNotGranted = availableAppRoles.Except(roles).ToList();
 
             foreach (var role in roles)
             {

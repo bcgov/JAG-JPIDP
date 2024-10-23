@@ -51,7 +51,7 @@ public static class HttpClientSetup
             ClientSecret = config.EdtClient.ClientSecret
         });
 
-        services.AddHttpClientWithBaseAddress<IJUSTINClaimClient, JUSTINClaimClient>(config.JustinClaimClient.Url).WithBearerToken(new InternalHttpRequestCredentials
+        services.AddHttpClientWithBaseAddress<IJUSTINClaimClient, JUSTINClaimClient>(config.JustinClaimClient.Url).WithBearerToken(new InternalJustinRequestCredentials
         {
             Address = config.JustinClaimClient.TokenUrl,
             ClientId = config.JustinClaimClient.ClientId,
@@ -158,7 +158,17 @@ public static class HttpClientSetup
     public static IHttpClientBuilder WithBearerToken<T>(this IHttpClientBuilder builder, T credentials) where T : ClientCredentialsTokenRequest
     {
         builder.Services.AddSingleton(credentials)
-            .AddTransient<BearerTokenHandler<T>>();
+            .AddScoped<BearerTokenHandler<T>>();
+
+        builder.AddHttpMessageHandler<BearerTokenHandler<T>>();
+
+        return builder;
+    }
+
+    public static IHttpClientBuilder WithDIAMBearerToken<T>(this IHttpClientBuilder builder, T credentials) where T : ClientCredentialsTokenRequest
+    {
+        builder.Services.AddSingleton(credentials)
+            .AddScoped<BearerTokenHandler<T>>();
 
         builder.AddHttpMessageHandler<BearerTokenHandler<T>>();
 

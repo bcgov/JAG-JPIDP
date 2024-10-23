@@ -19,12 +19,22 @@ public class DigitalEvidenceCaseQuery
     {
         public async Task<Models.DigitalEvidenceCaseModel> HandleAsync(Query query)
         {
-            var response = await client.FindCase(query.PartyId, query.AgencyFileNumber);
+            // first get the JUSTIN case status
+            var justinResponse = await jumClient.GetJustinCaseStatus(query.PartyId, query.AgencyFileNumber, "");
+            if (justinResponse != null)
+            {
+                Serilog.Log.Information($"[{query.PartyId}] Case {query.AgencyFileNumber} RCC {justinResponse.RccId} found in JUSTIN with status {justinResponse.Value}");
+            }
+            else
+            {
+                Serilog.Log.Information($"[{query.PartyId}] Case {query.AgencyFileNumber} not found in JUSTIN");
+            }
+
+            var response = await client.FindCase(query.PartyId, query.AgencyFileNumber, justinResponse != null && !string.IsNullOrEmpty(justinResponse.RccId) ? justinResponse.RccId : null);
 
             if (response != null && response.Status == "NotFound")
             {
                 Serilog.Log.Information($"[{query.PartyId}] Case {query.AgencyFileNumber} not found in EDT - checking for case in JUSTIN");
-                var justinResponse = await jumClient.GetJustinCaseStatus(query.PartyId, query.AgencyFileNumber, "");
 
                 if (justinResponse != null)
                 {

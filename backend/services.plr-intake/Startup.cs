@@ -1,16 +1,15 @@
 namespace PlrIntake;
 
-using FluentValidation.AspNetCore;
-using Microsoft.EntityFrameworkCore;
-using Serilog;
-using SoapCore;
 using System.Reflection;
 using System.ServiceModel;
 using System.Text.Json;
-
+using FluentValidation.AspNetCore;
+using Microsoft.EntityFrameworkCore;
 using PlrIntake.Data;
 using PlrIntake.Features;
 using PlrIntake.Features.Intake;
+using Serilog;
+using SoapCore;
 
 public class Startup
 {
@@ -81,11 +80,5 @@ public class Startup
             }
         };
 
-        app.UseEndpoints(endpoints =>
-        {
-            endpoints.UseSoapEndpoint<IIntakeService>("/api/PLRHL7", intakeBinding, SoapSerializer.XmlSerializer);
-            endpoints.MapControllers();
-            endpoints.MapHealthChecks("/health/liveness").AllowAnonymous();
-        });
     }
 }

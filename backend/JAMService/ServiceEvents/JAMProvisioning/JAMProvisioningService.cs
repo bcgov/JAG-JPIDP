@@ -9,6 +9,7 @@ using CommonModels.Models.JUSTIN;
 using Confluent.Kafka;
 using DIAM.Common.Models;
 using JAMService.Data;
+using JAMService.Entities;
 using JAMService.Infrastructure.Clients.KeycloakClient;
 using JAMService.Infrastructure.HttpClients.JustinParticipant;
 using NodaTime;
@@ -27,6 +28,10 @@ public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, I
 
         using (JAMProvisioningRequestDuration.NewTimer())
         {
+            var domainEvent = "jam-bcgov-provisioning-complete";
+            var processStatus = "Complete";
+            List<string> errorList = [];
+
             // check we havent handled this message before
             //check whether this message has been processed before   
             if (await context.HasBeenProcessed(key, consumer))
@@ -44,6 +49,8 @@ public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, I
                 throw new DIAMConfigurationException($"Application {jamProvisioningRequest.TargetApplication} not found in database");
             }
 
+            var allValidAppRoles = app.RoleMappings.Select(rm => rm.TargetRoles).SelectMany(r => r).Distinct().ToList();
+
 
             var sourceUser = await keycloakService.GetUserByUPN(jamProvisioningRequest.UPN, RealmConstants.BCPSRealm);
 
@@ -56,58 +63,89 @@ public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, I
 
             logger.LogInformation($"Handling JAM Provisioning Request for {jamProvisioningRequest.PartyId} {jamProvisioningRequest.ParticipantId} Target app {jamProvisioningRequest.TargetApplication}");
 
+            var appName = string.IsNullOrEmpty(app.JUSTINAppName) ? app.Name : app.JUSTINAppName;
+            List<string> keycloakRoles = [];
 
-            List<string> roles = [];
+            DbRoles dbRolesListing = null;
             if (jamProvisioningRequest.ParticipantId > 0)
             {
-                // call JUSTIN ORDS endpoint to get roles for user for requested application
-                roles = await justinClient.GetParticipantRolesByApplicationNameAndParticipantId(jamProvisioningRequest.TargetApplication, jamProvisioningRequest.ParticipantId);
+                // call JUSTIN ORDS endpoint to get dbRolesListing for user for requested application
+                dbRolesListing = await justinClient.GetParticipantRolesByApplicationNameAndParticipantId(appName, jamProvisioningRequest.ParticipantId);
             }
-            else
+
+
+            if (dbRolesListing == null && !string.IsNullOrEmpty(jamProvisioningRequest.UPN))
             {
-                // call JUSTIN ORDS endpoint to get roles for user for requested application
-                roles = await justinClient.GetParticipantRolesByApplicationNameAndUPN(jamProvisioningRequest.TargetApplication, jamProvisioningRequest.UPN);
+                // call JUSTIN ORDS endpoint to get dbRolesListing for user for requested application
+                dbRolesListing = await justinClient.GetParticipantRolesByApplicationNameAndUPN(appName, jamProvisioningRequest.UPN);
             }
 
 
+            if (dbRolesListing != null)
+            {
+                logger.LogInformation($"User [{jamProvisioningRequest.UserId}] has roles [{dbRolesListing}]");
+            }
 
-            roles.Add("POR_READ_ONLY");
-            roles.Add("POR_READ_WRITE");
-            //roles.Clear();
+            // get the keycloak mapping for these roles
+            keycloakRoles = GetKeycloakRolesForJUSTINRoles(app, dbRolesListing);
 
-            // if roles are good - create or update user in Keycloak with appropriate client roles
 
-            // call keycloak to create or update user with roles
+
+
+            // if dbRolesListing are good - create or update user in Keycloak with appropriate client dbRolesListing
+
+            // call keycloak to create or update user with dbRolesListing
             // User in BCPS is the original authenticated user
             logger.LogInformation($"User exists in keycloak BCPS Realm, checking user in ISB Realm");
 
             //User that is created or updated
             var existingUserinISB = await keycloakService.GetUserByUPN(jamProvisioningRequest.UPN, RealmConstants.ISBRealm);
-            var domainEvent = "jam-bcgov-provisioning-complete";
+
 
 
             if (existingUserinISB == null)
             {
-                logger.LogInformation($"User {jamProvisioningRequest.ParticipantId} {jamProvisioningRequest.UserId} does not exist in keycloak ISB Realm, creating new user in ISB Realm");
 
-                existingUserinISB = await keycloakService.CreateNewUser(app, sourceUser, RealmConstants.ISBRealm);
+                if (dbRolesListing == null || dbRolesListing.Roles.Count == 0 || keycloakRoles.Count == 0)
+                {
+                    // publish error and mark account as errored
+                    logger.LogWarning($"User [{jamProvisioningRequest.UserId}] does not exist - but has no mappable roles in JUSTIN for application {app} - marking request as errored");
+                    errorList.Add("Unable to map keycloak roles to JUSTIN roles");
+                    domainEvent = "jam-bcgov-provisioning-error";
+                    processStatus = "Error";
+                }
+                else
+                {
+                    logger.LogInformation($"User {jamProvisioningRequest.ParticipantId} {jamProvisioningRequest.UserId} does not exist in keycloak ISB Realm, creating new user in ISB Realm");
+
+                    existingUserinISB = await keycloakService.CreateNewUser(app, sourceUser, RealmConstants.ISBRealm);
+                }
             }
 
 
             if (existingUserinISB != null)
             {
-                if (roles.Count != 0)
+                // determine if existing roles are being updated
+                var existingUserRoles = existingUserinISB.Groups.Intersect(allValidAppRoles).ToList();
+
+                if (dbRolesListing != null && dbRolesListing.Roles.Count > 0 && keycloakRoles.Count > 0)
                 {
-                    logger.LogInformation($"User {jamProvisioningRequest.ParticipantId} {jamProvisioningRequest.UserId} will be added to roles [{string.Join(",", roles)}]");
+                    logger.LogInformation($"User {jamProvisioningRequest.ParticipantId} {jamProvisioningRequest.UserId} will be added to roles [{string.Join(",", dbRolesListing)}]");
 
                 }
                 else
                 {
                     logger.LogWarning($"No roles found for {jamProvisioningRequest.PartyId} in {jamProvisioningRequest.TargetApplication} - user will be removed from all roles for app");
-                    domainEvent = "jam-bcgov-account-disabled-complete";
+                    domainEvent = "jam-bcgov-account-disabled";
                 }
 
-                await keycloakService.UpdateUserApplicationRoles(existingUserinISB, jamProvisioningRequest.TargetApplication, roles, RealmConstants.ISBRealm);
+                // get the roles being removed or added
+                var rolesToAdd = keycloakRoles.Except(existingUserRoles).ToList();
+                var rolesToRemove = existingUserRoles.Except(keycloakRoles).ToList();
+
+                logger.LogInformation($"User {jamProvisioningRequest.ParticipantId} {jamProvisioningRequest.UserId} will have roles added [{string.Join(",", rolesToAdd)}] and removed [{string.Join(",", rolesToRemove)}]");
+
+                await keycloakService.UpdateUserApplicationRoles(existingUserinISB, app, keycloakRoles, RealmConstants.ISBRealm);
 
 
             }
@@ -125,7 +163,8 @@ public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, I
                 DomainEvent = domainEvent,
                 EventTime = clock.GetCurrentInstant(),
                 Id = jamProvisioningRequest.AccessRequestId,
-                Status = "Complete",
+                Status = processStatus,
+                ErrorList = errorList,
                 PartId = "" + jamProvisioningRequest.ParticipantId
             });
 
@@ -197,4 +236,43 @@ public class JAMProvisioningService(IClock clock, JAMServiceDbContext context, I
         }
     }
 
+    private List<string> GetKeycloakRolesForJUSTINRoles(Application app, DbRoles? dbRolesListing)
+    {
+        // go through app roles and find the keycloak roles
+        // Filter the Application objects based on the matching roles
+        var appRoles = context.AppRoleMappings.Where(appRoleMap => appRoleMap.Application == app).ToList();
+
+        // get all possible source roles for this app
+        var validSourceRoles = context.AppRoleMappings
+            .Where(appRoleMap => appRoleMap.Application == app)
+            .SelectMany(appRoleMap => appRoleMap.SourceRoles)
+            .ToList();
+
+        List<string> dbRolesList = [];
+
+        if (dbRolesListing != null)
+        {
+            foreach (var dbRole in dbRolesListing.Roles)
+            {
+                dbRolesList.Add(dbRole.Dbroles);
+            }
+        }
+
+        // remove unknown roles
+        dbRolesList = dbRolesList.Where(validSourceRoles.Contains).ToList();
+        var ignoredRoles = dbRolesList.Except(validSourceRoles).ToList();
+
+        foreach (var appRoleMap in appRoles)
+        {
+            var sourceRoles = appRoleMap.SourceRoles;
+            if (sourceRoles.SequenceEqual(dbRolesList))
+            {
+                logger.LogInformation($"Found matching roles for {appRoleMap.Description} for [{dbRolesListing}], Ignoring roles:[{ignoredRoles}]");
+                return appRoleMap.TargetRoles.ToList();
+            }
+
+        }
+
+        return new List<string>();
+    }
 }

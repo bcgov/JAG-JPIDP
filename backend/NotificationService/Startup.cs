@@ -124,8 +124,9 @@ public class Startup
         var config = new NotificationServiceConfiguration();
         this.Configuration.Bind(config);
         services.AddSingleton(config);
+        var version = Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+        Log.Logger.Information($"### Notification Service Version: {version} ###");
 
-        Log.Logger.Information($"### Notification Service Version:{Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion} ###");
 
         return config;
     }

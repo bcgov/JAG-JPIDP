@@ -1,9 +1,10 @@
 namespace JAMService.Infrastructure.HttpClients.JustinParticipant;
 
+using CommonModels.Models.JUSTIN;
 
 public interface IJustinParticipantRoleClient
 {
-    Task<List<string>> GetParticipantRolesByApplicationNameAndUPN(string application, string UPN);
-    Task<List<string>> GetParticipantRolesByApplicationNameAndParticipantId(string application, double participantId);
+    Task<DbRoles> GetParticipantRolesByApplicationNameAndUPN(string application, string UPN);
+    Task<DbRoles> GetParticipantRolesByApplicationNameAndParticipantId(string application, double participantId);
 
 }

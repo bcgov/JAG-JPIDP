@@ -33,6 +33,7 @@ public class PidpConfiguration
     public SanityCronConfig SanityCheck { get; set; } = new SanityCronConfig();
     public VerifiableCredentialsConfiguration VerifiableCredentials { get; set; } = new VerifiableCredentialsConfiguration();
     public TelemeteryConfiguration Telemetry { get; set; } = new TelemeteryConfiguration();
+    public bool AllowUserPassTestAccounts { get; set; }
 
     // ------- Configuration Objects -------
 
@@ -44,6 +45,8 @@ public class PidpConfiguration
     public class BackGroundServicesConfiguration
     {
         public DecomissionCaseAccessService DecomissionCaseAccessService { get; set; } = new DecomissionCaseAccessService();
+        public SyncCaseAccessService SyncCaseAccessService { get; set; } = new SyncCaseAccessService();
+
     }
 
     public class PersonLookupType
@@ -60,6 +63,13 @@ public class PidpConfiguration
     }
 
     public class DecomissionCaseAccessService
+    {
+        //  public int PeriodicTimer { get; set; }
+        public int GracePeriod { get; set; }
+        public string PollCron { get; set; } = "0 * * * * ?";
+    }
+
+    public class SyncCaseAccessService
     {
         //  public int PeriodicTimer { get; set; }
         public int GracePeriod { get; set; }

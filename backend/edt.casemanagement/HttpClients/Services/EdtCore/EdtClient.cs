@@ -505,10 +505,6 @@ public class EdtClient(
 
                         }
                     }
-                    else if (foundCase == null && string.IsNullOrEmpty(query.RCCNumber))
-                    {
-                        Log.Warning($"No current case found and RCCNumber not returned from JUSTIN - unable to query by case keys {query.RCCNumber} for party {query.partyId}");
-                    }
 
 
                     searchRequest.ResponseStatus = (foundCase != null) ? "Found " + foundCase.Id : "Not found";
