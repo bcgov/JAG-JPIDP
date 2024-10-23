@@ -33,6 +33,7 @@ public class EdtClient(
     private readonly Counter<long> processedJobCount = instrumentation.ProcessedJobCount;
     private readonly Counter<long> processRemovedJob = instrumentation.ProcessRemovedJob;
     private readonly Histogram<double> caseStatusDuration = instrumentation.CaseStatusDuration;
+    private readonly Histogram<double> caseLookupDuration = instrumentation.CaseStatusDuration;
 
 
     public async Task<EdtUserDto?> GetUser(string userKey)
@@ -350,6 +351,7 @@ public class EdtClient(
     public async Task<CaseModel> FindCase(CaseLookupQuery query)
     {
 
+
         var caseIdOrKey = query.caseName;
         //' /api/v1/org-units/1/cases/3:105: 23-472018/id
         this.searchCount.Add(1);
@@ -359,6 +361,11 @@ public class EdtClient(
         {
             Log.Fatal("Unable to determine search fields based on config - please check configuration");
             Environment.Exit(1);
+        }
+
+        if (string.IsNullOrEmpty(query.RCCNumber))
+        {
+            Log.Warning($"No RCC number provided for case lookup {query.caseName} for party {query.partyId}");
         }
 
         var searchString = this.configuration.SearchFieldId + ":" + caseIdOrKey;
@@ -420,6 +427,87 @@ public class EdtClient(
 
                             }
                         }
+                    }
+
+                    // if we have RCCNumber let's try to find that by active case
+                    if (foundCase == null && !string.IsNullOrEmpty(query.RCCNumber))
+                    {
+                        Log.Information($"Searching by RCC number Key: {query.RCCNumber} for party {query.partyId}");
+
+                        // should return max of one case as we're searching by key
+                        var rccSearch = await this.GetAsync<IEnumerable<CaseLookupModel>?>($"api/v1/org-units/1/cases/{query.RCCNumber}/id");
+                        if (rccSearch.IsSuccess)
+                        {
+                            // should only be one case returned
+                            var rccSearchValue = rccSearch?.Value.FirstOrDefault();
+                            if (rccSearchValue == null || rccSearchValue.Id == null)
+                            {
+                                Log.Error($"No case found for RCC number {query.RCCNumber} for party {query.partyId}");
+                            }
+                            else
+                            {
+                                var caseInfo = await this.GetCase(rccSearchValue.Id);
+
+                                if (caseInfo != null && caseInfo.Status == "Active")
+                                {
+                                    Log.Information($"Using RCC case {caseInfo.Id} [{caseInfo.Status}] [{caseInfo.Name}]");
+                                    foundCase = caseInfo;
+                                }
+                                else
+                                {
+                                    Log.Information($"Found inactive RCC case {caseInfo.Id} [{caseInfo.Status}] [{caseInfo.Name}] - looking for primary");
+                                    // get the primary search value
+                                    var primaryCaseId = caseInfo.Fields.Where(f => f.Id == configuration.RCCNumberSearchFieldId).FirstOrDefault();
+
+                                    if (primaryCaseId != null)
+                                    {
+                                        Log.Information($"Primary case ID is {primaryCaseId.Value} for Query {query.partyId} {query.caseName}- checking if this is active");
+                                        searchString = this.configuration.RCCNumberSearchFieldId + ":" + primaryCaseId.Value;
+
+                                        var primaryCaseList = await this.GetAsync<IEnumerable<CaseLookupModel>?>($"api/v1/org-units/1/cases/{searchString}/id");
+
+                                        if (primaryCaseList.IsSuccess)
+                                        {
+                                            if (primaryCaseList.Value != null)
+                                            {
+                                                // get case where status is active
+                                                var activeCases = primaryCaseList.Value.Where(c => c.Status == "Active");
+
+                                                if (activeCases.Count() == 1)
+                                                {
+                                                    Log.Information($"Found a single active case {activeCases.First().Id} for RCC number {query.RCCNumber} for party {query.partyId}");
+                                                    foundCase = await this.GetCase(activeCases.First().Id);
+                                                }
+                                                else if (activeCases.Count() > 1)
+                                                {
+                                                    Log.Warning($"Multiple active cases found for RCC number {query.RCCNumber} for party {query.partyId} - primary {primaryCaseId.Value} - picking highest ID");
+                                                    var highestCaseId = activeCases.OrderByDescending(c => c.Id).First().Id;
+                                                    foundCase = await this.GetCase(highestCaseId);
+
+                                                }
+                                                else
+                                                {
+                                                    Log.Warning($"No active cases found for RCC number {query.RCCNumber} for party {query.partyId} - primary {primaryCaseId.Value}");
+                                                }
+                                            }
+                                        }
+                                        else
+
+                                        {
+                                            Log.Error($"Failed to get primary case for RCC number {query.RCCNumber} for party {query.partyId}");
+                                        }
+
+
+                                    }
+
+                                }
+                            }
+
+                        }
+                    }
+                    else if (foundCase == null && string.IsNullOrEmpty(query.RCCNumber))
+                    {
+                        Log.Warning($"No current case found and RCCNumber not returned from JUSTIN - unable to query by case keys {query.RCCNumber} for party {query.partyId}");
                     }
 
 

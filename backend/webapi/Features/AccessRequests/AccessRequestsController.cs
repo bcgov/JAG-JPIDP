@@ -11,7 +11,27 @@ using Pidp.Models;
 [Route("api/[controller]")]
 public class AccessRequestsController : PidpControllerBase
 {
-    public AccessRequestsController(IPidpAuthorizationService authorizationService) : base(authorizationService) { }
+    [HttpPost("query")]
+    [Authorize(Policy = Policies.DiamInternalAuthentication)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<PaginatedResponse<AccessRequestDTO>>> GetAccessRequestsAsync(
+          [FromServices] IQueryHandler<AccessRequestSearchQuery.Query, PaginatedResponse<AccessRequestDTO>> handler,
+          [FromBody] PaginationInput input)
+    {
+        var query = new AccessRequestSearchQuery.Query { Input = input };
+        return await handler.HandleAsync(query);
+    }
+
+
+    [HttpGet("request/{AccessRequestId:int}")]
+    [Authorize(Policy = Policies.DiamInternalAuthentication)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<AccessRequestDTO>> GetAccessRequestAsync([FromServices] IQueryHandler<AccessRequestByIdQuery.Query, AccessRequestDTO> handler,
+                                                                     [FromRoute] AccessRequestByIdQuery.Query query)
+    => await handler.HandleAsync(query);
+
 
     [HttpGet("{partyId}")]
     [Authorize(Policy = Policies.AnyPartyIdentityProvider)]
