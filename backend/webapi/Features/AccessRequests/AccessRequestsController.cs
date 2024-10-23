@@ -2,15 +2,20 @@ namespace Pidp.Features.AccessRequests;
 
 using Common.Constants.Auth;
 using Common.Models.AccessRequests;
+using CommonModels.Models.Web;
 using DomainResults.Common;
 using DomainResults.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Pidp.Infrastructure.Services;
 using Pidp.Models;
 
 [Route("api/[controller]")]
 public class AccessRequestsController : PidpControllerBase
 {
+    public AccessRequestsController(IPidpAuthorizationService authorizationService) : base(authorizationService) { }
+
+
     [HttpPost("query")]
     [Authorize(Policy = Policies.DiamInternalAuthentication)]
     [ProducesResponseType(StatusCodes.Status200OK)]
