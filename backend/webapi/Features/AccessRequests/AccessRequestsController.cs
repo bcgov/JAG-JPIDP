@@ -11,11 +11,8 @@ using Pidp.Infrastructure.Services;
 using Pidp.Models;
 
 [Route("api/[controller]")]
-public class AccessRequestsController : PidpControllerBase
+public class AccessRequestsController(IPidpAuthorizationService authorizationService) : PidpControllerBase(authorizationService)
 {
-    public AccessRequestsController(IPidpAuthorizationService authorizationService) : base(authorizationService) { }
-
-
     [HttpPost("query")]
     [Authorize(Policy = Policies.DiamInternalAuthentication)]
     [ProducesResponseType(StatusCodes.Status200OK)]
