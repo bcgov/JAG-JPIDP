@@ -1,11 +1,11 @@
 namespace Pidp.Features.AccessRequests;
 
 using Common.Constants.Auth;
+using Common.Models.AccessRequests;
 using DomainResults.Common;
 using DomainResults.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Pidp.Infrastructure.Services;
 using Pidp.Models;
 
 [Route("api/[controller]")]
