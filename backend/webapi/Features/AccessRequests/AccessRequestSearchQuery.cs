@@ -26,6 +26,12 @@ public class AccessRequestSearchQuery()
         private readonly PidpDbContext context;
         private readonly ILogger<QueryHandler> logger;
 
+        public QueryHandler(PidpDbContext context, ILogger<QueryHandler> logger)
+        {
+            this.context = context;
+            this.logger = logger;
+
+        }
 
         public async Task<PaginatedResponse<AccessRequestDTO>> HandleAsync(Query query)
         {
@@ -50,11 +56,22 @@ public class AccessRequestSearchQuery()
 
                     var data = AccessRequestMappingService.MapToDTO(agencyRequests);
 
-            var requests = await this.context.AccessRequests.Include(a => a.Party).ToListAsync();
-            var paginatedResponse = nameof(PaginatedResponse<AccessRequestDTO>);
-            var data = AccessRequestMappingService.MapToDTO(requests);
 
+                    response.Data = data;
+                }
+            }
+            else
             {
+                this.logger.LogInformation("Access Request Search");
+
+                var requests = await this.context.AccessRequests.Include(a => a.Party)
+                    .Skip((query.Input.Page - 1) * query.Input.PageSize)
+                    .Take(query.Input.PageSize)
+                    .ToListAsync();
+
+                response.Total = this.context.AccessRequests.Count();
+
+                var data = AccessRequestMappingService.MapToDTO(requests);
 
                 response.Data = data;
             }
