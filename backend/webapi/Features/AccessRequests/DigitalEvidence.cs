@@ -86,7 +86,7 @@ public class DigitalEvidence
             {
 
                 var traceId = Tracer.CurrentSpan.Context.TraceId;
-                Serilog.Log.Logger.Information("DigitalEvidence Request {0} {1}", command.ParticipantId, traceId);
+                Serilog.Log.Logger.Information($"DigitalEvidence Request {command.ParticipantId} {command.PartyId} {traceId}");
 
                 Activity.Current?.AddTag("digitalevidence.party.id", command.PartyId);
 
@@ -106,7 +106,7 @@ public class DigitalEvidence
                     return DomainResult.Failed();
                 }
 
-                using var trx = this.context.Database.BeginTransaction();
+                using var trx = await this.context.Database.BeginTransactionAsync();
                 try
                 {
 
