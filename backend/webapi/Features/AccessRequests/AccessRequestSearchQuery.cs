@@ -45,6 +45,7 @@ public class AccessRequestSearchQuery()
             {
                 if (query.Input.Filters.TryGetValue("type", out var value) && value == "caseAccessRequests")
                 {
+
                     this.logger.LogInformation("Case Access Request Search");
                     var agencyRequests = await this.context.SubmittingAgencyRequests.Include(a => a.Party)
                         .Skip((query.Input.Page - 1) * query.Input.PageSize)
