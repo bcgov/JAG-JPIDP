@@ -2,7 +2,7 @@ version: 2
 updates:
   # npm dependencies - frontend
   - package-ecosystem: "npm"
-    directory: "/src/frontend"
+    directory: "/workspace"
     open-pull-requests-limit: 4
     schedule:
       interval: "weekly"
@@ -10,7 +10,7 @@ updates:
       time: "05:00"
   # NuGet dependencies
   - package-ecosystem: "nuget"
-    directory: "/src/backend"
+    directory: "/backend"
     open-pull-requests-limit: 3
     schedule:
       interval: "weekly"
