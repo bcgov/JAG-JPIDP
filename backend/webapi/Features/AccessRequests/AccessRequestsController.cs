@@ -17,9 +17,13 @@ public class AccessRequestsController(IPidpAuthorizationService authorizationSer
     [Authorize(Policy = Policies.DiamInternalAuthentication)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<PaginatedResponse<AccessRequestDTO>>> GetAccessRequestsAsync([FromServices] IQueryHandler<AccessRequestSearchQuery.Query, PaginatedResponse<AccessRequestDTO>> handler,
-                                                                         [FromBody] AccessRequestSearchQuery.Query query)
-        => await handler.HandleAsync(query);
+    public async Task<ActionResult<PaginatedResponse<AccessRequestDTO>>> GetAccessRequestsAsync(
+          [FromServices] IQueryHandler<AccessRequestSearchQuery.Query, PaginatedResponse<AccessRequestDTO>> handler,
+          [FromBody] PaginationInput input)
+    {
+        var query = new AccessRequestSearchQuery.Query { Input = input };
+        return await handler.HandleAsync(query);
+    }
 
 
     [HttpGet("request/{AccessRequestId:int}")]

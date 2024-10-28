@@ -115,7 +115,16 @@ public class PidpDbContext : DbContext
             new CourtLocation { Code = "3585-Y", Name = "Surrey Provincial Court-IPV and Youth", Active = true, Staffed = true },
             new CourtLocation { Code = "2042", Name = "Downtown Community Court", Active = true, Staffed = true },
             new CourtLocation { Code = "2040", Name = "Vancouver Provincial Court ", Active = true, Staffed = true },
-            new CourtLocation { Code = "2045", Name = "Robson Square Provincial Court-Youth", Active = true, Staffed = true }
+            new CourtLocation { Code = "2045", Name = "Robson Square Provincial Court-Youth", Active = true, Staffed = true },
+
+            new CourtLocation { Code = "No-VR1", Name = "North - VR1", Active = true, Staffed = true },
+            new CourtLocation { Code = "No-VR2", Name = "North - VR2", Active = true, Staffed = true },
+            new CourtLocation { Code = "In-VR3", Name = "Interior - VR3", Active = true, Staffed = true },
+            new CourtLocation { Code = "In-VR4", Name = "Interior - VR4", Active = true, Staffed = true },
+            new CourtLocation { Code = "Is-VR8", Name = "Island - VR8", Active = true, Staffed = true },
+            new CourtLocation { Code = "Is-VR9", Name = "Island - VR9", Active = true, Staffed = true }
+
+
         );
 
 
