@@ -495,6 +495,8 @@ public class EdtClient(
                                         {
                                             Log.Error($"Failed to get primary case for RCC number {query.RCCNumber} for party {query.partyId}");
                                         }
+                                    }
+                                }
 
                             }
                         }

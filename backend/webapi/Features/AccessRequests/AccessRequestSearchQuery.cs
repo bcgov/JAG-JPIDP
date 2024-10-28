@@ -47,7 +47,7 @@ public class AccessRequestSearchQuery()
                 {
 
                     this.logger.LogInformation("Case Access Request Search");
-                    var agencyRequests = await this.context.SubmittingAgencyRequests.Where(e => e.Party.Jpdid.Contains()).Include(a => a.Party)
+                    var agencyRequests = await this.context.SubmittingAgencyRequests.Include(a => a.Party)
                         .Skip((query.Input.Page - 1) * query.Input.PageSize)
                         .Take(query.Input.PageSize)
                         .ToListAsync();
