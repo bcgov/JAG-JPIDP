@@ -1,0 +1,42 @@
+name: "DIAM Vulnerability Scan- Trivy"
+
+on:
+  push:
+    branches:
+      - jjstratton-patch-2
+
+  pull_request:
+    branches:
+      - main
+      - test
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to Openshift Docker Registry Gold
+        uses: docker/login-action@v1
+        with:
+          registry: image-registry.apps.gold.devops.gov.bc.ca
+          username: ${{ secrets.OC_USERNAME }}
+          password: ${{ secrets.OC_PASSWORD_VAULT_SA }}
+
+      - name: Vulnerability Scan Frontend
+        uses: Azure/container-scan@v0
+        continue-on-error: true
+        with:
+          image-name: image-registry.apps.gold.devops.gov.bc.ca/${{ secrets.LICENSE_PLATE }}-tools/pidp-frontend:develop
+
+      #Run Vulnerability Scan usinig Trivy scanner
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: image
+          image-ref: image-registry.apps.gold.devops.gov.bc.ca/${{ secrets.LICENSE_PLATE }}-tools/pidp-frontend:develop
+          format: 'table'
+          ignore-unfixed: true
+          limit-severities-for-sarif: true
+          severity: HIGH,CRITICAL
