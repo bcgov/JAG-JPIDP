@@ -26,13 +26,14 @@ jobs:
 
       - name: Pull image
         run:
-          docker pull image-registry.apps.gold.devops.gov.bc.ca/${{ secrets.LICENSE_PLATE }}-tools/pidp-frontend:develop
+          docker pull image-registry.apps.gold.devops.gov.bc.ca/${{ secrets.LICENSE_PLATE }}-tools/pidp-webapi:develop
+          docker tag image-registry.apps.gold.devops.gov.bc.ca/${{ secrets.LICENSE_PLATE }}-tools/pidp-webapi:develop pidp-webapi:dev
 
       #Run Vulnerability Scan usinig Trivy scanner
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: image-registry.apps.gold.devops.gov.bc.ca/${{ secrets.LICENSE_PLATE }}-tools/pidp-frontend:develop
+          image-ref: pidp-webapi:dev
           format: table
           exit-code: '0'
           ignore-unfixed: true
