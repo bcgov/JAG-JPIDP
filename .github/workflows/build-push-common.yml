@@ -60,7 +60,8 @@ jobs:
         run: |
           dotnet build -c Release
           dotnet pack -c Release
+          ls -lstra
 
-      #- name: Docker Push to Artifactory
-      #  run: |
-      #    docker push artifacts.developer.gov.bc.ca/de27-common/${{env.IMAGE_NAME}}:${GITHUB_REF##*/}
+      - name: Docker Push to Artifactory
+        run: |
+          nuget push bin/Release/Common.1.1.8.nupkg artifacts.developer.gov.bc.ca/de27-common
