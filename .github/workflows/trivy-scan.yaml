@@ -1,0 +1,116 @@
+name: "DIAM Vulnerability Scan- Trivy"
+
+on:
+  schedule:
+    # Runs every week at 01:00 Sunday Morning.
+    - cron:  '0 1 * * 0'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to Openshift Docker Registry Gold
+        uses: docker/login-action@v1
+        with:
+          registry: image-registry.apps.gold.devops.gov.bc.ca
+          username: ${{ secrets.OC_USERNAME }}
+          password: ${{ secrets.OC_PASSWORD_VAULT_SA }}
+
+      - name: Pull WebApi image
+        run: |
+          docker pull image-registry.apps.gold.devops.gov.bc.ca/${{ secrets.LICENSE_PLATE }}-tools/pidp-webapi:develop
+          docker tag image-registry.apps.gold.devops.gov.bc.ca/${{ secrets.LICENSE_PLATE }}-tools/pidp-webapi:develop pidp-webapi:dev
+
+      #Run Vulnerability Scan usinig Trivy scanner
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: pidp-webapi:dev
+          scan-type: image
+          format: 'table'
+          ignore-unfixed: true
+          limit-severities-for-sarif: true
+          severity: HIGH,CRITICAL
+
+      - name: Pull Frontend image
+        run: |
+          docker pull image-registry.apps.gold.devops.gov.bc.ca/${{ secrets.LICENSE_PLATE }}-tools/pidp-frontend:develop
+          docker tag image-registry.apps.gold.devops.gov.bc.ca/${{ secrets.LICENSE_PLATE }}-tools/pidp-frontend:develop pidp-frontend:dev
+
+      #Run Vulnerability Scan usinig Trivy scanner
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: pidp-frontend:dev
+          scan-type: image
+          format: 'table'
+          ignore-unfixed: true
+          limit-severities-for-sarif: true
+          severity: HIGH,CRITICAL
+
+      - name: Pull EDT Case Management image
+        run: |
+          docker pull image-registry.apps.gold.devops.gov.bc.ca/${{ secrets.LICENSE_PLATE }}-tools/edt-casemgmt:develop
+          docker tag image-registry.apps.gold.devops.gov.bc.ca/${{ secrets.LICENSE_PLATE }}-tools/edt-casemgmt:develop edt-casemgmt:dev
+
+      #Run Vulnerability Scan usinig Trivy scanner
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: edt-casemgmt:dev
+          scan-type: image
+          format: 'table'
+          ignore-unfixed: true
+          limit-severities-for-sarif: true
+          severity: HIGH,CRITICAL
+
+      - name: Pull JUM Notification image
+        run: |
+          docker pull image-registry.apps.gold.devops.gov.bc.ca/${{ secrets.LICENSE_PLATE }}-tools/jum-notification:develop
+          docker tag image-registry.apps.gold.devops.gov.bc.ca/${{ secrets.LICENSE_PLATE }}-tools/jum-notification:develop jum-notification:dev
+
+      #Run Vulnerability Scan usinig Trivy scanner
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: jum-notification:dev
+          scan-type: image
+          format: 'table'
+          ignore-unfixed: true
+          limit-severities-for-sarif: true
+          severity: HIGH,CRITICAL
+          
+      - name: Pull EDT Disclosure image
+        run: |
+          docker pull image-registry.apps.gold.devops.gov.bc.ca/${{ secrets.LICENSE_PLATE }}-tools/edt-disclosure:develop
+          docker tag image-registry.apps.gold.devops.gov.bc.ca/${{ secrets.LICENSE_PLATE }}-tools/edt-disclosure:develop edt-disclosure:dev
+
+      #Run Vulnerability Scan usinig Trivy scanner
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: edt-disclosure:dev
+          scan-type: image
+          format: 'table'
+          ignore-unfixed: true
+          limit-severities-for-sarif: true
+          severity: HIGH,CRITICAL
+
+      - name: Pull EDT Service image
+        run: |
+          docker pull image-registry.apps.gold.devops.gov.bc.ca/${{ secrets.LICENSE_PLATE }}-tools/edt-service:develop
+          docker tag image-registry.apps.gold.devops.gov.bc.ca/${{ secrets.LICENSE_PLATE }}-tools/edt-service:develop edt-service:dev
+
+      #Run Vulnerability Scan usinig Trivy scanner
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: edt-service:dev
+          scan-type: image
+          format: 'table'
+          ignore-unfixed: true
+          limit-severities-for-sarif: true
+          severity: HIGH,CRITICAL
