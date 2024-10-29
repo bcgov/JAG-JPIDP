@@ -25,7 +25,7 @@ jobs:
           password: ${{ secrets.OC_PASSWORD_VAULT_SA }}
 
       - name: Pull image
-        run:
+        run: |
           docker pull image-registry.apps.gold.devops.gov.bc.ca/${{ secrets.LICENSE_PLATE }}-tools/pidp-webapi:develop
           docker tag image-registry.apps.gold.devops.gov.bc.ca/${{ secrets.LICENSE_PLATE }}-tools/pidp-webapi:develop pidp-webapi:dev
 
