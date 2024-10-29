@@ -24,11 +24,9 @@ jobs:
           username: ${{ secrets.OC_USERNAME }}
           password: ${{ secrets.OC_PASSWORD_VAULT_SA }}
 
-      - name: Vulnerability Scan Frontend
-        uses: Azure/container-scan@v0
-        continue-on-error: true
-        with:
-          image-name: image-registry.apps.gold.devops.gov.bc.ca/${{ secrets.LICENSE_PLATE }}-tools/pidp-frontend:develop
+      - name: Pull image
+        run:
+          docker pull image-registry.apps.gold.devops.gov.bc.ca/${{ secrets.LICENSE_PLATE }}-tools/pidp-frontend:develop
 
       #Run Vulnerability Scan usinig Trivy scanner
       - name: Run Trivy vulnerability scanner
