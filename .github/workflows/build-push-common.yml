@@ -63,6 +63,6 @@ jobs:
           ls -lstra
 
       - name: Docker Push to Artifactory
-        working-directory: ${{env.WORKING_DIRECTORY}}/bin/Release
+        working-directory: backend/common/bin/Release
         run: |
           nuget push Common.1.1.8.nupkg https://artifacts.developer.gov.bc.ca:443/artifactory/de27-common/
