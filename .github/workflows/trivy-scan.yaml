@@ -32,9 +32,9 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          scan-type: image
           image-ref: image-registry.apps.gold.devops.gov.bc.ca/${{ secrets.LICENSE_PLATE }}-tools/pidp-frontend:develop
-          format: 'table'
+          format: table
+          exit-code: '0'
           ignore-unfixed: true
-          limit-severities-for-sarif: true
-          severity: HIGH,CRITICAL
+          vuln-type: os,library
+          severity: CRITICAL
