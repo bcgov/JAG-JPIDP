@@ -56,6 +56,7 @@ jobs:
           password: ${{ secrets.ARTIFACTORY_PASSWORD }}
 
       - name: Dotnet Pack
+        working-directory: ${{env.WORKING_DIRECTORY}}
         run: |
           dotnet pack -c Release
 
