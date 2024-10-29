@@ -1,14 +1,9 @@
 name: "DIAM Vulnerability Scan- Trivy"
 
 on:
-  push:
-    branches:
-      - jjstratton-patch-2
-
-  pull_request:
-    branches:
-      - main
-      - test
+  schedule:
+    # Runs every week at 01:00 Sunday Morning.
+    - cron:  '0 1 * * 0'
   workflow_dispatch:
 
 jobs:
