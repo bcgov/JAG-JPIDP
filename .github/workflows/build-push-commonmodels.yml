@@ -64,4 +64,4 @@ jobs:
       - name: Docker Push to Artifactory
         working-directory: backend/CommonModels/bin/Release
         run: |
-          nuget push CommonModels.1.1.8.nupkg -Source https://artifacts.developer.gov.bc.ca/artifactory/api/nuget/de27-common -apikey ${{ secrets.ARTIFACTORY_USERNAME }}:${{ secrets.ARTIFACTORY_PASSWORD }}
+          nuget push *.nupkg -Source https://artifacts.developer.gov.bc.ca/artifactory/api/nuget/de27-common -apikey ${{ secrets.ARTIFACTORY_USERNAME }}:${{ secrets.ARTIFACTORY_PASSWORD }}
