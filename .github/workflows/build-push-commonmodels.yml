@@ -2,7 +2,7 @@ name: diam-common-models
  
 on:
   push:
-    branches: [jess-admin-tool]
+    branches: [develop]
     paths:
       - "backend/CommonModels/**" 
       - ".github/workflows/build-push-commonmodels.yml"
