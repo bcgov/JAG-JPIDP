@@ -66,8 +66,27 @@ public class EdtClient : BaseClient, IEdtClient
 
             if (!result.IsSuccess)
             {
-                Log.Logger.Error("Failed to create EDT user {0}", string.Join(",", result.Errors));
-                userModificationResponse.successful = false;
+                if (result.Errors != null && result.Errors.Count > 0 && result.Errors.FirstOrDefault().Contains("username or key already exists"))
+                {
+                    // confirm user key is also set
+                    var edtUser = await this.GetUser(accessRequest.Key!);
+                    if (edtUser == null)
+                    {
+                        Log.Logger.Error($"User {accessRequest.UserName} already exists but key is not set {accessRequest.Key}");
+                        userModificationResponse.successful = false;
+
+                    }
+                    else
+                    {
+                        Log.Logger.Information("User {0} already exists", accessRequest.Key);
+                        return userModificationResponse;
+                    }
+                }
+                else
+                {
+                    Log.Logger.Error("Failed to create EDT user {0}", string.Join(",", result.Errors));
+                    userModificationResponse.successful = false;
+                }
             }
 
             //add user to group
@@ -113,18 +132,27 @@ public class EdtClient : BaseClient, IEdtClient
         Log.Information($"User {userIdOrKey} is assigned to {currentlyAssignedGroups.Count} groups");
         foreach (var currentAssignedGroup in currentlyAssignedGroups)
         {
-            var assignedRegion = assignedRegions.Find(region => region.RegionName.Equals(currentAssignedGroup.Name))!;
-            if (assignedRegion == null && !additionalGroupConfig.Contains(assignedRegion.RegionName))
+            var assignedRegion = assignedRegions.Find(region => region.RegionName.Equals(currentAssignedGroup.Name));
+            if (assignedRegion == null)
             {
-                Log.Logger.Information("User {0} is in group {1} that is no longer valid", userIdOrKey, currentAssignedGroup.Name);
-                var result = await this.RemoveUserFromGroup(userIdOrKey, currentAssignedGroup);
-                if (!result)
+                if (additionalGroupConfig.Contains(currentAssignedGroup.Name))
                 {
-                    Log.Warning($"Failed to remove user {userIdOrKey} from group {currentAssignedGroup.Name}");
-                    return false;
+                    Log.Logger.Information($"User {userIdOrKey} is in group {currentAssignedGroup.Name} that is part of additional groups");
+                }
+                else
+                {
+                    Log.Logger.Information("User {0} is in group {1} that is no longer valid", userIdOrKey, currentAssignedGroup.Name);
+                    var result = await this.RemoveUserFromGroup(userIdOrKey, currentAssignedGroup);
+                    if (!result)
+                    {
+                        Log.Warning($"Failed to remove user {userIdOrKey} from group {currentAssignedGroup.Name}");
+                        return false;
+                    }
                 }
             }
         }
+
+  
 
         if (assignedRegions.Count == 0)
         {
