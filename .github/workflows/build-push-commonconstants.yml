@@ -1,4 +1,4 @@
-name: diam-common
+name: diam-common-constants
  
 on:
   push:
