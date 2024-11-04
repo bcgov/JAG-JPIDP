@@ -244,12 +244,24 @@ public class Startup
 
         services.AddQuartz(q =>
         {
+
             Log.Information("Starting scheduler..");
-            q.SchedulerId = "Court-Access-Core";
+            var schedulerId = $"DIAM-Quartz-Scehduler-{Guid.NewGuid().ToString()}";
+            q.SchedulerId = schedulerId;
             q.SchedulerName = "DIAM Scheduler";
+
+            q.UseDefaultThreadPool(tp =>
+            {
+                tp.MaxConcurrency = 3;
+            });
 
             q.UsePersistentStore(store =>
             {
+                store.UseClustering(c =>
+                {
+                    c.CheckinMisfireThreshold = TimeSpan.FromSeconds(15);
+                    c.CheckinInterval = TimeSpan.FromSeconds(10);
+                });
                 // Use for PostgresSQL database
                 store.UsePostgres(pgOptions =>
                 {
@@ -273,7 +285,7 @@ public class Startup
             // Create a "key" for the job
             var jobKey = new JobKey("Court access trigger");
 
-            q.AddJob<CourtAccessScheduledJob>(opts => opts.WithIdentity(jobKey));
+            q.AddJob<CourtAccessScheduledJob>(opts => { opts.WithIdentity(jobKey); });
 
             Log.Information($"Scheduling CourtAccessScheduledJob with params [{config.CourtAccess.PollCron}]");
 

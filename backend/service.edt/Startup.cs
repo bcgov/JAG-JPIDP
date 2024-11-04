@@ -48,7 +48,7 @@ public class Startup
 
     public static IConfiguration StaticConfig { get; private set; }
 
-
+    [Obsolete]
     public void ConfigureServices(IServiceCollection services)
     {
         var config = this.InitializeConfiguration(services);
@@ -238,16 +238,27 @@ public class Startup
         services.AddQuartz(q =>
         {
             Log.Information("Starting scheduler..");
-            q.SchedulerId = "Folio-Linkage-Scheduler";
-            q.SchedulerName = "DIAM Scheduler";
+            var schedulerId = $"DIAM-EDT-Scheduler-{Guid.NewGuid()}";
+
+            q.SchedulerId = schedulerId;
+            q.SchedulerName = "DIAM EDT Scheduler";
 
             q.UsePersistentStore(store =>
             {
+                q.UseDefaultThreadPool(tp =>
+                {
+                    tp.MaxConcurrency = 3;
+                });
+                store.UseClustering(c =>
+                {
+                    c.CheckinMisfireThreshold = TimeSpan.FromSeconds(15);
+                    c.CheckinInterval = TimeSpan.FromSeconds(10);
+                });
                 // Use for PostgresSQL database
                 store.UsePostgres(pgOptions =>
                 {
                     pgOptions.UseDriverDelegate<PostgreSQLDelegate>();
-                    pgOptions.ConnectionString = config.ConnectionStrings.EdtDataStore;
+                    pgOptions.ConnectionString = $"{config.ConnectionStrings.EdtDataStore};MaxConnections=3";
                     pgOptions.TablePrefix = "quartz.qrtz_";
                 });
                 store.UseJsonSerializer();
@@ -264,9 +275,6 @@ public class Startup
                 .WithIdentity("Folio-linkage-trigger") // give the trigger a unique name
                 .WithDescription("Court access scheduled event")
                 .WithCronSchedule(config.FolioLinkageBackgroundService.PollCron));
-
-
-
 
         });
 
