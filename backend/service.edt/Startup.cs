@@ -258,7 +258,7 @@ public class Startup
                 store.UsePostgres(pgOptions =>
                 {
                     pgOptions.UseDriverDelegate<PostgreSQLDelegate>();
-                    pgOptions.ConnectionString = $"{config.ConnectionStrings.EdtDataStore};MaxConnections=3";
+                    pgOptions.ConnectionString = $"{config.ConnectionStrings.EdtDataStore}";
                     pgOptions.TablePrefix = "quartz.qrtz_";
                 });
                 store.UseJsonSerializer();
