@@ -2,6 +2,7 @@ namespace jumwebapi.Data;
 
 using AppAny.Quartz.EntityFrameworkCore.Migrations;
 using AppAny.Quartz.EntityFrameworkCore.Migrations.PostgreSQL;
+using global::Common.Models;
 using jumwebapi.Data.ef;
 using jumwebapi.Features.UserChangeManagement.Data;
 using jumwebapi.Infrastructure.Auth;
@@ -30,6 +31,8 @@ public class JumDbContext : DbContext
     public DbSet<JustinAgency> Agencies { get; set; } = default!;
     public DbSet<JustinAgencyAssignment> AgencyAssignments { get; set; } = default!;
     public DbSet<JustinPartyType> PartyTypes { get; set; } = default!;
+    public DbSet<ParticipantMerge> ParticipantMerges { get; set; } = default!;
+    public DbSet<IdempotentConsumer> IdempotentConsumers { get; set; } = default!;
 
     public DbSet<JustinUserChange> JustinUserChange { get; set; } = default!;
 
@@ -72,6 +75,9 @@ public class JumDbContext : DbContext
         }
 
     }
+
+    public async Task<bool> HasBeenProcessed(string messageId, string consumer) => await this.IdempotentConsumers.AnyAsync(x => x.MessageId == messageId && x.Consumer == consumer);
+
 
     private void ApplyAudits()
     {
