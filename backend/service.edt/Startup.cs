@@ -258,14 +258,14 @@ public class Startup
                 store.UsePostgres(pgOptions =>
                 {
                     pgOptions.UseDriverDelegate<PostgreSQLDelegate>();
-                    pgOptions.ConnectionString = $"{config.ConnectionStrings.EdtDataStore};MaxConnections=3";
+                    pgOptions.ConnectionString = $"{config.ConnectionStrings.EdtDataStore}";
                     pgOptions.TablePrefix = "quartz.qrtz_";
                 });
                 store.UseJsonSerializer();
             });
 
 
-            var jobKey = new JobKey("Folio Linkage Jon");
+            var jobKey = new JobKey("Folio Linkage Job");
 
             q.AddJob<FolioLinkageJob>(opts => opts.WithIdentity(jobKey));
             Log.Information($"Scheduling FolioLinkageBackgroundService with params [{config.FolioLinkageBackgroundService.PollCron}]");
