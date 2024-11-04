@@ -265,7 +265,7 @@ public class Startup
             });
 
 
-            var jobKey = new JobKey("Folio Linkage Jon");
+            var jobKey = new JobKey("Folio Linkage Job");
 
             q.AddJob<FolioLinkageJob>(opts => opts.WithIdentity(jobKey));
             Log.Information($"Scheduling FolioLinkageBackgroundService with params [{config.FolioLinkageBackgroundService.PollCron}]");
