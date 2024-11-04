@@ -76,8 +76,29 @@ public class JumDbContext : DbContext
 
     }
 
+    /// <summary>
+    /// Check if a message was already recorded as processed
+    /// </summary>
+    /// <param name="messageId"></param>
+    /// <param name="consumer"></param>
+    /// <returns></returns>
     public async Task<bool> HasBeenProcessed(string messageId, string consumer) => await this.IdempotentConsumers.AnyAsync(x => x.MessageId == messageId && x.Consumer == consumer);
 
+    /// <summary>
+    /// Record message as processed
+    /// </summary>
+    /// <param name="messageId"></param>
+    /// <param name="consumer"></param>
+    /// <returns></returns>
+    public async Task AddIdempotentConsumer(string messageId, string consumer)
+    {
+        await this.IdempotentConsumers.AddAsync(new IdempotentConsumer
+        {
+            MessageId = messageId,
+            Consumer = consumer
+        });
+        await this.SaveChangesAsync();
+    }
 
     private void ApplyAudits()
     {
