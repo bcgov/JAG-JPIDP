@@ -206,7 +206,9 @@ public class Startup
             services.AddQuartz(q =>
             {
                 Log.Information("Starting ORDS Test scheduler..");
-                q.SchedulerId = "JUM-ORDS-TEST";
+                var schedulerId = $"DIAM-JUM-Scehduler-{Guid.NewGuid()}";
+
+                q.SchedulerId = schedulerId;
                 q.SchedulerName = "ORDS Test Scheduler";
 
                 q.UsePersistentStore(store =>

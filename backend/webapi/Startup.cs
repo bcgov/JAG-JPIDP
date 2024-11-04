@@ -246,7 +246,7 @@ public class Startup
         {
 
             Log.Information("Starting scheduler..");
-            var schedulerId = $"DIAM-Quartz-Scehduler-{Guid.NewGuid().ToString()}";
+            var schedulerId = $"DIAM-Quartz-Scehduler-{Guid.NewGuid()}";
             q.SchedulerId = schedulerId;
             q.SchedulerName = "DIAM Scheduler";
 
