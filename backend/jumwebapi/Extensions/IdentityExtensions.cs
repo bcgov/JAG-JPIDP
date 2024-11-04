@@ -1,9 +1,8 @@
-﻿using jumwebapi.Core.Extension;
+using System.Security.Claims;
+using jumwebapi.Core.Extension;
 using jumwebapi.Data.Exceptions;
 using jumwebapi.Data.Security;
 using jumwebapi.Infrastructure;
-using System.Linq;
-using System.Security.Claims;
 
 namespace jumwebapi.Extensions;
 
@@ -20,8 +19,11 @@ public static class IdentityExtensions
     /// <returns>True if the user has any of the permission.</returns>
     public static bool HasPermission(this ClaimsPrincipal user, params Permissions[] permission)
     {
-        if (permission == null) throw new ArgumentNullException(nameof(permission));
-        if (permission.Length == 0) throw new ArgumentOutOfRangeException(nameof(permission));
+        ArgumentNullException.ThrowIfNull(permission);
+        if (permission.Length == 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(permission));
+        }
 
         var roles = permission.Select(r => r.GetName()).ToArray();
         return user.Claims.Any(c => c.Type == ClaimTypes.Role && roles.Contains(c.Value));
@@ -35,8 +37,11 @@ public static class IdentityExtensions
     /// <returns>True if the user has all of the permissions.</returns>
     public static bool HasPermissions(this ClaimsPrincipal user, params Permissions[] permission)
     {
-        if (permission == null) throw new ArgumentNullException(nameof(permission));
-        if (permission.Length == 0) throw new ArgumentOutOfRangeException(nameof(permission));
+        ArgumentNullException.ThrowIfNull(permission);
+        if (permission.Length == 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(permission));
+        }
 
         var roles = permission.Select(r => r.GetName()).ToArray();
         var claims = user.Claims.Where(c => c.Type == ClaimTypes.Role);
@@ -52,7 +57,11 @@ public static class IdentityExtensions
     /// <returns></returns>
     public static ClaimsPrincipal ThrowIfNotAuthorized(this ClaimsPrincipal user, string message = null)
     {
-        if (user == null || !user.Identity.IsAuthenticated) throw new NotAuthorizedException(message);
+        if (user == null || !user.Identity.IsAuthenticated)
+        {
+            throw new NotAuthorizedException(message);
+        }
+
         return user;
     }
 
@@ -61,12 +70,16 @@ public static class IdentityExtensions
     /// </summary>
     /// <param name="user"></param>
     /// <param name="role"></param>
-    /// <param name="message"></param>
+    /// <param name="message"></param>a
     /// <exception type="NotAuthorizedException">User does not have the specified 'role'.</exception>
     /// <returns></returns>
     public static ClaimsPrincipal ThrowIfNotAuthorized(this ClaimsPrincipal user, string role, string message)
     {
-        if (user == null || !user.HasRole(role)) throw new NotAuthorizedException(message);
+        if (user == null || !user.HasRole(role))
+        {
+            throw new NotAuthorizedException(message);
+        }
+
         return user;
     }
 
@@ -80,7 +93,11 @@ public static class IdentityExtensions
     /// <returns></returns>
     public static ClaimsPrincipal ThrowIfNotAuthorized(this ClaimsPrincipal user, Permissions permission, string message = null)
     {
-        if (user == null || !user.HasPermission(permission)) throw new NotAuthorizedException(message);
+        if (user == null || !user.HasPermission(permission))
+        {
+            throw new NotAuthorizedException(message);
+        }
+
         return user;
     }
 
@@ -93,7 +110,11 @@ public static class IdentityExtensions
     /// <returns></returns>
     public static ClaimsPrincipal ThrowIfNotAuthorized(this ClaimsPrincipal user, params Permissions[] permission)
     {
-        if (user == null || !user.HasPermission(permission)) throw new NotAuthorizedException();
+        if (user == null || !user.HasPermission(permission))
+        {
+            throw new NotAuthorizedException();
+        }
+
         return user;
     }
 
@@ -107,7 +128,11 @@ public static class IdentityExtensions
     /// <returns></returns>
     public static ClaimsPrincipal ThrowIfNotAllAuthorized(this ClaimsPrincipal user, Permissions permission, string message = null)
     {
-        if (user == null || !user.HasPermissions(permission)) throw new NotAuthorizedException(message);
+        if (user == null || !user.HasPermissions(permission))
+        {
+            throw new NotAuthorizedException(message);
+        }
+
         return user;
     }
 
@@ -120,7 +145,11 @@ public static class IdentityExtensions
     /// <returns></returns>
     public static ClaimsPrincipal ThrowIfNotAllAuthorized(this ClaimsPrincipal user, params Permissions[] permission)
     {
-        if (user == null || !user.HasPermissions(permission)) throw new NotAuthorizedException();
+        if (user == null || !user.HasPermissions(permission))
+        {
+            throw new NotAuthorizedException();
+        }
+
         return user;
     }
 
@@ -134,7 +163,11 @@ public static class IdentityExtensions
     /// <returns></returns>
     public static ClaimsPrincipal ThrowIfNotAuthorized(this ClaimsPrincipal user, Permissions[] permission, string message = null)
     {
-        if (user == null || !user.HasPermission(permission)) throw new NotAuthorizedException(message);
+        if (user == null || !user.HasPermission(permission))
+        {
+            throw new NotAuthorizedException(message);
+        }
+
         return user;
     }
 

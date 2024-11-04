@@ -1,0 +1,38 @@
+name: Weekly OWASP ZAP Baseline Scan on Prod Site
+on:
+  #schedule:
+    # Runs every week at 01:00 Sunday Morning.
+  #  - cron:  '0 1 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  zap_scan:
+    runs-on: ubuntu-latest
+    name: Scan ZAP Test Site
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: ZAP Scan JPIDP
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: "https://jpidp.justice.gov.bc.ca"
+          rules_file_name: "zap-rules.tsv"
+      - name: ZAP Scan Legal Counsel
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: "https://legalcounsel.justice.gov.bc.ca"
+          rules_file_name: "zap-rules.tsv"
+      - name: ZAP Scan BC Prosecution
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: "https://accused.bcprosecution.gov.bc.ca"
+          rules_file_name: "zap-rules.tsv"
+      - name: ZAP Scan Agencies
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: "https://agencies.justice.gov.bc.ca"
+          rules_file_name: "zap-rules.tsv"
