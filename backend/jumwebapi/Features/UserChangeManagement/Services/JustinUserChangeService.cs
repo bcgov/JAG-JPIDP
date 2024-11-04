@@ -2,12 +2,12 @@ namespace jumwebapi.Features.UserChangeManagement.Services;
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using global::Common.Kafka;
 using jumwebapi.Core.Extension;
 using jumwebapi.Data;
 using jumwebapi.Features.Participants.Queries;
 using jumwebapi.Features.UserChangeManagement.Data;
 using jumwebapi.Infrastructure.Auth;
-using jumwebapi.Kafka.Producer.Interfaces;
 using jumwebapi.Models;
 using MediatR;
 using NodaTime;

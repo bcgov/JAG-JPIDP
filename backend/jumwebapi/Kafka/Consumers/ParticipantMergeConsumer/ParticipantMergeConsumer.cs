@@ -1,4 +1,4 @@
-namespace jumwebapi.Kafka.Consumers.ParticipantMergeConsumer;
+namespace jumwebapi.Kafka.Consumers.NotificationConsumer;
 
 
 using Confluent.Kafka;

@@ -3,6 +3,7 @@ namespace jumwebapi;
 using System.Reflection;
 using System.Security.Claims;
 using FluentValidation.AspNetCore;
+using global::Common.Kafka;
 using global::Common.Logging;
 using jumwebapi.Common;
 using jumwebapi.Core.Http;
@@ -20,6 +21,8 @@ using jumwebapi.Helpers.Mapping;
 using jumwebapi.Infrastructure;
 using jumwebapi.Infrastructure.Auth;
 using jumwebapi.Infrastructure.HttpClients;
+using jumwebapi.Kafka.Consumers.ParticipantMergeConsumer;
+using jumwebapi.Models;
 using jumwebapi.PipelineBehaviours;
 using MediatR;
 using MediatR.Extensions.FluentValidation.AspNetCore;
@@ -102,12 +105,20 @@ public class Startup
 
         services.AddSingleton<ProblemDetailsFactory, UserManagerProblemDetailsFactory>();
 
+
         services.AddSingleton<IAuthorizationHandler, RealmAccessRoleHandler>();
         services.AddTransient<IClaimsTransformation, KeycloakClaimTransformer>();
         services.AddHttpContextAccessor();
         services.AddTransient<ClaimsPrincipal>(s => s.GetService<IHttpContextAccessor>().HttpContext.User);
         services.AddScoped<IProxyRequestClient, ProxyRequestClient>();
         services.AddScoped<IdentityProviderDataSeeder>();
+
+        // add consumer background service
+        services.AddHostedService<ParticipantMergeConsumerService>();
+
+        // add handler to process part merge messages
+        services.AddScoped<IKafkaHandler<string, ParticipantMergeEvent>, PartipantMergeConsumerHandler>();
+
 
         services.AddHealthChecks()
             .AddCheck("liveliness", () => HealthCheckResult.Healthy())
