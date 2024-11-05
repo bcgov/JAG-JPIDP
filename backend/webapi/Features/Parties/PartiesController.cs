@@ -1,11 +1,14 @@
 namespace Pidp.Features.Parties;
 
 using Common.Constants.Auth;
+using CommonModels.Models.Party;
+using CommonModels.Models.Web;
 using DomainResults.Common;
 using DomainResults.Mvc;
 using HybridModelBinding;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Pidp.Features.Parties.Query;
 using Pidp.Infrastructure.Services;
 using Pidp.Models;
 using Swashbuckle.AspNetCore.Annotations;
@@ -15,6 +18,18 @@ using Swashbuckle.AspNetCore.Annotations;
 public class PartiesController : PidpControllerBase
 {
     public PartiesController(IPidpAuthorizationService authorizationService) : base(authorizationService) { }
+
+    [HttpPost("query")]
+    [Authorize(Policy = Policies.DiamInternalAuthentication)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<PaginatedResponse<PartyDetailModel>>> GetPartiesQuery(
+      [FromServices] IQueryHandler<PartySearchQuery.Query, PaginatedResponse<PartyDetailModel>> handler,
+      [FromBody] PaginationInput input)
+    {
+        var query = new PartySearchQuery.Query { Input = input };
+        return await handler.HandleAsync(query);
+    }
 
     [SwaggerOperation(Summary = "Return all parties known to DIAM")]
     [HttpGet]

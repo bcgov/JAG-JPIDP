@@ -1,13 +1,13 @@
 namespace Pidp.Infrastructure.Auth;
 
 using System.Security.Claims;
-using Common.Constants.Auth;
 using Common.Authorization;
 using Common.Constants.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Pidp.Extensions;
+using Serilog;
 
 public static class AuthenticationSetup
 {
@@ -96,14 +96,49 @@ public static class AuthenticationSetup
             return hasSARole || hasClaim;
         }));
 
+
+        // any JAM_POR possible user (should be more generic!)
+        services.AddAuthorizationBuilder().AddPolicy(Policies.AllJAMIdentityProvider, policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
+        {
+            if (config.AllowUserPassTestAccounts && !context.User.HasClaim(c => c.Type == Claims.IdentityProvider)) // test accounts
+            {
+                var username = context.User.Claims.FirstOrDefault(c => c.Type == "preferred_username");
+                Log.Logger.Warning("**** Allowing test accounts to pass through - NOT FOR PRODUCTION USE ****");
+
+                if (username != null && username.Value.StartsWith("tst"))
+                {
+                    Log.Logger.Warning($"**** Permitting test user {username} - adding keycloak provider ****");
+                    return true;
+                }
+            }
+            var hasSARole = context.User.IsInRole(Roles.JAM_POR);
+            var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider && (
+                                                        c.Value == ClaimValues.AzureAd));
+            return hasSARole || hasClaim;
+        }));
+
         // any party requirement
         services.AddAuthorizationBuilder().AddPolicy(Policies.AnyPartyIdentityProvider, policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
         {
+
+            // no IDP linked - using a username and password combo from keycloak - not for prod use!!
+            if (config.AllowUserPassTestAccounts && !context.User.HasClaim(c => c.Type == Claims.IdentityProvider)) // test accounts
+            {
+                var username = context.User.Claims.FirstOrDefault(c => c.Type == "preferred_username");
+                Log.Logger.Warning("**** Allowing test accounts to pass through - NOT FOR PRODUCTION USE ****");
+
+                if (username != null && username.Value.StartsWith("tst"))
+                {
+                    Log.Logger.Warning($"**** Permitting test user {username} - adding keycloak provider ****");
+                    return true;
+                }
+            }
             var hasRole = context.User.IsInRole(Roles.SubmittingAgency);
             var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider &&
                                                        (c.Value == ClaimValues.BCServicesCard ||
                                                         c.Value == ClaimValues.Idir ||
                                                         c.Value == ClaimValues.Bcps ||
+                                                        c.Value == ClaimValues.AzureAd ||
                                                         c.Value == ClaimValues.VerifiedCredentials));
 
             return hasRole || hasClaim;
@@ -120,6 +155,12 @@ public static class AuthenticationSetup
         }));
 
         services.AddAuthorizationBuilder().AddPolicy(Policies.AdminClientAuthentication, policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
+        {
+            var hasClaim = context.User.HasClaim(c => c.Type == Claims.AuthorizedParties && c.Value == Clients.DiamInternal);
+            return hasClaim;
+        }));
+
+        services.AddAuthorizationBuilder().AddPolicy(Policies.DiamInternalAuthentication, policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
         {
             var hasClaim = context.User.HasClaim(c => c.Type == Claims.AuthorizedParties && c.Value == Clients.DiamInternal);
             return hasClaim;

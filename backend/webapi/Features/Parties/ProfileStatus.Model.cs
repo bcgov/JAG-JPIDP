@@ -2,6 +2,7 @@ namespace Pidp.Features.Parties;
 
 using System.Security.Claims;
 using Pidp.Extensions;
+using Pidp.Infrastructure.HttpClients.Claims;
 using Pidp.Models;
 using Pidp.Models.Lookups;
 using Prometheus;
@@ -107,8 +108,9 @@ public partial class ProfileStatus
             public string? Email { get; set; }
             public string? Phone { get; set; }
             public IEnumerable<string> UserTypes { get; set; }
+            private bool AllowTestJAMAccounts { get; set; }
 
-            public Demographics(ProfileStatusDto profile) : base(profile)
+            public Demographics(ProfileStatusDto profile, bool allowTestJAMAccounts) : base(profile)
             {
                 this.FirstName = profile.FirstName;
                 this.LastName = profile.LastName;
@@ -116,12 +118,13 @@ public partial class ProfileStatus
                 this.Email = profile.Email;
                 this.Phone = profile.Phone;
                 this.UserTypes = profile.UserTypes;
+                this.AllowTestJAMAccounts = allowTestJAMAccounts;
             }
 
             // submitting agency user details are locked
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
-                this.StatusCode = profile.UserIsBcServicesCard ? StatusCode.LockedComplete : profile.DemographicsEntered || profile.SubmittingAgency != null ?
+                this.StatusCode = profile.UserIsBcServicesCard || profile.UserIsIdir || profile.UserIsTestJAMAccount ? StatusCode.LockedComplete : profile.DemographicsEntered || profile.SubmittingAgency != null ?
                     (profile.SubmittingAgency != null || profile.UserIsBcps) ? StatusCode.HiddenComplete : StatusCode.Complete :
 
                     StatusCode.Incomplete;
@@ -282,6 +285,56 @@ public partial class ProfileStatus
                 }
 
                 return valid;
+            }
+        }
+
+        public class JamPor(IJUSTINClaimClient client, ProfileStatusDto profile) : ProfileSection(profile)
+        {
+            internal override string SectionName => "jamPor";
+
+            protected override void SetAlertsAndStatus(ProfileStatusDto profile)
+            {
+                var provider = profile.User.GetIdentityProvider();
+
+
+                if (!profile.UserIsIdir && !profile.UserIsTestJAMAccount || profile.UserIsInSubmittingAgency)
+                {
+                    this.StatusCode = StatusCode.Hidden;
+                    return;
+                }
+
+                var claims = client.GetJustinClaims(profile.Email).Result;
+
+                if (claims != null && claims.Errors.Length != 0)
+                {
+                    if (profile.UserIsIdir)
+                    {
+                        Log.Error($"User {profile.Email} unable to request JAM access due to missing JUSTIN claims");
+                        this.StatusCode = StatusCode.MissingRequiredClaims;
+                        return;
+                    }
+                    else // user is in sub agency
+                    {
+                        Log.Error($"User {profile.Email} unable to request JAM access due to missing JUSTIN claims");
+                        this.StatusCode = StatusCode.Hidden;
+                        return;
+                    }
+
+                }
+
+                this.StatusCode = StatusCode.Available;
+
+                if (profile.AccessRequestStatus.Any())
+                {
+                    var request = profile.AccessRequestStatus.First();
+                    if (request != null)
+                    {
+                        this.StatusCode = Enum.Parse<StatusCode>(request);
+                    }
+
+                }
+
+
             }
         }
 

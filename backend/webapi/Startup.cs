@@ -35,6 +35,8 @@ using Pidp.Features.DigitalEvidenceCaseManagement.BackgroundServices;
 using Pidp.Features.Organization.OrgUnitService;
 using Pidp.Features.Organization.UserTypeService;
 using Pidp.Features.Parties;
+using Pidp.Features.SanityChecks.CaseRequests;
+using Pidp.Features.SanityChecks.Onboarding;
 using Pidp.Helpers.Middleware;
 using Pidp.Infrastructure;
 using Pidp.Infrastructure.Auth;
@@ -158,6 +160,7 @@ public class Startup
         services.AddScoped<IOrgUnitService, OrgUnitService>();
         services.AddScoped<ICourtAccessService, CourtAccessService>();
         services.AddScoped<IProfileUpdateService, ProfileUpdateServiceImpl>();
+        services.AddScoped<ICaseSanityChecks, CaseSanityChecks>();
 
         services.AddSingleton(typeof(IKafkaProducer<,>), typeof(KafkaProducer<,>));
 
@@ -241,12 +244,24 @@ public class Startup
 
         services.AddQuartz(q =>
         {
+
             Log.Information("Starting scheduler..");
-            q.SchedulerId = "Court-Access-Core";
+            var schedulerId = $"DIAM-Quartz-Scehduler-{Guid.NewGuid()}";
+            q.SchedulerId = schedulerId;
             q.SchedulerName = "DIAM Scheduler";
+
+            q.UseDefaultThreadPool(tp =>
+            {
+                tp.MaxConcurrency = 3;
+            });
 
             q.UsePersistentStore(store =>
             {
+                store.UseClustering(c =>
+                {
+                    c.CheckinMisfireThreshold = TimeSpan.FromSeconds(15);
+                    c.CheckinInterval = TimeSpan.FromSeconds(10);
+                });
                 // Use for PostgresSQL database
                 store.UsePostgres(pgOptions =>
                 {
@@ -254,19 +269,29 @@ public class Startup
                     pgOptions.ConnectionString = config.ConnectionStrings.PidpDatabase;
                     pgOptions.TablePrefix = "quartz.qrtz_";
                 });
-                store.UseJsonSerializer();
+                store.UseNewtonsoftJsonSerializer();
             });
+
+            // Create a "key" for the job
+            var sanityCheckKey = new JobKey("Sanity Checks");
+            q.AddJob<SanityCheckTask>(opts => opts.WithIdentity(sanityCheckKey));
+            Log.Information($"Scheduling Sanity Checks with params [{config.SanityCheck.PollCron}]");
+            q.AddTrigger(opts => opts
+                .ForJob(sanityCheckKey)
+                .WithIdentity("SanityCheck-trigger")
+                .WithCronSchedule(config.SanityCheck.PollCron));
+
 
             // Create a "key" for the job
             var jobKey = new JobKey("Court access trigger");
 
-            q.AddJob<CourtAccessScheduledJob>(opts => opts.WithIdentity(jobKey));
+            q.AddJob<CourtAccessScheduledJob>(opts => { opts.WithIdentity(jobKey); });
 
             Log.Information($"Scheduling CourtAccessScheduledJob with params [{config.CourtAccess.PollCron}]");
 
             // Create a trigger for the job
             q.AddTrigger(opts => opts
-                .ForJob(jobKey) // link to the HelloWorldJob
+                .ForJob(jobKey)
                 .WithIdentity("CourtAccess-trigger") // give the trigger a unique name
                 .WithCronSchedule(config.CourtAccess.PollCron));
 
@@ -283,6 +308,18 @@ public class Startup
                 .ForJob(decommisionJobKey) // link to the HelloWorldJob
                 .WithIdentity("case-decommission-trigger") // give the trigger a unique name
                 .WithCronSchedule(config.BackGroundServices.DecomissionCaseAccessService.PollCron));
+
+            // add case sync job
+            var caseAccessSyncJobKey = new JobKey("Case access sync trigger");
+            q.AddJob<SyncCaseAccessJob>(opts => opts.WithIdentity(caseAccessSyncJobKey));
+            Log.Information($"Scheduling Case Sync with params [{config.BackGroundServices.SyncCaseAccessService.PollCron}]");
+
+            // Create a trigger for the job
+            q.AddTrigger(opts => opts
+                .ForJob(caseAccessSyncJobKey) // link to the HelloWorldJob
+                .WithIdentity("case-sync-access-trigger") // give the trigger a unique name
+                .WithCronSchedule(config.BackGroundServices.SyncCaseAccessService.PollCron));
+
 
         });
 

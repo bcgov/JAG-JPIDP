@@ -4,7 +4,7 @@ using Common.Models.EDT;
 using edt.casemanagement.HttpClients.Services.EdtCore;
 using MediatR;
 
-public record CaseLookupQuery(string partyId, string caseName) : IRequest<CaseModel>;
+public record CaseLookupQuery(string partyId, string caseName, string? RCCNumber) : IRequest<CaseModel>;
 public record CaseGetByIdQuery(int caseId) : IRequest<CaseModel>;
 
 

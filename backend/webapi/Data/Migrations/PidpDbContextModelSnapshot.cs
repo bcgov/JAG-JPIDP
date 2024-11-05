@@ -19,7 +19,7 @@ namespace Pidp.Data.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("diam")
-                .HasAnnotation("ProductVersion", "8.0.2")
+                .HasAnnotation("ProductVersion", "8.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -554,7 +554,7 @@ namespace Pidp.Data.Migrations
 
                     b.ToTable("Address", "diam");
 
-                    b.HasDiscriminator<string>("Discriminator").HasValue("Address");
+                    b.HasDiscriminator().HasValue("Address");
 
                     b.UseTphMappingStrategy();
                 });
@@ -1014,6 +1014,21 @@ namespace Pidp.Data.Migrations
                         {
                             Code = 8,
                             Name = "Digital Evidence Defence"
+                        },
+                        new
+                        {
+                            Code = 13,
+                            Name = "JUSTIN Law Enforcement"
+                        },
+                        new
+                        {
+                            Code = 11,
+                            Name = "JUSTIN Protection Order"
+                        },
+                        new
+                        {
+                            Code = 12,
+                            Name = "JUSTIN Request for Crown"
                         });
                 });
 
@@ -1159,429 +1174,9 @@ namespace Pidp.Data.Migrations
                         },
                         new
                         {
-                            Code = "5681",
-                            Active = true,
-                            Name = "Anahim Lake Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "ACNW",
-                            Active = true,
-                            Name = "Anvil Centre",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5691",
-                            Active = true,
-                            Name = "Atlin Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "COA",
-                            Active = true,
-                            Name = "BC Court of Appeal",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "2007",
-                            Active = true,
-                            Name = "Bella Bella Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "2008",
-                            Active = true,
-                            Name = "Bella Coola Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5701",
-                            Active = true,
-                            Name = "Burns Lake Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "1031",
-                            Active = true,
-                            Name = "Campbell River Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "4681",
-                            Active = true,
-                            Name = "Castlegar Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5721",
-                            Active = true,
-                            Name = "Chetwynd Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "3521",
-                            Active = true,
-                            Name = "Chilliwack Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "4701",
-                            Active = true,
-                            Name = "Clearwater Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "CAKA",
-                            Active = true,
-                            Name = "Court of Appeal of BC - Kamloops",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "CAKE",
-                            Active = true,
-                            Name = "Court of Appeal of BC - Kelowna",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "CAVA",
-                            Active = true,
-                            Name = "Court of Appeal of BC - Vancouver",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "CAVI",
-                            Active = true,
-                            Name = "Court of Appeal of BC - Victoria",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "1041",
-                            Active = true,
-                            Name = "Courtenay Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "4711",
-                            Active = true,
-                            Name = "Cranbrook Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "4721",
-                            Active = true,
-                            Name = "Creston Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5911",
-                            Active = true,
-                            Name = "Daajing Giids Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5731",
-                            Active = true,
-                            Name = "Dawson Creek Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5741",
-                            Active = true,
-                            Name = "Dease Lake Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "2042",
-                            Active = true,
-                            Name = "Downtown Community Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "1051",
-                            Active = true,
-                            Name = "Duncan Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "4731",
-                            Active = true,
-                            Name = "Fernie Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5751",
-                            Active = true,
-                            Name = "Fort Nelson Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5761",
-                            Active = true,
-                            Name = "Fort St James Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5771",
-                            Active = true,
-                            Name = "Fort St John Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5781",
-                            Active = true,
-                            Name = "Fraser Lake Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "1061",
-                            Active = true,
-                            Name = "Ganges Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "1071",
-                            Active = true,
-                            Name = "Gold River Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "4741",
-                            Active = true,
-                            Name = "Golden Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5711",
-                            Active = true,
-                            Name = "Good Hope Lake Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "4751",
-                            Active = true,
-                            Name = "Grand Forks Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5861",
-                            Active = true,
-                            Name = "Hazelton Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5791",
-                            Active = true,
-                            Name = "Houston Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "ITQ",
-                            Active = true,
-                            Name = "Inn at the Quay",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "4771",
-                            Active = true,
-                            Name = "Invermere Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "2041",
-                            Active = true,
-                            Name = "Justice Centre (Judicial)",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "4781",
-                            Active = true,
-                            Name = "Kamloops Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "4801",
-                            Active = true,
-                            Name = "Kelowna Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5811",
-                            Active = true,
-                            Name = "Kitimat Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "2009",
-                            Active = true,
-                            Name = "Klemtu Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5775",
-                            Active = true,
-                            Name = "Kwadacha Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "4821",
-                            Active = true,
-                            Name = "Lillooet Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5821",
-                            Active = true,
-                            Name = "Lower Post Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5831",
-                            Active = true,
-                            Name = "Mackenzie Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5841",
-                            Active = true,
-                            Name = "Masset Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5845",
-                            Active = true,
-                            Name = "McBride Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "MCC",
-                            Active = true,
-                            Name = "Merritt Civic Centre",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "4851",
-                            Active = true,
-                            Name = "Merritt Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "4861",
-                            Active = true,
-                            Name = "Nakusp Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "1091",
-                            Active = true,
-                            Name = "Nanaimo Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "4871",
-                            Active = true,
-                            Name = "Nelson Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5851",
-                            Active = true,
-                            Name = "New Aiyansh Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "3581",
-                            Active = true,
-                            Name = "New Westminster Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5871",
-                            Active = true,
-                            Name = "100 Mile House Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
                             Code = "2011",
                             Active = true,
                             Name = "North Vancouver Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "2021",
-                            Active = true,
-                            Name = "Pemberton Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "4891",
-                            Active = true,
-                            Name = "Penticton Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "1121",
-                            Active = true,
-                            Name = "Port Alberni Law Courts",
                             Staffed = true
                         },
                         new
@@ -1593,226 +1188,86 @@ namespace Pidp.Data.Migrations
                         },
                         new
                         {
-                            Code = "1141",
-                            Active = true,
-                            Name = "Port Hardy Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "1145",
-                            Active = true,
-                            Name = "Powell River Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5891",
-                            Active = true,
-                            Name = "Prince George Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5901",
-                            Active = true,
-                            Name = "Prince Rupert Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "4901",
-                            Active = true,
-                            Name = "Princeton Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5921",
-                            Active = true,
-                            Name = "Quesnel Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "4911",
-                            Active = true,
-                            Name = "Revelstoke Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
                             Code = "2025",
                             Active = true,
-                            Name = "Richmond Provincial Court",
+                            Name = "Richmond Provincial Courts",
                             Staffed = true
                         },
                         new
                         {
-                            Code = "2045",
+                            Code = "3585-A",
                             Active = true,
-                            Name = "Robson Square Provincial Court",
+                            Name = "Surrey Provincial Court-Adult",
                             Staffed = true
                         },
                         new
                         {
-                            Code = "4921",
+                            Code = "3585-Y",
                             Active = true,
-                            Name = "Rossland Law Courts",
+                            Name = "Surrey Provincial Court-IPV and Youth",
                             Staffed = true
                         },
                         new
                         {
-                            Code = "4941",
+                            Code = "2042",
                             Active = true,
-                            Name = "Salmon Arm Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "2031",
-                            Active = true,
-                            Name = "Sechelt Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "SLG",
-                            Active = true,
-                            Name = "Si'em' Lelum Gymnasium",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "1151",
-                            Active = true,
-                            Name = "Sidney Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5931",
-                            Active = true,
-                            Name = "Smithers Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "4951",
-                            Active = true,
-                            Name = "Sparwood Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5941",
-                            Active = true,
-                            Name = "Stewart Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "3585",
-                            Active = true,
-                            Name = "Surrey Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5951",
-                            Active = true,
-                            Name = "Terrace Law Courts",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "1181",
-                            Active = true,
-                            Name = "Tofino Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5805",
-                            Active = true,
-                            Name = "Tsay Keh Dene Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5955",
-                            Active = true,
-                            Name = "Tumbler Ridge Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "1191",
-                            Active = true,
-                            Name = "Ucluelet Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "5959",
-                            Active = true,
-                            Name = "Valemount Provincial Court",
-                            Staffed = true
-                        },
-                        new
-                        {
-                            Code = "6011",
-                            Active = true,
-                            Name = "Vancouver Law Courts",
+                            Name = "Downtown Community Court",
                             Staffed = true
                         },
                         new
                         {
                             Code = "2040",
                             Active = true,
-                            Name = "Vancouver Provincial Court",
+                            Name = "Vancouver Provincial Court ",
                             Staffed = true
                         },
                         new
                         {
-                            Code = "5961",
+                            Code = "2045",
                             Active = true,
-                            Name = "Vanderhoof Law Courts",
+                            Name = "Robson Square Provincial Court-Youth",
                             Staffed = true
                         },
                         new
                         {
-                            Code = "4971",
+                            Code = "No-VR1",
                             Active = true,
-                            Name = "Vernon Law Courts",
+                            Name = "North - VR1",
                             Staffed = true
                         },
                         new
                         {
-                            Code = "1211",
+                            Code = "No-VR2",
                             Active = true,
-                            Name = "Western Communities Provincial Court",
+                            Name = "North - VR2",
                             Staffed = true
                         },
                         new
                         {
-                            Code = "5971",
+                            Code = "In-VR3",
                             Active = true,
-                            Name = "Williams Lake Law Courts",
+                            Name = "Interior - VR3",
                             Staffed = true
                         },
                         new
                         {
-                            Code = "WLMH",
+                            Code = "In-VR4",
                             Active = true,
-                            Name = "Williams Lake MacKinnon Hall",
+                            Name = "Interior - VR4",
                             Staffed = true
                         },
                         new
                         {
-                            Code = "1201",
+                            Code = "Is-VR8",
                             Active = true,
-                            Name = "Victoria Law Courts",
+                            Name = "Island - VR8",
+                            Staffed = true
+                        },
+                        new
+                        {
+                            Code = "Is-VR9",
+                            Active = true,
+                            Name = "Island - VR9",
                             Staffed = true
                         });
                 });
@@ -4377,7 +3832,7 @@ namespace Pidp.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<LocalDate?>("Birthdate")
+                    b.Property<DateOnly?>("Birthdate")
                         .HasColumnType("date");
 
                     b.Property<string>("Cpn")
@@ -5071,6 +4526,33 @@ namespace Pidp.Data.Migrations
                     b.ToTable("HcimEnrolment", "diam");
                 });
 
+            modelBuilder.Entity("Pidp.Models.JustinAppAccessRequest", b =>
+                {
+                    b.HasBaseType("Pidp.Models.AccessRequest");
+
+                    b.Property<string>("JustinUserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OrganizationName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OrganizationType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ParticipantId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TargetApplication")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.ToTable("JustinAppAccessRequest", "diam");
+                });
+
             modelBuilder.Entity("Pidp.Models.FacilityAddress", b =>
                 {
                     b.HasBaseType("Pidp.Models.Address");
@@ -5494,6 +4976,15 @@ namespace Pidp.Data.Migrations
                     b.HasOne("Pidp.Models.AccessRequest", null)
                         .WithOne()
                         .HasForeignKey("Pidp.Models.HcimEnrolment", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Pidp.Models.JustinAppAccessRequest", b =>
+                {
+                    b.HasOne("Pidp.Models.AccessRequest", null)
+                        .WithOne()
+                        .HasForeignKey("Pidp.Models.JustinAppAccessRequest", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

@@ -23,6 +23,7 @@ public class PendingApprovalQueryHandler : IRequestHandler<ApprovalsQuery, IList
         var config = new MapperConfiguration(cfg =>
         {
             cfg.CreateMap<ApprovalRequest, ApprovalModel>();
+            cfg.CreateMap<ApprovalHistory, ApprovalHistoryModel>();
             cfg.CreateMap<ApprovalRequestReasons, ReasonModel>();
             cfg.CreateMap<PersonalIdentity, PersonalIdentityModel>();
             cfg.CreateMap<Request, RequestModel>();
@@ -36,15 +37,14 @@ public class PendingApprovalQueryHandler : IRequestHandler<ApprovalsQuery, IList
     public async Task<IList<ApprovalModel>> Handle(ApprovalsQuery request, CancellationToken cancellationToken)
     {
         List<ApprovalRequest> results;
+
         if (request.PendingOnly)
         {
             results = this.context.ApprovalRequests.AsSplitQuery().Include(req => req.Reasons).Include(req => req.PersonalIdentities).Include(req => req.Requests).ThenInclude(req => req.History).Where(req => req.Completed == null).ToList();
-
         }
         else
         {
             results = this.context.ApprovalRequests.AsSplitQuery().Include(req => req.Reasons).Include(req => req.PersonalIdentities).Include(req => req.Requests).ThenInclude(req => req.History).ToList();
-
         }
 
 
@@ -57,7 +57,7 @@ public class PendingApprovalQueryHandler : IRequestHandler<ApprovalsQuery, IList
         }
         else
         {
-            return new List<ApprovalModel>();
+            return [];
         }
     }
 }

@@ -41,7 +41,7 @@ public static class ClaimValues
     public const string SubmittingAgency = "SUBMITTING_AGENCY";
     public const string VerifiedCredentials = "verified";
     public const string AzureAd = "azuread";
-
+    public const string KeycloakUserPass = "keycloak-user-pass";
 }
 
 public static class Clients
@@ -61,6 +61,7 @@ public static class Policies
     public const string SubAgencyIdentityProvider = "subgency-idp-policy";
     public const string UserOwnsResource = "user-owns-resource-policy";
     public const string VerifiedCredentialsProvider = "verified-credentials-authentication-policy";
+    public const string AllJAMIdentityProvider = "jam-idp-policy";
 
     public const string AllDemsIdentityProvider = "dems-idp-policy";
     public const string AllDefenceIdentityProvider = "all-defense-idp-policy";
@@ -84,6 +85,7 @@ public static class Roles
     // PIdP Role Placeholders
     public const string Admin = "ADMIN";
     public const string User = "USER";
+    public const string JAM_POR = "JAM_POR";
 
     // represents agencies that need upload access (e.g. police)
     public const string SubmittingAgency = "SUBMITTING_AGENCY";

@@ -2,6 +2,8 @@
   "profiles": {
     "pidp_dotnet_webapi": {
       "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "LOG_SQL": "false"

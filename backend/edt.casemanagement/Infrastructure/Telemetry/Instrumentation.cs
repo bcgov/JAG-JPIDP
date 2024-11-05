@@ -21,6 +21,8 @@ public class Instrumentation : IDisposable
         this.ActivitySource = new ActivitySource(ActivitySourceName, version);
         this.CaseSearchCount = this.meter.CreateCounter<long>("case_search_count_total", description: "Number of case searches");
         this.CaseStatusDuration = this.meter.CreateHistogram<double>("case_status_lookup_duration", description: "Case access duration", unit: "ms");
+        this.CaseLookupDuration = this.meter.CreateHistogram<double>("case_lookup_duration", description: "Case lookup duration", unit: "ms");
+
         this.ProcessedJobCount = this.meter.CreateCounter<long>("case_access_count_total", description: "Number of total case requests");
         this.ProcessRemovedJob = this.meter.CreateCounter<long>("case_removal_count_total", description: "Number of total case removal requests");
 
@@ -30,6 +32,8 @@ public class Instrumentation : IDisposable
 
     public Counter<long> CaseSearchCount { get; }
     public Histogram<double> CaseStatusDuration { get; }
+    public Histogram<double> CaseLookupDuration { get; }
+
     public Counter<long> ProcessedJobCount { get; }
     public Counter<long> ProcessRemovedJob { get; }
 

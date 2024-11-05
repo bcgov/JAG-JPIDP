@@ -8,6 +8,7 @@ using Confluent.Kafka;
 using IdentityModel.Client;
 using Pidp.Extensions;
 using Pidp.Infrastructure.HttpClients.AddressAutocomplete;
+using Pidp.Infrastructure.HttpClients.Claims;
 using Pidp.Infrastructure.HttpClients.Edt;
 using Pidp.Infrastructure.HttpClients.Jum;
 using Pidp.Infrastructure.HttpClients.Keycloak;
@@ -49,7 +50,13 @@ public static class HttpClientSetup
             ClientId = config.EdtClient.ClientId,
             ClientSecret = config.EdtClient.ClientSecret
         });
-        ;
+
+        services.AddHttpClientWithBaseAddress<IJUSTINClaimClient, JUSTINClaimClient>(config.JustinClaimClient.Url).WithBearerToken(new InternalJustinRequestCredentials
+        {
+            Address = config.JustinClaimClient.TokenUrl,
+            ClientId = config.JustinClaimClient.ClientId,
+            ClientSecret = config.JustinClaimClient.ClientSecret
+        });
 
         services.AddHttpClientWithBaseAddress<IJumClient, JumClient>(config.JumClient.Url).WithBearerToken(new KeycloakAdministrationClientCredentials
         {
@@ -151,7 +158,17 @@ public static class HttpClientSetup
     public static IHttpClientBuilder WithBearerToken<T>(this IHttpClientBuilder builder, T credentials) where T : ClientCredentialsTokenRequest
     {
         builder.Services.AddSingleton(credentials)
-            .AddTransient<BearerTokenHandler<T>>();
+            .AddScoped<BearerTokenHandler<T>>();
+
+        builder.AddHttpMessageHandler<BearerTokenHandler<T>>();
+
+        return builder;
+    }
+
+    public static IHttpClientBuilder WithDIAMBearerToken<T>(this IHttpClientBuilder builder, T credentials) where T : ClientCredentialsTokenRequest
+    {
+        builder.Services.AddSingleton(credentials)
+            .AddScoped<BearerTokenHandler<T>>();
 
         builder.AddHttpMessageHandler<BearerTokenHandler<T>>();
 

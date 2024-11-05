@@ -16,7 +16,6 @@ public interface IEdtClient
     Task<UserModificationEvent> UpdateUserDetails(EdtUserDto userDetails);
     Task<bool> LinkPersonToDisclosureFolio(PersonFolioLinkage request);
 
-
     Task<int> GetOuGroupId(string regionName);
 
     Task<EdtUserDto?> GetUser(string userKey);
@@ -120,6 +119,5 @@ public interface IEdtClient
     /// <param name="personLookup"></param>
     /// <returns></returns>
     Task<List<EdtPersonDto>> SearchForPerson(PersonLookupModel personLookup);
-
-
+    Task<List<UserCaseSearchResponseModel>> GetUserCases(string userKey);
 }

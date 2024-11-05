@@ -8,6 +8,10 @@ import { IdentityProvider } from '../enums/identity-provider.enum';
 import { BcpsResolver } from '../models/bcps-user.model';
 import { BcscResolver } from '../models/bcsc-user.model';
 import { CounselResolver } from '../models/counsel-user-model';
+import {
+  UserPassResolver,
+  UserPassUser,
+} from '../models/direct-userpass-login.model';
 import { IdirResolver } from '../models/idir-user.model';
 import { PhsaResolver } from '../models/phsa-user.model';
 import { SubmittingAgencyResolver } from '../models/submitting-agency-resolver';
@@ -22,7 +26,7 @@ export class AuthorizedUserService {
   public constructor(
     private accessTokenService: AccessTokenService,
     private lookupService: LookupService
-  ) { }
+  ) {}
 
   /**
    * @description
@@ -79,13 +83,21 @@ export class AuthorizedUserService {
     if (submittingAgency != null) {
       return new SubmittingAgencyResolver(userIdentity);
     }
+    debugger;
+    if (
+      userIdentity.accessTokenParsed?.['identity_provider'] === undefined &&
+      userIdentity.accessTokenParsed.preferred_username.startsWith('tst')
+    ) {
+      return new UserPassResolver(userIdentity);
+    }
+
     // this is so lame!! - this needs to come from server config!!
     // new services should get possible identity providers
     switch (userIdentity.accessTokenParsed?.identity_provider) {
       case IdentityProvider.AZUREAD:
         return new IdirResolver(userIdentity);
 
-      case IdentityProvider.IDIR, IdentityProvider.AZUREIDIR:
+      case (IdentityProvider.IDIR, IdentityProvider.AZUREIDIR):
         return new IdirResolver(userIdentity);
       case IdentityProvider.BCSC:
         return new BcscResolver(userIdentity);
@@ -96,11 +108,14 @@ export class AuthorizedUserService {
       case IdentityProvider.BCPS:
         return new BcpsResolver(userIdentity);
       default:
-        console.error("Unknown provider %s", userIdentity.accessTokenParsed?.identity_provider);
+        console.error(
+          'Unknown provider %s',
+          userIdentity.accessTokenParsed?.identity_provider
+        );
         throw new Error(
           'Identity provider not [' +
-          userIdentity.accessTokenParsed?.identity_provider +
-          '] recognized'
+            userIdentity.accessTokenParsed?.identity_provider +
+            '] recognized'
         );
     }
   }

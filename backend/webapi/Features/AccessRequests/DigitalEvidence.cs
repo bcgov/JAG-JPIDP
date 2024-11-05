@@ -6,7 +6,6 @@ using DomainResults.Common;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using NodaTime;
 using OpenTelemetry.Trace;
 using Pidp.Data;
@@ -86,7 +85,7 @@ public class DigitalEvidence
             {
 
                 var traceId = Tracer.CurrentSpan.Context.TraceId;
-                Serilog.Log.Logger.Information("DigitalEvidence Request {0} {1}", command.ParticipantId, traceId);
+                Serilog.Log.Logger.Information($"DigitalEvidence Request {command.ParticipantId} {command.PartyId} {traceId}");
 
                 Activity.Current?.AddTag("digitalevidence.party.id", command.PartyId);
 
@@ -101,14 +100,14 @@ public class DigitalEvidence
                     return DomainResult.Failed();
                 }
 
-                if (!await this.UpdateKeycloakUser(dto.UserId, command.AssignedRegions, command.ParticipantId))
-                {
-                    return DomainResult.Failed();
-                }
-
-                using var trx = this.context.Database.BeginTransaction();
+                using var trx = await this.context.Database.BeginTransactionAsync();
                 try
                 {
+                    if (!await this.UpdateKeycloakUser(dto.UserId, command.AssignedRegions, command.ParticipantId))
+                    {
+                        await trx.RollbackAsync();
+                        return DomainResult.Failed();
+                    }
 
                     var digitalEvidence = await this.SubmitDigitalEvidenceRequest(command); //save all trx at once for production(remove this and handle using idempotent)
                     var key = Guid.NewGuid().ToString();
@@ -125,8 +124,9 @@ public class DigitalEvidence
                     else
                     {
                         this.logger.LogDigitalEvidenceAccessTrxFailed($"Failed to publish access request to topic {digitalEvidence} - rolling back transaction");
-
                         await trx.RollbackAsync();
+                        return DomainResult.Failed();
+
                     }
 
                 }
@@ -164,7 +164,7 @@ public class DigitalEvidence
         private async Task<DeliveryResult<string, EdtUserProvisioning>> PublishAccessRequest(Command command, PartyDto dto, Models.DigitalEvidence digitalEvidence)
         {
             var taskId = Guid.NewGuid().ToString();
-            Serilog.Log.Logger.Information("Adding message to topic {0} {1} {2}", this.config.KafkaCluster.ProducerTopicName, command.ParticipantId, taskId);
+            Serilog.Log.Logger.Information($"Adding message to topic {this.config.KafkaCluster.ProducerTopicName} {command.ParticipantId} {dto.Jpdid}");
             var regions = new List<AssignedRegion>();
 
             if (!digitalEvidence.OrganizationType.Equals(this.SUBMITTING_AGENCY, StringComparison.Ordinal) && !digitalEvidence.OrganizationType.Equals(this.LAW_SOCIETY, StringComparison.Ordinal))
@@ -244,27 +244,29 @@ public class DigitalEvidence
             await this.context.SaveChangesAsync();
             return digitalEvidence;
         }
-        private Task<Models.OutBoxEvent.ExportedEvent> AddOutbox(Command command, Models.DigitalEvidence digitalEvidence, PartyDto dto)
-        {
-            var exportedEvent = this.context.ExportedEvents.Add(new Models.OutBoxEvent.ExportedEvent
-            {
-                AggregateType = AccessTypeCode.DigitalEvidence.ToString(),
-                AggregateId = $"{command.PartyId}",
-                EventType = "Access Request Created",
-                EventPayload = JsonConvert.SerializeObject(new EdtUserProvisioning
-                {
-                    Key = $"{command.ParticipantId}",
-                    UserName = dto.Jpdid,
-                    Email = dto.Email,
-                    PhoneNumber = dto.Phone!,
-                    FullName = $"{dto.FirstName} {dto.LastName}",
-                    AccountType = "Saml",
-                    Role = "User",
-                    AssignedRegions = command.AssignedRegions
-                })
-            });
-            return Task.FromResult(exportedEvent.Entity);
-        }
+
+
+        //private Task<Models.OutBoxEvent.ExportedEvent> AddOutbox(Command command, Models.DigitalEvidence digitalEvidence, PartyDto dto)
+        //{
+        //    var exportedEvent = this.context.ExportedEvents.Add(new Models.OutBoxEvent.ExportedEvent
+        //    {
+        //        AggregateType = AccessTypeCode.DigitalEvidence.ToString(),
+        //        AggregateId = $"{command.PartyId}",
+        //        EventType = "Access Request Created",
+        //        EventPayload = JsonConvert.SerializeObject(new EdtUserProvisioning
+        //        {
+        //            Key = $"{command.ParticipantId}",
+        //            UserName = dto.Jpdid,
+        //            Email = dto.Email,
+        //            PhoneNumber = dto.Phone!,
+        //            FullName = $"{dto.FirstName} {dto.LastName}",
+        //            AccountType = "Saml",
+        //            Role = "User",
+        //            AssignedRegions = command.AssignedRegions
+        //        })
+        //    });
+        //    return Task.FromResult(exportedEvent.Entity);
+        //}
 
         private async Task<bool> UpdateKeycloakUser(Guid userId, IEnumerable<AssignedRegion> assignedGroup, string partId)
         {

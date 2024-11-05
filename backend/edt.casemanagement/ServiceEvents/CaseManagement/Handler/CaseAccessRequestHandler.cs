@@ -64,101 +64,96 @@ public class CaseAccessRequestHandler : IKafkaHandler<string, SubAgencyDomainEve
             }
             else
             {
-
-
-
-                var partId = userInfo.Attributes.GetValueOrDefault("partId").FirstOrDefault();
+                var partId = userInfo.Attributes.TryGetValue("partId", out var value) ? value.FirstOrDefault() : "";
                 if (string.IsNullOrEmpty(partId))
                 {
-                    // get the EDT user info
-                    Serilog.Log.Error("No partId found for {0} - possible attempt to bypass security", caseEvent.UserId);
+                    Serilog.Log.Warning("No partId found for {0} - possible attempt to bypass security", caseEvent.UserId);
                 }
-                else
+
+                var result = await this.edtClient.HandleCaseRequest(caseEvent);
+
+                if (result != null && result.IsCompleted)
                 {
-                    var result = await this.edtClient.HandleCaseRequest(partId, caseEvent);
-
-                    if (result != null && result.IsCompleted)
+                    try
                     {
-                        try
+                        var caseRequest = new CaseRequest
                         {
-                            var caseRequest = new CaseRequest
+                            AgencFileNumber = caseEvent.AgencyFileNumber,
+                            PartyId = caseEvent.PartyId,
+                            Party = caseEvent.Username,
+                            Status = "Complete",
+                            CaseId = caseEvent.CaseId,
+                            RemoveRequested = caseEvent.EventType.Equals(CaseEventType.Decommission, StringComparison.Ordinal),
+                            Requested = caseEvent.RequestedOn.ToInstant()
+                        };
+
+                        if (result != null && result.Status == TaskStatus.RanToCompletion && result.Exception == null)
+                        {
+
+                            caseRequest.Status = "Complete";
+                            //save notification ref in notification table database
+                            var response = await this.context.CaseRequests.AddAsync(caseRequest);
+
+
+                            Serilog.Log.Information($"Sending completed response for user {caseEvent.UserId} and case {caseEvent.CaseId}");
+
+                            if (result.IsCompleted)
                             {
-                                AgencFileNumber = caseEvent.AgencyFileNumber,
-                                PartyId = caseEvent.PartyId,
-                                Party = caseEvent.Username,
-                                Status = "Complete",
-                                CaseId = caseEvent.CaseId,
-                                RemoveRequested = caseEvent.EventType.Equals(CaseEventType.Decommission, StringComparison.Ordinal),
-                                Requested = caseEvent.RequestedOn.ToInstant()
-                            };
-
-                            if (result != null && result.Status == TaskStatus.RanToCompletion && result.Exception == null)
-                            {
-
-                                caseRequest.Status = "Complete";
-                                //save notification ref in notification table database
-                                var response = await this.context.CaseRequests.AddAsync(caseRequest);
-
-
-                                Serilog.Log.Information($"Sending completed response for user {caseEvent.UserId} and case {caseEvent.CaseId}");
-
-                                if (result.IsCompleted)
-                                {
-                                    var uniqueKey = Guid.NewGuid().ToString();
-
-                                    var producerResponse = await this.producer.ProduceAsync(this.configuration.KafkaCluster.AckTopicName, key: uniqueKey, new NotificationAckModel
-                                    {
-                                        Status = "Complete",
-                                        AccessRequestId = caseEvent.RequestId,
-                                        PartId = partId,
-                                        EmailAddress = userInfo.Email,
-                                        Subject = NotificationSubject.CaseAccessRequest,
-                                        EventType = caseEvent.EventType
-                                    });
-
-                                    Serilog.Log.Information($"Response {producerResponse}");
-
-                                }
-                            }
-                            else
-                            {
-                                Serilog.Log.Error($"Sending failure response for user {caseEvent.UserId} and case {caseEvent.CaseId} [{string.Join(",", result.Exception)}]");
-
-                                caseRequest.Status = "Failure";
-                                caseRequest.Details = string.Join(",", result.Exception);
-                                //save notification ref in notification table database
-                                var response = await this.context.CaseRequests.AddAsync(caseRequest);
-
                                 var uniqueKey = Guid.NewGuid().ToString();
 
-                                await this.producer.ProduceAsync(this.configuration.KafkaCluster.AckTopicName, key: uniqueKey, new NotificationAckModel
+                                var producerResponse = await this.producer.ProduceAsync(this.configuration.KafkaCluster.AckTopicName, key: uniqueKey, new NotificationAckModel
                                 {
-                                    Status = "Failure",
+                                    Status = "Complete",
                                     AccessRequestId = caseEvent.RequestId,
                                     PartId = partId,
-                                    Details = (result?.Exception != null) ? result.Exception.Message : "No details provided",
                                     EmailAddress = userInfo.Email,
                                     Subject = NotificationSubject.CaseAccessRequest,
                                     EventType = caseEvent.EventType
                                 });
+
+                                Serilog.Log.Information($"Response for {uniqueKey} - {producerResponse.Status}");
+
                             }
-
-
-                            //add to tell message has been processed by consumer
-                            await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
-                            await this.context.SaveChangesAsync();
-                            await trx.CommitAsync();
-
                         }
-                        catch (Exception ex)
+                        else
                         {
-                            Serilog.Log.Error("Failed to process request {0}", string.Join(", ", ex.Message));
-                            await trx.RollbackAsync();
-                            return Task.FromException(new CaseAssignmentException($"Failed to process request {caseEvent}"));
+                            Serilog.Log.Error($"Sending failure response for user {caseEvent.UserId} and case {caseEvent.CaseId} [{string.Join(",", result.Exception)}]");
 
+                            caseRequest.Status = "Failure";
+                            caseRequest.Details = string.Join(",", result.Exception);
+                            //save notification ref in notification table database
+                            var response = await this.context.CaseRequests.AddAsync(caseRequest);
+
+                            var uniqueKey = Guid.NewGuid().ToString();
+
+                            await this.producer.ProduceAsync(this.configuration.KafkaCluster.AckTopicName, key: uniqueKey, new NotificationAckModel
+                            {
+                                Status = "Failure",
+                                AccessRequestId = caseEvent.RequestId,
+                                PartId = partId,
+                                Details = (result?.Exception != null) ? result.Exception.Message : "No details provided",
+                                EmailAddress = userInfo.Email,
+                                Subject = NotificationSubject.CaseAccessRequest,
+                                EventType = caseEvent.EventType
+                            });
                         }
+
+
+                        //add to tell message has been processed by consumer
+                        await this.context.IdempotentConsumer(messageId: key, consumer: consumerName);
+                        await this.context.SaveChangesAsync();
+                        await trx.CommitAsync();
 
                     }
+                    catch (Exception ex)
+                    {
+                        Serilog.Log.Error("Failed to process request {0}", string.Join(", ", ex.Message));
+                        await trx.RollbackAsync();
+                        return Task.FromException(new CaseAssignmentException($"Failed to process request {caseEvent}"));
+
+                    }
+
+
 
 
 

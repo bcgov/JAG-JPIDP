@@ -206,11 +206,23 @@ public class Startup
             services.AddQuartz(q =>
             {
                 Log.Information("Starting ORDS Test scheduler..");
-                q.SchedulerId = "JUM-ORDS-TEST";
+                var schedulerId = $"DIAM-JUM-Scehduler-{Guid.NewGuid()}";
+
+                q.SchedulerId = schedulerId;
                 q.SchedulerName = "ORDS Test Scheduler";
+
+                q.UseDefaultThreadPool(tp =>
+                {
+                    tp.MaxConcurrency = 3;
+                });
 
                 q.UsePersistentStore(store =>
                 {
+                    store.UseClustering(c =>
+                    {
+                        c.CheckinMisfireThreshold = TimeSpan.FromSeconds(15);
+                        c.CheckinInterval = TimeSpan.FromSeconds(10);
+                    });
                     // Use for PostgresSQL database
                     store.UsePostgres(pgOptions =>
                     {

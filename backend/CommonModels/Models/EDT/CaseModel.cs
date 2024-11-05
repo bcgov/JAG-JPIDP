@@ -10,6 +10,14 @@ public class CaseSummaryModel
 
 }
 
+
+public class UserCaseSearchResponseModel
+{
+    public int Id { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public string? Key { get; set; } = string.Empty;
+}
+
 public class CaseModel
 {
 

@@ -8,7 +8,7 @@ using edt.casemanagement.ServiceEvents.CaseManagement.Models;
 
 public interface IEdtClient
 {
-    Task<Task> HandleCaseRequest(string key, SubAgencyDomainEvent accessRequest);
+    Task<Task> HandleCaseRequest(SubAgencyDomainEvent accessRequest);
 
     Task<IEnumerable<CustomFieldDefinition>> GetCustomFields(string objectType);
 

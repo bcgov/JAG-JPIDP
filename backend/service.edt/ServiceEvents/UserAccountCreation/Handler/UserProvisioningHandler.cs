@@ -255,6 +255,7 @@ public class UserProvisioningHandler : IKafkaHandler<string, EdtUserProvisioning
                 {
                         { "FirstName", accessRequestModel.FullName!.Split(' ').FirstOrDefault("NAME_NOT_SET") },
                         { "PartyId", accessRequestModel.Key! },
+                        { "AccessRequestId", "" + accessRequestModel.AccessRequestId },
                         { "Tag", msgId! }
                     };
 

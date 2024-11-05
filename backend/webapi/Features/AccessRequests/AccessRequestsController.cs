@@ -1,6 +1,8 @@
 namespace Pidp.Features.AccessRequests;
 
 using Common.Constants.Auth;
+using Common.Models.AccessRequests;
+using CommonModels.Models.Web;
 using DomainResults.Common;
 using DomainResults.Mvc;
 using Microsoft.AspNetCore.Authorization;
@@ -9,9 +11,29 @@ using Pidp.Infrastructure.Services;
 using Pidp.Models;
 
 [Route("api/[controller]")]
-public class AccessRequestsController : PidpControllerBase
+public class AccessRequestsController(IPidpAuthorizationService authorizationService) : PidpControllerBase(authorizationService)
 {
-    public AccessRequestsController(IPidpAuthorizationService authorizationService) : base(authorizationService) { }
+    [HttpPost("query")]
+    [Authorize(Policy = Policies.DiamInternalAuthentication)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<PaginatedResponse<AccessRequestDTO>>> GetAccessRequestsAsync(
+          [FromServices] IQueryHandler<AccessRequestSearchQuery.Query, PaginatedResponse<AccessRequestDTO>> handler,
+          [FromBody] PaginationInput input)
+    {
+        var query = new AccessRequestSearchQuery.Query { Input = input };
+        return await handler.HandleAsync(query);
+    }
+
+
+    [HttpGet("request/{AccessRequestId:int}")]
+    [Authorize(Policy = Policies.DiamInternalAuthentication)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<AccessRequestDTO>> GetAccessRequestAsync([FromServices] IQueryHandler<AccessRequestByIdQuery.Query, AccessRequestDTO> handler,
+                                                                     [FromRoute] AccessRequestByIdQuery.Query query)
+    => await handler.HandleAsync(query);
+
 
     [HttpGet("{partyId}")]
     [Authorize(Policy = Policies.AnyPartyIdentityProvider)]
@@ -64,6 +86,15 @@ public class AccessRequestsController : PidpControllerBase
                                                           [FromBody] DigitalEvidenceDefence.Command command)
      => await this.AuthorizePartyBeforeHandleAsync(command.PartyId, handler, command)
         .ToActionResult();
+
+    [HttpPost("justin-modernization")]
+    [Authorize(Policy = Policies.AllJAMIdentityProvider)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CreateJamPorEnrolment([FromServices] ICommandHandler<JamAccessHandler.Command, IDomainResult> handler,
+                                                      [FromBody] JamAccessHandler.Command command)
+ => await this.AuthorizePartyBeforeHandleAsync(command.PartyId, handler, command)
+    .ToActionResult();
 
 
     [HttpPost("digital-evidence-disclosure")]
