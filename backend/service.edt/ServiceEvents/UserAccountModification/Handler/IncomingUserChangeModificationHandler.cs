@@ -1,6 +1,7 @@
 namespace edt.service.ServiceEvents.UserAccountModification.Handler;
+
+using Common.Exceptions.EDT;
 using edt.service.Data;
-using edt.service.Exceptions;
 using edt.service.HttpClients.Services.EdtCore;
 using edt.service.Kafka.Interfaces;
 using edt.service.Kafka.Model;
