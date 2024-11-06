@@ -14,7 +14,7 @@ public class ParticipantMergeConsumerService(IKafkaConsumer<string, ParticipantM
     {
         try
         {
-            Serilog.Log.Information("Starting consumer {0}", this.config.KafkaCluster.ParticipantMergeTopic);
+            Serilog.Log.Information("ParticipantMergeConsumerService Starting consumer {0}", this.config.KafkaCluster.ParticipantMergeTopic);
 
             await this.consumer.Consume(this.config.KafkaCluster.ParticipantMergeTopic, stoppingToken);
         }

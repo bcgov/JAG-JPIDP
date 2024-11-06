@@ -91,11 +91,6 @@ public class Startup
             .AddHybridModelBinder();
         services.AddHttpClient();
 
-        //services.AddDbContext<JumDbContext>(options => options
-        //    .UseSqlServer(config.ConnectionStrings.JumDatabase, sql => sql.UseNodaTime())
-        //    .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
-
-
         services.AddDbContext<JumDbContext>(options => options
          .UseNpgsql(config.ConnectionStrings.JumDatabase, npg => npg.UseNodaTime())
          .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));

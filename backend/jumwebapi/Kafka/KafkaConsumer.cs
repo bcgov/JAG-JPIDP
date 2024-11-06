@@ -28,7 +28,7 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
     {
         using var scope = this.serviceScopeFactory.CreateScope();
 
-        Log.Logger.Information("PIDP Starting consumer for topic {0}", topic);
+        Serilog.Log.Information("DIAM Kafka Consumer start consuming from topic {0}", topic);
 
         this.handler = scope.ServiceProvider.GetRequiredService<IKafkaHandler<TKey, TValue>>();
         this.consumer = new ConsumerBuilder<TKey, TValue>(this.config)
@@ -50,7 +50,7 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
     private async Task StartConsumerLoop(CancellationToken cancellationToken)
     {
 
-        Log.Logger.Information("Start consuming from {0}", this.topic);
+        Log.Logger.Information("DIAM Kafka Consumer start consuming from {0}", this.topic);
         this.consumer.Subscribe(this.topic);
 
         while (!cancellationToken.IsCancellationRequested)
@@ -123,7 +123,7 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
             clientSecret ??= clusterConfig.GetValue<string>("KafkaCluster:SaslOauthbearerConsumerClientSecret");
             clientId ??= clusterConfig.GetValue<string>("KafkaCluster:SaslOauthbearerConsumerClientId");
             tokenEndpoint ??= clusterConfig.GetValue<string>("KafkaCluster:SaslOauthbearerTokenEndpointUrl");
-            Log.Logger.Debug("Pidp Kafka Consumer getting token {0} {1}", tokenEndpoint, clientId);
+            Log.Logger.Debug("DIAM Kafka Consumer getting token {0} {1}", tokenEndpoint, clientId);
             var accessTokenClient = new HttpClient();
 
 
