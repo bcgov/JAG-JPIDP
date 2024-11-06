@@ -3,8 +3,8 @@ namespace edt.service.HttpClients.Services.EdtCore;
 using System.Diagnostics.Metrics;
 using System.Threading.Tasks;
 using AutoMapper;
+using Common.Exceptions.EDT;
 using Common.Models.EDT;
-using edt.service.Exceptions;
 using edt.service.Infrastructure.Telemetry;
 using edt.service.Kafka.Model;
 using edt.service.ServiceEvents.PersonCreationHandler.Models;
@@ -484,6 +484,12 @@ public class EdtClient : BaseClient, IEdtClient
         }
     }
 
+
+    /// <summary>
+    /// Get a person (participant) from EDT
+    /// </summary>
+    /// <param name="userKey"></param>
+    /// <returns></returns>
     public async Task<EdtPersonDto?> GetPerson(string userKey)
     {
         using (GetUserDuration.NewTimer())

@@ -1,8 +1,7 @@
-using Microsoft.AspNetCore.Http.Extensions;
-
 namespace Common.Logging;
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Logging;
 using Serilog.Context;
 

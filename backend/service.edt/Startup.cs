@@ -3,6 +3,7 @@ namespace edt.service;
 
 using System.Reflection;
 using System.Text.Json;
+using Common.Helpers.Web;
 using Common.Logging;
 using edt.service.Data;
 using edt.service.Features.Participant;
@@ -14,7 +15,8 @@ using edt.service.ServiceEvents.PersonFolioLinkageHandler;
 using edt.service.ServiceEvents.UserAccountCreation.ConsumerRetry;
 using edt.service.ServiceEvents.UserAccountCreation.Handler;
 using edt.service.ServiceEvents.UserAccountModification.Handler;
-using FluentValidation.AspNetCore;
+using FluentValidation;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.Versioning;
@@ -140,13 +142,19 @@ public class Startup
         .AddCheck("liveliness", () => HealthCheckResult.Healthy())
         .AddNpgSql(config.ConnectionStrings.EdtDataStore, tags: new[] { "services" }).ForwardToPrometheus();
 
-        services.AddControllers(options => options.Conventions.Add(new RouteTokenTransformerConvention(new KabobCaseParameterTransformer())))
-             .AddFluentValidation(options => options.RegisterValidatorsFromAssemblyContaining<Startup>())
-             .AddJsonOptions(options =>
+        services.AddControllers(options =>
+        {
+            options.Filters.Add(new DIAMGlobalExceptionHandler());
+            options.Conventions.Add(new RouteTokenTransformerConvention(new KabobCaseParameterTransformer()));
+        }).AddJsonOptions(options =>
              {
                  options.JsonSerializerOptions.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
                  options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
              });
+
+        services.AddValidatorsFromAssemblyContaining<IRequest>();
+
+
         services.AddHttpClient();
 
         services.AddSingleton<Instrumentation>();
@@ -236,7 +244,6 @@ public class Startup
         }
 
 
-
         services.AddQuartz(q =>
         {
             Log.Information("Starting scheduler..");
@@ -285,6 +292,9 @@ public class Startup
         {
             options.WaitForJobsToComplete = true;
         });
+
+
+
 
         Log.Logger.Information("### EDT Service Configuration complete");
 

@@ -1,4 +1,4 @@
-namespace edt.service.Exceptions;
+namespace Common.Exceptions.EDT;
 
 using System.Runtime.Serialization;
 

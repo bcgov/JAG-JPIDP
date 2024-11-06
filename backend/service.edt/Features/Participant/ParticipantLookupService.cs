@@ -1,6 +1,8 @@
 namespace edt.service.Features.Participant;
 
 using System.Diagnostics.Metrics;
+using Common.Exceptions;
+using Common.Exceptions.EDT;
 using Common.Models.EDT;
 using CommonModels.Models.Party;
 using edt.service.Data;
@@ -18,6 +20,57 @@ public class ParticipantLookupService(ILogger<ParticipantLookupService> logger,
 
 
     /// <summary>
+    /// Recursive call to get participants that are merged together
+    /// </summary>
+    /// <param name="participantId"></param>
+    /// <param name="knownParticipantIds"></param>
+    /// <returns></returns>
+    private async Task<Dictionary<string, EdtPersonDto>> GetAssociatedParticipants(string participantId, Dictionary<string, EdtPersonDto> knownParticipantIds)
+    {
+
+        // get initial participant
+        var participant = await edtClient.GetPerson(participantId);
+        if (participant == null)
+        {
+            throw new RecordNotFoundException("participant", participantId);
+        }
+        else
+        {
+
+            knownParticipantIds.Add(participantId, participant);
+            var mergedFieldValue = participant.Fields.FirstOrDefault(f => f.Name.Equals(configuration.ParticipantMergeLookupConfig.MergedParticipantField, StringComparison.OrdinalIgnoreCase));
+            if (mergedFieldValue == null || mergedFieldValue.Value == null || string.IsNullOrEmpty(mergedFieldValue.Value.ToString()))
+            {
+                if (!participant.IsActive)
+                {
+                    logger.LogWarning($"No part merge info found for {participant} that is inactive");
+                }
+            }
+            else
+            {
+                var mergedIdListing = mergedFieldValue.Value.ToString();
+                foreach (var mergedId in mergedIdListing.Split(configuration.ParticipantMergeLookupConfig.MergedParticipantDelimiter))
+                {
+                    if (knownParticipantIds.ContainsKey(mergedId))
+                    {
+                        continue;
+                    }
+
+                    await this.GetAssociatedParticipants(mergedId, knownParticipantIds);
+                }
+            }
+
+
+
+
+
+        }
+
+        return knownParticipantIds;
+    }
+
+
+    /// <summary>
     /// 
     /// </summary>
     /// <param name="participantId"></param>
@@ -29,82 +82,30 @@ public class ParticipantLookupService(ILogger<ParticipantLookupService> logger,
         {
             this.participantMergeSearchCounter.Add(1);
             List<string> processedParticipantIds = [];
-
+            Dictionary<string, EdtPersonDto> participantMap = [];
             logger.LogInformation($"Starting lookup for {participantId}");
+            ParticipantMergeListingModel responseModel = new ParticipantMergeListingModel();
 
-            var initialParticpant = await edtClient.GetPerson(participantId);
+            // get all associated participants
+            var associatedParticipants = await this.GetAssociatedParticipants(participantId, participantMap);
 
-            if (initialParticpant == null)
+            // find active participant
+            var activeParticpant = associatedParticipants.Values.Where(participant => participant.IsActive).Select(this.PopulateParticipantFromPerson).FirstOrDefault();
+            if (activeParticpant != null)
             {
-                logger.LogWarning($"No participant found for partId {participantId}");
-                return null;
-            }
+                responseModel.PrimaryParticipant = activeParticpant;
 
-
-            // track initial id
-            processedParticipantIds.Add(participantId);
-
-            // see if this user is active
-            logger.LogInformation($"Found initial user with key: {participantId} {initialParticpant}");
-
-            // see if this user has merged keys
-            var mergedFieldValue = initialParticpant.Fields.FirstOrDefault(f => f.Name.Equals(configuration.ParticipantMergeLookupConfig.MergedParticipantField, StringComparison.OrdinalIgnoreCase));
-            if (mergedFieldValue == null || mergedFieldValue.Value == null || string.IsNullOrEmpty(mergedFieldValue.Value.ToString()))
-            {
-                logger.LogInformation($"No merge info found for partId {participantId}");
-
-                if (!initialParticpant.IsActive)
-                {
-                    logger.LogWarning($"Participant is inactive for {participantId} and no merges found");
-                }
-                return new ParticipantMergeListingModel()
-                {
-                    PrimaryParticipant = PopulateParticipantFromPerson(initialParticpant)
-                };
-
+                responseModel.SourceParticipants = associatedParticipants.Values.Where(participant => !participant.IsActive).Select(this.PopulateParticipantFromPerson).ToList();
             }
             else
             {
+                logger.LogWarning($"No participants associated to {participantId} are active");
+                throw new ParticipantLookupException($"No participants associated to {participantId} are active");
 
-                var returnParticipant = new ParticipantMergeListingModel()
-                {
-                    PrimaryParticipant = PopulateParticipantFromPerson(initialParticpant)
-                };
-
-                // recurse through all merged participants
-                var mergedIdListing = mergedFieldValue.Value.ToString();
-
-
-                foreach (var mergedId in mergedIdListing.Split(configuration.ParticipantMergeLookupConfig.MergedParticipantDelimiter))
-                {
-                    // dont process same id more than once
-                    if (processedParticipantIds.Contains(mergedId))
-                    {
-                        logger.LogWarning($"Merged ID {mergedId} already handled for {participantId}");
-                        continue;
-                    }
-
-
-                    logger.LogInformation($"Searching merged participant from source {participantId} [{mergedId}]");
-                    var mergedParticipant = await edtClient.GetPerson(mergedId);
-
-                    if (mergedParticipant != null)
-                    {
-                        logger.LogInformation($"Found merged user with key: {mergedId} {mergedParticipant} for initial participant {participantId}");
-
-                        returnParticipant.SourceParticipants.Add(PopulateParticipantFromPerson(mergedParticipant));
-                    }
-                    else
-                    {
-                        logger.LogWarning($"Unknown merged participant {mergedId} for participant {participantId}");
-                    }
-                    processedParticipantIds.Add(mergedId);
-
-                }
-
-
-                return returnParticipant;
             }
+
+
+            return responseModel;
         }
         catch (Exception ex)
         {
@@ -114,6 +115,12 @@ public class ParticipantLookupService(ILogger<ParticipantLookupService> logger,
 
     }
 
+
+    /// <summary>
+    /// Create a person model from the EdtPersonDTO
+    /// </summary>
+    /// <param name="person"></param>
+    /// <returns></returns>
     private ParticipantMergeModel PopulateParticipantFromPerson(EdtPersonDto person)
     {
         var dateOfBirthField = person.Fields.FirstOrDefault(f => f.Name.Equals(configuration.ParticipantMergeLookupConfig.DateOfBirthField, StringComparison.OrdinalIgnoreCase));
