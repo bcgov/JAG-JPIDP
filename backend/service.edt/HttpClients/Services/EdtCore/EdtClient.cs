@@ -152,7 +152,7 @@ public class EdtClient : BaseClient, IEdtClient
             }
         }
 
-  
+
 
         if (assignedRegions.Count == 0)
         {
@@ -501,7 +501,15 @@ public class EdtClient : BaseClient, IEdtClient
             if (person != null && person.Id > 0)
             {
                 person.Identifiers = await this.GetPersonIdentifiers(person.Id);
+
+                if (person.Status != null)
+                {
+                    person.IsActive = person.Status.Equals("Active", StringComparison.OrdinalIgnoreCase);
+                }
+
             }
+
+
             return person;
         }
     }
