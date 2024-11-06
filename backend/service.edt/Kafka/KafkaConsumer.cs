@@ -105,7 +105,7 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
             catch (ConsumeException e)
             {
                 // Consumer errors should generally be ignored (or logged) unless fatal.
-                Console.WriteLine($"Consume error: {e.Error.Reason}");
+                Console.WriteLine($"Consume error: {e.Error.Reason} on topic {this.topic}");
 
                 if (e.Error.IsFatal)
                 {

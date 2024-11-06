@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text.Json;
 using Common.Logging;
 using edt.service.Data;
+using edt.service.Features.Participant;
 using edt.service.HttpClients;
 using edt.service.Infrastructure.Auth;
 using edt.service.Infrastructure.Telemetry;
@@ -151,6 +152,7 @@ public class Startup
         services.AddSingleton<Instrumentation>();
         services.AddSingleton<IAuthorizationHandler, RealmAccessRoleHandler>();
         services.AddScoped<IFolioLinkageService, FolioLinkageService>();
+        services.AddScoped<IParticipantLookupService, ParticipantLookupService>();
 
 
         //services.AddSingleton<ProblemDetailsFactory, UserManagerProblemDetailsFactory>();
@@ -258,7 +260,7 @@ public class Startup
                 store.UsePostgres(pgOptions =>
                 {
                     pgOptions.UseDriverDelegate<PostgreSQLDelegate>();
-                    pgOptions.ConnectionString = $"{config.ConnectionStrings.EdtDataStore};MaxConnections=3";
+                    pgOptions.ConnectionString = $"{config.ConnectionStrings.EdtDataStore}";
                     pgOptions.TablePrefix = "quartz.qrtz_";
                 });
                 store.UseJsonSerializer();
