@@ -17,6 +17,7 @@ public class DIAMGlobalExceptionHandler() : IExceptionFilter
             DIAMGeneralException => StatusCodes.Status400BadRequest,
             DIAMConfigurationException => StatusCodes.Status500InternalServerError,
             DIAMAuthException => StatusCodes.Status403Forbidden,
+            DIAMSecurityException => StatusCodes.Status403Forbidden,
             RecordNotFoundException => StatusCodes.Status404NotFound,
             DIAMUserProvisioningException => StatusCodes.Status500InternalServerError,
 

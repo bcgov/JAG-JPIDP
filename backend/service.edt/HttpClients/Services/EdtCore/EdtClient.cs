@@ -1,8 +1,10 @@
 namespace edt.service.HttpClients.Services.EdtCore;
 
 using System.Diagnostics.Metrics;
+using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
+using Common.Exceptions;
 using Common.Exceptions.EDT;
 using Common.Models.EDT;
 using CommonModels.Models.Party;
@@ -980,62 +982,90 @@ public class EdtClient : BaseClient, IEdtClient
         {
             Logger.LogInformation($"Searching for person {personLookup.LastName} {personLookup.FirstName} {personLookup.DateOfBirth}");
 
+
+
             // construct the filter
             List<string> filterParams = [];
 
-
             if (!string.IsNullOrEmpty(personLookup.LastName))
             {
-                filterParams.Add($"LastName:{personLookup.LastName}");
+                if (personLookup.LastName.Length > 100)
+                {
+                    throw new DIAMSecurityException($"SearchForPerson() Last name [{personLookup.LastName}] is too long");
+                }
+                filterParams.Add($"LastName:{WebUtility.UrlEncode(personLookup.LastName)}");
             }
             if (!string.IsNullOrEmpty(personLookup.FirstName))
             {
-                filterParams.Add($"FirstName:{personLookup.FirstName}");
+                if (personLookup.FirstName.Length > 100)
+                {
+                    throw new DIAMSecurityException($"SearchForPerson() First name [{personLookup.FirstName}] is too long");
+                }
+                filterParams.Add($"FirstName:{WebUtility.UrlEncode(personLookup.FirstName)}");
             }
             if (personLookup.DateOfBirth != null)
             {
                 filterParams.Add($"Date of Birth:{personLookup.DateOfBirth}");
             }
 
+            var queryParams = string.Join(",", filterParams);
 
-            var filter = string.Join(",", filterParams);
+            if (personLookup.IncludeInactive)
+            {
+                queryParams += "&IncludeInactive=true";
+            }
 
-            Logger.LogInformation($"Searching filter {filter}");
 
-            var result = await this.GetAsync<PagedItemsResponse<EdtPersonDto>>($"api/v2/org-units/1/persons?IncludeInactive={personLookup.IncludeInactive}&filter={filter}");
+            Logger.LogInformation($"Searching filter {queryParams}");
+
+            var result = await this.GetAsync<PagedItemsResponse<EdtPersonDto>>($"api/v2/org-units/1/persons?filter={queryParams}");
 
             if (result.IsSuccess)
             {
                 if (result.Value.Total == 0)
                 {
-                    Logger.LogInformation($"No person found for {personLookup.LastName} {personLookup.FirstName} {personLookup.DateOfBirth}");
+                    Logger.LogInformation($"No person found for {personLookup}");
                     return [];
                 }
 
                 // Todo handle merged participants if there are multiple matches
                 if (result.Value.Total > 1)
                 {
-                    Logger.LogInformation($"Multiple persons found for {personLookup.LastName} {personLookup.FirstName} {personLookup.DateOfBirth}");
+                    Logger.LogInformation($"Multiple persons found for {personLookup}");
                 }
 
+                // get first matching person with a partId
+                var firstMatchingPerson = result.Value.Items.Where(person => !string.IsNullOrEmpty(person.Key)).FirstOrDefault();
 
+                // create query
+                var mergeQuery = new ParticipantByPartId(firstMatchingPerson.Key);
 
-
-
-                var mergeQuery = new ParticipantByPartId("172308.0877");
+                // find all merged participants
                 var mergedParticipants = await this.mediator.Send(mergeQuery);
 
                 // see if any of the participants have the entered OTC
                 if (personLookup.AttributeValues.Count != 0)
                 {
+                    Logger.LogInformation($"Checking attributes of participant {personLookup}");
                     var matchingParticipants = this.FilterParticipantsByAttributes(mergedParticipants, personLookup.AttributeValues, ALL_ATTRIBUTES);
+
+                    if (matchingParticipants.Count() == 0)
+                    {
+                        Logger.LogWarning($"No matching participant found {personLookup}");
+                        // no matching participants by attributes or fields - remove response data
+                        result.Value.Items = [];
+                        result.Value.Total = 0;
+                    }
+                    else
+                    {
+                        Logger.LogInformation($"A matching participant was found for {personLookup}");
+                    }
                 }
 
                 return result.Value.Items;
             }
             else
             {
-
                 Logger.LogError($"Failed to search for person {personLookup.LastName} {personLookup.FirstName} {personLookup.DateOfBirth}");
                 return [];
             }
@@ -1049,36 +1079,49 @@ public class EdtClient : BaseClient, IEdtClient
     /// <param name="attributeValues"></param>
     /// <param name="aLL_ATTRIBUTES"></param>
     /// <returns></returns>
-    private IEnumerable<ParticipantMergeModel> FilterParticipantsByAttributes(ParticipantMergeListingModel mergedParticipants, List<LookupKeyValueGroup> attributeValues, bool allMatchingAttributes)
+    private List<ParticipantMergeModel> FilterParticipantsByAttributes(ParticipantMergeListingModel mergedParticipants, List<LookupKeyValueGroup> attributeValues, bool allMatchingAttributes)
     {
 
         var allMatchingParticipants = mergedParticipants.GetAllParticipants();
+        List<ParticipantMergeModel> returnMatchedParticipants = [];
         foreach (var participant in allMatchingParticipants)
         {
             var isMatching = false;
 
             foreach (var attribute in attributeValues)
             {
-                // custom EDT field
-                if (attribute.ValType == LookupType.Field)
+                if (!allMatchingAttributes && isMatching)
                 {
-                    Logger.LogDebug($"Checking field lookup {attribute.Name} for participant {participant}");
-                    var fieldValue = participant.ParticipantInfo.FirstOrDefault(info => info.Key.Equals(attribute.Value, StringComparison.OrdinalIgnoreCase));
-                    if (!string.IsNullOrEmpty(fieldValue.Value))
-                    {
-                        // check the value
-                    }
+                    Logger.LogInformation($"Matching attribute found for participant {participant} - moving to next");
                 }
-                if (attribute.ValType == LookupType.Attribute)
+                else
                 {
-                    Logger.LogDebug($"Checking attribute {attribute.Name} for participant {participant}");
+                    // custom EDT field
+                    if (attribute.ValType == LookupType.Field)
+                    {
+                        Logger.LogDebug($"Checking field lookup {attribute.Name} for participant {participant}");
+                        var fieldValue = participant.ParticipantInfo.FirstOrDefault(info => info.Key.Equals(attribute.Name, StringComparison.OrdinalIgnoreCase));
+                        if (!string.IsNullOrEmpty(fieldValue.Value))
+                        {
+                            // check the value
+                            if (fieldValue.Value.Equals(attribute.Value, StringComparison.OrdinalIgnoreCase))
+                            {
+                                isMatching = true;
+                                returnMatchedParticipants.Add(participant);
+                            }
+                        }
+                    }
+                    if (attribute.ValType == LookupType.Attribute)
+                    {
+                        Logger.LogDebug($"Checking attribute {attribute.Name} for participant {participant}");
 
+                    }
                 }
             }
 
         }
 
-        return allMatchingParticipants;
+        return returnMatchedParticipants;
     }
 
     public async Task<List<UserCaseSearchResponseModel>> GetUserCases(string userKey)
