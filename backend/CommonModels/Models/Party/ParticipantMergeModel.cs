@@ -19,4 +19,17 @@ public class ParticipantMergeListingModel
     public ParticipantMergeModel? PrimaryParticipant { get; set; }
     public List<ParticipantMergeModel> SourceParticipants { get; set; } = [];
 
+    // get All
+    public IEnumerable<ParticipantMergeModel> GetAllParticipants()
+    {
+        var response = new List<ParticipantMergeModel>();
+        if (this.PrimaryParticipant != null)
+        {
+            response.Add(this.PrimaryParticipant);
+        }
+
+        response.AddRange(this.SourceParticipants);
+
+        return response;
+    }
 }

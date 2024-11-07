@@ -5,17 +5,23 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Common.Exceptions.EDT;
 using Common.Models.EDT;
+using CommonModels.Models.Party;
+using edt.service.Features.Participant;
 using edt.service.Infrastructure.Telemetry;
 using edt.service.Kafka.Model;
 using edt.service.ServiceEvents.PersonCreationHandler.Models;
 using edt.service.ServiceEvents.UserAccountModification.Models;
+using MediatR;
 using Prometheus;
 using Serilog;
 
 public class EdtClient : BaseClient, IEdtClient
 {
     private const string SUBMITTING_AGENCY_GROUP_NAME = "Submitting Agency";
+    private const bool ALL_ATTRIBUTES = true;
+    private const bool ANY_ATTRIBUTE = false;
     private readonly IMapper mapper;
+    private readonly IMediator mediator;
     private readonly EdtServiceConfiguration configuration;
     private readonly string SUBMITTING_AGENCY = "SubmittingAgency";
     private static readonly Histogram AccountCreationDuration = Metrics.CreateHistogram("edt_account_creation_duration", "Histogram of edt account creations.");
@@ -33,13 +39,17 @@ public class EdtClient : BaseClient, IEdtClient
     private readonly Counter<long> updatePersonCounter;
 
     public EdtClient(
-        HttpClient httpClient, Instrumentation instrumentation, EdtServiceConfiguration edtServiceConfiguration,
+        HttpClient httpClient,
+        Instrumentation instrumentation,
+        EdtServiceConfiguration edtServiceConfiguration,
         IMapper mapper,
+        IMediator mediator,
         ILogger<EdtClient> logger)
         : base(httpClient, logger)
     {
         ArgumentNullException.ThrowIfNull(instrumentation);
         this.mapper = mapper;
+        this.mediator = mediator;
         this.configuration = edtServiceConfiguration;
         this.getPersonCounter = instrumentation.EdtGetPersonCounter;
         this.addPersonCounter = instrumentation.EdtAddPersonCounter;
@@ -1001,14 +1011,74 @@ public class EdtClient : BaseClient, IEdtClient
                     Logger.LogInformation($"No person found for {personLookup.LastName} {personLookup.FirstName} {personLookup.DateOfBirth}");
                     return [];
                 }
+
+                // Todo handle merged participants if there are multiple matches
+                if (result.Value.Total > 1)
+                {
+                    Logger.LogInformation($"Multiple persons found for {personLookup.LastName} {personLookup.FirstName} {personLookup.DateOfBirth}");
+                }
+
+
+
+
+
+                var mergeQuery = new ParticipantByPartId("172308.0877");
+                var mergedParticipants = await this.mediator.Send(mergeQuery);
+
+                // see if any of the participants have the entered OTC
+                if (personLookup.AttributeValues.Count != 0)
+                {
+                    var matchingParticipants = this.FilterParticipantsByAttributes(mergedParticipants, personLookup.AttributeValues, ALL_ATTRIBUTES);
+                }
+
                 return result.Value.Items;
             }
             else
             {
+
                 Logger.LogError($"Failed to search for person {personLookup.LastName} {personLookup.FirstName} {personLookup.DateOfBirth}");
                 return [];
             }
         }
+    }
+
+    /// <summary>
+    /// Filter all participants by matching attributes
+    /// </summary>
+    /// <param name="mergedParticipants"></param>
+    /// <param name="attributeValues"></param>
+    /// <param name="aLL_ATTRIBUTES"></param>
+    /// <returns></returns>
+    private IEnumerable<ParticipantMergeModel> FilterParticipantsByAttributes(ParticipantMergeListingModel mergedParticipants, List<LookupKeyValueGroup> attributeValues, bool allMatchingAttributes)
+    {
+
+        var allMatchingParticipants = mergedParticipants.GetAllParticipants();
+        foreach (var participant in allMatchingParticipants)
+        {
+            var isMatching = false;
+
+            foreach (var attribute in attributeValues)
+            {
+                // custom EDT field
+                if (attribute.ValType == LookupType.Field)
+                {
+                    Logger.LogDebug($"Checking field lookup {attribute.Name} for participant {participant}");
+                    var fieldValue = participant.ParticipantInfo.FirstOrDefault(info => info.Key.Equals(attribute.Value, StringComparison.OrdinalIgnoreCase));
+                    if (!string.IsNullOrEmpty(fieldValue.Value))
+                    {
+                        // check the value
+                    }
+                }
+                if (attribute.ValType == LookupType.Attribute)
+                {
+                    Logger.LogDebug($"Checking attribute {attribute.Name} for participant {participant}");
+
+                }
+            }
+
+        }
+
+        return allMatchingParticipants;
     }
 
     public async Task<List<UserCaseSearchResponseModel>> GetUserCases(string userKey)
