@@ -39,6 +39,9 @@ public class EdtClient : BaseClient, IEdtClient
     private readonly Counter<long> getUserCounter;
     private readonly Counter<long> updateUserCounter;
     private readonly Counter<long> updatePersonCounter;
+    private readonly Counter<long> participantSearchSuccessCounter;
+    private readonly Counter<long> participantSearchFailureCounter;
+
 
     public EdtClient(
         HttpClient httpClient,
@@ -58,6 +61,8 @@ public class EdtClient : BaseClient, IEdtClient
         this.getUserCounter = instrumentation.EdtGetUserCounter;
         this.updateUserCounter = instrumentation.EdtUpdateUserCounter;
         this.updatePersonCounter = instrumentation.EdtUpdatePersonCounter;
+        this.participantSearchSuccessCounter = instrumentation.ParticipantSearchSuccessCounter;
+        this.participantSearchFailureCounter = instrumentation.ParticipantSearchFailureCounter;
 
     }
 
@@ -1049,18 +1054,22 @@ public class EdtClient : BaseClient, IEdtClient
                     Logger.LogInformation($"Checking attributes of participant {personLookup}");
                     var matchingParticipants = this.FilterParticipantsByAttributes(mergedParticipants, personLookup.AttributeValues, ALL_ATTRIBUTES);
 
-                    if (matchingParticipants.Count() == 0)
+                    if (matchingParticipants.Count == 0)
                     {
                         Logger.LogWarning($"No matching participant found {personLookup}");
                         // no matching participants by attributes or fields - remove response data
                         result.Value.Items = [];
                         result.Value.Total = 0;
+                        this.participantSearchFailureCounter.Add(1);
                     }
                     else
                     {
                         Logger.LogInformation($"A matching participant was found for {personLookup}");
                     }
                 }
+
+                // track successful searches
+                this.participantSearchSuccessCounter.Add(result.Value.Items.Count);
 
                 return result.Value.Items;
             }

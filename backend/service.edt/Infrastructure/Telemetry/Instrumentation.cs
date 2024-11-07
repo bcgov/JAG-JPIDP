@@ -26,7 +26,8 @@ public class Instrumentation : IDisposable
         this.EdtUpdatePersonCounter = this.meter.CreateCounter<long>("edt-person-update", description: "EDT person Update Requests");
         this.EdtGetPersonCounter = this.meter.CreateCounter<long>("edt-person-get", description: "EDT Person Get Requests");
         this.EdtAddPersonCounter = this.meter.CreateCounter<long>("edt-person-added", description: "EDT Person Add Requests");
-        this.ParticipantMergeCounter = this.meter.CreateCounter<long>("edt-participantmergeinfo-request", description: "EDT Participant Merge Lookup Requests");
+        this.ParticipantSearchSuccessCounter = this.meter.CreateCounter<long>("edt-participant-search-success-request", description: "EDT Participant Search Success Total");
+        this.ParticipantSearchFailureCounter = this.meter.CreateCounter<long>("edt-participant-search-failure-request", description: "EDT Participant Search Failure Total");
 
 
     }
@@ -40,6 +41,8 @@ public class Instrumentation : IDisposable
     public Counter<long> EdtAddPersonCounter { get; }
     public Counter<long> EdtUpdateUserCounter { get; }
     public Counter<long> ParticipantMergeCounter { get; }
+    public Counter<long> ParticipantSearchSuccessCounter { get; }
+    public Counter<long> ParticipantSearchFailureCounter { get; }
 
 
 
