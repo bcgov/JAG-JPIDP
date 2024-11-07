@@ -4,6 +4,7 @@ using System.Diagnostics.Metrics;
 using Common.Exceptions;
 using Common.Exceptions.EDT;
 using Common.Models.EDT;
+using CommonConstants.Constants.DIAM;
 using CommonModels.Models.Party;
 using edt.service.Data;
 using edt.service.HttpClients.Services.EdtCore;
@@ -30,12 +31,15 @@ public class ParticipantLookupService(ILogger<ParticipantLookupService> logger,
 
         // get initial participant
         var participant = await edtClient.GetPerson(participantId);
+
         if (participant == null)
         {
             throw new RecordNotFoundException("participant", participantId);
         }
         else
         {
+            // only accused participants get merged!
+            participant.Role = DIAMConstants.ACCUSED;
 
             knownParticipantIds.Add(participantId, participant);
             var mergedFieldValue = participant.Fields.FirstOrDefault(f => f.Name.Equals(configuration.ParticipantMergeLookupConfig.MergedParticipantField, StringComparison.OrdinalIgnoreCase));

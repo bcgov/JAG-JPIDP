@@ -149,6 +149,7 @@ public class ValidateUser
                     DateOfBirth = party.Birthdate,
                     FirstName = party.FirstName,
                     LastName = party.LastName,
+                    IncludeInactive = true,
                     AttributeValues = [
                         new()
                         {
@@ -161,21 +162,34 @@ public class ValidateUser
 
 
                 // see how many users we have - if more than one then we need to determine if they are merged but the same person
-                // and merged users will be considered (even if inactive), so long as one of the persons has the right first, last names
+                // and merged users will be considered (even if inactive), so long as one of the persons has the matching first, last names
                 // date of birth and OTC then user will be allowed to proceed
 
+                if (userInfoResponse != null && userInfoResponse.Count > 0)
+                {
 
-                response = await this.GetPrimaryParticipant(userInfoResponse, command, party, keycloakUser, priorRequests);
-                Serilog.Log.Information($"Primary participant {primaryParticipant?.Id} {primaryParticipant?.Key} {primaryParticipant?.FirstName} {primaryParticipant?.LastName} {primaryParticipant?.IsActive} {command.Code}");
+                    // response = await this.GetPrimaryParticipant(userInfoResponse, command, party, keycloakUser, priorRequests);
+                    Serilog.Log.Information($"Primary participant {primaryParticipant}");
+
+                    // if any users are returned then the OTC is valid for at least one of them
+                    response.Validated = true;
 
 
-                var updates = await dbContext.SaveChangesAsync();
-                Serilog.Log.Debug($"{updates} public request records added");
+                    var updates = await dbContext.SaveChangesAsync();
+                    Serilog.Log.Debug($"{updates} public request records added");
 
 
-                await transaction.CommitAsync();
+                    await transaction.CommitAsync();
 
-                return DomainResult.Success(response);
+                    return DomainResult.Success(response);
+                }
+                else
+                {
+                    Serilog.Log.Information($"No users found with identifier {command.Code}");
+                    response.Message = "Invalid code provided";
+                    await transaction.CommitAsync();
+                    return DomainResult.Success(response);
+                }
             }
             catch (Exception ex)
             {
@@ -272,7 +286,7 @@ public class ValidateUser
                     {
                         Serilog.Log.Information($"Multiple active users found with name {party.FirstName} {party.LastName} {party.Birthdate} - if any match OTC {command.Code} that will be selected");
 
-                        var activePerson = activePersons.FirstOrDefault(person => person.Fields.Any(field => field.Name.Equals(configuration.EdtClient.OneTimeCode) && field.Value.Equals(command.Code)));
+                        var activePerson = activePersons.FirstOrDefault(person => person.IsActive);
 
                         if (activePerson == null)
                         {

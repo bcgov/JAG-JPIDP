@@ -142,7 +142,7 @@ public class EdtCoreClient(HttpClient httpClient, ILogger<EdtCoreClient> logger,
     /// <returns>The list of <see cref="EdtPersonDto"/> if found; otherwise, an empty list.</returns>
     public async Task<List<EdtPersonDto>?> FindPersons(PersonLookupModel personLookupModel)
     {
-        logger.LogInformation($"Edt Person search requested {personLookupModel.LastName} {personLookupModel.FirstName} {personLookupModel.DateOfBirth} ");
+        logger.LogInformation($"Edt Person search requested {personLookupModel} ");
 
         var wrapper = new PersonLookupWrapper { PersonLookup = personLookupModel };
 
