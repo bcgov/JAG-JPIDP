@@ -177,7 +177,7 @@ public class ValidateUser
 
                     var updates = await dbContext.SaveChangesAsync();
                     Serilog.Log.Debug($"{updates} public request records added");
-
+                    validation.IsValid = true;
 
                     await transaction.CommitAsync();
 
@@ -185,6 +185,8 @@ public class ValidateUser
                 }
                 else
                 {
+                    var updates = await dbContext.SaveChangesAsync();
+                    Serilog.Log.Debug($"{updates} public request records added");
                     Serilog.Log.Information($"No users found with identifier {command.Code}");
                     response.Message = "Invalid code provided";
                     await transaction.CommitAsync();

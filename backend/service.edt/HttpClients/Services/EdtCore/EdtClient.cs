@@ -61,7 +61,7 @@ public class EdtClient : BaseClient, IEdtClient
         this.getUserCounter = instrumentation.EdtGetUserCounter;
         this.updateUserCounter = instrumentation.EdtUpdateUserCounter;
         this.updatePersonCounter = instrumentation.EdtUpdatePersonCounter;
-        this.participantSearchSuccessCounter = instrumentation.ParticipantSearchSuccessCounter;
+        this.participantSearchSuccessCounter = instrumentation.ParticipantMergeSearch;
         this.participantSearchFailureCounter = instrumentation.ParticipantSearchFailureCounter;
 
     }
