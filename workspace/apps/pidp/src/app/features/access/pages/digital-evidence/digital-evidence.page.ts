@@ -1,5 +1,13 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
-import { Component, Inject, OnInit, ViewEncapsulation } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  Inject,
+  OnInit,
+  ViewChild,
+  ViewChildren,
+} from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatTableDataSource } from '@angular/material/table';
@@ -312,9 +320,8 @@ export class DigitalEvidencePage
     return input;
   }
 
-  public checkCodeInput(): void {
-    const codeValue = this.formState.OOCUniqueId.value;
-    if (codeValue && codeValue.length === 6) {
+  public checkCodeInput(inputVal: string): void {
+    if (inputVal && inputVal.length === 6) {
       this.checkUniqueID();
     }
   }
@@ -525,6 +532,10 @@ export class DigitalEvidencePage
       if (idp === IdentityProvider.BCPS) {
         this.formState.AssignedRegions.setValidators([Validators.required]);
       }
+    });
+
+    this.formState.form.get('OOCUniqueId')?.valueChanges.subscribe((change) => {
+      this.checkCodeInput(change);
     });
   }
 

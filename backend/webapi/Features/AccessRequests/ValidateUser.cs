@@ -51,6 +51,7 @@ public class ValidateUser
         public async Task<IDomainResult<UserValidationResponse>> HandleAsync(Command command)
         {
 
+            var sameCodeEntered = false;
             // see if this code is already active and complete
             var priorAccessRequest = dbContext.DigitalEvidencePublicDisclosures.Where(req => req.KeyData == command.Code).FirstOrDefault();
 
@@ -69,8 +70,6 @@ public class ValidateUser
 
             }
 
-            // start a transaction
-            using var transaction = dbContext.Database.BeginTransaction();
             try
             {
 
@@ -103,13 +102,7 @@ public class ValidateUser
 
                 };
 
-                if (retries >= configuration.EdtClient.MaxClientValidations)
-                {
-                    response.TooManyAttempts = true;
-                    await this.NotifyTooManyAttempts(party, priorRequests);
-                    return DomainResult.Success(response);
 
-                }
 
 
                 var validation = new PublicUserValidation
@@ -120,25 +113,14 @@ public class ValidateUser
                     IsValid = false
                 };
 
-                if (priorRequests != null && priorRequests.Count > 0)
-                {
-                    var sameCodeAttempt = priorRequests.FirstOrDefault(req => req.Party == party && req.Code == command.Code);
-                    if (sameCodeAttempt != null)
-                    {
-                        Serilog.Log.Information($"User {party.Id} entered duplicated code");
-                        sameCodeAttempt.Modified = clock.GetCurrentInstant();
-                    }
-                    else
-                    {
-                        dbContext.PublicUserValidations.Add(validation);
 
-                    }
-                }
-                else
+                var sameCodeAttempt = priorRequests.FirstOrDefault(req => req.Party == party && req.Code == command.Code);
+                if (sameCodeAttempt != null)
                 {
-                    dbContext.PublicUserValidations.Add(validation);
+                    Serilog.Log.Information($"User {party.Id} entered duplicated code");
+                    validation = sameCodeAttempt;
+                    sameCodeEntered = true;
                 }
-
 
 
                 // get the user primaryParticipant from the EdtService
@@ -173,30 +155,44 @@ public class ValidateUser
 
                     // if any users are returned then the OTC is valid for at least one of them
                     response.Validated = true;
-
+                    validation.IsValid = true;
+                    dbContext.PublicUserValidations.Add(validation);
 
                     var updates = await dbContext.SaveChangesAsync();
                     Serilog.Log.Debug($"{updates} public request records added");
-                    validation.IsValid = true;
 
-                    await transaction.CommitAsync();
 
                     return DomainResult.Success(response);
                 }
                 else
                 {
+                    if (retries >= configuration.EdtClient.MaxClientValidations)
+                    {
+                        response.TooManyAttempts = true;
+                        await this.NotifyTooManyAttempts(party, priorRequests);
+                        return DomainResult.Success(response);
+
+                    }
+
+                    if (!sameCodeEntered)
+                    {
+                        dbContext.PublicUserValidations.Add(validation);
+                    }
+                    else
+                    {
+                        validation.Modified = clock.GetCurrentInstant();
+
+                    }
                     var updates = await dbContext.SaveChangesAsync();
                     Serilog.Log.Debug($"{updates} public request records added");
                     Serilog.Log.Information($"No users found with identifier {command.Code}");
                     response.Message = "Invalid code provided";
-                    await transaction.CommitAsync();
                     return DomainResult.Success(response);
                 }
             }
             catch (Exception ex)
             {
                 Serilog.Log.Error($"Person validation error: {ex.Message}");
-                await transaction.RollbackAsync();
                 throw;
 
             }
