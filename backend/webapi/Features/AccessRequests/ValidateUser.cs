@@ -51,6 +51,7 @@ public class ValidateUser
         public async Task<IDomainResult<UserValidationResponse>> HandleAsync(Command command)
         {
 
+            var sameCodeEntered = false;
             // see if this code is already active and complete
             var priorAccessRequest = dbContext.DigitalEvidencePublicDisclosures.Where(req => req.KeyData == command.Code).FirstOrDefault();
 
@@ -69,8 +70,6 @@ public class ValidateUser
 
             }
 
-            // start a transaction
-            using var transaction = dbContext.Database.BeginTransaction();
             try
             {
 
@@ -103,13 +102,7 @@ public class ValidateUser
 
                 };
 
-                if (retries >= configuration.EdtClient.MaxClientValidations)
-                {
-                    response.TooManyAttempts = true;
-                    await this.NotifyTooManyAttempts(party, priorRequests);
-                    return DomainResult.Success(response);
 
-                }
 
 
                 var validation = new PublicUserValidation
@@ -120,25 +113,14 @@ public class ValidateUser
                     IsValid = false
                 };
 
-                if (priorRequests != null && priorRequests.Count > 0)
-                {
-                    var sameCodeAttempt = priorRequests.FirstOrDefault(req => req.Party == party && req.Code == command.Code);
-                    if (sameCodeAttempt != null)
-                    {
-                        Serilog.Log.Information($"User {party.Id} entered duplicated code");
-                        sameCodeAttempt.Modified = clock.GetCurrentInstant();
-                    }
-                    else
-                    {
-                        dbContext.PublicUserValidations.Add(validation);
 
-                    }
-                }
-                else
+                var sameCodeAttempt = priorRequests.FirstOrDefault(req => req.Party == party && req.Code == command.Code);
+                if (sameCodeAttempt != null)
                 {
-                    dbContext.PublicUserValidations.Add(validation);
+                    Serilog.Log.Information($"User {party.Id} entered duplicated code");
+                    validation = sameCodeAttempt;
+                    sameCodeEntered = true;
                 }
-
 
 
                 // get the user primaryParticipant from the EdtService
@@ -149,6 +131,7 @@ public class ValidateUser
                     DateOfBirth = party.Birthdate,
                     FirstName = party.FirstName,
                     LastName = party.LastName,
+                    IncludeInactive = true,
                     AttributeValues = [
                         new()
                         {
@@ -161,26 +144,55 @@ public class ValidateUser
 
 
                 // see how many users we have - if more than one then we need to determine if they are merged but the same person
-                // and merged users will be considered (even if inactive), so long as one of the persons has the right first, last names
+                // and merged users will be considered (even if inactive), so long as one of the persons has the matching first, last names
                 // date of birth and OTC then user will be allowed to proceed
 
+                if (userInfoResponse != null && userInfoResponse.Count > 0)
+                {
 
-                response = await this.GetPrimaryParticipant(userInfoResponse, command, party, keycloakUser, priorRequests);
-                Serilog.Log.Information($"Primary participant {primaryParticipant?.Id} {primaryParticipant?.Key} {primaryParticipant?.FirstName} {primaryParticipant?.LastName} {primaryParticipant?.IsActive} {command.Code}");
+                    // response = await this.GetPrimaryParticipant(userInfoResponse, command, party, keycloakUser, priorRequests);
+                    Serilog.Log.Information($"Primary participant {primaryParticipant}");
+
+                    // if any users are returned then the OTC is valid for at least one of them
+                    response.Validated = true;
+                    validation.IsValid = true;
+                    dbContext.PublicUserValidations.Add(validation);
+
+                    var updates = await dbContext.SaveChangesAsync();
+                    Serilog.Log.Debug($"{updates} public request records added");
 
 
-                var updates = await dbContext.SaveChangesAsync();
-                Serilog.Log.Debug($"{updates} public request records added");
+                    return DomainResult.Success(response);
+                }
+                else
+                {
+                    if (retries >= configuration.EdtClient.MaxClientValidations)
+                    {
+                        response.TooManyAttempts = true;
+                        await this.NotifyTooManyAttempts(party, priorRequests);
+                        return DomainResult.Success(response);
 
+                    }
 
-                await transaction.CommitAsync();
+                    if (!sameCodeEntered)
+                    {
+                        dbContext.PublicUserValidations.Add(validation);
+                    }
+                    else
+                    {
+                        validation.Modified = clock.GetCurrentInstant();
 
-                return DomainResult.Success(response);
+                    }
+                    var updates = await dbContext.SaveChangesAsync();
+                    Serilog.Log.Debug($"{updates} public request records added");
+                    Serilog.Log.Information($"No users found with identifier {command.Code}");
+                    response.Message = "Invalid code provided";
+                    return DomainResult.Success(response);
+                }
             }
             catch (Exception ex)
             {
                 Serilog.Log.Error($"Person validation error: {ex.Message}");
-                await transaction.RollbackAsync();
                 throw;
 
             }
@@ -272,7 +284,7 @@ public class ValidateUser
                     {
                         Serilog.Log.Information($"Multiple active users found with name {party.FirstName} {party.LastName} {party.Birthdate} - if any match OTC {command.Code} that will be selected");
 
-                        var activePerson = activePersons.FirstOrDefault(person => person.Fields.Any(field => field.Name.Equals(configuration.EdtClient.OneTimeCode) && field.Value.Equals(command.Code)));
+                        var activePerson = activePersons.FirstOrDefault(person => person.IsActive);
 
                         if (activePerson == null)
                         {

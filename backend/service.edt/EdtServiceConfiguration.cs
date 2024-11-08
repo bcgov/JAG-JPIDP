@@ -21,6 +21,7 @@ public class EdtServiceConfiguration
     public BackgroundServiceConfig FolioLinkageBackgroundService { get; set; } = new BackgroundServiceConfig();
     public SchemaRegistryConfiguration SchemaRegistry { get; set; } = new();
     public TelemeteryConfiguration Telemetry { get; set; } = new TelemeteryConfiguration();
+    public ParticipantMergeLookup ParticipantMergeLookupConfig { get; set; } = new ParticipantMergeLookup();
 
 
     // ------- Configuration Objects -------
@@ -31,6 +32,17 @@ public class EdtServiceConfiguration
         public string AzureConnectionString { get; set; } = string.Empty;
         public bool LogToConsole { get; set; }
 
+    }
+
+    public class ParticipantMergeLookup
+    {
+        public string MergedParticipantField { get; set; } = "MergedParticipantKeys";
+        public char MergedParticipantDelimiter { get; set; } = ',';
+        public string[] AdditionalLookupFields { get; set; } = ["OTC"];
+        public string DisclosurePortalCaseField { get; set; } = "DisclosurePortalCase";
+        public string DateOfBirthField { get; set; } = "Date of birth";
+        public string DateOfBirthFormat { get; set; } = "yyyy-MM-dd";
+        public string[] Identifiers { get; set; } = ["DisclosurePortalCase"];
     }
 
     public class BackgroundServiceConfig

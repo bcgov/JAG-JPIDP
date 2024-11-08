@@ -83,7 +83,6 @@ export class AuthorizedUserService {
     if (submittingAgency != null) {
       return new SubmittingAgencyResolver(userIdentity);
     }
-    debugger;
     if (
       userIdentity.accessTokenParsed?.['identity_provider'] === undefined &&
       userIdentity.accessTokenParsed.preferred_username.startsWith('tst')

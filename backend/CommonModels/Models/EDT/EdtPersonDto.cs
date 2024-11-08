@@ -12,9 +12,11 @@ public class EdtPersonDto
     public EdtPersonAddress? Address { get; set; } = new EdtPersonAddress();
     public string? Role { get; set; } = "Defence";
     public bool IsActive { get; set; } = true;
+    public string? Status { get; set; }
     public List<EdtField> Fields { get; set; } = [];
     public List<IdentifierModel> Identifiers { get; set; } = [];
 
+    public override string ToString() => $"Id: {this.Id}, Key: {this.Key}, FirstName: {this.FirstName}, LastName: {this.LastName}, Address: {this.Address}, Role: {this.Role}, IsActive: {this.IsActive}, Status: {this.Status}, Fields: {this.Fields.Count}, Identifiers: {this.Identifiers.Count}";
 }
 
 public class EdtPersonAddress
