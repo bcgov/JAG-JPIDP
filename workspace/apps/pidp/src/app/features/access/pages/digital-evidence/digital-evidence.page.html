@@ -160,24 +160,25 @@
           your Disclosure.
         </div>
         <div class="row">
-          <div class="col-md-4 col-sm-12 mt-3">
-            <mat-form-field class="code-entry mat-elevation-z16">
-              <input
-                class="formControl"
-                matInput
-                placeholder="Enter Code"
-                formControlName="OOCUniqueId"
-                mask="000-000"
-                #codeInput
-                [readonly]="false"
-                (keyup)="checkCodeInput()" />
-            </mat-form-field>
-            <div *ngIf="validatingUser" class="col-md-4">
-              <mat-spinner class="spinner" [diameter]="60"></mat-spinner>
+          <div class="col-12">
+            <div class="col-md-4 col-sm-12 mt-3">
+              <mat-form-field class="code-entry mat-elevation-z16">
+                <input class="formControl"
+                       matInput
+                       placeholder="Enter Code"
+                       formControlName="OOCUniqueId"
+                       mask="000-000"
+                       #codeInput
+                       [readonly]="false"
+                       (keyup)="checkCodeInput()" />
+              </mat-form-field>
+              <div *ngIf="validatingUser" class="col-md-4">
+                <mat-spinner class="spinner" [diameter]="60"></mat-spinner>
+              </div>
+            </div>
             </div>
           </div>
         </div>
-      </div>
       <div>
         <div class="col-12 align-middle my-auto">
           <div
