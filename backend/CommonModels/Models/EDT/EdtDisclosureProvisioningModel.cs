@@ -17,6 +17,7 @@ public abstract class EdtDisclosureUserProvisioningModel
     public string? OrganizationType { get; set; }
     public string? OrganizationName { get; set; }
     public string? Telephone { get; set; }
+    public List<string> DisclosurePortalCaseIds { get; set; } = [];
     public int ManuallyAddedParticipantId { get; set; } = -1;
     public string EdtExternalIdentifier { get; set; } = string.Empty;
     public override string ToString() => JsonSerializer.Serialize(this);

@@ -19,7 +19,42 @@ public class ParticipantMergeListingModel
     public ParticipantMergeModel? PrimaryParticipant { get; set; }
     public List<ParticipantMergeModel> SourceParticipants { get; set; } = [];
 
-    // get All
+
+    /// <summary>
+    /// Get all matching values across primary and any secondary participants
+    /// </summary>
+    /// <param name="fieldName"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
+    public IEnumerable<string> GetAllMatchingFieldValues(string fieldName)
+    {
+        if (string.IsNullOrEmpty(fieldName))
+        {
+            throw new ArgumentException("Field name cannot be null or empty", nameof(fieldName));
+        }
+
+        var distinctValues = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        if (this.PrimaryParticipant != null && this.PrimaryParticipant.ParticipantInfo.TryGetValue(fieldName, out var primaryValue))
+        {
+            distinctValues.Add(primaryValue);
+        }
+
+        foreach (var participant in this.SourceParticipants)
+        {
+            if (participant.ParticipantInfo.TryGetValue(fieldName, out var value))
+            {
+                distinctValues.Add(value);
+            }
+        }
+
+        return distinctValues;
+    }
+
+    /// <summary>
+    /// Get all participants
+    /// </summary>
+    /// <returns></returns>
     public IEnumerable<ParticipantMergeModel> GetAllParticipants()
     {
         var response = new List<ParticipantMergeModel>();

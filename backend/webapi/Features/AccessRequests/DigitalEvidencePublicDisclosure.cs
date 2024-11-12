@@ -2,8 +2,10 @@ namespace Pidp.Features.AccessRequests;
 
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
+using Common.Exceptions;
 using Common.Models.Approval;
 using Common.Models.Notification;
+using CommonConstants.Constants.DIAM;
 using Confluent.Kafka;
 using DomainResults.Common;
 using FluentValidation;
@@ -158,13 +160,48 @@ public class DigitalEvidencePublicDisclosure
             // use UUIDs for topic keys
             var delivered = await this.kafkaProducer.ProduceAsync(this.config.KafkaCluster.DisclosurePublicUserCreationTopic,
                 taskId,
-                this.GetPublicDisclosureUserModel(command, dto, digitalEvidencePublicDisclosure));
+                await this.GetPublicDisclosureUserModel(command, dto, digitalEvidencePublicDisclosure));
 
             return delivered;
         }
 
-        private EdtDisclosureUserProvisioning GetPublicDisclosureUserModel(Command command, PartyDto dto, Models.DigitalEvidencePublicDisclosure digitalEvidencePublicDisclosure)
+        private async Task<EdtDisclosureUserProvisioning> GetPublicDisclosureUserModel(Command command, PartyDto dto, Models.DigitalEvidencePublicDisclosure digitalEvidencePublicDisclosure)
         {
+
+            if (string.IsNullOrEmpty(command.ParticipantId))
+            {
+                throw new DIAMGeneralException("No participant ID provided for public disclosure request");
+            }
+
+            var party = this.context.Parties.Include(p => p.AlternateIds).FirstOrDefault(p => p.Id == command.PartyId);
+
+            if (party == null)
+            {
+                throw new DIAMUserProvisioningException($"Unable to find party record for {command.PartyId} - request denied");
+            }
+
+            var participantId = party.AlternateIds.FirstOrDefault(altId => altId.Name == DIAMConstants.JUSTINPARTICIPANTID);
+
+            if (participantId == null || string.IsNullOrEmpty(participantId.Value))
+            {
+                throw new DIAMUserProvisioningException($"Unable to find participant ID for {command.PartyId} in Alternate Ids - request denied");
+            }
+
+            // get merge info
+            logger.LogInformation($"Getting public user disclosure model for {dto.LastName} {dto.Jpdid} - request [{digitalEvidencePublicDisclosure.Id}");
+
+
+            var mergeInfo = await this.coreClient.GetParticipantMergeListing(participantId.Value);
+            var disclosurePortalCaseIds = mergeInfo.GetAllMatchingFieldValues(DIAMConstants.DISCLOSUREPORTALCASE).ToList();
+
+            if (disclosurePortalCaseIds.Count > 0)
+            {
+                logger.LogInformation($"Party {party.Id} has been disclosed to with case Ids [{string.Join(",", disclosurePortalCaseIds)}]");
+            }
+            else
+            {
+                logger.LogWarning($"Party is requesting to onboard but has no disclosed cases [{party.Id}]");
+            }
 
             return new EdtDisclosureUserProvisioning
             {
@@ -176,6 +213,7 @@ public class DigitalEvidencePublicDisclosure
                 Role = "User",
                 SystemName = AccessTypeCode.DigitalEvidenceDisclosure.ToString(),
                 AccessRequestId = digitalEvidencePublicDisclosure.Id,
+                DisclosurePortalCaseIds = disclosurePortalCaseIds,
                 OrganizationType = "Out-of-custody",
                 OrganizationName = "Public",
                 PersonKey = command.KeyData
