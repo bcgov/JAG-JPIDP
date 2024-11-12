@@ -10,7 +10,7 @@ public class EdtDisclosureUserProvisioning
     public bool? IsActive => true;
     public string? AccountType { get; set; }
     public string? OrganizationType { get; set; }
-    public List<string> DisclosurePortalCaseIds { get; set; } = [];
+    public List<int> DisclosurePortalCaseIds { get; set; } = [];
     public string? OrganizationName { get; set; }
     public string? SystemName { get; set; } = "DISCLOSURE";
     public int AccessRequestId { get; set; }

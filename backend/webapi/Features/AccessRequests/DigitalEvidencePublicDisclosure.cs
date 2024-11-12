@@ -168,17 +168,13 @@ public class DigitalEvidencePublicDisclosure
         private async Task<EdtDisclosureUserProvisioning> GetPublicDisclosureUserModel(Command command, PartyDto dto, Models.DigitalEvidencePublicDisclosure digitalEvidencePublicDisclosure)
         {
 
+
             if (string.IsNullOrEmpty(command.ParticipantId))
             {
                 throw new DIAMGeneralException("No participant ID provided for public disclosure request");
             }
 
-            var party = this.context.Parties.Include(p => p.AlternateIds).FirstOrDefault(p => p.Id == command.PartyId);
-
-            if (party == null)
-            {
-                throw new DIAMUserProvisioningException($"Unable to find party record for {command.PartyId} - request denied");
-            }
+            var party = this.context.Parties.Include(p => p.AlternateIds).FirstOrDefault(p => p.Id == command.PartyId) ?? throw new DIAMUserProvisioningException($"Unable to find party record for {command.PartyId} - request denied");
 
             var participantId = party.AlternateIds.FirstOrDefault(altId => altId.Name == DIAMConstants.JUSTINPARTICIPANTID);
 
@@ -187,37 +183,52 @@ public class DigitalEvidencePublicDisclosure
                 throw new DIAMUserProvisioningException($"Unable to find participant ID for {command.PartyId} in Alternate Ids - request denied");
             }
 
-            // get merge info
-            logger.LogInformation($"Getting public user disclosure model for {dto.LastName} {dto.Jpdid} - request [{digitalEvidencePublicDisclosure.Id}");
-
-
-            var mergeInfo = await this.coreClient.GetParticipantMergeListing(participantId.Value);
-            var disclosurePortalCaseIds = mergeInfo.GetAllMatchingFieldValues(DIAMConstants.DISCLOSUREPORTALCASE).ToList();
-
-            if (disclosurePortalCaseIds.Count > 0)
+            try
             {
-                logger.LogInformation($"Party {party.Id} has been disclosed to with case Ids [{string.Join(",", disclosurePortalCaseIds)}]");
+                // get merge info
+                logger.LogInformation($"Getting public user disclosure model for {dto.LastName} {dto.Jpdid} - request [{digitalEvidencePublicDisclosure.Id}");
+
+
+                var mergeInfo = await this.coreClient.GetParticipantMergeListing(participantId.Value);
+                var disclosurePortalCaseIds = mergeInfo.GetAllMatchingFieldValues(DIAMConstants.DISCLOSUREPORTALCASE).ToList();
+
+                if (disclosurePortalCaseIds.Count > 0)
+                {
+                    // remove the leading "n-" from all disclosure portal case IDs
+                    if (disclosurePortalCaseIds.First().Contains('-'))
+                    {
+                        var index = disclosurePortalCaseIds.First().IndexOf('-') + 1;
+                        disclosurePortalCaseIds = disclosurePortalCaseIds.Select(id => id[index..]).ToList();
+
+                    }
+
+                    logger.LogInformation($"Party {party.Id} has been disclosed to with case Ids [{string.Join(",", disclosurePortalCaseIds)}]");
+                }
+                else
+                {
+                    logger.LogWarning($"Party is requesting to onboard but has no disclosed cases [{party.Id}]");
+                }
+
+                return new EdtDisclosureUserProvisioning
+                {
+                    Key = $"{command.ParticipantId}",
+                    UserName = dto.Jpdid,
+                    Email = dto.Email,
+                    FullName = $"{dto.FirstName} {dto.LastName}",
+                    AccountType = "Saml",
+                    Role = "User",
+                    SystemName = AccessTypeCode.DigitalEvidenceDisclosure.ToString(),
+                    AccessRequestId = digitalEvidencePublicDisclosure.Id,
+                    DisclosurePortalCaseIds = disclosurePortalCaseIds.Select(int.Parse).ToList(),
+                    OrganizationType = "Out-of-custody",
+                    OrganizationName = "Public",
+                    PersonKey = command.KeyData
+                };
             }
-            else
+            catch (Exception ex)
             {
-                logger.LogWarning($"Party is requesting to onboard but has no disclosed cases [{party.Id}]");
+                throw new DIAMUserProvisioningException($"Error handling public disclosure request for {dto.LastName} {dto.Jpdid} - {ex.Message}", ex);
             }
-
-            return new EdtDisclosureUserProvisioning
-            {
-                Key = $"{command.ParticipantId}",
-                UserName = dto.Jpdid,
-                Email = dto.Email,
-                FullName = $"{dto.FirstName} {dto.LastName}",
-                AccountType = "Saml",
-                Role = "User",
-                SystemName = AccessTypeCode.DigitalEvidenceDisclosure.ToString(),
-                AccessRequestId = digitalEvidencePublicDisclosure.Id,
-                DisclosurePortalCaseIds = disclosurePortalCaseIds,
-                OrganizationType = "Out-of-custody",
-                OrganizationName = "Public",
-                PersonKey = command.KeyData
-            };
         }
 
         private async Task<PartyDto> GetPidpUser(Command command)
