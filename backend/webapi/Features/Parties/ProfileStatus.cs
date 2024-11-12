@@ -10,6 +10,7 @@ using AutoMapper.QueryableExtensions;
 using Common.Constants.Auth;
 using Common.Models.EDT;
 using Common.Models.JUSTIN;
+using CommonConstants.Constants.DIAM;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
@@ -214,7 +215,7 @@ public partial class ProfileStatus
                             Serilog.Log.Information($"Storing JUSTIN alt id for {party.Id} as {participant.partId}");
                             party.AlternateIds.Add(new PartyAlternateId
                             {
-                                Name = "JUSTINParticipant",
+                                Name = DIAMConstants.JUSTINPARTICIPANTID,
                                 Value = participant.partId,
                                 Party = party
                             });
