@@ -1,5 +1,6 @@
 namespace jumwebapi.Infrastructure.HttpClients.JustinCases;
 
+using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Threading.Tasks;
 using CommonModels.Models.JUSTIN;

@@ -1,5 +1,6 @@
 namespace jumwebapi.Features.Cases.Controllers;
 
+using System.ComponentModel.DataAnnotations;
 using CommonModels.Models.JUSTIN;
 using global::Common.Models.JUSTIN;
 using jumwebapi.Features.Cases.Queries;

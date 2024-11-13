@@ -1,16 +1,85 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using NodaTime;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
 namespace jumwebapi.Migrations
 {
-    public partial class AddQuartz : Migration
+    /// <inheritdoc />
+    public partial class Init : Migration
     {
+        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.EnsureSchema(
+                name: "jum");
+
+            migrationBuilder.EnsureSchema(
                 name: "quartz");
+
+            migrationBuilder.CreateTable(
+                name: "IdempotentConsumers",
+                schema: "jum",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    MessageId = table.Column<string>(type: "text", nullable: false),
+                    Consumer = table.Column<string>(type: "text", nullable: false),
+                    ConsumeDate = table.Column<Instant>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_IdempotentConsumers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "JustinUserChange",
+                schema: "jum",
+                columns: table => new
+                {
+                    EventMessageId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PartId = table.Column<string>(type: "text", nullable: false),
+                    EventTime = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
+                    EventType = table.Column<string>(type: "text", nullable: false),
+                    Completed = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
+                    Created = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
+                    Modified = table.Column<Instant>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_JustinUserChange", x => x.EventMessageId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ParticipantMerge",
+                schema: "jum",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    MessageId = table.Column<string>(type: "text", nullable: false),
+                    MergeEventTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    SourceParticipantId = table.Column<string>(type: "text", nullable: false),
+                    TargetParticipantId = table.Column<string>(type: "text", nullable: false),
+                    SourceParticipantFirstName = table.Column<string>(type: "text", nullable: false),
+                    SourceParticipantLastName = table.Column<string>(type: "text", nullable: false),
+                    TargetParticipantFirstName = table.Column<string>(type: "text", nullable: false),
+                    TargetParticipantLastName = table.Column<string>(type: "text", nullable: false),
+                    SourceParticipantDOB = table.Column<DateOnly>(type: "date", nullable: false),
+                    TargetParticipantDOB = table.Column<DateOnly>(type: "date", nullable: false),
+                    PublishedMessageId = table.Column<string>(type: "text", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: false),
+                    Created = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
+                    Modified = table.Column<Instant>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ParticipantMerge", x => x.Id);
+                });
 
             migrationBuilder.CreateTable(
                 name: "qrtz_calendars",
@@ -110,6 +179,33 @@ namespace jumwebapi.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_qrtz_scheduler_state", x => new { x.sched_name, x.instance_name });
+                });
+
+            migrationBuilder.CreateTable(
+                name: "JustinUserChangeTarget",
+                schema: "jum",
+                columns: table => new
+                {
+                    ChangeTargetId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ServiceName = table.Column<string>(type: "text", nullable: false),
+                    ChangeStatus = table.Column<string>(type: "text", nullable: false),
+                    ErrorDetails = table.Column<string>(type: "text", nullable: false),
+                    CompletedTime = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
+                    JustinUserChangeId = table.Column<int>(type: "integer", nullable: false),
+                    Created = table.Column<Instant>(type: "timestamp with time zone", nullable: false),
+                    Modified = table.Column<Instant>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_JustinUserChangeTarget", x => x.ChangeTargetId);
+                    table.ForeignKey(
+                        name: "FK_JustinUserChangeTarget_JustinUserChange_JustinUserChangeId",
+                        column: x => x.JustinUserChangeId,
+                        principalSchema: "jum",
+                        principalTable: "JustinUserChange",
+                        principalColumn: "EventMessageId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -249,6 +345,12 @@ namespace jumwebapi.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_JustinUserChangeTarget_JustinUserChangeId",
+                schema: "jum",
+                table: "JustinUserChangeTarget",
+                column: "JustinUserChangeId");
+
+            migrationBuilder.CreateIndex(
                 name: "idx_qrtz_ft_job_group",
                 schema: "quartz",
                 table: "qrtz_fired_triggers",
@@ -321,8 +423,21 @@ namespace jumwebapi.Migrations
                 columns: new[] { "sched_name", "job_name", "job_group" });
         }
 
+        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "IdempotentConsumers",
+                schema: "jum");
+
+            migrationBuilder.DropTable(
+                name: "JustinUserChangeTarget",
+                schema: "jum");
+
+            migrationBuilder.DropTable(
+                name: "ParticipantMerge",
+                schema: "jum");
+
             migrationBuilder.DropTable(
                 name: "qrtz_blob_triggers",
                 schema: "quartz");
@@ -358,6 +473,10 @@ namespace jumwebapi.Migrations
             migrationBuilder.DropTable(
                 name: "qrtz_simprop_triggers",
                 schema: "quartz");
+
+            migrationBuilder.DropTable(
+                name: "JustinUserChange",
+                schema: "jum");
 
             migrationBuilder.DropTable(
                 name: "qrtz_triggers",

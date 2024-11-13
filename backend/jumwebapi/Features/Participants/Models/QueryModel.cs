@@ -1,4 +1,7 @@
-﻿namespace jumwebapi.Features.Participants.Models;
+namespace jumwebapi.Features.Participants.Models;
+
+using System.ComponentModel.DataAnnotations;
+
 public class QueryModel
 {
     [Required]

@@ -181,7 +181,14 @@ public static class AuthenticationSetup
 
     private static Task OnForbidden(ForbiddenContext context)
     {
-        Serilog.Log.Warning($"Authentication failure {context.Result.Failure}");
+        if (context != null && context.Result != null)
+        {
+            Serilog.Log.Warning($"Authentication failure {context.Result.Failure}");
+        }
+        else
+        {
+            Serilog.Log.Warning($"Authentication failure - null context");
+        }
         return Task.CompletedTask;
     }
 

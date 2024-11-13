@@ -169,6 +169,7 @@ public class PidpConfiguration
         public string ParticipantCSNumberMappingTopic { get; set; } = string.Empty;
         public string NotificationTopicName { get; set; } = string.Empty;
         public string UserAccountChangeNotificationTopicName { get; set; } = string.Empty;
+        public string ParticipantMergeResponseTopic { get; set; } = string.Empty;
         public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientId { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientSecret { get; set; } = string.Empty;

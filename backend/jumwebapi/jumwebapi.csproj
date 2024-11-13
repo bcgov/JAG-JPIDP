@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>b2b3aeca-3282-4224-bc2c-ae504c17e682</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <Version>1.1.8</Version>
+    <Version>1.1.9</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -21,6 +21,13 @@
   <PropertyGroup>
     <InvariantGlobalization>false</InvariantGlobalization>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Features\AgencyAssignments\**" />
+    <Content Remove="Features\AgencyAssignments\**" />
+    <EmbeddedResource Remove="Features\AgencyAssignments\**" />
+    <None Remove="Features\AgencyAssignments\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\common\Common.csproj" />
@@ -49,10 +56,11 @@
   <ItemGroup>
     <Folder Include="API\v1\" />
     <Folder Include="API\v1\" />
+    <Folder Include="Data\Comparer\" />
     <Folder Include="Data\Models\" />
-    <Folder Include="Features\AgencyAssignments\" />
     <Folder Include="Features\UserChangeManagement\Commands\" />
     <Folder Include="Features\UserChangeManagement\Queries\" />
+    <Folder Include="Migrations\" />
   </ItemGroup>
   
     <Target Name="OpenAPI" AfterTargets="Build" Condition="$(Configuration)=='Debug'">
