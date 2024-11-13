@@ -1,19 +1,13 @@
 namespace jumwebapi.Infrastructure.HttpClients.JustinUserChangeManagement;
 
 using System;
-using System.Web.Http.Controllers;
-using jumwebapi.Features.UserChangeManagement.Data;
-using jumwebapi.Infrastructure.HttpClients.JustinUserChangeManagement;
 using jumwebapi.Models;
 using NodaTime;
 using Serilog;
 
 
-public class JustinUserChangeManagementClient : BaseClient, IJustinUserChangeManagementClient
+public class JustinUserChangeManagementClient(HttpClient httpClient, ILogger<JustinUserChangeManagementClient> logger) : BaseClient(httpClient, logger, PropertySerialization.SnakeCase), IJustinUserChangeManagementClient
 {
-    public JustinUserChangeManagementClient(HttpClient httpClient, ILogger<JustinUserChangeManagementClient> logger) : base(httpClient, logger, PropertySerialization.SnakeCase) { }
-
-
     public async Task<IEnumerable<JustinUserChangeEvent>> GetCurrentChangeEvents()
     {
         Log.Debug("Getting current JUSTIN user changes");
@@ -107,14 +101,14 @@ public class JustinUserChangeManagementClient : BaseClient, IJustinUserChangeMan
         var successFlag = successful ? "T" : "F";
         var result = await this.PutAsync($"eventStatus?event_message_id={eventId}&is_success={successFlag}");
 
-        if ( result.IsSuccess)
+        if (result.IsSuccess)
         {
             Log.Information($"Event message id {eventId} marked success {successful}");
             return true;
         }
         else
         {
-            Log.Error($"Failed to mark event message id {eventId} success {successful} [{string.Join(",",result.Errors)}]");
+            Log.Error($"Failed to mark event message id {eventId} success {successful} [{string.Join(",", result.Errors)}]");
             return false;
         }
 
