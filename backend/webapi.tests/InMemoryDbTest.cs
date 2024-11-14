@@ -1,11 +1,11 @@
 namespace PidpTests;
 
+using System.Reflection;
 using AutoMapper;
 using FakeItEasy.Sdk;
 using Microsoft.EntityFrameworkCore;
 using NodaTime;
-using System.Reflection;
-
+using Pidp;
 using Pidp.Data;
 
 public class InMemoryDbTest : IDisposable
@@ -18,7 +18,7 @@ public class InMemoryDbTest : IDisposable
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
 
-        this.TestDb = new PidpDbContext(options, SystemClock.Instance);
+        this.TestDb = new PidpDbContext(options, SystemClock.Instance, new PidpConfiguration());
         this.TestDb.Database.EnsureCreated();
     }
 

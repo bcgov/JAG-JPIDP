@@ -1,6 +1,7 @@
 namespace PidpTests.Infrastructure.Services;
 
 using System.Security.Claims;
+using Common.Constants.Auth;
 using DomainResults.Common;
 using FakeItEasy;
 using Microsoft.AspNetCore.Authorization;

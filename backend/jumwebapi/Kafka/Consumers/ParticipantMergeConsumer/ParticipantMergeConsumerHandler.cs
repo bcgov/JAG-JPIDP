@@ -64,6 +64,21 @@ public class ParticipantMergeConsumerHandler
                     var source = sourceParticipant.participantDetails.FirstOrDefault();
                     var target = targetParticipant.participantDetails.FirstOrDefault();
 
+                    newParticipantMerge.SourceParticipantFirstName = source.firstGivenNm;
+                    newParticipantMerge.SourceParticipantLastName = source.surname;
+                    var sourceDOBOk = DateOnly.TryParse(source.birthDate, out var sourceDOB);
+                    if (sourceDOBOk)
+                    {
+                        newParticipantMerge.SourceParticipantDOB = sourceDOB;
+                    }
+                    newParticipantMerge.TargetParticipantFirstName = target.firstGivenNm;
+                    newParticipantMerge.TargetParticipantLastName = target.surname;
+                    var targetDOBOk = DateOnly.TryParse(target.birthDate, out var targetDOB);
+                    if (targetDOBOk)
+                    {
+                        newParticipantMerge.TargetParticipantDOB = targetDOB;
+                    }
+
 
                     // we will publish a message to a new topic with more detail, this in-turn will be picked up by other services
                     // such as webapi to see if this participant is onboarded and if they are then we'll publish yet another message to EDT Disclosure
