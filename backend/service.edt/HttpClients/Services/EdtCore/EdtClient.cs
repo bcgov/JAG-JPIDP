@@ -1,21 +1,29 @@
 namespace edt.service.HttpClients.Services.EdtCore;
 
 using System.Diagnostics.Metrics;
+using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
+using Common.Exceptions;
+using Common.Exceptions.EDT;
 using Common.Models.EDT;
-using edt.service.Exceptions;
+using CommonModels.Models.Party;
+using edt.service.Features.Participant;
 using edt.service.Infrastructure.Telemetry;
 using edt.service.Kafka.Model;
 using edt.service.ServiceEvents.PersonCreationHandler.Models;
 using edt.service.ServiceEvents.UserAccountModification.Models;
+using MediatR;
 using Prometheus;
 using Serilog;
 
 public class EdtClient : BaseClient, IEdtClient
 {
     private const string SUBMITTING_AGENCY_GROUP_NAME = "Submitting Agency";
+    private const bool ALL_ATTRIBUTES = true;
+    private const bool ANY_ATTRIBUTE = false;
     private readonly IMapper mapper;
+    private readonly IMediator mediator;
     private readonly EdtServiceConfiguration configuration;
     private readonly string SUBMITTING_AGENCY = "SubmittingAgency";
     private static readonly Histogram AccountCreationDuration = Metrics.CreateHistogram("edt_account_creation_duration", "Histogram of edt account creations.");
@@ -31,21 +39,30 @@ public class EdtClient : BaseClient, IEdtClient
     private readonly Counter<long> getUserCounter;
     private readonly Counter<long> updateUserCounter;
     private readonly Counter<long> updatePersonCounter;
+    private readonly Counter<long> participantSearchSuccessCounter;
+    private readonly Counter<long> participantSearchFailureCounter;
+
 
     public EdtClient(
-        HttpClient httpClient, Instrumentation instrumentation, EdtServiceConfiguration edtServiceConfiguration,
+        HttpClient httpClient,
+        Instrumentation instrumentation,
+        EdtServiceConfiguration edtServiceConfiguration,
         IMapper mapper,
+        IMediator mediator,
         ILogger<EdtClient> logger)
         : base(httpClient, logger)
     {
         ArgumentNullException.ThrowIfNull(instrumentation);
         this.mapper = mapper;
+        this.mediator = mediator;
         this.configuration = edtServiceConfiguration;
         this.getPersonCounter = instrumentation.EdtGetPersonCounter;
         this.addPersonCounter = instrumentation.EdtAddPersonCounter;
         this.getUserCounter = instrumentation.EdtGetUserCounter;
         this.updateUserCounter = instrumentation.EdtUpdateUserCounter;
         this.updatePersonCounter = instrumentation.EdtUpdatePersonCounter;
+        this.participantSearchSuccessCounter = instrumentation.ParticipantMergeSearch;
+        this.participantSearchFailureCounter = instrumentation.ParticipantSearchFailureCounter;
 
     }
 
@@ -152,7 +169,7 @@ public class EdtClient : BaseClient, IEdtClient
             }
         }
 
-  
+
 
         if (assignedRegions.Count == 0)
         {
@@ -484,6 +501,12 @@ public class EdtClient : BaseClient, IEdtClient
         }
     }
 
+
+    /// <summary>
+    /// Get a person (participant) from EDT
+    /// </summary>
+    /// <param name="userKey"></param>
+    /// <returns></returns>
     public async Task<EdtPersonDto?> GetPerson(string userKey)
     {
         using (GetUserDuration.NewTimer())
@@ -501,7 +524,15 @@ public class EdtClient : BaseClient, IEdtClient
             if (person != null && person.Id > 0)
             {
                 person.Identifiers = await this.GetPersonIdentifiers(person.Id);
+
+                if (person.Status != null)
+                {
+                    person.IsActive = person.Status.Equals("Active", StringComparison.OrdinalIgnoreCase);
+                }
+
             }
+
+
             return person;
         }
     }
@@ -956,37 +987,90 @@ public class EdtClient : BaseClient, IEdtClient
         {
             Logger.LogInformation($"Searching for person {personLookup.LastName} {personLookup.FirstName} {personLookup.DateOfBirth}");
 
+
+
             // construct the filter
             List<string> filterParams = [];
 
-
             if (!string.IsNullOrEmpty(personLookup.LastName))
             {
-                filterParams.Add($"LastName:{personLookup.LastName}");
+                if (personLookup.LastName.Length > 100)
+                {
+                    throw new DIAMSecurityException($"SearchForPerson() Last name [{personLookup.LastName}] is too long");
+                }
+                filterParams.Add($"LastName:{WebUtility.UrlEncode(personLookup.LastName)}");
             }
             if (!string.IsNullOrEmpty(personLookup.FirstName))
             {
-                filterParams.Add($"FirstName:{personLookup.FirstName}");
+                if (personLookup.FirstName.Length > 100)
+                {
+                    throw new DIAMSecurityException($"SearchForPerson() First name [{personLookup.FirstName}] is too long");
+                }
+                filterParams.Add($"FirstName:{WebUtility.UrlEncode(personLookup.FirstName)}");
             }
             if (personLookup.DateOfBirth != null)
             {
                 filterParams.Add($"Date of Birth:{personLookup.DateOfBirth}");
             }
 
+            var queryParams = string.Join(",", filterParams);
 
-            var filter = string.Join(",", filterParams);
+            if (personLookup.IncludeInactive)
+            {
+                queryParams += "&IncludeInactive=true";
+            }
 
-            Logger.LogInformation($"Searching filter {filter}");
 
-            var result = await this.GetAsync<PagedItemsResponse<EdtPersonDto>>($"api/v2/org-units/1/persons?IncludeInactive={personLookup.IncludeInactive}&filter={filter}");
+            Logger.LogInformation($"Searching filter {queryParams}");
+
+            var result = await this.GetAsync<PagedItemsResponse<EdtPersonDto>>($"api/v2/org-units/1/persons?filter={queryParams}");
 
             if (result.IsSuccess)
             {
                 if (result.Value.Total == 0)
                 {
-                    Logger.LogInformation($"No person found for {personLookup.LastName} {personLookup.FirstName} {personLookup.DateOfBirth}");
+                    Logger.LogInformation($"No person found for {personLookup}");
                     return [];
                 }
+
+                // Todo handle merged participants if there are multiple matches
+                if (result.Value.Total > 1)
+                {
+                    Logger.LogInformation($"Multiple persons found for {personLookup}");
+                }
+
+                // get first matching person with a partId
+                var firstMatchingPerson = result.Value.Items.Where(person => !string.IsNullOrEmpty(person.Key)).FirstOrDefault();
+
+                // create query
+                var mergeQuery = new ParticipantByPartId(firstMatchingPerson.Key);
+
+                // find all merged participants
+                var mergedParticipants = await this.mediator.Send(mergeQuery);
+
+                // see if any of the participants have the entered OTC
+                if (personLookup.AttributeValues.Count != 0)
+                {
+                    Logger.LogInformation($"Checking attributes of participant {personLookup}");
+                    var matchingParticipants = this.FilterParticipantsByAttributes(mergedParticipants, personLookup.AttributeValues, ALL_ATTRIBUTES);
+
+                    if (matchingParticipants.Count == 0)
+                    {
+                        Logger.LogWarning($"No matching participant found {personLookup}");
+                        // no matching participants by attributes or fields - remove response data
+                        result.Value.Items = [];
+                        result.Value.Total = 0;
+                        this.participantSearchFailureCounter.Add(1);
+                    }
+                    else
+                    {
+                        Logger.LogInformation($"A matching participant was found for {personLookup}");
+                    }
+                }
+
+                // track successful searches
+                this.participantSearchSuccessCounter.Add(result.Value.Items.Count);
+
                 return result.Value.Items;
             }
             else
@@ -995,6 +1079,58 @@ public class EdtClient : BaseClient, IEdtClient
                 return [];
             }
         }
+    }
+
+    /// <summary>
+    /// Filter all participants by matching attributes
+    /// </summary>
+    /// <param name="mergedParticipants"></param>
+    /// <param name="attributeValues"></param>
+    /// <param name="aLL_ATTRIBUTES"></param>
+    /// <returns></returns>
+    private List<ParticipantMergeModel> FilterParticipantsByAttributes(ParticipantMergeListingModel mergedParticipants, List<LookupKeyValueGroup> attributeValues, bool allMatchingAttributes)
+    {
+
+        var allMatchingParticipants = mergedParticipants.GetAllParticipants();
+        List<ParticipantMergeModel> returnMatchedParticipants = [];
+        foreach (var participant in allMatchingParticipants)
+        {
+            var isMatching = false;
+
+            foreach (var attribute in attributeValues)
+            {
+                if (!allMatchingAttributes && isMatching)
+                {
+                    Logger.LogInformation($"Matching attribute found for participant {participant} - moving to next");
+                }
+                else
+                {
+                    // custom EDT field
+                    if (attribute.ValType == LookupType.Field)
+                    {
+                        Logger.LogDebug($"Checking field lookup {attribute.Name} for participant {participant}");
+                        var fieldValue = participant.ParticipantInfo.FirstOrDefault(info => info.Key.Equals(attribute.Name, StringComparison.OrdinalIgnoreCase));
+                        if (!string.IsNullOrEmpty(fieldValue.Value))
+                        {
+                            // check the value
+                            if (fieldValue.Value.Equals(attribute.Value, StringComparison.OrdinalIgnoreCase))
+                            {
+                                isMatching = true;
+                                returnMatchedParticipants.Add(participant);
+                            }
+                        }
+                    }
+                    if (attribute.ValType == LookupType.Attribute)
+                    {
+                        Logger.LogDebug($"Checking attribute {attribute.Name} for participant {participant}");
+
+                    }
+                }
+            }
+
+        }
+
+        return returnMatchedParticipants;
     }
 
     public async Task<List<UserCaseSearchResponseModel>> GetUserCases(string userKey)

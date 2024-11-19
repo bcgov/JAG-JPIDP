@@ -3,6 +3,7 @@ namespace edt.casemanagement;
 
 using System.Reflection;
 using System.Text.Json;
+using Common.Helpers.Web;
 using Common.Logging;
 using edt.casemanagement.Data;
 using edt.casemanagement.HttpClients;
@@ -129,8 +130,17 @@ public class Startup
                 .AddCheck("liveliness", () => HealthCheckResult.Healthy())
                 .AddNpgSql(config.ConnectionStrings.CaseManagementDataStore, tags: new[] { "services" }).ForwardToPrometheus();
 
-        services.AddControllers(options => options.Conventions.Add(new RouteTokenTransformerConvention(new KabobCaseParameterTransformer())))
-             .AddFluentValidation(options => options.RegisterValidatorsFromAssemblyContaining<Startup>())
+        services.AddControllers(options =>
+        {
+            options.Filters.Add(new DIAMGlobalExceptionHandler());
+            options.Conventions.Add(
+                new RouteTokenTransformerConvention(new KabobCaseParameterTransformer())
+            );
+
+        }
+
+
+        ).AddFluentValidation(options => options.RegisterValidatorsFromAssemblyContaining<Startup>())
              .AddJsonOptions(options =>
              {
                  options.JsonSerializerOptions.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);

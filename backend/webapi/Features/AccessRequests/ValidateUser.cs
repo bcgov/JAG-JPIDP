@@ -1,13 +1,17 @@
 namespace Pidp.Features.AccessRequests;
 
 using System.Net;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using Common.Exceptions;
 using Common.Kafka;
 using Common.Models.EDT;
 using Common.Models.Notification;
+using CommonConstants.Constants.DIAM;
 using DomainResults.Common;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using NodaTime;
 using NodaTime.Text;
 using Pidp.Data;
@@ -41,6 +45,7 @@ public class ValidateUser
     public class CommandHandler(PidpDbContext dbContext,
         IEdtCoreClient edtCoreClient,
         IClock clock,
+        ILogger<CommandHandler> logger,
         IKeycloakAdministrationClient keycloakAdministrationClient,
         PidpConfiguration configuration,
         IKafkaProducer<string, Notification> kafkaNotificationProducer
@@ -51,12 +56,13 @@ public class ValidateUser
         public async Task<IDomainResult<UserValidationResponse>> HandleAsync(Command command)
         {
 
+            var sameCodeEntered = false;
             // see if this code is already active and complete
             var priorAccessRequest = dbContext.DigitalEvidencePublicDisclosures.Where(req => req.KeyData == command.Code).FirstOrDefault();
 
             if (priorAccessRequest != null)
             {
-                Serilog.Log.Information($"User {command.PartyId} is attempting to use code {command.Code} previously submitted");
+                logger.LogInformation($"User {command.PartyId} is attempting to use code {command.Code} previously submitted");
                 return DomainResult.Success(new UserValidationResponse
                 {
                     AlreadyActive = true,
@@ -69,12 +75,10 @@ public class ValidateUser
 
             }
 
-            // start a transaction
-            using var transaction = dbContext.Database.BeginTransaction();
             try
             {
 
-                var party = dbContext.Parties.First(p => p.Id == command.PartyId) ?? throw new DIAMAuthException($"Party {command.PartyId} was not found - request ignored");
+                var party = dbContext.Parties.Include(p => p.AlternateIds).FirstOrDefault(p => p.Id == command.PartyId) ?? throw new DIAMAuthException($"Party {command.PartyId} was not found - request ignored");
 
                 var keycloakUser = await keycloakAdministrationClient.GetUser(Common.Constants.Auth.RealmConstants.BCPSRealm, party.UserId) ?? throw new DIAMAuthException($"Keycloak user {command.PartyId} {party.UserId} was not found - request ignored");
 
@@ -103,13 +107,7 @@ public class ValidateUser
 
                 };
 
-                if (retries >= configuration.EdtClient.MaxClientValidations)
-                {
-                    response.TooManyAttempts = true;
-                    await this.NotifyTooManyAttempts(party, priorRequests);
-                    return DomainResult.Success(response);
 
-                }
 
 
                 var validation = new PublicUserValidation
@@ -120,25 +118,14 @@ public class ValidateUser
                     IsValid = false
                 };
 
-                if (priorRequests != null && priorRequests.Count > 0)
-                {
-                    var sameCodeAttempt = priorRequests.FirstOrDefault(req => req.Party == party && req.Code == command.Code);
-                    if (sameCodeAttempt != null)
-                    {
-                        Serilog.Log.Information($"User {party.Id} entered duplicated code");
-                        sameCodeAttempt.Modified = clock.GetCurrentInstant();
-                    }
-                    else
-                    {
-                        dbContext.PublicUserValidations.Add(validation);
 
-                    }
-                }
-                else
+                var sameCodeAttempt = priorRequests.FirstOrDefault(req => req.Party == party && req.Code == command.Code);
+                if (sameCodeAttempt != null)
                 {
-                    dbContext.PublicUserValidations.Add(validation);
+                    logger.LogInformation($"User {party.Id} entered duplicated code");
+                    validation = sameCodeAttempt;
+                    sameCodeEntered = true;
                 }
-
 
 
                 // get the user primaryParticipant from the EdtService
@@ -149,6 +136,7 @@ public class ValidateUser
                     DateOfBirth = party.Birthdate,
                     FirstName = party.FirstName,
                     LastName = party.LastName,
+                    IncludeInactive = true,
                     AttributeValues = [
                         new()
                         {
@@ -161,26 +149,85 @@ public class ValidateUser
 
 
                 // see how many users we have - if more than one then we need to determine if they are merged but the same person
-                // and merged users will be considered (even if inactive), so long as one of the persons has the right first, last names
+                // and merged users will be considered (even if inactive), so long as one of the persons has the matching first, last names
                 // date of birth and OTC then user will be allowed to proceed
 
+                if (userInfoResponse != null && userInfoResponse.Count > 0)
+                {
+                    primaryParticipant = userInfoResponse.FirstOrDefault(person => person.IsActive);
+                    // response = await this.GetPrimaryParticipant(userInfoResponse, command, party, keycloakUser, priorRequests);
+                    logger.LogInformation($"Primary participant {primaryParticipant}");
 
-                response = await this.GetPrimaryParticipant(userInfoResponse, command, party, keycloakUser, priorRequests);
-                Serilog.Log.Information($"Primary participant {primaryParticipant?.Id} {primaryParticipant?.Key} {primaryParticipant?.FirstName} {primaryParticipant?.LastName} {primaryParticipant?.IsActive} {command.Code}");
+                    // if any users are returned then the OTC is valid for at least one of them
+                    response.Validated = true;
+                    validation.IsValid = true;
+                    dbContext.PublicUserValidations.Add(validation);
 
 
-                var updates = await dbContext.SaveChangesAsync();
-                Serilog.Log.Debug($"{updates} public request records added");
+                    // store the users participant ID for onboarding requests later
+                    if (string.IsNullOrEmpty(primaryParticipant.Key))
+                    {
+                        throw new DIAMUserProvisioningException($"Primary participant {primaryParticipant.Id} has no key - unable to proceed");
+                    }
+                    else
+                    {
+
+                        var existingAlternateId = party.AlternateIds.FirstOrDefault(altId => altId.Name == DIAMConstants.JUSTINPARTICIPANTID);
+
+                        if (existingAlternateId != null)
+                        {
+                            logger.LogInformation($"Updating existing alt ID for {party.Id} {party.Jpdid} to {primaryParticipant.Key}");
+                            existingAlternateId.Modified = clock.GetCurrentInstant();
+                            existingAlternateId.Value = primaryParticipant.Key;
+                        }
+                        else
+                        {
+                            // add participant ID to the party as an alt ID so we dont need to look it up again later
+                            party.AlternateIds.Add(new PartyAlternateId()
+                            {
+                                Name = DIAMConstants.JUSTINPARTICIPANTID,
+                                Value = primaryParticipant.Key,
+                                Party = party,
+                                Created = clock.GetCurrentInstant()
+                            });
+                        }
+                    }
+
+                    var updates = await dbContext.SaveChangesAsync();
+                    logger.LogDebug($"{updates} public request records added");
 
 
-                await transaction.CommitAsync();
+                    return DomainResult.Success(response);
+                }
+                else
+                {
+                    if (retries >= configuration.EdtClient.MaxClientValidations)
+                    {
+                        response.TooManyAttempts = true;
+                        await this.NotifyTooManyAttempts(party, priorRequests);
+                        return DomainResult.Success(response);
 
-                return DomainResult.Success(response);
+                    }
+
+                    if (!sameCodeEntered)
+                    {
+                        dbContext.PublicUserValidations.Add(validation);
+                    }
+                    else
+                    {
+                        validation.Modified = clock.GetCurrentInstant();
+
+                    }
+                    var updates = await dbContext.SaveChangesAsync();
+                    logger.LogDebug($"{updates} public request records added");
+                    logger.LogInformation($"No users found with identifier {command.Code}");
+                    response.Message = "Invalid code provided";
+                    return DomainResult.Success(response);
+                }
             }
             catch (Exception ex)
             {
                 Serilog.Log.Error($"Person validation error: {ex.Message}");
-                await transaction.RollbackAsync();
                 throw;
 
             }
@@ -196,7 +243,7 @@ public class ValidateUser
         /// <exception cref="DIAMGeneralException"></exception>
         private async Task NotifyTooManyAttempts(Party party, List<PublicUserValidation> priorRequests)
         {
-            Serilog.Log.Warning($"Too many validation attempts by user {party.Id} {party.FirstName} {party.LastName}");
+            logger.LogWarning($"Too many validation attempts by user {party.Id} {party.FirstName} {party.LastName}");
 
             var codesTried = priorRequests.Select(req => req.Code).ToList();
             var eventData = new Dictionary<string, string>
@@ -223,21 +270,16 @@ public class ValidateUser
 
             if (produceResponse.Status == Confluent.Kafka.PersistenceStatus.Persisted)
             {
-                Serilog.Log.Information($"Published user {party.Id} {party.Jpdid} too many requests message");
+                logger.LogInformation($"Published user {party.Id} {party.Jpdid} too many requests message");
             }
             else
             {
-                Serilog.Log.Error($"Failed to publish to topic for {party.Id} {party.Jpdid} - too many validation attempts");
+                logger.LogError($"Failed to publish to topic for {party.Id} {party.Jpdid} - too many validation attempts");
                 throw new DIAMGeneralException($"Failed to publish to topic for {party.Id} {party.Jpdid} - too many validation attempts");
 
             }
         }
 
-        /// <summary>
-        /// Get the primary participant - the person that will be linked in EDT
-        /// </summary>
-        /// <param name="userInfoResponse"></param>
-        /// <param name="code"></param>
         /// <param name="party"></param>
         /// <param name="keycloakUser"></param>
         /// <returns></returns>
@@ -259,24 +301,24 @@ public class ValidateUser
             {
                 if (userInfoResponse.Count > 1)
                 {
-                    Serilog.Log.Error($"Multiple users found in EDT with {party.FirstName} {party.LastName} {party.Birthdate}");
+                    logger.LogError($"Multiple users found in EDT with {party.FirstName} {party.LastName} {party.Birthdate}");
 
                     // add code to find the active participant from the list
                     var activePersons = userInfoResponse.Where(person => person.IsActive).ToList();
                     if (activePersons.Count == 0)
                     {
-                        Serilog.Log.Information($"No active users found with name {party.FirstName} {party.LastName} {party.Birthdate}");
+                        logger.LogInformation($"No active users found with name {party.FirstName} {party.LastName} {party.Birthdate}");
                         response.Message = "No active participants found";
                     }
                     else if (activePersons.Count > 1)
                     {
-                        Serilog.Log.Information($"Multiple active users found with name {party.FirstName} {party.LastName} {party.Birthdate} - if any match OTC {command.Code} that will be selected");
+                        logger.LogInformation($"Multiple active users found with name {party.FirstName} {party.LastName} {party.Birthdate} - if any match OTC {command.Code} that will be selected");
 
-                        var activePerson = activePersons.FirstOrDefault(person => person.Fields.Any(field => field.Name.Equals(configuration.EdtClient.OneTimeCode) && field.Value.Equals(command.Code)));
+                        var activePerson = activePersons.FirstOrDefault(person => person.IsActive);
 
                         if (activePerson == null)
                         {
-                            Serilog.Log.Information($"No active users found with name {party.FirstName} {party.LastName} {party.Birthdate} - and OTC {command.Code}");
+                            logger.LogInformation($"No active users found with name {party.FirstName} {party.LastName} {party.Birthdate} - and OTC {command.Code}");
                             response.Message = "No participant found with OTC";
 
                         }
@@ -304,7 +346,7 @@ public class ValidateUser
                         if (edtOTC == null || edtOTC.Value == null || string.IsNullOrEmpty(edtOTC.Value.ToString()))
                         {
                             var msg = $"One time code not populated in EDT for {command.PartyId}";
-                            Serilog.Log.Warning(msg);
+                            logger.LogWarning(msg);
                             response.Message = msg;
                             return response;
                         }
@@ -313,7 +355,7 @@ public class ValidateUser
 
                         if (!otcValid)
                         {
-                            Serilog.Log.Information($"User {primaryParticipant.Id} {primaryParticipant.Key} did not match OTC {command.Code}");
+                            logger.LogInformation($"User {primaryParticipant.Id} {primaryParticipant.Key} did not match OTC {command.Code}");
                             response.Message = "Invalid code provided";
                             return response;
                         }
@@ -329,7 +371,7 @@ public class ValidateUser
                             if (edtDOBField == null || edtDOBField.Value == null || string.IsNullOrEmpty(edtDOBField.Value.ToString()))
                             {
                                 var msg = $"Date of birth not populated in EDT for {command.PartyId}";
-                                Serilog.Log.Warning(msg);
+                                logger.LogWarning(msg);
                                 response.Message = msg;
                             }
                             else
@@ -350,7 +392,7 @@ public class ValidateUser
 
                                     if (datesMatch && firstNameMatch && lastNameMatch)
                                     {
-                                        Serilog.Log.Information($"User info matches {keycloakUser.LastName} ({edtLastName})");
+                                        logger.LogInformation($"User info matches {keycloakUser.LastName} ({edtLastName})");
                                         response.Validated = true;
                                     }
                                     else
@@ -358,24 +400,24 @@ public class ValidateUser
                                         // if at least one item matches then we'll notify BCPS
                                         if (firstNameMatch || lastNameMatch || datesMatch)
                                         {
-                                            Serilog.Log.Information($"User {keycloakUser.FirstName} {keycloakUser.LastName} was a potential match [FN={firstNameMatch}] [LN={lastNameMatch}] [DOB={datesMatch}] with one or more issues found");
+                                            logger.LogInformation($"User {keycloakUser.FirstName} {keycloakUser.LastName} was a potential match [FN={firstNameMatch}] [LN={lastNameMatch}] [DOB={datesMatch}] with one or more issues found");
                                             // publish a message for BCPS
                                             var codesTried = priorRequests.Select(req => req.Code).ToList();
 
                                             var eventData = new Dictionary<string, string>
-                                            {
-                                                { "attempts", "" + priorRequests.Count },
-                                                { "bcscFirstName", party.FirstName },
-                                                { "bcpsFirstName", edtFirstName },
-                                                { "bcpsLastName", edtLastName },
-                                                { "requestDateTime", DateTime.Now.ToString() },
-                                                { "bcpsdob", edtDOBField.Value.ToString() },
-                                                { "partyId", party.Jpdid},
-                                                { "bcscLastName", party.LastName },
-                                                { "ipAddress", command.IPAddress.ToString() },
-                                                { "bcscdob",  keycloakDOB.Value[0] },
-                                                { "codes", string.Join(",", codesTried) }
-                                            };
+                                        {
+                                            { "attempts", "" + priorRequests.Count },
+                                            { "bcscFirstName", party.FirstName },
+                                            { "bcpsFirstName", edtFirstName },
+                                            { "bcpsLastName", edtLastName },
+                                            { "requestDateTime", DateTime.Now.ToString() },
+                                            { "bcpsdob", edtDOBField.Value.ToString() },
+                                            { "partyId", party.Jpdid},
+                                            { "bcscLastName", party.LastName },
+                                            { "ipAddress", command.IPAddress.ToString() },
+                                            { "bcscdob",  keycloakDOB.Value[0] },
+                                            { "codes", string.Join(",", codesTried) }
+                                        };
 
                                             response.DataMismatch = true;
                                             response.Message = "Data mismatch";
@@ -395,7 +437,7 @@ public class ValidateUser
                     }
                     else
                     {
-                        Serilog.Log.Error($"No fields found for {primaryParticipant.Id} {primaryParticipant.Key} - unable to check DOB");
+                        logger.LogError($"No fields found for {primaryParticipant.Id} {primaryParticipant.Key} - unable to check DOB");
                     }
 
                 }
@@ -403,7 +445,7 @@ public class ValidateUser
             }
             else
             {
-                Serilog.Log.Information($"No users found with identifier {command.Code}");
+                logger.LogInformation($"No users found with identifier {command.Code}");
                 response.Message = "Invalid code provided";
             }
 
@@ -438,6 +480,18 @@ public class ValidateUser
             {
                 throw new DIAMGeneralException("Failed to publish BCPS event - transaction will rollback");
 
+            }
+        }
+    }
+
+    public static class HMACSHA256Helper
+    {
+        public static string Encrypt(string value, string key)
+        {
+            using (var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(key)))
+            {
+                var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(value));
+                return Convert.ToBase64String(hash);
             }
         }
     }

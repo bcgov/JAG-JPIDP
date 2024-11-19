@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <Folder Include="API\v1\" />
+    <Folder Include="Exceptions\" />
   </ItemGroup>
   <Target Name="OpenAPI" AfterTargets="Build" Condition="$(Configuration)=='Debug'">
 

@@ -5,15 +5,9 @@ using edt.service.HttpClients.Services.EdtCore;
 using MediatR;
 
 public record PersonByIdentifierQuery(string identifierType, string identifierValue) : IRequest<List<EdtPersonDto>>;
-public class PersonByIdentifierQueryHandler : IRequestHandler<PersonByIdentifierQuery, List<EdtPersonDto>>
+public class PersonByIdentifierQueryHandler(IEdtClient edtClient) : IRequestHandler<PersonByIdentifierQuery, List<EdtPersonDto>>
 {
-    private readonly IEdtClient edtClient;
-
-
-    public PersonByIdentifierQueryHandler(IEdtClient edtClient)
-    {
-        this.edtClient = edtClient;
-    }
+    private readonly IEdtClient edtClient = edtClient;
 
     public Task<List<EdtPersonDto>> Handle(PersonByIdentifierQuery request, CancellationToken cancellationToken)
     {

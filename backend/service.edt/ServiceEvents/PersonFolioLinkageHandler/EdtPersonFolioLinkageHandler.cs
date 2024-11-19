@@ -1,8 +1,8 @@
 namespace edt.service.ServiceEvents.PersonFolioLinkageHandler;
 
+using Common.Exceptions.EDT;
 using Common.Models.EDT;
 using edt.service.Data;
-using edt.service.Exceptions;
 using edt.service.Kafka.Interfaces;
 using edt.service.ServiceEvents.PersonCreationHandler.Models;
 using edt.service.ServiceEvents.UserAccountCreation.Models;

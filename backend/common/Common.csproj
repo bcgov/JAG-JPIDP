@@ -20,6 +20,7 @@
     <PackageReference Include="Confluent.SchemaRegistry.Serdes.Avro" Version="2.5.0" />
     <PackageReference Include="DomainResult.Common" Version="3.2.0" />
     <PackageReference Include="DomainResult" Version="3.2.0" />
+    <PackageReference Include="FluentValidation" Version="11.10.0" />
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
     <PackageReference Include="Flurl" Version="4.0.0" />
     <PackageReference Include="IdentityModel" Version="7.0.0" />
