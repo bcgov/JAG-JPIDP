@@ -31,6 +31,16 @@ public class PartiesController : PidpControllerBase
         return await handler.HandleAsync(query);
     }
 
+    [HttpGet("{partyId}")]
+    [Authorize(Policy = Policies.DiamInternalAuthentication)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<PartyDetailModel>> GetPartyById([FromServices] IQueryHandler<PartyByIdQuery.Query, PartyDetailModel> handler,
+                                                                     [FromRoute] PartyByIdQuery.Query query)
+    {
+        return await handler.HandleAsync(query);
+    }
+
     [SwaggerOperation(Summary = "Return all parties known to DIAM")]
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]

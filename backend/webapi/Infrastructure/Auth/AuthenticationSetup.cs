@@ -133,6 +133,13 @@ public static class AuthenticationSetup
                     return true;
                 }
             }
+
+            // if client is diam-internal then permit
+            if (context.User.HasClaim(c => c.Type == "azp" && c.Value == "DIAM-INTERNAL"))
+            {
+                return true;
+            }
+
             var hasRole = context.User.IsInRole(Roles.SubmittingAgency);
             var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider &&
                                                        (c.Value == ClaimValues.BCServicesCard ||

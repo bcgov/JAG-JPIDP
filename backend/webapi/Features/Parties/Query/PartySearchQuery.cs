@@ -21,6 +21,7 @@ public class PartySearchQuery()
     {
 
     }
+
     public class QueryHandler : IQueryHandler<Query, PaginatedResponse<PartyDetailModel>>
     {
         private readonly PidpDbContext context;
