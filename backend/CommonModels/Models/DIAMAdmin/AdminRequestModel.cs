@@ -6,10 +6,10 @@ namespace CommonModels.Models.DIAMAdmin;
 /// </summary>
 public class AdminRequestModel
 {
-    public required string TargetInstance { get; set; }
+    public required string TargetKafkaInstance { get; set; }
+    public required string TargetEnvironment { get; set; }
     public required string RequestType { get; set; }
     public required string Requestor { get; set; }
-    public required Guid RequestId { get; set; } = Guid.NewGuid();
     public string? RequestorIPAddress { get; set; }
     public Dictionary<string, string> RequestData { get; set; } = [];
     public DateTime RequestDateTime { get; set; }
