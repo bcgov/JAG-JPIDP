@@ -4,6 +4,7 @@ using System.Net;
 using Common.Authorization;
 using Common.Constants.Auth;
 using Common.Models.CORNET;
+using CommonModels.Models.DIAMAdmin;
 using CommonModels.Models.JUSTIN;
 using Confluent.Kafka;
 using IdentityModel.Client;
@@ -17,6 +18,7 @@ using Pidp.Infrastructure.HttpClients.Ldap;
 using Pidp.Infrastructure.HttpClients.Mail;
 using Pidp.Infrastructure.HttpClients.Plr;
 using Pidp.Kafka.Consumer;
+using Pidp.Kafka.Consumer.DIAMAdminRequests;
 using Pidp.Kafka.Consumer.DomainEventResponses;
 using Pidp.Kafka.Consumer.InCustodyProvisioning;
 using Pidp.Kafka.Consumer.JustinParticipantMerges;
@@ -147,9 +149,11 @@ public static class HttpClientSetup
         services.AddScoped<IKafkaHandler<string, InCustodyParticipantModel>, InCustodyHandler>();
         services.AddScoped<IKafkaHandler<string, ParticipantMergeDetailModel>, JustinParticipantMergeHandler>();
 
+        services.AddScoped<IKafkaHandler<string, AdminRequestModel>, DIAMAdminRequestHandler>();
 
         services.AddHostedService<JustinUserChangeService>();
         services.AddHostedService<DomainEventResponseService>();
+        services.AddHostedService<DIAMAdminMessageConsumer>();
 
         return services;
     }

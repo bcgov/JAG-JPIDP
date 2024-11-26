@@ -13,7 +13,7 @@ public class AdminRequestStatusModel
     public DateTime? DeliveredTime { get; set; }
     public DateTime? CompletedTime { get; set; }
     public string? Errors { get; set; }
-    public required string RequestType { get; set; }
+    public required AdminCommandSet RequestType { get; set; }
     public string? Status { get; set; }
     public string? RequestData { get; set; }
     public string? ResponseData { get; set; }

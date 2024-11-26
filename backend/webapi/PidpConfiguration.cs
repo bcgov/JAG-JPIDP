@@ -184,6 +184,8 @@ public class PidpConfiguration
         public string KafkaAdminClientId { get; set; } = string.Empty;
         public string KafkaAdminClientSecret { get; set; } = string.Empty;
         public string HostnameVerification { get; set; } = "Https";
+        public string DIAMAdminIncomingTopic { get; set; } = string.Empty;
+        public string DIAMAdminOutgoingTopic { get; set; } = string.Empty;
 
     }
     public class JumClientConfiguration

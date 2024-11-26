@@ -161,6 +161,7 @@ public class Startup
         services.AddScoped<ICourtAccessService, CourtAccessService>();
         services.AddScoped<IProfileUpdateService, ProfileUpdateServiceImpl>();
         services.AddScoped<ICaseSanityChecks, CaseSanityChecks>();
+        services.AddScoped<IDIAMAdminService, DIAMAdminService>();
 
         services.AddSingleton(typeof(IKafkaProducer<,>), typeof(KafkaProducer<,>));
 
