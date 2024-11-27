@@ -24,8 +24,44 @@ public class DIAMAdminService(ILogger<DIAMAdminService> logger, PidpDbContext db
 
                 break;
             }
+            case AdminCommandSet.PARTY_ACCESS_REQUEST_REMOVE:
+            {
+                logger.LogInformation($"Request received {request}");
+
+
+                var accessRequestIdStr = request.RequestData["accessRequestId"];
+                if (string.IsNullOrEmpty(accessRequestIdStr))
+                {
+                    logger.LogError($"No access request ID in remove request {request}");
+                    return false;
+                }
+                // convert accessRequestIdStr to int
+                if (!int.TryParse(accessRequestIdStr, out int accessRequestId))
+                {
+                    logger.LogError($"Invalid access request id in remove request {request}");
+                    return false;
+                }
+
+                // get the access request
+                var accessRequest = dbContext.AccessRequests.FirstOrDefault(ar => ar.Id == accessRequestId);
+                if (accessRequest == null)
+                {
+                    logger.LogError($"Access request not found in remove request {request} - marking complete");
+                    return true;
+                }
+                else
+                {
+                    dbContext.AccessRequests.Remove(accessRequest);
+                    await dbContext.SaveChangesAsync();
+                    break;
+                }
+
+                break;
+            }
             case AdminCommandSet.PARTY_REMOVE_REQUEST:
             {
+                logger.LogInformation($"Request received {request}");
+
                 var partyIdStr = request.RequestData["partyId"];
                 if (string.IsNullOrEmpty(partyIdStr))
                 {
