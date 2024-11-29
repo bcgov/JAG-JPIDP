@@ -1,6 +1,7 @@
 namespace Pidp.Kafka.Consumer.DIAMAdminRequests;
 
 using System.Diagnostics;
+using System.Reflection;
 using Common.Exceptions;
 using CommonModels.Models.DIAMAdmin;
 using NodaTime;
@@ -9,7 +10,7 @@ using Pidp.Infrastructure.Services;
 using Pidp.Kafka.Interfaces;
 using Serilog;
 
-public class DIAMAdminRequestHandler : IKafkaHandler<string, AdminRequestModel>
+public class DIAMAdminRequestHandler : IKafkaHandler<AdminRequestKey, AdminRequestModel>
 
 {
     private readonly PidpDbContext context;
@@ -17,6 +18,7 @@ public class DIAMAdminRequestHandler : IKafkaHandler<string, AdminRequestModel>
     private readonly IKafkaProducer<string, AdminResponseModel> adminResponseProducer;
     private readonly PidpConfiguration config;
     private readonly IDIAMAdminService adminService;
+    private readonly string AssemblyName = Assembly.GetEntryAssembly().GetName().Name;
 
     public DIAMAdminRequestHandler(PidpDbContext context, IClock clock,
         IKafkaProducer<string, AdminResponseModel> adminResponseProducer,
@@ -29,13 +31,20 @@ public class DIAMAdminRequestHandler : IKafkaHandler<string, AdminRequestModel>
         this.adminService = adminService;
     }
 
-    public async Task<Task> HandleAsync(string consumerName, string key, AdminRequestModel value)
+    public async Task<Task> HandleAsync(string consumerName, AdminRequestKey header, AdminRequestModel value)
     {
         var started = Stopwatch.StartNew();
+        Log.Logger.Information($"Admin request [{value}] message received on {consumerName} with key {header.Key}");
+        if (header.TargetServices.Count > 0)
+        {
+            if (!header.TargetServices.Contains(this.AssemblyName))
+            {
+                return Task.CompletedTask;
+            }
+        }
 
-        Log.Logger.Information($"Admin request [{value}] message received on {consumerName} with key {key}");
         //check whether this message has been processed before
-        if (await context.HasBeenProcessed(key, consumerName))
+        if (await context.HasBeenProcessed(header.Key, consumerName))
         {
             return Task.CompletedTask;
         }
@@ -49,18 +58,18 @@ public class DIAMAdminRequestHandler : IKafkaHandler<string, AdminRequestModel>
             var success = await adminService.ProcessAdminRequestAsync(value);
             if (success)
             {
-                await this.PublishSuccessResponse(consumerName, Guid.Parse(key), value.RequestData);
+                await this.PublishSuccessResponse(consumerName, Guid.Parse(header.Key), value.RequestData);
             }
             else
             {
-                await this.PublishErrorResponse(consumerName, Guid.Parse(key), value.RequestData, "Failed to process request");
+                await this.PublishErrorResponse(consumerName, Guid.Parse(header.Key), value.RequestData, "Failed to process request");
             }
 
         }
         catch (Exception ex)
         {
             Log.Error(ex, $"Error processing admin request {value}");
-            await this.PublishErrorResponse(consumerName, Guid.Parse(key), value.RequestData, ex.Message);
+            await this.PublishErrorResponse(consumerName, Guid.Parse(header.Key), value.RequestData, ex.Message);
         }
 
         return Task.CompletedTask;

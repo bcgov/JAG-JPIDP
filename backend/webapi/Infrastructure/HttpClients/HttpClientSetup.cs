@@ -149,7 +149,7 @@ public static class HttpClientSetup
         services.AddScoped<IKafkaHandler<string, InCustodyParticipantModel>, InCustodyHandler>();
         services.AddScoped<IKafkaHandler<string, ParticipantMergeDetailModel>, JustinParticipantMergeHandler>();
 
-        services.AddScoped<IKafkaHandler<string, AdminRequestModel>, DIAMAdminRequestHandler>();
+        services.AddScoped<IKafkaHandler<AdminRequestKey, AdminRequestModel>, DIAMAdminRequestHandler>();
 
         services.AddHostedService<JustinUserChangeService>();
         services.AddHostedService<DomainEventResponseService>();

@@ -33,7 +33,11 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
         this.consumer = new ConsumerBuilder<TKey, TValue>(this.config)
             .SetLogHandler((consumer, log) => Console.WriteLine($"CON _______________________ {log}"))
             .SetErrorHandler((consumer, log) => Console.WriteLine($"CON ERR _______________________ {log}"))
-            .SetOAuthBearerTokenRefreshHandler(OauthTokenRefreshCallback).SetValueDeserializer(new KafkaDeserializer<TValue>()).Build();
+            .SetKeyDeserializer(new KafkaDeserializer<TKey>()).
+                SetOAuthBearerTokenRefreshHandler(OauthTokenRefreshCallback).SetValueDeserializer(new KafkaDeserializer<TValue>()).Build();
+
+
+
         this.topic = topic;
 
         await Task.Run(() => this.StartConsumerLoop(stoppingToken), stoppingToken);

@@ -16,3 +16,9 @@ public class AdminRequestModel
 
 }
 
+public class AdminRequestKey
+{
+    public required string Key { get; set; }
+    public List<string> TargetServices { get; set; } = [];
+}
+

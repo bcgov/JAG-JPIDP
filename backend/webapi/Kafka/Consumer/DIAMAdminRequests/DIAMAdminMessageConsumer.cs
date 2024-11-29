@@ -4,7 +4,7 @@ using System.Net;
 using CommonModels.Models.DIAMAdmin;
 using Pidp.Kafka.Interfaces;
 
-public class DIAMAdminMessageConsumer(IKafkaConsumer<string, AdminRequestModel> kafkaConsumer, PidpConfiguration config) : BackgroundService
+public class DIAMAdminMessageConsumer(IKafkaConsumer<AdminRequestKey, AdminRequestModel> kafkaConsumer, PidpConfiguration config) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
