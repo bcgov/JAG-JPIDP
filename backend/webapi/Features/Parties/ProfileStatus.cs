@@ -418,6 +418,7 @@ public partial class ProfileStatus
         public bool UserIsBcServicesCard => this.User.GetIdentityProvider() == ClaimValues.BCServicesCard;
         //public bool UserIsPhsa => this.User.GetIdentityProvider() == ClaimValues.Phsa;
         //public bool UserIsBcps => this.User.GetIdentityProvider() == ClaimValues.Bcps;
+        public bool UserHasPVTCaseAccessRole => this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpService).Contains(Roles.AUF_TEST_ACCESS);
         public bool UserIsBcps => this.User.GetIdentityProvider() == ClaimValues.Bcps && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpService).Contains(DefaultRoles.Bcps) || (this.PermitIDIRDEMS() && (this.User.GetIdentityProvider() == ClaimValues.Idir || this.User.GetIdentityProvider() == ClaimValues.AzureAd));
         public bool UserIsIdir => this.User.GetIdentityProvider() == ClaimValues.Idir || this.User.GetIdentityProvider() == ClaimValues.AzureAd;
         public bool UserIsIdirCaseManagement => this.User.GetIdentityProvider() == ClaimValues.Idir && this.PermitIDIRDEMS() && this.User?.Identity is ClaimsIdentity identity && identity.GetResourceAccessRoles(Clients.PidpService).Contains(Roles.SubmittingAgency);

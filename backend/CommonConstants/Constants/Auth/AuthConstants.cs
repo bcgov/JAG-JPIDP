@@ -59,6 +59,8 @@ public static class Policies
     public const string IdirAuthentication = "idir-authentication-policy";
     public const string AnyPartyIdentityProvider = "party-idp-policy";
     public const string SubAgencyIdentityProvider = "subgency-idp-policy";
+    public const string BCPSAufAccessIdentityProvider = "bcps-auf-access-policy";
+    public const string AUFCaseAccessPolicy = "auf-case-access-policy";
     public const string UserOwnsResource = "user-owns-resource-policy";
     public const string VerifiedCredentialsProvider = "verified-credentials-authentication-policy";
     public const string AllJAMIdentityProvider = "jam-idp-policy";
@@ -82,6 +84,8 @@ public static class Roles
 {
     public const string Approver = "APPROVER";
     public const string ApprovalViewer = "APPROVAL-VIEWER";
+    public const string AUF_TEST_ACCESS = "AUF_TEST_ACCESS";
+
     // PIdP Role Placeholders
     public const string Admin = "ADMIN";
     public const string User = "USER";

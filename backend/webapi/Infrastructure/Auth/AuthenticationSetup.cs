@@ -6,12 +6,13 @@ using Common.Constants.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
+using Pidp.Data;
 using Pidp.Extensions;
 using Serilog;
 
 public static class AuthenticationSetup
 {
-    public static IServiceCollection AddKeycloakAuth(this IServiceCollection services, PidpConfiguration config)
+    public static IServiceCollection AddKeycloakAuth(this IServiceCollection services, PidpConfiguration config, PidpDbContext dbContext)
     {
 
         services.ThrowIfNull(nameof(services));
@@ -56,6 +57,30 @@ public static class AuthenticationSetup
         services.AddAuthorizationBuilder().AddPolicy(Policies.SubAgencyIdentityProvider, policy => policy.RequireAuthenticatedUser()
                                   .RequireRole(Roles.SubmittingAgency));
 
+        // policy for BCPS users with PVT AUF access
+        services.AddAuthorizationBuilder().AddPolicy(Policies.BCPSAufAccessIdentityProvider, policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
+        {
+            var hasAUFRole = context.User.IsInRole(Roles.AUF_TEST_ACCESS);
+            var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider && c.Value == ClaimValues.Bcps);
+            return hasAUFRole && hasClaim;
+        }));
+
+        // AUF Case Access
+        services.AddAuthorizationBuilder().AddPolicy(Policies.AUFCaseAccessPolicy, policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
+        {
+            var hasAUFRole = context.User.IsInRole(Roles.AUF_TEST_ACCESS);
+            var isIkeyUser = context.User.HasClaim(c => c.Type == Claims.IdentityProvider && c.Value == ClaimValues.Bcps);
+            var isTestBCPSUser = hasAUFRole && isIkeyUser;
+            var isInAgencyRole = context.User.IsInRole(Roles.SubmittingAgency);
+            var agencyIdp = dbContext.SubmittingAgencies.Select(a => a.IdpHint).ToList();
+            var isAgency = context.User.HasClaim(c => c.Type == Claims.IdentityProvider && agencyIdp.Contains(c.Value));
+            var isValidAgencyUser = isAgency && isInAgencyRole;
+
+            return isTestBCPSUser || isValidAgencyUser;
+
+        }));
+
+
         // BC services card policy
         services.AddAuthorizationBuilder().AddPolicy(Policies.BcscAuthentication, policy => policy.RequireAuthenticatedUser().RequireClaim(Claims.IdentityProvider, ClaimValues.BCServicesCard));
 
@@ -95,6 +120,9 @@ public static class AuthenticationSetup
                                                         c.Value == ClaimValues.VerifiedCredentials));
             return hasSARole || hasClaim;
         }));
+
+        //services.AddAuthorizationBuilder().AddPolicy(Policies.AUFCaseAccessPolicy, policy
+        //    )
 
 
         // any JAM_POR possible user (should be more generic!)

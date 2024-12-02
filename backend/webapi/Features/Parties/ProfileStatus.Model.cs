@@ -487,6 +487,14 @@ public partial class ProfileStatus
 
             protected override void SetAlertsAndStatus(ProfileStatusDto profile)
             {
+                // allow BCPS access to PVT purposes
+                if (profile.UserIsBcps && profile.UserHasPVTCaseAccessRole)
+                {
+                    Log.Warning($"User {profile.User.GetUserId()} is a BCPS user with PVT case access role - remove once PVT complete");
+                    this.StatusCode = StatusCode.Complete;
+                    return;
+                }
+
                 // special testing case where IDIR users could view case management and request access as an SA
                 if (profile.UserIsIdirCaseManagement)
                 {

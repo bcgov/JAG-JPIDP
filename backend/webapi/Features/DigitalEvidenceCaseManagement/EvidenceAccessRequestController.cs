@@ -11,6 +11,7 @@ using Pidp.Infrastructure.Services;
 using Pidp.Models;
 
 [Route("api/[controller]")]
+[Authorize(Policy = Policies.AUFCaseAccessPolicy)]
 public class EvidenceCaseManagementController : PidpControllerBase
 {
     public EvidenceCaseManagementController(IPidpAuthorizationService authService) : base(authService) { }
@@ -22,7 +23,6 @@ public class EvidenceCaseManagementController : PidpControllerBase
     /// <param name="query"></param>
     /// <returns></returns>
     [HttpGet("{requestId}")]
-    [Authorize(Policy = Policies.SubAgencyIdentityProvider)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<DigitalEvidenceCaseModel?>> GetSubAgencyRequests([FromServices] IQueryHandler<DigitalEvidenceByRequestIdQuery.Query, DigitalEvidenceCaseModel?> handler,
@@ -31,7 +31,6 @@ public class EvidenceCaseManagementController : PidpControllerBase
 
 
     [HttpGet("case/{caseId}")]
-    [Authorize(Policy = Policies.SubAgencyIdentityProvider)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<DigitalEvidenceCaseModel?>> GetSubAgencyRequests([FromServices] IQueryHandler<DigitalEvidenceCaseByIdQuery.Query, DigitalEvidenceCaseModel?> handler,
@@ -45,7 +44,6 @@ public class EvidenceCaseManagementController : PidpControllerBase
     /// <param name="query"></param>
     /// <returns></returns>
     [HttpGet("getCaseUserKeys")]
-    [Authorize(Roles = Roles.SubmittingAgencyClient)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<List<string>>> GetSubAgencyRequestsByCaseId([FromServices] IQueryHandler<SubmittingAgencyByCaseId.Query, List<string>> handler,
@@ -63,7 +61,6 @@ public class EvidenceCaseManagementController : PidpControllerBase
     /// <param name="query"></param>
     /// <returns></returns>
     [HttpGet]
-    [Authorize(Policy = Policies.SubAgencyIdentityProvider, Roles = Roles.SubmittingAgency)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<List<DigitalEvidenceCaseModel>>> GetSubAgencyRequestsByPartyId([FromServices] IQueryHandler<DigitalEvidenceByPartyQuery.Query, List<DigitalEvidenceCaseModel>> handler,
@@ -77,7 +74,6 @@ public class EvidenceCaseManagementController : PidpControllerBase
     /// <param name="command"></param>
     /// <returns></returns>
     [HttpPost]
-    [Authorize(Policy = Policies.SubAgencyIdentityProvider)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateDigitalEvidenceSubAgencyCaseAccessRequest([FromServices] ICommandHandler<CaseAccessRequest.Command, IDomainResult> handler,
@@ -92,7 +88,6 @@ public class EvidenceCaseManagementController : PidpControllerBase
     /// <param name="command"></param>
     /// <returns></returns>
     [HttpPut("{requestId}")]
-    [Authorize(Policy = Policies.SubAgencyIdentityProvider)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> RemoveDigitalEvidenceSubAgencyCaseAccessRequest([FromServices] ICommandHandler<RemoveCaseAccess.Command, IDomainResult> handler,
@@ -110,7 +105,6 @@ public class EvidenceCaseManagementController : PidpControllerBase
     /// <returns></returns>
 
     [HttpGet("search")]
-    [Authorize(Policy = Policies.SubAgencyIdentityProvider)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<DigitalEvidenceCaseModel>> FindCase([FromServices] IQueryHandler<DigitalEvidenceCaseQuery.Query, DigitalEvidenceCaseModel> handler,

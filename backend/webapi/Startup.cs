@@ -71,6 +71,7 @@ public class Startup
 
         var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.0.0";
         var knownProxies = this.Configuration.GetSection("KnownProxies").Value;
+        services.AddSingleton<IClock>(SystemClock.Instance);
 
 
         if (!string.IsNullOrEmpty(config.Telemetry.CollectorUrl))
@@ -119,14 +120,18 @@ public class Startup
 
         }
 
+        services.AddDbContext<PidpDbContext>(options => options
+    .UseNpgsql(config.ConnectionStrings.PidpDatabase, npg => npg.UseNodaTime())
+    .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
+
         services
+
         .AddAutoMapper(typeof(Startup))
         .AddHttpClients(config)
-        .AddKeycloakAuth(config)
+        .AddKeycloakAuth(config, services.BuildServiceProvider().GetService<PidpDbContext>())
         .AddScoped<IEmailService, EmailService>()
         .AddScoped<IPidpAuthorizationService, PidpAuthorizationService>()
         .AddScoped<IInCustodyService, InCustodyService>()
-        .AddSingleton<IClock>(SystemClock.Instance)
         .AddScoped<Infrastructure.HttpClients.Jum.JumClient>();
 
         services.AddSingleton<ProblemDetailsFactory, JpidpProblemDetailsFactory>();
@@ -144,9 +149,7 @@ public class Startup
             })
             .AddHybridModelBinder();
 
-        services.AddDbContext<PidpDbContext>(options => options
-            .UseNpgsql(config.ConnectionStrings.PidpDatabase, npg => npg.UseNodaTime())
-            .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
+
 
         services.Scan(scan => scan
             .FromAssemblyOf<Startup>()
