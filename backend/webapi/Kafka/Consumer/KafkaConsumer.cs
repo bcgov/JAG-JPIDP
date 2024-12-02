@@ -1,6 +1,7 @@
 namespace Pidp.Kafka.Consumer;
 
 using System.Globalization;
+using Common.Kafka.Deserializer;
 using Confluent.Kafka;
 using IdentityModel.Client;
 using Pidp.Kafka.Interfaces;
@@ -33,7 +34,7 @@ public class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue> where TV
         this.consumer = new ConsumerBuilder<TKey, TValue>(this.config)
             .SetLogHandler((consumer, log) => Console.WriteLine($"CON _______________________ {log}"))
             .SetErrorHandler((consumer, log) => Console.WriteLine($"CON ERR _______________________ {log}"))
-            .SetKeyDeserializer(new KafkaDeserializer<TKey>()).
+            .SetKeyDeserializer(new DefaultKafkaDeserializer<TKey>()).
                 SetOAuthBearerTokenRefreshHandler(OauthTokenRefreshCallback).SetValueDeserializer(new KafkaDeserializer<TValue>()).Build();
 
 

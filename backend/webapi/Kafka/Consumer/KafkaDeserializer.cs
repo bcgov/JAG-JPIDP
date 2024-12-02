@@ -12,6 +12,8 @@ internal sealed class KafkaDeserializer<T> : IDeserializer<T>
 {
     public T Deserialize(ReadOnlySpan<byte> data, bool isNull, SerializationContext context)
     {
+
+
         if (typeof(T) == typeof(Null))
         {
             if (data.Length > 0)
@@ -24,10 +26,17 @@ internal sealed class KafkaDeserializer<T> : IDeserializer<T>
 
         var dataJson = Encoding.UTF8.GetString(data);
 
+        if (typeof(T) == typeof(string))
+        {
+            // string
+        }
+
         var settings = new JsonSerializerSettings
         {
             Converters = new List<JsonConverter> { new InstantConverter() }
         };
+
+
 
         return JsonConvert.DeserializeObject<T>(dataJson, settings);
     }
