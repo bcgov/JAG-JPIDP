@@ -39,6 +39,7 @@ public class DIAMAdminRequestHandler : IKafkaHandler<AdminRequestKey, AdminReque
         {
             if (!header.TargetServices.Contains(this.AssemblyName))
             {
+                Log.Logger.Information($"{header.Key} ignored as its not for me");
                 return Task.CompletedTask;
             }
         }
