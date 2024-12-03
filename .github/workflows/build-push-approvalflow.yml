@@ -5,7 +5,8 @@ on:
     branches: [develop,test,main]
     paths:
       - "backend/ApprovalFlow/**"
-      - "backend/common/**" 
+      - "backend/common/**"
+      - "backend/Dockerfile.ApprovalFlow" 
       - ".github/workflows/build-push-approvalflow.yml"
   workflow_dispatch:
 env:

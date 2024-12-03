@@ -6,6 +6,7 @@ on:
     paths:
       - "backend/DIAMCornetService/**"
       - "backend/common/**" 
+      - "backend/Dockerfile.DIAMCornetService"
       - ".github/workflows/build-push-diamcornet.yml"
   workflow_dispatch:
 env:

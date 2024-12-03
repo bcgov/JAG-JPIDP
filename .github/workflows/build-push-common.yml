@@ -5,6 +5,7 @@ on:
     branches: [develop]
     paths:
       - "backend/common/**" 
+      - "backend/Dockerfile.Common"
       - ".github/workflows/build-push-common.yml"
   workflow_dispatch:
 env:

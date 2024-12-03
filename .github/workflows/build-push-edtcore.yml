@@ -5,7 +5,8 @@ on:
     branches: [develop,test,main]
     paths:
       - "backend/service.edt/**"
-      - "backend/common/**" 
+      - "backend/common/**"
+      - "backend/Dockerfile.EdtCore"
       - ".github/workflows/build-push-edtcore.yml"
   workflow_dispatch:
 env:

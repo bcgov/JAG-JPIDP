@@ -4,7 +4,8 @@ on:
   push:
     branches: [develop]
     paths:
-      - "backend/CommonConstants/**" 
+      - "backend/CommonConstants/**"
+      - "backend/Dockerfile.CommonConstants"
       - ".github/workflows/build-push-commonconstants.yml"
   workflow_dispatch:
 env:
