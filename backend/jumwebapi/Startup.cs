@@ -10,13 +10,9 @@ using jumwebapi.Core.Http;
 using jumwebapi.Data;
 using jumwebapi.Data.Seed;
 using jumwebapi.Extensions;
-using jumwebapi.Features.Agencies.Services;
-using jumwebapi.Features.DigitalParticipants.Services;
+
 using jumwebapi.Features.ORDSTest;
-using jumwebapi.Features.Participants.Services;
-using jumwebapi.Features.Persons.Services;
 using jumwebapi.Features.UserChangeManagement.Services;
-using jumwebapi.Features.Users.Services;
 using jumwebapi.Helpers.Mapping;
 using jumwebapi.Infrastructure;
 using jumwebapi.Infrastructure.Auth;
@@ -24,6 +20,7 @@ using jumwebapi.Infrastructure.HttpClients;
 using jumwebapi.Kafka.Consumers.ParticipantMergeConsumer;
 using jumwebapi.Models;
 using jumwebapi.PipelineBehaviours;
+using Mapster;
 using MediatR;
 using MediatR.Extensions.FluentValidation.AspNetCore;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
@@ -79,22 +76,13 @@ public class Startup
             options.AddPolicy("Administrator", policy => policy.Requirements.Add(new RealmAccessRoleRequirement("administrator")));
         });
 
-        services.AddScoped<IPartyTypeService, PartyTypeService>();
-        services.AddScoped<IDigitalParticipantService, DigitalParticipantService>();
-        services.AddScoped<IPersonService, PersonService>();
-        services.AddScoped<IAgencyService, AgencyService>();
-        services.AddScoped<IUserService, UserService>();
+
 
         services.AddControllers(options => options.Conventions.Add(new RouteTokenTransformerConvention(new KabobCaseParameterTransformer())))
             .AddFluentValidation(options => options.RegisterValidatorsFromAssemblyContaining<Startup>())
             .AddJsonOptions(options => options.JsonSerializerOptions.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb))
             .AddHybridModelBinder();
         services.AddHttpClient();
-
-        //services.AddDbContext<JumDbContext>(options => options
-        //    .UseSqlServer(config.ConnectionStrings.JumDatabase, sql => sql.UseNodaTime())
-        //    .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
-
 
         services.AddDbContext<JumDbContext>(options => options
          .UseNpgsql(config.ConnectionStrings.JumDatabase, npg => npg.UseNodaTime())
@@ -117,7 +105,7 @@ public class Startup
         services.AddHostedService<ParticipantMergeConsumerService>();
 
         // add handler to process part merge messages
-        services.AddScoped<IKafkaHandler<string, ParticipantMergeEvent>, PartipantMergeConsumerHandler>();
+        services.AddScoped<IKafkaHandler<string, ParticipantMergeEvent>, ParticipantMergeConsumerHandler>();
 
 
         services.AddHealthChecks()

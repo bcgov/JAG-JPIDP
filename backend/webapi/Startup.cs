@@ -161,6 +161,7 @@ public class Startup
         services.AddScoped<ICourtAccessService, CourtAccessService>();
         services.AddScoped<IProfileUpdateService, ProfileUpdateServiceImpl>();
         services.AddScoped<ICaseSanityChecks, CaseSanityChecks>();
+        services.AddScoped<IDIAMAdminService, DIAMAdminService>();
 
         services.AddSingleton(typeof(IKafkaProducer<,>), typeof(KafkaProducer<,>));
 
@@ -359,13 +360,15 @@ public class Startup
         services.AddSingleton(config);
 
         Log.Logger.Information($"### DIAM Core Version:{Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion} ###");
-
         Log.Logger.Information($"Assembly version: {new AppInfo().GetAssemblyVersion()}");
+
+        var dotnetVersion = System.Environment.Version.ToString();
+        Log.Logger.Information($"Current .NET Core Version: {dotnetVersion}");
+
         if (Environment.GetEnvironmentVariable("JUSTIN_SKIP_USER_EMAIL_CHECK") is not null and "true")
         {
             Log.Logger.Warning("*** JUSTIN EMAIL VERIFICATION IS DISABLED ***");
         }
-
 
         return config;
     }

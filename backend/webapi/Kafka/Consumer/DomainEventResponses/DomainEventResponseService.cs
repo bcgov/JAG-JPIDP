@@ -9,11 +9,13 @@ public class DomainEventResponseService : BackgroundService
     private readonly IKafkaConsumer<string, GenericProcessStatusResponse> consumer;
 
     private readonly PidpConfiguration config;
+
     public DomainEventResponseService(IKafkaConsumer<string, GenericProcessStatusResponse> kafkaConsumer, PidpConfiguration config)
     {
         this.consumer = kafkaConsumer;
         this.config = config;
     }
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         try

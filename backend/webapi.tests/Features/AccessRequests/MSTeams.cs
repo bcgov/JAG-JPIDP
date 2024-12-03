@@ -1,13 +1,11 @@
 namespace PidpTests.Features.AccessRequests;
 
 using FakeItEasy;
-using NodaTime;
-using Xunit;
-
 using Pidp.Features.AccessRequests;
 using Pidp.Infrastructure.HttpClients.Plr;
 using Pidp.Models;
 using PidpTests.TestingExtensions;
+using Xunit;
 
 public class MSTeamsTests : InMemoryDbTest
 {
@@ -19,7 +17,7 @@ public class MSTeamsTests : InMemoryDbTest
         {
             FirstName = "FirstName",
             LastName = "LastName",
-            Birthdate = LocalDate.FromDateTime(DateTime.Today),
+            Birthdate = DateOnly.MinValue,
             Email = "Email@email.com",
             Phone = "5551234567",
             Cpn = "Cpn"

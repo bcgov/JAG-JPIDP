@@ -2,7 +2,6 @@ namespace jumwebapi.Features.UserChangeManagement.Controllers;
 
 using jumwebapi.Features.UserChangeManagement.Commands;
 using jumwebapi.Features.UserChangeManagement.Models;
-using jumwebapi.Features.Users.Commands;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -38,6 +37,6 @@ public class UserChangeManagementController : ControllerBase
         {
             return this.BadRequest($"Failed to update {changeData.EventMessageId}");
         }
- 
+
     }
 }

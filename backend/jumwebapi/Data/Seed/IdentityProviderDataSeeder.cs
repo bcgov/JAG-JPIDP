@@ -1,49 +1,18 @@
-using Common.Constants.Auth;
-using jumwebapi.Data.ef;
+namespace jumwebapi.Data.Seed;
+
 using jumwebapi.Infrastructure.HttpClients.Keycloak;
 using Microsoft.EntityFrameworkCore;
 
-namespace jumwebapi.Data.Seed;
 
-public class IdentityProviderDataSeeder
-{
-    private readonly IKeycloakAdministrationClient _keycloakClient;
-    private readonly ILogger<IdentityProviderDataSeeder> _logger;
-    private readonly JumDbContext _context;
 
-    public IdentityProviderDataSeeder(IKeycloakAdministrationClient keycloakClient
+public class IdentityProviderDataSeeder(IKeycloakAdministrationClient keycloakClient
                                         , ILogger<IdentityProviderDataSeeder> logger
                                         , JumDbContext context)
-    {
-        _keycloakClient = keycloakClient;
-        _logger = logger;
-        _context = context;
-    }
+{
     public async Task Seed()
     {
-        _context.Database.EnsureCreated();
-        await _context.Database.MigrateAsync();
+        context.Database.EnsureCreated();
+        await context.Database.MigrateAsync();
 
-        if (!await _context.IdentityProviders.AnyAsync())
-        {
-            _logger.LogWarning("Adding IDPs from Keycloak");
-            var idps = await _keycloakClient.IdentityProviders(RealmConstants.BCPSRealm);
-            var c = idps.Select(t => new JustinIdentityProvider
-            {
-                Alias = t.Alias,
-                ProviderId = t.ProviderId,
-                InternalId = t.InternalId,
-                IsActive = t.Enabled,
-                Name = t.DisplayName,
-                TokenUrl = t.Config.TokenUrl,
-                AuthUrl = t.Config.AuthorizationUrl
-            });
-            await _context.IdentityProviders.AddRangeAsync(c);
-            await _context.SaveChangesAsync();
-            _logger.LogInformation("Keycloaks IDPs added to DataSource.");
-        }
     }
-
-
-
 }

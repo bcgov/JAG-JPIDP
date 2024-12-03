@@ -39,7 +39,13 @@ public sealed class DefaultKafkaDeserializer<T> : IDeserializer<T>
             return (T)(object)parsed.ToInstant();
         }
 
-        Serilog.Log.Information("Message {0}", dataJson);
+        Serilog.Log.Information($"Message {dataJson} convert to {typeof(T)}");
+
+        if (typeof(T) == typeof(string))
+        {
+            return (T)(object)dataJson;
+
+        }
 
 
         return JsonConvert.DeserializeObject<T>(dataJson);

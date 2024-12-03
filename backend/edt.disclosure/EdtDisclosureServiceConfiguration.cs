@@ -115,7 +115,7 @@ public class EdtDisclosureServiceConfiguration
 
         public string NotificationTopic { get; set; } = string.Empty;
         public string ProcessResponseTopic { get; set; } = string.Empty;
-
+        public string UserMergeEventTopic { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientId { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientSecret { get; set; } = string.Empty;
         public string SaslOauthbearerConsumerClientId { get; set; } = string.Empty;

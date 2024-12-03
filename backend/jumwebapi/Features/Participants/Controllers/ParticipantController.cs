@@ -1,5 +1,6 @@
 namespace jumwebapi.Features.Participants.Controllers;
 
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using jumwebapi.Features.Participants.Queries;
 using MediatR;
@@ -12,15 +13,8 @@ using Serilog;
 [Authorize]
 [Route("api/[controller]")]
 [ApiController]
-public class ParticipantController : ControllerBase
+public class ParticipantController(IMediator mediator) : ControllerBase
 {
-    private readonly IMediator mediator;
-
-    public ParticipantController(IMediator mediator)
-    {
-        this.mediator = mediator;
-    }
-
     [HttpGet]
     [Produces("application/json")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -29,7 +23,7 @@ public class ParticipantController : ControllerBase
     public async Task<IActionResult> ParticipantByUsername([Required] string username)
     {
         Log.Logger.Information("Getting participant info for {0}", username);
-        var participant = await this.mediator.Send(new GetParticipantByUsernameQuery(username));
+        var participant = await mediator.Send(new GetParticipantByUsernameQuery(username));
         Log.Logger.Information("Got participant {0}", JsonSerializer.Serialize(participant));
         return new JsonResult(participant);
     }
@@ -41,7 +35,7 @@ public class ParticipantController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ParticipantById(decimal partId)
     {
-        var participant = await this.mediator.Send(new GetParticipantByIdQuery(partId));
+        var participant = await mediator.Send(new GetParticipantByIdQuery(partId));
         return new JsonResult(participant);
     }
 }

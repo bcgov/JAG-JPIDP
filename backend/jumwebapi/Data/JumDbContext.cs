@@ -2,7 +2,6 @@ namespace jumwebapi.Data;
 
 using AppAny.Quartz.EntityFrameworkCore.Migrations;
 using AppAny.Quartz.EntityFrameworkCore.Migrations.PostgreSQL;
-using global::Common.Models;
 using jumwebapi.Data.ef;
 using jumwebapi.Features.UserChangeManagement.Data;
 using jumwebapi.Infrastructure.Auth;
@@ -22,22 +21,13 @@ public class JumDbContext : DbContext
         this.configuration = configuration;
     }
 
-    public DbSet<JustinUser> Users { get; set; } = default!;
 
-    //public DbSet<ParticipantModel> Participants { get; set; } = default!;
-    public DbSet<JustinRole> Roles { get; set; } = default!;
-    public DbSet<JustinPerson> People { get; set; } = default!;
-    public DbSet<JustinIdentityProvider> IdentityProviders { get; set; } = default!;
-    public DbSet<JustinAgency> Agencies { get; set; } = default!;
-    public DbSet<JustinAgencyAssignment> AgencyAssignments { get; set; } = default!;
-    public DbSet<JustinPartyType> PartyTypes { get; set; } = default!;
     public DbSet<ParticipantMerge> ParticipantMerges { get; set; } = default!;
-    public DbSet<IdempotentConsumer> IdempotentConsumers { get; set; } = default!;
+    public DbSet<IdempotentConsumers> IdempotentConsumer { get; set; } = default!;
 
     public DbSet<JustinUserChange> JustinUserChange { get; set; } = default!;
 
 
-    //public DbSet<DigitalParticipantModel> DigitalParticipants { get; set; } = default!;
     public override int SaveChanges()
     {
         this.ApplyAudits();
@@ -82,7 +72,7 @@ public class JumDbContext : DbContext
     /// <param name="messageId"></param>
     /// <param name="consumer"></param>
     /// <returns></returns>
-    public async Task<bool> HasBeenProcessed(string messageId, string consumer) => await this.IdempotentConsumers.AnyAsync(x => x.MessageId == messageId && x.Consumer == consumer);
+    public async Task<bool> HasBeenProcessed(string messageId, string consumer) => await this.IdempotentConsumer.AnyAsync(x => x.MessageId == messageId && x.Consumer == consumer);
 
     /// <summary>
     /// Record message as processed
@@ -92,10 +82,11 @@ public class JumDbContext : DbContext
     /// <returns></returns>
     public async Task AddIdempotentConsumer(string messageId, string consumer)
     {
-        await this.IdempotentConsumers.AddAsync(new IdempotentConsumer
+        await this.IdempotentConsumer.AddAsync(new IdempotentConsumers
         {
             MessageId = messageId,
-            Consumer = consumer
+            Consumer = consumer,
+            ConsumeDate = this.clock.GetCurrentInstant()
         });
         await this.SaveChangesAsync();
     }

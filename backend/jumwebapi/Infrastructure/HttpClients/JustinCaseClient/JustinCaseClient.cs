@@ -1,5 +1,6 @@
 namespace jumwebapi.Infrastructure.HttpClients.JustinCases;
 
+using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Threading.Tasks;
 using CommonModels.Models.JUSTIN;
@@ -9,11 +10,8 @@ using global::Common.Models.JUSTIN;
 /// <summary>
 /// Client for getting case status
 /// </summary>
-public class JustinCaseClient : BaseClient, IJustinCaseClient
+public class JustinCaseClient(HttpClient httpClient, ILogger<JustinCaseClient> logger) : BaseClient(httpClient, logger), IJustinCaseClient
 {
-
-    public JustinCaseClient(HttpClient httpClient, ILogger<JustinCaseClient> logger) : base(httpClient, logger) { }
-
     public async Task<CaseStatusWrapper> GetCaseStatus([Required] string encodedCaseId, string accessToken)
     {
         var caseId = WebUtility.UrlDecode(encodedCaseId);
@@ -34,7 +32,7 @@ public class JustinCaseClient : BaseClient, IJustinCaseClient
         if (result.IsSuccess && result.Value != null)
         {
             this.Logger.LogCaseStatusFound(caseId, result.Value.AgencyFileStatus);
-            var caseStatus = CaseStatusWrapper.GetByValue(result.Value.AgencyFileStatus);
+            var caseStatus = CaseStatus.GetByValue(result.Value.AgencyFileStatus);
 
             var caseStatusWrapper = new CaseStatusWrapper(value: caseStatus.Value, demsCandidate: caseStatus.DemsCandidate, description: caseStatus.Description)
             {

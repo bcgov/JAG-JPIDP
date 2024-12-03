@@ -95,7 +95,7 @@ namespace jumwebapi.Infrastructure.Auth
                 options.RequireHttpsMetadata = false;
                 options.Audience = Resources.JumApi;
                 options.MetadataAddress = KeycloakUrls.WellKnownConfig(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl);
-                options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters()
+                options.TokenValidationParameters = new TokenValidationParameters()
                 {
                     ValidateIssuerSigningKey = true,
                     ValidateIssuer = false,
@@ -119,7 +119,7 @@ namespace jumwebapi.Infrastructure.Auth
                             JsonConvert.SerializeObject("The access token provided is not valid.");
                             if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
                             {
-                                context.Response.Headers.Add("Token-Expired", "true");
+                                context.Response.Headers.Append("Token-Expired", "true");
                                 response =
                                     JsonConvert.SerializeObject("The access token provided has expired.");
                             }

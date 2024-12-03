@@ -1,13 +1,12 @@
 namespace jumwebapi.Infrastructure.HttpClients.JustinParticipant;
 
+using global::Common.Exceptions;
 using global::Common.Models.JUSTIN;
 using jumwebapi.Features.Participants.Models;
 
 
-public class JustinParticipantClient : BaseClient, IJustinParticipantClient
+public class JustinParticipantClient(HttpClient httpClient, ILogger<JustinParticipantClient> logger) : BaseClient(httpClient, logger), IJustinParticipantClient
 {
-    public JustinParticipantClient(HttpClient httpClient, ILogger<JustinParticipantClient> logger) : base(httpClient, logger) { }
-
     public async Task<Participant> GetParticipantByUserName(string username, string accessToken)
     {
         var result = await this.GetAsync<Party>($"?user_id={username}", accessToken);
@@ -31,7 +30,7 @@ public class JustinParticipantClient : BaseClient, IJustinParticipantClient
         return participants.participant;
     }
 
-    public async Task<Participant> GetParticipantPartId(decimal partId, string accessToken)
+    public async Task<Participant> GetParticipantByPartId(decimal partId, string accessToken)
     {
         var result = await this.GetAsync<Party>($"?part_id={partId}", accessToken);
 
@@ -51,7 +50,25 @@ public class JustinParticipantClient : BaseClient, IJustinParticipantClient
         }
         return participants.participant;
     }
+
+    public async Task<Participant> GetParticipantByPartId(string partId, string accesToken)
+    {
+        var parsedOk = decimal.TryParse(partId, out var partIdDecimal);
+
+        if (parsedOk)
+        {
+            return await this.GetParticipantByPartId(partIdDecimal, accesToken);
+        }
+        else
+        {
+            throw new DIAMGeneralException($"Failed to parse partId {partId}");
+
+
+        }
+    }
+
 }
+
 public static partial class JustinParticipantClientLoggingExtensions
 {
     [LoggerMessage(1, LogLevel.Warning, "No User found in JUM with Username = {username}.")]

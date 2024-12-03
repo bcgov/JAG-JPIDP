@@ -1,5 +1,7 @@
 namespace jumwebapi.Features.UserChangeManagement.Data;
 
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using jumwebapi.Models;
 using NodaTime;
 

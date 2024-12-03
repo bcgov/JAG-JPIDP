@@ -14,13 +14,13 @@ public class ParticipantMergeConsumerService(IKafkaConsumer<string, ParticipantM
     {
         try
         {
-            Serilog.Log.Information("Starting consumer {0}", this.config.KafkaCluster.ParticipantMergeTopic);
+            Serilog.Log.Information("ParticipantMergeConsumerService Starting consumer {0}", this.config.KafkaCluster.ParticipantMergeConsumeTopic);
 
-            await this.consumer.Consume(this.config.KafkaCluster.ParticipantMergeTopic, stoppingToken);
+            await this.consumer.Consume(this.config.KafkaCluster.ParticipantMergeConsumeTopic, stoppingToken);
         }
         catch (Exception ex)
         {
-            Serilog.Log.Warning($"{(int)HttpStatusCode.InternalServerError} ConsumeFailedOnTopic - {this.config.KafkaCluster.ParticipantMergeTopic}, {ex}");
+            Serilog.Log.Warning($"{(int)HttpStatusCode.InternalServerError} ConsumeFailedOnTopic - {this.config.KafkaCluster.ParticipantMergeConsumeTopic}, {ex}");
         }
     }
 
