@@ -10,6 +10,7 @@ public class AccessRequestMappingService
 
     public static AccessRequestDTO MapToDTO(AccessRequest accessRequest)
     {
+
         return new AccessRequestDTO
         {
             Id = accessRequest.Id,
