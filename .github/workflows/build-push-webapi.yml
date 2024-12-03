@@ -6,6 +6,7 @@ on:
     paths:
       - "backend/webapi/**"
       - "backend/common/**" 
+      - "backend/Dockerfile.WebApi"
       - ".github/workflows/build-push-webapi.yml"
   workflow_dispatch:
 env:
