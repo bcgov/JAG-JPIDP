@@ -12,6 +12,8 @@
     <ProjectReference Include="..\CommonModels\CommonModels.csproj" />
     <PackageReference Include="Keycloak.Net.Core" Version="1.0.30" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.11" />
+
   </ItemGroup>
 
   <ItemGroup>
