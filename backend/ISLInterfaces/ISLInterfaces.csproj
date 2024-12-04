@@ -14,7 +14,7 @@
      <ProjectReference Include="..\CommonModels\CommonModels.csproj" />
      <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0" />
 
-     <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.9.0" />
+     <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.10.0" />
 
    </ItemGroup>
 

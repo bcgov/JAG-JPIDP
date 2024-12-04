@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NodaTime;
 
-public class DIAMConfigurationDataStoreDbContext(DbContextOptions<DIAMConfigurationDataStoreDbContext> options, IClock clock, IConfiguration configuration) : DbContext(options)
+public class DIAMConfigurationDataStoreDbContext(DbContextOptions<DIAMConfigurationDataStoreDbContext> options, IClock clock, IConfiguration configuration, ILogger<DIAMConfigurationDataStoreDbContext> logger) : DbContext(options)
 {
     private readonly IClock clock = clock;
     private readonly IConfiguration configuration = configuration;
@@ -17,7 +17,13 @@ public class DIAMConfigurationDataStoreDbContext(DbContextOptions<DIAMConfigurat
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
 
-        modelBuilder.HasDefaultSchema(this.configuration.GetValue<string>("ConfigSchema"));
+        var defaultSchema = this.configuration.GetValue<string>("ConfigSchema");
+
+        logger.LogInformation($"Default Schema: {defaultSchema}");
+        modelBuilder.HasDefaultSchema(defaultSchema);
+        base.OnModelCreating(modelBuilder);
+
+        // modelBuilder.HasDefaultSchema(defaultSchema);
 
         modelBuilder
             .Entity<LoginConfig>()
