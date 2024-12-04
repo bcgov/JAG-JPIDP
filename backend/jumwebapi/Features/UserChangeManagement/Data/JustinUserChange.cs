@@ -1,5 +1,7 @@
 namespace jumwebapi.Features.UserChangeManagement.Data;
 
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using jumwebapi.Models;
 using NodaTime;
 
@@ -13,7 +15,7 @@ public class JustinUserChange : BaseAuditable
     public Instant EventTime { get; set; }
     public string EventType { get; set; } = string.Empty;
 
-    
+
     public Instant Completed { get; set; }
 
     [InverseProperty("JustinUserChange")]

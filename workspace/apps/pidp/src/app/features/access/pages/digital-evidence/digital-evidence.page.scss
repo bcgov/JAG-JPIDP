@@ -11,6 +11,20 @@ div.user-notification {
   line-height: normal;
 }
 
+.user-otc-notification {
+  border-width: 3px;
+  font-size: 1.2em;
+  color: white;
+}
+
+.otc-success {
+  background-color: darkgreen;
+}
+
+.otc-failure {
+  background-color: darkred;
+}
+
 .submitting-agency {
   border-radius: 5px;
   border: 2px black solid;
@@ -40,6 +54,10 @@ div.user-notification {
   color: red !important;
 }
 
+.white-icon {
+  color: white;
+}
+
 .invalid-icon {
   color: red;
 }
@@ -54,7 +72,7 @@ div.small-text {
 }
 
 .code-entry {
-  width: 80%;
+  width: 85%;
   border-radius: 8px;
   padding-left: 18px;
   padding-right: 18px;
@@ -63,11 +81,13 @@ div.small-text {
   .mat-option-text > span {
     font-size: large;
     margin-left: 16px;
+    background-color: white;
   }
   input {
     background-color: palette.theme-palette(blue, 'lighter');
-    font-size: 22px;
+    font-size: 28px;
     line-height: 36px;
+    background-color: white;
   }
 }
 

@@ -23,7 +23,7 @@ public class GetParticipantById : IRequestHandler<GetParticipantByIdQuery, Parti
         using (JumRequestDuration.NewTimer())
         {
             JumRequests.Inc();
-            return await this._justinParticipantClient.GetParticipantPartId(request.Id, "");
+            return await this._justinParticipantClient.GetParticipantByPartId(request.Id, "");
         }
     }
 }

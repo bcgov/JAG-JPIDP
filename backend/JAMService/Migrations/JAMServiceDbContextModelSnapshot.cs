@@ -18,7 +18,7 @@ namespace JAMService.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("jamservice")
-                .HasAnnotation("ProductVersion", "8.0.10")
+                .HasAnnotation("ProductVersion", "8.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -111,17 +111,17 @@ namespace JAMService.Migrations
                             ExactSourceRoleMatch = true,
                             IsRealmGroup = true,
                             SourceRoles = new List<string> { "POS_VIEW_ALL_USER", "POS_USER" },
-                            TargetRoles = new List<string> { "POR_READ_ONLY" }
+                            TargetRoles = new List<string> { "POR_READ_EXPIRED_ORDERS" }
                         },
                         new
                         {
                             Id = -2,
                             ApplicationId = -1,
-                            Description = "Read-only: Current protection orders and expired",
+                            Description = "Read-only: Current protection orders only",
                             ExactSourceRoleMatch = true,
                             IsRealmGroup = true,
                             SourceRoles = new List<string> { "POS_SEL_USER", "POS_USER" },
-                            TargetRoles = new List<string> { "POR_READ_ONLY" }
+                            TargetRoles = new List<string> { "POR_READ_VALID_ONLY" }
                         },
                         new
                         {
@@ -140,18 +140,18 @@ namespace JAMService.Migrations
                             Description = "Admin with remove orders permission",
                             ExactSourceRoleMatch = true,
                             IsRealmGroup = true,
-                            SourceRoles = new List<string> { "POS_USER", "POS_REMOVE_USER" },
-                            TargetRoles = new List<string> { "POR_READ_WRITE", "POR_DELETE_ORDER" }
+                            SourceRoles = new List<string> { "POS_USER", "POS_DEL_USER" },
+                            TargetRoles = new List<string> { "POR_ADMIN_WITH_SEALING" }
                         },
                         new
                         {
                             Id = -5,
                             ApplicationId = -1,
-                            Description = "BAE Roles, ability to see results on sealed orders queries",
+                            Description = "Ability to seal protection orders and mark as removed",
                             ExactSourceRoleMatch = true,
                             IsRealmGroup = true,
-                            SourceRoles = new List<string> { "POS_USER", "POS_REMOVE_USER", "POS_JUSTIN" },
-                            TargetRoles = new List<string> { "POR_READ_WRITE", "POR_DELETE_ORDER" }
+                            SourceRoles = new List<string> { "POS_USER", "POS_REMOVE_USER" },
+                            TargetRoles = new List<string> { "POR_ADMIN_WITH_SEALING" }
                         });
                 });
 
@@ -246,12 +246,17 @@ namespace JAMService.Migrations
             modelBuilder.Entity("JAMService.Entities.AppRoleMapping", b =>
                 {
                     b.HasOne("JAMService.Entities.Application", "Application")
-                        .WithMany()
+                        .WithMany("RoleMappings")
                         .HasForeignKey("ApplicationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Application");
+                });
+
+            modelBuilder.Entity("JAMService.Entities.Application", b =>
+                {
+                    b.Navigation("RoleMappings");
                 });
 #pragma warning restore 612, 618
         }

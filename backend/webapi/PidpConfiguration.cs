@@ -169,6 +169,7 @@ public class PidpConfiguration
         public string ParticipantCSNumberMappingTopic { get; set; } = string.Empty;
         public string NotificationTopicName { get; set; } = string.Empty;
         public string UserAccountChangeNotificationTopicName { get; set; } = string.Empty;
+        public string ParticipantMergeResponseTopic { get; set; } = string.Empty;
         public string SaslOauthbearerTokenEndpointUrl { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientId { get; set; } = string.Empty;
         public string SaslOauthbearerProducerClientSecret { get; set; } = string.Empty;
@@ -183,6 +184,8 @@ public class PidpConfiguration
         public string KafkaAdminClientId { get; set; } = string.Empty;
         public string KafkaAdminClientSecret { get; set; } = string.Empty;
         public string HostnameVerification { get; set; } = "Https";
+        public string DIAMAdminIncomingTopic { get; set; } = string.Empty;
+        public string DIAMAdminOutgoingTopic { get; set; } = string.Empty;
 
     }
     public class JumClientConfiguration

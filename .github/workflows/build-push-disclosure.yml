@@ -6,6 +6,7 @@ on:
     paths:
       - "backend/edt.disclosure/**"
       - "backend/common/**" 
+      - "backend/Dockerfile.Disclosure"
       - ".github/workflows/build-push-disclosure.yml"
   workflow_dispatch:
 env:

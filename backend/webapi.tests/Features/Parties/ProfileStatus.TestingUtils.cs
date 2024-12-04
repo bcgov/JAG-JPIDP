@@ -1,14 +1,12 @@
 namespace PidpTests.Features.Parties;
 
-using NodaTime;
-using Xunit;
-
-using static Pidp.Features.Parties.ProfileStatus;
-using static Pidp.Features.Parties.ProfileStatus.Model;
 using Pidp.Infrastructure.Auth;
 using Pidp.Models;
 using Pidp.Models.Lookups;
 using PidpTests;
+using Xunit;
+using static Pidp.Features.Parties.ProfileStatus;
+using static Pidp.Features.Parties.ProfileStatus.Model;
 
 public class ProfileStatusTest : InMemoryDbTest
 {
@@ -42,7 +40,7 @@ public static class AParty
         if (identityProvider == ClaimValues.BCServicesCard)
         {
             party.Jpdid = "JPDID";
-            party.Birthdate = LocalDate.FromDateTime(DateTime.Today);
+            party.Birthdate = DateOnly.MinValue;
         }
 
         return party;

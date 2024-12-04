@@ -1,9 +1,10 @@
+using System.Net;
 using Common.Authorization;
 using Common.Constants.Auth;
+using Common.Kafka;
 using Confluent.Kafka;
 using jumwebapi.Extensions;
-using jumwebapi.Kafka.Producer;
-using jumwebapi.Kafka.Producer.Interfaces;
+using jumwebapi.Kafka;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
@@ -17,6 +18,23 @@ namespace jumwebapi.Infrastructure.Auth
         {
             services.ThrowIfNull(nameof(services));
             config.ThrowIfNull(nameof(config));
+
+            var clientConfig = new ClientConfig()
+            {
+                BootstrapServers = config.KafkaCluster.BootstrapServers,
+                SaslMechanism = SaslMechanism.OAuthBearer,
+                SecurityProtocol = SecurityProtocol.SaslSsl,
+                SaslOauthbearerTokenEndpointUrl = config.KafkaCluster.SaslOauthbearerTokenEndpointUrl,
+                SaslOauthbearerMethod = SaslOauthbearerMethod.Oidc,
+                SocketKeepaliveEnable = true,
+                SaslOauthbearerScope = config.KafkaCluster.Scope,
+                SslEndpointIdentificationAlgorithm = SslEndpointIdentificationAlgorithm.Https,
+                SslCaLocation = config.KafkaCluster.SslCaLocation,
+                ConnectionsMaxIdleMs = 600000,
+                SslCertificateLocation = config.KafkaCluster.SslCertificateLocation,
+                SslKeyLocation = config.KafkaCluster.SslKeyLocation
+            };
+
 
             var producerConfig = new ProducerConfig
             {
@@ -41,6 +59,27 @@ namespace jumwebapi.Infrastructure.Auth
             services.AddSingleton(producerConfig);
             services.AddSingleton(typeof(IKafkaProducer<,>), typeof(KafkaProducer<,>));
 
+
+
+            var consumerConfig = new ConsumerConfig(clientConfig)
+            {
+                GroupId = config.KafkaCluster.ConsumerGroupId,
+                EnableAutoCommit = true,
+                AutoOffsetReset = AutoOffsetReset.Earliest,
+                ClientId = Dns.GetHostName(),
+                EnableAutoOffsetStore = false,
+                AutoCommitIntervalMs = 4000,
+                BootstrapServers = config.KafkaCluster.BootstrapServers,
+                SaslOauthbearerClientId = config.KafkaCluster.SaslOauthbearerConsumerClientId,
+                SaslOauthbearerClientSecret = config.KafkaCluster.SaslOauthbearerConsumerClientSecret,
+                SaslMechanism = SaslMechanism.OAuthBearer,
+                SecurityProtocol = SecurityProtocol.SaslSsl
+            };
+            services.AddSingleton(consumerConfig);
+
+            services.AddSingleton(producerConfig);
+            services.AddSingleton(typeof(IKafkaConsumer<,>), typeof(KafkaConsumer<,>));
+
             Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
             //JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
@@ -56,7 +95,7 @@ namespace jumwebapi.Infrastructure.Auth
                 options.RequireHttpsMetadata = false;
                 options.Audience = Resources.JumApi;
                 options.MetadataAddress = KeycloakUrls.WellKnownConfig(RealmConstants.BCPSRealm, config.Keycloak.RealmUrl);
-                options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters()
+                options.TokenValidationParameters = new TokenValidationParameters()
                 {
                     ValidateIssuerSigningKey = true,
                     ValidateIssuer = false,
@@ -80,7 +119,7 @@ namespace jumwebapi.Infrastructure.Auth
                             JsonConvert.SerializeObject("The access token provided is not valid.");
                             if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
                             {
-                                context.Response.Headers.Add("Token-Expired", "true");
+                                context.Response.Headers.Append("Token-Expired", "true");
                                 response =
                                     JsonConvert.SerializeObject("The access token provided has expired.");
                             }

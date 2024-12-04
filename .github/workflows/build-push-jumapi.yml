@@ -6,6 +6,7 @@ on:
     paths:
       - "backend/jumwebapi/**"
       - "backend/common/**"
+      - "backend/Dockerfile.JUMApi"
       - ".github/workflows/build-push-jumapi.yml"
   workflow_dispatch:
 env:

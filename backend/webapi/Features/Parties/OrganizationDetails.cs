@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Text.Json.Serialization;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using CommonConstants.Constants.DIAM;
 using FluentValidation;
 using HybridModelBinding;
 using Microsoft.AspNetCore.Authentication;
@@ -205,7 +206,7 @@ public class OrganizationDetails
                     dto.AlternateIds.Add(new Models.PartyAlternateId
                     {
                         Party = dto,
-                        Name = "JUSTINParticipant",
+                        Name = DIAMConstants.JUSTINPARTICIPANTID,
                         Value = jpsDetail.ParticipantId
                     });
                 }

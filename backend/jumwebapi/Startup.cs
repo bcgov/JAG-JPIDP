@@ -3,24 +3,24 @@ namespace jumwebapi;
 using System.Reflection;
 using System.Security.Claims;
 using FluentValidation.AspNetCore;
+using global::Common.Kafka;
 using global::Common.Logging;
 using jumwebapi.Common;
 using jumwebapi.Core.Http;
 using jumwebapi.Data;
 using jumwebapi.Data.Seed;
 using jumwebapi.Extensions;
-using jumwebapi.Features.Agencies.Services;
-using jumwebapi.Features.DigitalParticipants.Services;
+
 using jumwebapi.Features.ORDSTest;
-using jumwebapi.Features.Participants.Services;
-using jumwebapi.Features.Persons.Services;
 using jumwebapi.Features.UserChangeManagement.Services;
-using jumwebapi.Features.Users.Services;
 using jumwebapi.Helpers.Mapping;
 using jumwebapi.Infrastructure;
 using jumwebapi.Infrastructure.Auth;
 using jumwebapi.Infrastructure.HttpClients;
+using jumwebapi.Kafka.Consumers.ParticipantMergeConsumer;
+using jumwebapi.Models;
 using jumwebapi.PipelineBehaviours;
+using Mapster;
 using MediatR;
 using MediatR.Extensions.FluentValidation.AspNetCore;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
@@ -28,7 +28,6 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.OpenApi.Models;
@@ -76,22 +75,13 @@ public class Startup
             options.AddPolicy("Administrator", policy => policy.Requirements.Add(new RealmAccessRoleRequirement("administrator")));
         });
 
-        services.AddScoped<IPartyTypeService, PartyTypeService>();
-        services.AddScoped<IDigitalParticipantService, DigitalParticipantService>();
-        services.AddScoped<IPersonService, PersonService>();
-        services.AddScoped<IAgencyService, AgencyService>();
-        services.AddScoped<IUserService, UserService>();
+
 
         services.AddControllers(options => options.Conventions.Add(new RouteTokenTransformerConvention(new KabobCaseParameterTransformer())))
             .AddFluentValidation(options => options.RegisterValidatorsFromAssemblyContaining<Startup>())
             .AddJsonOptions(options => options.JsonSerializerOptions.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb))
             .AddHybridModelBinder();
         services.AddHttpClient();
-
-        //services.AddDbContext<JumDbContext>(options => options
-        //    .UseSqlServer(config.ConnectionStrings.JumDatabase, sql => sql.UseNodaTime())
-        //    .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
-
 
         services.AddDbContext<JumDbContext>(options => options
          .UseNpgsql(config.ConnectionStrings.JumDatabase, npg => npg.UseNodaTime())
@@ -102,12 +92,20 @@ public class Startup
 
         services.AddSingleton<ProblemDetailsFactory, UserManagerProblemDetailsFactory>();
 
+
         services.AddSingleton<IAuthorizationHandler, RealmAccessRoleHandler>();
         services.AddTransient<IClaimsTransformation, KeycloakClaimTransformer>();
         services.AddHttpContextAccessor();
         services.AddTransient<ClaimsPrincipal>(s => s.GetService<IHttpContextAccessor>().HttpContext.User);
         services.AddScoped<IProxyRequestClient, ProxyRequestClient>();
         services.AddScoped<IdentityProviderDataSeeder>();
+
+        // add consumer background service
+        services.AddHostedService<ParticipantMergeConsumerService>();
+
+        // add handler to process part merge messages
+        services.AddScoped<IKafkaHandler<string, ParticipantMergeEvent>, ParticipantMergeConsumerHandler>();
+
 
         services.AddHealthChecks()
             .AddCheck("liveliness", () => HealthCheckResult.Healthy())
@@ -121,7 +119,6 @@ public class Startup
         {
             options.ReportApiVersions = true;
             options.AssumeDefaultVersionWhenUnspecified = true;
-            options.ApiVersionReader = new HeaderApiVersionReader("api-version");
         });
 
         services.AddSwaggerGen(options =>

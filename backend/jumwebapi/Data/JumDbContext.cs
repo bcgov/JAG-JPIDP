@@ -21,20 +21,13 @@ public class JumDbContext : DbContext
         this.configuration = configuration;
     }
 
-    public DbSet<JustinUser> Users { get; set; } = default!;
 
-    //public DbSet<ParticipantModel> Participants { get; set; } = default!;
-    public DbSet<JustinRole> Roles { get; set; } = default!;
-    public DbSet<JustinPerson> People { get; set; } = default!;
-    public DbSet<JustinIdentityProvider> IdentityProviders { get; set; } = default!;
-    public DbSet<JustinAgency> Agencies { get; set; } = default!;
-    public DbSet<JustinAgencyAssignment> AgencyAssignments { get; set; } = default!;
-    public DbSet<JustinPartyType> PartyTypes { get; set; } = default!;
+    public DbSet<ParticipantMerge> ParticipantMerges { get; set; } = default!;
+    public DbSet<IdempotentConsumers> IdempotentConsumer { get; set; } = default!;
 
     public DbSet<JustinUserChange> JustinUserChange { get; set; } = default!;
 
 
-    //public DbSet<DigitalParticipantModel> DigitalParticipants { get; set; } = default!;
     public override int SaveChanges()
     {
         this.ApplyAudits();
@@ -71,6 +64,31 @@ public class JumDbContext : DbContext
             optionsBuilder.LogTo(Console.WriteLine);
         }
 
+    }
+
+    /// <summary>
+    /// Check if a message was already recorded as processed
+    /// </summary>
+    /// <param name="messageId"></param>
+    /// <param name="consumer"></param>
+    /// <returns></returns>
+    public async Task<bool> HasBeenProcessed(string messageId, string consumer) => await this.IdempotentConsumer.AnyAsync(x => x.MessageId == messageId && x.Consumer == consumer);
+
+    /// <summary>
+    /// Record message as processed
+    /// </summary>
+    /// <param name="messageId"></param>
+    /// <param name="consumer"></param>
+    /// <returns></returns>
+    public async Task AddIdempotentConsumer(string messageId, string consumer)
+    {
+        await this.IdempotentConsumer.AddAsync(new IdempotentConsumers
+        {
+            MessageId = messageId,
+            Consumer = consumer,
+            ConsumeDate = this.clock.GetCurrentInstant()
+        });
+        await this.SaveChangesAsync();
     }
 
     private void ApplyAudits()

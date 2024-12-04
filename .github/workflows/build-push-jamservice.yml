@@ -6,6 +6,7 @@ on:
     paths:
       - "backend/JAMService/**"
       - "backend/common/**"
+      - "backend/Dockerfile.JAMService"
       - ".github/workflows/build-push-jamservice.yml"
   workflow_dispatch:
 env:

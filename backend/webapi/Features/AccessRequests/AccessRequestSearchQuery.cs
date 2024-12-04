@@ -72,9 +72,12 @@ public class AccessRequestSearchQuery()
 
                 response.Total = this.context.AccessRequests.Count();
 
-                var data = AccessRequestMappingService.MapToDTO(requests);
+                if (requests != null)
+                {
+                    var data = AccessRequestMappingService.MapToDTO(requests);
 
-                response.Data = data;
+                    response.Data = data;
+                }
             }
             response.TotalPages = (int)Math.Ceiling((double)response.Total / query.Input.PageSize);
             return response;

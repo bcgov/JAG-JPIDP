@@ -1,9 +1,9 @@
 namespace jumwebapi.Infrastructure.Auth;
 public class JumWebApiConfiguration
 {
+    private static readonly string? EnvironmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
     public static bool IsProduction() => EnvironmentName == Environments.Production;
     public static bool IsDevelopment() => EnvironmentName == Environments.Development;
-    private static readonly string? EnvironmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
 
     public AddressAutocompleteClientConfiguration AddressAutocompleteClient { get; set; } = new();
     public ConnectionStringConfiguration ConnectionStrings { get; set; } = new();
@@ -70,6 +70,9 @@ public class JumWebApiConfiguration
         public string SslKeyLocation { get; set; } = string.Empty;
         public string Scope { get; set; } = "openid";
         public string HostnameVerification { get; set; } = "Https";
+        public string ParticipantMergeConsumeTopic { get; set; } = string.Empty;
+        public string ParticipantMergeResponseTopic { get; set; } = string.Empty;
+        public string ConsumerGroupId { get; set; } = "justin-service-consumer";
 
     }
     public class JustinClientConfiguration

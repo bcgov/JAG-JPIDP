@@ -6,6 +6,7 @@ on:
     paths:
       - "backend/ISLInterfaces/**"
       - "backend/common/**" 
+      - "backend/Dockerfile.ISLInterfaces"
       - ".github/workflows/build-push-islinterfaces.yml"
   workflow_dispatch:
 env:

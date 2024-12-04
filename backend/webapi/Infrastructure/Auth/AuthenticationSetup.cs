@@ -133,6 +133,13 @@ public static class AuthenticationSetup
                     return true;
                 }
             }
+
+            // if client is diam-internal then permit
+            if (context.User.HasClaim(c => c.Type == "azp" && c.Value == "DIAM-INTERNAL"))
+            {
+                return true;
+            }
+
             var hasRole = context.User.IsInRole(Roles.SubmittingAgency);
             var hasClaim = context.User.HasClaim(c => c.Type == Claims.IdentityProvider &&
                                                        (c.Value == ClaimValues.BCServicesCard ||
@@ -181,7 +188,14 @@ public static class AuthenticationSetup
 
     private static Task OnForbidden(ForbiddenContext context)
     {
-        Serilog.Log.Warning($"Authentication failure {context.Result.Failure}");
+        if (context != null && context.Result != null)
+        {
+            Serilog.Log.Warning($"Authentication failure {context.Result.Failure}");
+        }
+        else
+        {
+            Serilog.Log.Warning($"Authentication failure - null context");
+        }
         return Task.CompletedTask;
     }
 

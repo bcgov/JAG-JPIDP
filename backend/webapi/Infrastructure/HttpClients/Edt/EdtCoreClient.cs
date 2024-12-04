@@ -4,6 +4,7 @@ using System.Net;
 using System.Threading.Tasks;
 using Common.Exceptions;
 using Common.Models.EDT;
+using CommonModels.Models.Party;
 using Pidp.Data;
 using Prometheus;
 
@@ -142,7 +143,7 @@ public class EdtCoreClient(HttpClient httpClient, ILogger<EdtCoreClient> logger,
     /// <returns>The list of <see cref="EdtPersonDto"/> if found; otherwise, an empty list.</returns>
     public async Task<List<EdtPersonDto>?> FindPersons(PersonLookupModel personLookupModel)
     {
-        logger.LogInformation($"Edt Person search requested {personLookupModel.LastName} {personLookupModel.FirstName} {personLookupModel.DateOfBirth} ");
+        logger.LogInformation($"Edt Person search requested {personLookupModel} ");
 
         var wrapper = new PersonLookupWrapper { PersonLookup = personLookupModel };
 
@@ -224,6 +225,33 @@ public class EdtCoreClient(HttpClient httpClient, ILogger<EdtCoreClient> logger,
                 logger.LogWarning($"Failed to query EDT for user cases {string.Join(",", result.Errors)}");
                 return null;
             }
+        }
+    }
+
+    /// <summary>
+    /// Get merge info a given participant - needed to check for disclosures for a given user when establishing accounts
+    /// </summary>
+    /// <param name="participantId"></param>
+    /// <returns></returns>
+    public async Task<ParticipantMergeListingModel> GetParticipantMergeListing(string participantId)
+    {
+        Logger.LogInformation($"Getting participant merge info for {participantId}");
+
+        if (string.IsNullOrEmpty(participantId))
+        {
+            throw new DIAMGeneralException($"No participant ID in call to GetParticipantMergeListing()");
+        }
+
+        var result = await this.GetAsync<ParticipantMergeListingModel>($"participant/merge-details/{participantId}");
+
+        if (result.IsSuccess)
+        {
+            return result.Value;
+        }
+        else
+        {
+            logger.LogWarning($"Failed to query EDT for user merge info for {participantId} - {string.Join(",", result.Errors)}");
+            return null;
         }
     }
 

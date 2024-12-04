@@ -88,26 +88,57 @@ public class PublicUserProvisioningHandler : BaseProvisioningHandler, IKafkaHand
 
                 // get the folio for the user (if present)
                 var existingFolio = await this.edtClient.FindCaseByKey(accessRequestModel.PersonKey);
-                // we'll track the created case Id so that we can later notify core if necessary to add as LinkDicsloureCaseId to the participant in core
+                // we'll track the created case Id so that we can later notify core if necessary to add as LinkDisclosureCaseId to the participant in core
                 var processResponseData = new Dictionary<string, string>
                 {
                     { "OOCUniqueId", accessRequestModel.PersonKey }
                 };
 
 
-                if (existingFolio == null)
+                if (accessRequestModel.DisclosurePortalCaseIds.Count > 0)
                 {
-                    Serilog.Log.Information($"User with key {accessRequestModel.Key} does not currently have a folio - adding folio");
-                    var folio = await this.CreateUserFolio(accessRequestModel);
-                    var linked = await this.LinkUserToFolio(accessRequestModel, folio.Id);
-                    processResponseData.Add("caseID", "" + folio.Id);
+                    logger.LogInformation($"Access request {accessRequestModel.Id} includes Disclosure Portal Ids - using these to link to user {accessRequestModel.UserName} {accessRequestModel.PersonKey}");
+                    foreach (var portalCaseId in accessRequestModel.DisclosurePortalCaseIds)
+                    {
+                        var linked = await this.LinkUserToFolio(accessRequestModel, portalCaseId);
+                        processResponseData.Add("caseID", "" + portalCaseId);
+
+
+                    }
+
+
 
                 }
                 else
                 {
-                    Serilog.Log.Information($"User with key {accessRequestModel.Key} has a folio - adding public user to folio if not already linked");
-                    var linked = await this.LinkUserToFolio(accessRequestModel, existingFolio.Id);
-                    processResponseData.Add("caseID", "" + existingFolio.Id);
+
+                    if (existingFolio == null)
+                    {
+                        Serilog.Log.Information($"User with key {accessRequestModel.Key} does not currently have a folio - adding folio");
+                        var folio = await this.CreateUserFolio(accessRequestModel);
+                        var linked = await this.LinkUserToFolio(accessRequestModel, folio.Id);
+                        if (linked)
+                        {
+                            processResponseData.Add("caseID", "" + folio.Id);
+                        }
+                        else
+                        {
+                            processResponseData.Add("caseLinkFailed", "" + folio.Id);
+                        }
+                    }
+                    else
+                    {
+                        Serilog.Log.Information($"User with key {accessRequestModel.Key} has a folio - adding public user to folio if not already linked");
+                        var linked = await this.LinkUserToFolio(accessRequestModel, existingFolio.Id);
+                        if (linked)
+                        {
+                            processResponseData.Add("caseID", "" + existingFolio.Id);
+                        }
+                        else
+                        {
+                            processResponseData.Add("caseLinkFailed", "" + existingFolio.Id);
+                        }
+                    }
                 }
 
 

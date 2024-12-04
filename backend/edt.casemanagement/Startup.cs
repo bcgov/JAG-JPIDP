@@ -3,6 +3,7 @@ namespace edt.casemanagement;
 
 using System.Reflection;
 using System.Text.Json;
+using Common.Helpers.Web;
 using Common.Logging;
 using edt.casemanagement.Data;
 using edt.casemanagement.HttpClients;
@@ -12,7 +13,6 @@ using edt.casemanagement.Kafka;
 using edt.casemanagement.ServiceEvents.CaseManagement.Handler;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
-using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
@@ -72,9 +72,9 @@ public class Startup
 
                    // tracing
                    builder.SetSampler(new AlwaysOnSampler())
-                       .AddHttpClientInstrumentation()
-                       .AddEntityFrameworkCoreInstrumentation(options => options.SetDbStatementForText = true)
-                       .AddAspNetCoreInstrumentation();
+                     .AddHttpClientInstrumentation()
+                     .AddEntityFrameworkCoreInstrumentation(options => options.SetDbStatementForText = true)
+                     .AddAspNetCoreInstrumentation();
 
                    if (config.Telemetry.LogToConsole)
                    {
@@ -84,7 +84,7 @@ public class Startup
                    if (config.Telemetry.CollectorUrl != null)
                    {
                        builder.AddOtlpExporter(options =>
-                       {
+                     {
                            Log.Information("*** OpenTelemetry trace exporter enabled ***");
 
                            options.Endpoint = new Uri(config.Telemetry.CollectorUrl);
@@ -95,10 +95,10 @@ public class Startup
                .WithMetrics(builder =>
                {
                    builder
-                    .AddMeter(Instrumentation.MeterName)
-                    .AddRuntimeInstrumentation()
-                   .AddHttpClientInstrumentation()
-                   .AddAspNetCoreInstrumentation();
+                  .AddMeter(Instrumentation.MeterName)
+                  .AddRuntimeInstrumentation()
+                 .AddHttpClientInstrumentation()
+                 .AddAspNetCoreInstrumentation();
                });
 
         }
@@ -129,8 +129,17 @@ public class Startup
                 .AddCheck("liveliness", () => HealthCheckResult.Healthy())
                 .AddNpgSql(config.ConnectionStrings.CaseManagementDataStore, tags: new[] { "services" }).ForwardToPrometheus();
 
-        services.AddControllers(options => options.Conventions.Add(new RouteTokenTransformerConvention(new KabobCaseParameterTransformer())))
-             .AddFluentValidation(options => options.RegisterValidatorsFromAssemblyContaining<Startup>())
+        services.AddControllers(options =>
+        {
+            options.Filters.Add(new DIAMGlobalExceptionHandler());
+            options.Conventions.Add(
+              new RouteTokenTransformerConvention(new KabobCaseParameterTransformer())
+          );
+
+        }
+
+
+        ).AddFluentValidation(options => options.RegisterValidatorsFromAssemblyContaining<Startup>())
              .AddJsonOptions(options =>
              {
                  options.JsonSerializerOptions.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
@@ -148,8 +157,9 @@ public class Startup
         {
             options.ReportApiVersions = true;
             options.AssumeDefaultVersionWhenUnspecified = true;
-            options.ApiVersionReader = new HeaderApiVersionReader("api-version");
         });
+
+
 
         services.AddSwaggerGen(options =>
         {
@@ -163,21 +173,21 @@ public class Startup
             });
             options.AddSecurityRequirement(new OpenApiSecurityRequirement()
                 {
-                    {
-                        new OpenApiSecurityScheme
-                        {
-                            Reference = new OpenApiReference
-                            {
-                                Type = ReferenceType.SecurityScheme,
-                                Id = "Bearer"
-                            },
-                            Scheme = "oauth2",
-                            Name = "Bearer",
-                            In = ParameterLocation.Header,
+                  {
+                      new OpenApiSecurityScheme
+                      {
+                          Reference = new OpenApiReference
+                          {
+                              Type = ReferenceType.SecurityScheme,
+                              Id = "Bearer"
+                          },
+                          Scheme = "oauth2",
+                          Name = "Bearer",
+                          In = ParameterLocation.Header,
 
-                        },
-                        new List<string>()
-                    }
+                      },
+                      new List<string>()
+                  }
                 });
             options.OperationFilter<SecurityRequirementsOperationFilter>();
             options.CustomSchemaIds(x => x.FullName);
