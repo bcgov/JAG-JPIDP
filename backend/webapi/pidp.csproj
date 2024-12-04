@@ -20,11 +20,11 @@
     <ProjectReference Include="..\CommonModels\CommonModels.csproj" />
 
     <PackageReference Include="HybridModelBinding" Version="0.18.0" />
-    <PackageReference Include="Quartz" Version="3.13.0" />
-    <PackageReference Include="Quartz.AspNetCore" Version="3.13.0" />
-    <PackageReference Include="Quartz.Serialization.Json" Version="3.13.0" />
+    <PackageReference Include="Quartz" Version="3.13.1" />
+    <PackageReference Include="Quartz.AspNetCore" Version="3.13.1" />
+    <PackageReference Include="Quartz.Serialization.Json" Version="3.13.1" />
 
-    <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.13.0" />
+    <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.13.1" />
     <PackageReference Include="Keycloak.Net.Core" Version="1.0.30" />
     <PackageReference Include="SendGrid" Version="9.29.3" />
 

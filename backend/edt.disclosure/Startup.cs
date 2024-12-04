@@ -11,7 +11,6 @@ using edt.disclosure.Kafka;
 using edt.disclosure.ServiceEvents.CourtLocation.Handler;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
-using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
@@ -123,7 +122,6 @@ public class Startup
         {
             options.ReportApiVersions = true;
             options.AssumeDefaultVersionWhenUnspecified = true;
-            options.ApiVersionReader = new HeaderApiVersionReader("api-version");
         });
 
         services.AddSwaggerGen(options =>

@@ -15,9 +15,6 @@ var outputTemplate = "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Ex
 var path = Environment.GetEnvironmentVariable("LogFilePath") ?? "logs";
 
 
-
-
-
 // Add services to the container.
 
 var dbConnection = builder.Configuration.GetValue<string>("ConfigDatabase");
@@ -27,7 +24,7 @@ builder.Services.AddSingleton<IClock>(SystemClock.Instance);
 builder.Services.AddDbContext<DIAMConfigurationDataStoreDbContext>(options => options
     .UseNpgsql(dbConnection, npg =>
     {
-        npg.MigrationsHistoryTable(HistoryRepository.DefaultTableName, builder.Configuration.GetValue<string>("ConfigSchema"));
+        npg.MigrationsHistoryTable(HistoryRepository.DefaultTableName, builder.Configuration.GetValue<string>("MigrationSchema"));
         npg.UseNodaTime();
     })
     .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: false));
@@ -87,16 +84,22 @@ app.MapControllers();
 //app.UseAuthorization();
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<DIAMConfigurationDataStoreDbContext>();
-    try
+
+    // Validate EF migrations on startup
+    using (var serviceScope = builder.Services.BuildServiceProvider().CreateScope())
     {
-        dbContext.Database.Migrate();
+        var dbContext = serviceScope.ServiceProvider.GetRequiredService<DIAMConfigurationDataStoreDbContext>();
+        try
+        {
+            dbContext.Database.Migrate();
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Database migration failure {string.Join(",", ex.Message)}");
+            throw;
+        }
     }
-    catch (Exception ex)
-    {
-        Log.Error($"Database migration failure {string.Join(",", ex.Message)}");
-        throw;
-    }
+
 }
 
 
