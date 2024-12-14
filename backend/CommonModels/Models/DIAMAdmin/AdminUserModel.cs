@@ -7,8 +7,12 @@ public class AdminUserModel
     public string Username { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public bool Enabled { get; set; } = true;
+    public bool IsAppCreationPermitted { get; set; }
+    public bool IsAppCreationApprovalRequired { get; set; } = true;
+
     public DateTime CreatedAt { get; set; }
     public DateTime LastLogin { get; set; }
+    public List<ApplicationModel> ApplicationsAccess { get; set; } = [];
     public List<UserEnvironmentAccessModel> EnvironmentAccessModel { get; set; } = [];
 
 }
@@ -35,6 +39,8 @@ public class UserAuditLogModel
     public string IPAddress { get; set; } = string.Empty;
     public DateTime EventTime { get; set; }
 }
+
+
 
 
 public class UserClientAccessModel
