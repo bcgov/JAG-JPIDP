@@ -7,9 +7,6 @@ public enum AdminCommandSet
     [Description("Ping known Kafka instances")]
     PING,
 
-    [Description("Create new application")]
-    CREATE_NEW_APPLICATION,
-
     [Description("Remove a party (user) from DIAM")]
     PARTY_REMOVE_REQUEST,
 
@@ -44,7 +41,10 @@ public enum AdminCommandSet
     SSO_CLIENT_ADD,
 
     [Description("Update an existing Keycloak client")]
-    SSO_CLIENT_UPDATE
+    SSO_CLIENT_UPDATE,
+
+    [Description("Create new DIAM application")]
+    DIAM_CREATE_NEW_APPLICATION,
 
 
 }

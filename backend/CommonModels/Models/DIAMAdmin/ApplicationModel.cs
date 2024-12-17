@@ -1,6 +1,7 @@
 namespace CommonModels.Models.DIAMAdmin;
 
 using System.ComponentModel;
+using NodaTime;
 
 public class ApplicationModel
 {
@@ -20,6 +21,7 @@ public class ApplicationModel
     public List<string> DomainPrefixList { get; set; } = [];
     public List<ApplicationUrlModel> ApplicationUrls { get; set; } = [];
     public List<ApplicationGroupModel> ApplicationGroups { get; set; } = [];
+    public List<ApplicationPublishStatusModel> PublishStatusList { get; set; } = [];
 
     public ProjectType ProjectType { get; set; } = ProjectType.JUSTIN;
 
@@ -36,6 +38,14 @@ public class ApplicationUrlModel
 {
     public string Url { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+    public string Environment { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+}
+
+public class ApplicationPublishStatusModel
+{
+    public Instant? PublishDate { get; set; }
+    public string? PublishNotes { get; set; }
     public string Environment { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
 }
