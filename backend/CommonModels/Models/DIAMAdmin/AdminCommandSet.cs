@@ -46,6 +46,11 @@ public enum AdminCommandSet
     [Description("Create new DIAM application")]
     DIAM_CREATE_NEW_APPLICATION,
 
+    [Description("Create new DIAM application client")]
+    DIAM_CREATE_APPLICATION_SSO_CLIENT,
+
+    [Description("Publish new DIAM application")]
+    DIAM_PUBLISH_APPLICATION,
 
 }
 
