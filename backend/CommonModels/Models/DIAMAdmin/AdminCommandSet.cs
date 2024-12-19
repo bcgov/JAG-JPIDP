@@ -52,6 +52,12 @@ public enum AdminCommandSet
     [Description("Publish new DIAM application")]
     DIAM_PUBLISH_APPLICATION,
 
+    [Description("Associate client to application")]
+    DIAM_SET_CLIENT_APPLICATION_ASSOCIATION,
+
+    [Description("Associate group to application")]
+    DIAM_SET_GROUP_APPLICATION_ASSOCIATION,
+
 }
 
 public static class AdminCommandSetExtensions
